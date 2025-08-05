@@ -41,4 +41,5 @@ class SaleDetails extends Model
     public function getProductTaxAmountAttribute($value) {
         return $value / 100;
     }
+    
 }
