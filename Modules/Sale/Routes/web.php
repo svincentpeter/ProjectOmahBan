@@ -54,4 +54,5 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/sale-payments/{sale_id}/edit/{salePayment}', 'SalePaymentsController@edit')->name('sale-payments.edit');
     Route::patch('/sale-payments/update/{salePayment}', 'SalePaymentsController@update')->name('sale-payments.update');
     Route::delete('/sale-payments/destroy/{salePayment}', 'SalePaymentsController@destroy')->name('sale-payments.destroy');
+    Route::get('/sales/reports/profit', 'ReportController@profitReport')->name('sales.reports.profit');
 });

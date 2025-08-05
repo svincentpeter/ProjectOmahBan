@@ -29,6 +29,11 @@
                 <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Semua Produk
             </a>
         </li>
+        <li class="c-sidebar-nav-item">
+            <a class="c-sidebar-nav-link {{ request()->routeIs('products_second.index') ? 'c-active' : '' }}" href="{{ route('products_second.index') }}">
+                <i class="c-sidebar-nav-icon bi bi-recycle" style="line-height: 1;"></i> Semua Produk Bekas
+            </a>
+        </li>
         @can('print_barcodes')
             <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('barcode.print') ? 'c-active' : '' }}" href="{{ route('barcode.print') }}">
@@ -244,6 +249,11 @@
             <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('sales-report.index') ? 'c-active' : '' }}" href="{{ route('sales-report.index') }}">
                     <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Laporan Penjualan
+                </a>
+            </li>
+            <li class="c-sidebar-nav-item">
+                <a class="c-sidebar-nav-link {{ request()->routeIs('profit-loss-report.index') ? 'c-active' : '' }}" href="{{ route('profit-loss-report.index') }}">
+                    <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Laporan Laba / Rugi
                 </a>
             </li>
             <li class="c-sidebar-nav-item">
