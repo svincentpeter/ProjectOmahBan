@@ -48,4 +48,26 @@ class ProductList extends Component
     public function selectProduct($product) {
         $this->dispatch('productSelected', $product);
     }
+
+    // === Tambahkan/replace method di bawah ini! ===
+    public function addToCart($productId)
+    {
+        $product = Product::findOrFail($productId);
+
+        \Cart::add([
+            'id'       => $product->id,
+            'name'     => $product->product_name,
+            'price'    => $product->product_price,
+            'quantity' => 1,
+            'attributes' => [
+                'source_type'   => 'new',   // <--- PENTING: menandai produk baru
+                'discount'      => 0,
+                'discount_type' => 'fixed',
+                'tax'           => 0,
+            ],
+        ]);
+
+        $this->emit('cartUpdated');
+        $this->dispatchBrowserEvent('showSuccess', ['message' => 'Product Added To Cart!']);
+    }
 }

@@ -20,9 +20,41 @@
                 @include('utils.alerts')
             </div>
             <div class="col-lg-7">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="new-product-tab" data-toggle="tab" href="#new-product" role="tab" aria-controls="new-product" aria-selected="true">Produk Baru</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="second-product-tab" data-toggle="tab" href="#second-product" role="tab" aria-controls="second-product" aria-selected="false">Produk Bekas</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="manual-item-tab" data-toggle="tab" href="#manual-item" role="tab" aria-controls="manual-item" aria-selected="false">Jasa / Manual</a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="new-product" role="tabpanel" aria-labelledby="new-product-tab">
+            <div class="mt-3">
                 <livewire:search-product/>
                 <livewire:pos.product-list :categories="$product_categories"/>
             </div>
+        </div>
+
+        <div class="tab-pane fade" id="second-product" role="tabpanel" aria-labelledby="second-product-tab">
+             <div class="mt-3">
+                {{-- Kita akan buat komponen ini di langkah selanjutnya --}}
+                <livewire:pos.product-list-second/>
+             </div>
+        </div>
+
+        <div class="tab-pane fade" id="manual-item" role="tabpanel" aria-labelledby="manual-item-tab">
+            <div class="mt-3">
+                {{-- Kita akan buat komponen ini di langkah selanjutnya --}}
+                <livewire:pos.manual-item-form/>
+            </div>
+        </div>
+    </div>
+</div>
             <div class="col-lg-5">
                 <livewire:pos.checkout :cart-instance="'sale'" :customers="$customers"/>
             </div>
