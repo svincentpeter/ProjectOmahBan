@@ -16,6 +16,11 @@
                 <i class="c-sidebar-nav-icon bi bi-collection" style="line-height: 1;"></i> Kategori
             </a>
         </li>
+        <li class="c-sidebar-nav-item">
+        <a class="c-sidebar-nav-link {{ request()->routeIs('brands.*') ? 'c-active' : '' }}" href="{{ route('brands.index') }}">
+            <i class="c-sidebar-nav-icon bi bi-tags" style="line-height: 1;"></i> Merek
+        </a>
+    </li>
         @endcan
         @can('create_products')
         <li class="c-sidebar-nav-item">

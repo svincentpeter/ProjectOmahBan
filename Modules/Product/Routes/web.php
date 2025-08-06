@@ -9,14 +9,17 @@
 Route::group(['middleware' => 'auth'], function () {
     // Print Barcode
     Route::get('/products/print-barcode', 'BarcodeController@printBarcode')->name('barcode.print');
+    
     // Product
     Route::resource('products', 'ProductController');
+    Route::post('/products/upload', 'ProductController@uploadImage')->name('dropzone.upload');
+    
     // Product Category
     Route::resource('product-categories', 'CategoriesController')->except('create', 'show');
 
-    // ==============================
-    // Tambahkan route di bawah ini!
-    // ==============================
+    // ====================================================================
+    // BAGIAN YANG DIPERBAIKI ADA DI BAWAH INI
+    // ====================================================================
 
     // Rute CRUD untuk Produk Bekas
     Route::resource('products-second', 'ProductSecondController')->names([
@@ -28,4 +31,8 @@ Route::group(['middleware' => 'auth'], function () {
         'update'  => 'products_second.update',
         'destroy' => 'products_second.destroy',
     ]);
+    
+    // Rute CRUD untuk Merek (dipisahkan menjadi pendaftaran sendiri)
+    Route::resource('brands', 'BrandController');
+
 });

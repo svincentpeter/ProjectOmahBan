@@ -11,10 +11,24 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Product extends Model implements HasMedia
 {
-
     use HasFactory, InteractsWithMedia;
 
     protected $guarded = [];
+
+    // GANTI SELURUH ARRAY $fillable MENJADI SEPERTI INI:
+    protected $fillable = [
+    'product_name',
+    'product_code',
+    'category_id', // <-- DIPERBAIKI
+    'brand_id',
+    'product_cost',
+    'product_price',
+    'product_quantity',
+    'product_unit',
+    'product_stock_alert',
+    'product_note',
+    'product_barcode_symbology'
+];
 
     protected $with = ['media'];
 

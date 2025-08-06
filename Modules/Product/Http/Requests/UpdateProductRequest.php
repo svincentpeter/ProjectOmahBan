@@ -14,22 +14,19 @@ class UpdateProductRequest extends FormRequest
      * @return array
      */
     public function rules()
-    {
-        return [
-            'product_name' => ['required', 'string', 'max:255'],
-            'product_code' => ['required', 'string', 'max:255', 'unique:products,product_code,' . $this->product->id],
-            'product_barcode_symbology' => ['required', 'string', 'max:255'],
-            'product_unit' => ['required', 'string', 'max:255'],
-            'product_quantity' => ['required', 'integer', 'min:1'],
-            'product_cost' => ['required', 'numeric', 'max:2147483647'],
-            'product_price' => ['required', 'numeric', 'max:2147483647'],
-            'product_stock_alert' => ['required', 'integer', 'min:0'],
-            'product_order_tax' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'product_tax_type' => ['nullable', 'integer'],
-            'product_note' => ['nullable', 'string', 'max:1000'],
-            'category_id' => ['required', 'integer']
-        ];
-    }
+{
+    return [
+        'product_name' => 'required|string|max:255',
+        'product_code' => 'required|string|max:255|unique:products,product_code,' . (optional($this->product)->id ?: 'NULL') . ',id',
+        'category_id' => 'required|integer|exists:categories,id', // <-- DIPERBAIKI
+        'brand_id' => 'nullable|integer|exists:brands,id',
+        'product_cost' => 'required|numeric|min:0',
+        'product_price' => 'required|numeric|min:0',
+        'product_unit' => 'required|string',
+        'product_stock_alert' => 'required|integer|min:0',
+        'product_note' => 'nullable|string',
+    ];
+}
 
     /**
      * Determine if the user is authorized to make this request.
