@@ -14,6 +14,7 @@ class AdjustedProduct extends Model
 
     protected $with = ['product'];
 
+    // Tambahkan relasi ini
     public function adjustment() {
         return $this->belongsTo(Adjustment::class, 'adjustment_id', 'id');
     }

@@ -5,23 +5,16 @@ namespace Modules\Product\DataTables;
 use Modules\Product\Entities\Product;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
 class ProductDataTable extends DataTable
 {
-
     public function dataTable($query)
     {
         return datatables()
-            ->eloquent($query)->with('category')
+            ->eloquent($query)
             ->addColumn('action', function ($data) {
                 return view('product::products.partials.actions', compact('data'));
-            })
-            ->addColumn('product_image', function ($data) {
-                $url = $data->getFirstMediaUrl('images', 'thumb');
-                return '<img src="'.$url.'" border="0" width="50" class="img-thumbnail" align="center"/>';
             })
             ->addColumn('product_price', function ($data) {
                 return format_currency($data->product_price);
@@ -29,15 +22,21 @@ class ProductDataTable extends DataTable
             ->addColumn('product_cost', function ($data) {
                 return format_currency($data->product_cost);
             })
-            ->addColumn('product_quantity', function ($data) {
+            // Menambahkan kolom 'stok_sisa' yang dinamis
+            ->addColumn('stok_sisa', function ($data) {
                 return $data->product_quantity . ' ' . $data->product_unit;
             })
-            ->rawColumns(['product_image']);
+            // Menambahkan kolom 'merk' dari relasi
+            ->addColumn('merk', function ($data) {
+                // Jika produk punya brand, tampilkan namanya. Jika tidak, tampilkan strip.
+                return $data->brand ? $data->brand->name : '-';
+            });
     }
 
     public function query(Product $model)
     {
-        return $model->newQuery()->with('category');
+        // Eager loading relasi 'category' dan 'brand' untuk performa query yang lebih cepat
+        return $model->newQuery()->with(['category', 'brand']);
     }
 
     public function html()
@@ -49,67 +48,70 @@ class ProductDataTable extends DataTable
                     ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
                                 'tr' .
                                 <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-                    ->orderBy(7)
+                    ->orderBy(0, 'asc') // Urutkan berdasarkan kolom pertama (Nama Barang)
                     ->buttons(
-                        Button::make('excel')
-                            ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
-                        Button::make('print')
-                            ->text('<i class="bi bi-printer-fill"></i> Print'),
-                        Button::make('reset')
-                            ->text('<i class="bi bi-x-circle"></i> Reset'),
-                        Button::make('reload')
-                            ->text('<i class="bi bi-arrow-repeat"></i> Reload')
+                        Button::make('excel')->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
+                        Button::make('print')->text('<i class="bi bi-printer-fill"></i> Cetak'),
+                        Button::make('reset')->text('<i class="bi bi-x-circle"></i> Reset'),
+                        Button::make('reload')->text('<i class="bi bi-arrow-repeat"></i> Muat Ulang')
                     );
     }
 
     protected function getColumns()
     {
+        // Mendefinisikan semua kolom yang Anda minta, sesuai urutan.
         return [
-            Column::computed('product_image')
-                ->title('Image')
-                ->className('text-center align-middle'),
-
-            Column::make('category.category_name')
-                ->title('Category')
-                ->className('text-center align-middle'),
-
-            Column::make('product_code')
-                ->title('Code')
-                ->className('text-center align-middle'),
-
             Column::make('product_name')
-                ->title('Name')
+                ->title('Nama Barang')
+                ->className('align-middle'),
+
+            Column::computed('merk')
+                ->title('Merk')
+                ->className('text-center align-middle'),
+
+            Column::make('product_year')
+                ->title('Tahun')
+                ->className('text-center align-middle'),
+
+            Column::make('product_size')
+                ->title('Ukuran')
+                ->className('text-center align-middle'),
+
+            Column::make('ring')
+                ->title('Ring')
                 ->className('text-center align-middle'),
 
             Column::computed('product_cost')
-                ->title('Cost')
+                ->title('Modal')
                 ->className('text-center align-middle'),
 
             Column::computed('product_price')
-                ->title('Price')
+                ->title('Harga Jual')
                 ->className('text-center align-middle'),
 
-            Column::computed('product_quantity')
-                ->title('Quantity')
+            Column::make('stok_awal')
+                ->title('Stok Awal')
+                ->className('text-center align-middle'),
+
+            Column::computed('stok_sisa')
+                ->title('Stok Sisa')
+                ->className('text-center align-middle'),
+
+            Column::make('product_stock_alert')
+                ->title('Stok Min.')
                 ->className('text-center align-middle'),
 
             Column::computed('action')
+                ->title('Aksi')
                 ->exportable(false)
                 ->printable(false)
+                ->width(60)
                 ->className('text-center align-middle'),
-
-            Column::make('created_at')
-                ->visible(false)
         ];
     }
 
-    /**
-     * Get filename for export.
-     *
-     * @return string
-     */
     protected function filename(): string
     {
-        return 'Product_' . date('YmdHis');
+        return 'Daftar_Produk_' . date('YmdHis');
     }
 }
