@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Adjustment\Entities\AdjustedProduct;
 use Modules\Adjustment\Entities\Adjustment;
 use Modules\Product\Entities\Product;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdjustmentController extends Controller
 {
@@ -160,5 +161,15 @@ class AdjustmentController extends Controller
         toast('Adjustment Deleted!', 'warning');
 
         return redirect()->route('adjustments.index');
+    }
+
+    public function pdf($id) {
+        $adjustment = Adjustment::findOrFail($id);
+
+        $pdf = PDF::loadView('adjustment::print', [
+            'adjustment' => $adjustment,
+        ]);
+
+        return $pdf->stream('adjustment-'. $adjustment->reference .'.pdf');
     }
 }

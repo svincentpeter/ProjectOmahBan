@@ -3,7 +3,6 @@
 namespace Modules\Product\Http\Controllers;
 
 use Modules\Product\DataTables\ProductDataTable;
-use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
@@ -11,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\Category;
 use Modules\Product\Entities\Brand;
-use Modules\Product\Entities\ProductCategory; // <-- Tambahkan Import Brand
+// Hapus 'ProductCategory' karena duplikat dengan 'Category'
 use Modules\Product\Http\Requests\StoreProductRequest;
 use Modules\Product\Http\Requests\UpdateProductRequest;
 use Modules\Upload\Entities\Upload;
@@ -28,40 +27,48 @@ class ProductController extends Controller
         abort_if(Gate::denies('create_products'), 403);
 
         $categories = Category::all();
-        $brands = Brand::all(); // <-- Kirim data merek ke view
+        $brands = Brand::all();
 
         return view('product::products.create', compact('categories', 'brands'));
     }
 
+    /**
+     * Menyimpan produk baru ke database.
+     */
     public function store(StoreProductRequest $request)
-{
-    $validatedData = $request->validated();
+    {
+        // Perintah $request->validated() secara otomatis menjalankan semua aturan
+        // di file `StoreProductRequest.php`. Jika valid, ia akan mengembalikan
+        // array berisi semua data yang sudah bersih dan aman.
+        // Anda tidak perlu lagi menulis validasi manual di sini.
+        $validatedData = $request->validated();
 
-    $product = Product::create([
-        'product_name' => $validatedData['product_name'],
-        'product_code' => $validatedData['product_code'],
-        'category_id' => $validatedData['category_id'],
-        'brand_id' => $validatedData['brand_id'] ?? null,
-        'product_cost' => $validatedData['product_cost'],
-        'product_price' => $validatedData['product_price'],
-        'product_quantity' => $validatedData['product_quantity'], // <-- TAMBAHKAN INI
-        'product_unit' => $validatedData['product_unit'],
-        'product_stock_alert' => $validatedData['product_stock_alert'],
-        'product_note' => $validatedData['product_note'],
-    ]);
+        // Logika bisnis: Saat produk baru dibuat, Stok Sisa (product_quantity)
+        // nilainya sama dengan Stok Awal yang diinput.
+        $validatedData['product_quantity'] = $validatedData['stok_awal'];
 
-    if ($request->has('document') && count($request->document) > 0) {
-        foreach ($request->document as $file) {
-            $product->addMedia(Storage::path('temp/dropzone/' . $file))->toMediaCollection('images');
+        // Karena semua nama kolom di form sudah sesuai dengan nama kolom di database,
+        // dan sudah kita daftarkan di $fillable pada model Product,
+        // kita bisa langsung memasukkan semua data tervalidasi sekaligus.
+        // Ini lebih singkat, aman, dan mudah dirawat.
+        $product = Product::create($validatedData);
+
+        if ($request->has('document') && count($request->document) > 0) {
+            foreach ($request->document as $file) {
+                $product->addMedia(Storage::path('temp/dropzone/' . $file))->toMediaCollection('images');
+            }
         }
+
+        toast('Produk Baru Berhasil Dibuat!', 'success');
+        return redirect()->route('products.index');
     }
 
-    toast('Produk Baru Berhasil Dibuat!', 'success');
-    return redirect()->route('products.index');
-}
-
-    public function show(Product $product) {
+     public function show(Product $product) {
         abort_if(Gate::denies('show_products'), 403);
+
+        // Eager load relasi: Ambil semua data 'adjustedProducts'
+        // dan untuk setiap item, ambil juga data 'adjustment' induknya (yang berisi note).
+        $product->load('adjustedProducts.adjustment');
 
         return view('product::products.show', compact('product'));
     }
@@ -70,38 +77,44 @@ class ProductController extends Controller
         abort_if(Gate::denies('edit_products'), 403);
 
         $categories = Category::all();
-        $brands = Brand::all(); // <-- Kirim data merek ke view
+        $brands = Brand::all();
 
         return view('product::products.edit', compact('product', 'categories', 'brands'));
     }
 
+    /**
+     * Memperbarui data produk yang sudah ada.
+     */
     public function update(UpdateProductRequest $request, Product $product)
-{
-    $validatedData = $request->validated();
+    {
+        // Sama seperti store(), method ini mengambil semua data yang sudah lolos
+        // validasi dari file `UpdateProductRequest.php`.
+        $validatedData = $request->validated();
 
-    $product->update([
-        'product_name' => $validatedData['product_name'],
-        'product_code' => $validatedData['product_code'],
-        'category_id' => $validatedData['category_id'], // <-- DIPERBAIKI
-        'brand_id' => $validatedData['brand_id'] ?? null,
-        'product_cost' => $validatedData['product_cost'],
-        'product_price' => $validatedData['product_price'],
-        'product_quantity' => $validatedData['product_quantity'],
-        'product_unit' => $validatedData['product_unit'],
-        'product_stock_alert' => $validatedData['product_stock_alert'],
-        'product_note' => $validatedData['product_note'],
-    ]);
-
-    if ($request->has('document') && count($request->document) > 0) {
-        $product->clearMediaCollection('images');
-        foreach ($request->document as $file) {
-            $product->addMedia(Storage::path('temp/dropzone/' . $file))->toMediaCollection('images');
+        // Logika cerdas untuk update stok sisa:
+        // Jika admin mengubah nilai "Stok Awal", maka "Stok Sisa" harus ikut disesuaikan.
+        if (isset($validatedData['stok_awal'])) {
+            // 1. Hitung selisih antara stok awal yang baru dengan yang lama.
+            $selisihStokAwal = $validatedData['stok_awal'] - $product->stok_awal;
+            
+            // 2. Tambahkan selisih tersebut ke stok sisa saat ini.
+            // Ini membuat stok tetap akurat meskipun stok awal diubah.
+            $validatedData['product_quantity'] = $product->product_quantity + $selisihStokAwal;
         }
-    }
 
-    toast('Produk Berhasil Diperbarui!', 'success');
-    return redirect()->route('products.index');
-}
+        // Langsung update semua data yang tervalidasi.
+        $product->update($validatedData);
+
+        if ($request->has('document') && count($request->document) > 0) {
+            $product->clearMediaCollection('images');
+            foreach ($request->document as $file) {
+                $product->addMedia(Storage::path('temp/dropzone/' . $file))->toMediaCollection('images');
+            }
+        }
+
+        toast('Produk Berhasil Diperbarui!', 'success');
+        return redirect()->route('products.index');
+    }
 
     public function destroy(Product $product) {
         abort_if(Gate::denies('delete_products'), 403);
@@ -122,10 +135,8 @@ class ProductController extends Controller
             $file = $request->file('file');
             $filename = time() . '_' . $file->getClientOriginalName();
             
-            // Simpan file ke storage/app/public/uploads/products
             $path = $file->storeAs('uploads/products', $filename, 'public');
 
-            // Kembalikan response JSON yang dibutuhkan oleh Dropzone
             return response()->json(['name' => $filename, 'path' => $path]);
         }
 

@@ -5,6 +5,7 @@ namespace Modules\Product\Entities;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Modules\Product\Notifications\NotifyQuantityAlert;
+use Modules\Adjustment\Entities\AdjustedProduct;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -17,18 +18,22 @@ class Product extends Model implements HasMedia
 
     // GANTI SELURUH ARRAY $fillable MENJADI SEPERTI INI:
     protected $fillable = [
-    'product_name',
-    'product_code',
-    'category_id', // <-- DIPERBAIKI
-    'brand_id',
-    'product_cost',
-    'product_price',
-    'product_quantity',
-    'product_unit',
-    'product_stock_alert',
-    'product_note',
-    'product_barcode_symbology'
-];
+        'product_name',
+        'product_code',
+        'category_id',
+        'brand_id',
+        'product_size',
+        'ring', // Tambahan baru
+        'product_year',
+        'product_cost',
+        'product_price',
+        'product_quantity',
+        'stok_awal', // Tambahan baru
+        'product_unit',
+        'product_stock_alert',
+        'product_note',
+    ];
+    // ===== KODE PERBAIKAN SELESAI DI SINI =====
 
     protected $with = ['media'];
 
@@ -61,5 +66,13 @@ class Product extends Model implements HasMedia
 
     public function getProductPriceAttribute($value) {
         return ($value / 100);
+    }
+
+    public function brand() {
+    return $this->belongsTo(Brand::class, 'brand_id', 'id');
+}
+
+public function adjustedProducts() {
+        return $this->hasMany(AdjustedProduct::class, 'product_id', 'id');
     }
 }

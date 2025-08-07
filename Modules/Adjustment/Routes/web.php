@@ -12,6 +12,7 @@
 */
 
 Route::group(['middleware' => 'auth'], function () {
+     Route::get('/adjustments/{id}/pdf', 'AdjustmentController@pdf')->name('adjustments.pdf');
     //Product Adjustment
     Route::resource('adjustments', 'AdjustmentController');
 });

@@ -39,13 +39,6 @@
                 <i class="c-sidebar-nav-icon bi bi-recycle" style="line-height: 1;"></i> Semua Produk Bekas
             </a>
         </li>
-        @can('print_barcodes')
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('barcode.print') ? 'c-active' : '' }}" href="{{ route('barcode.print') }}">
-                    <i class="c-sidebar-nav-icon bi bi-printer" style="line-height: 1;"></i> Cetak Barcode
-                </a>
-            </li>
-        @endcan
     </ul>
 </li>
 @endcan
