@@ -19,33 +19,18 @@
                 @include('utils.alerts')
             </div>
             <div class="col-lg-7">
-                {{-- **Perbaikan baris 16–24**: data-bs-* untuk Bootstrap 5 --}}
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="new-product-tab"
-                            data-bs-toggle="tab" data-bs-target="#new-product"
-                            type="button" role="tab"
-                            aria-controls="new-product" aria-selected="true">
-                            Produk Baru
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="second-product-tab"
-                            data-bs-toggle="tab" data-bs-target="#second-product"
-                            type="button" role="tab"
-                            aria-controls="second-product" aria-selected="false">
-                            Produk Bekas
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="manual-item-tab"
-                            data-bs-toggle="tab" data-bs-target="#manual-item"
-                            type="button" role="tab"
-                            aria-controls="manual-item" aria-selected="false">
-                            Jasa / Manual
-                        </button>
-                    </li>
-                </ul>
+    <li class="nav-item">
+        {{-- KEMBALI KE SINTAKS BOOTSTRAP 4 --}}
+        <a class="nav-link active" id="new-product-tab" data-toggle="tab" href="#new-product" role="tab" aria-controls="new-product" aria-selected="true">Produk Baru</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="second-product-tab" data-toggle="tab" href="#second-product" role="tab" aria-controls="second-product" aria-selected="false">Produk Bekas</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="manual-item-tab" data-toggle="tab" href="#manual-item" role="tab" aria-controls="manual-item" aria-selected="false">Jasa / Manual</a>
+    </li>
+</ul>
 
                 <div class="tab-content" id="myTabContent">
                     <div class="tab-pane fade show active" id="new-product" role="tabpanel" aria-labelledby="new-product-tab">
@@ -90,7 +75,6 @@
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // **Perbaikan baris  sixty-some**: ganti @this.call → Livewire.emit
                     Livewire.emit('resetCart');
                     Swal.fire(
                         'Dihapus!',

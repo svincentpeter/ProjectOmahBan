@@ -16,10 +16,10 @@
                     <table class="table">
                         <thead>
                         <tr class="text-center">
-                            <th class="align-middle">Product</th>
-                            <th class="align-middle">Price</th>
-                            <th class="align-middle">Quantity</th>
-                            <th class="align-middle">Action</th>
+                            <th class="align-middle">Produk</th>
+                            <th class="align-middle">Harga</th>
+                            <th class="align-middle">Jumlah</th>
+                            <th class="align-middle">Aksi</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -29,17 +29,27 @@
                                     <td class="align-middle">
                                         {{ $cart_item->name }} <br>
                                         <span class="badge badge-success">
-                                        {{ $cart_item->options->code }}
-                                    </span>
-                                        @include('livewire.includes.product-cart-modal')
+                                            {{ $cart_item->options->code ?? '' }}
+                                        </span>
                                     </td>
 
-                                    <td class="align-middle">
+                                    <td class="align-middle text-center">
                                         {{ format_currency($cart_item->price) }}
                                     </td>
 
-                                    <td class="align-middle">
-                                        @include('livewire.includes.product-cart-quantity')
+                                    <td class="align-middle" style="width: 120px;">
+                                        @if($cart_item->options->source_type == 'new')
+                                            <div class="input-group">
+                                                <input wire:model.live="quantity.{{ $cart_item->id }}" style="min-width: 40px;max-width: 90px;" type="number" class="form-control" value="{{ $cart_item->qty }}" min="1">
+                                                <div class="input-group-append">
+                                                    <button type="button" wire:click="updateQuantity('{{ $cart_item->rowId }}', {{ $cart_item->id }})" class="btn btn-info">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <input type="number" class="form-control text-center" value="{{ $cart_item->qty }}" readonly>
+                                        @endif
                                     </td>
 
                                     <td class="align-middle text-center">
@@ -51,10 +61,10 @@
                             @endforeach
                         @else
                             <tr>
-                                <td colspan="8" class="text-center">
-                        <span class="text-danger">
-                            Please search & select products!
-                        </span>
+                                <td colspan="4" class="text-center">
+                                    <span class="text-danger">
+                                        Silakan cari & pilih produk!
+                                    </span>
                                 </td>
                             </tr>
                         @endif
@@ -68,25 +78,21 @@
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <tr>
-                                <th>Order Tax ({{ $global_tax }}%)</th>
+                                <th>Pajak ({{ $global_tax }}%)</th>
                                 <td>(+) {{ format_currency(Cart::instance($cart_instance)->tax()) }}</td>
                             </tr>
                             <tr>
-                                <th>Discount ({{ $global_discount }}%)</th>
+                                <th>Diskon ({{ $global_discount }}%)</th>
                                 <td>(-) {{ format_currency(Cart::instance($cart_instance)->discount()) }}</td>
                             </tr>
                             <tr>
-                                <th>Shipping</th>
-                                <input type="hidden" value="{{ $shipping }}" name="shipping_amount">
+                                <th>Ongkos Kirim</th>
                                 <td>(+) {{ format_currency($shipping) }}</td>
                             </tr>
                             <tr class="text-primary">
                                 <th>Grand Total</th>
-                                @php
-                                    $total_with_shipping = Cart::instance($cart_instance)->total() + (float) $shipping
-                                @endphp
                                 <th>
-                                    (=) {{ format_currency($total_with_shipping) }}
+                                    (=) {{ format_currency($total_amount) }}
                                 </th>
                             </tr>
                         </table>
@@ -97,19 +103,19 @@
             <div class="form-row">
                 <div class="col-lg-4">
                     <div class="form-group">
-                        <label for="tax_percentage">Order Tax (%)</label>
+                        <label for="tax_percentage">Pajak Pesanan (%)</label>
                         <input wire:model.blur="global_tax" type="number" class="form-control" min="0" max="100" value="{{ $global_tax }}" required>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="form-group">
-                        <label for="discount_percentage">Discount (%)</label>
+                        <label for="discount_percentage">Diskon (%)</label>
                         <input wire:model.blur="global_discount" type="number" class="form-control" min="0" max="100" value="{{ $global_discount }}" required>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="form-group">
-                        <label for="shipping_amount">Shipping</label>
+                        <label for="shipping_amount">Ongkos Kirim</label>
                         <input wire:model.blur="shipping" type="number" class="form-control" min="0" value="0" required step="0.01">
                     </div>
                 </div>
@@ -117,13 +123,10 @@
 
             <div class="form-group d-flex justify-content-center flex-wrap mb-0">
                 <button onclick="confirmReset()" type="button" class="btn btn-pill btn-danger mr-3"><i class="bi bi-x"></i> Reset</button>
-                <button wire:loading.attr="disabled" wire:click="store" type="button" class="btn btn-pill btn-primary" {{  $total_amount == 0 ? 'disabled' : '' }}><i class="bi bi-check"></i> Proceed</button>
+                <button wire:loading.attr="disabled" wire:click="proceed" type="button" class="btn btn-pill btn-primary" {{ $total_amount == 0 ? 'disabled' : '' }}><i class="bi bi-check"></i> Lanjutkan</button>
             </div>
         </div>
     </div>
 
-    {{--Checkout Modal--}}
     @include('livewire.pos.includes.checkout-modal')
-
 </div>
-

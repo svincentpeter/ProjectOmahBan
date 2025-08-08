@@ -1,7 +1,8 @@
-import './bootstrap.js';
+// Impor CoreUI yang sudah mencakup Bootstrap 4 JS.
 import '@coreui/coreui/dist/js/coreui.bundle.min.js';
 
-$(function () {
-    $('[data-toggle="tooltip"]').tooltip()
-})
-
+// Jika Anda menggunakan komponen Alpine.js, biarkan baris-baris ini.
+// Jika tidak, Anda bisa menghapusnya.
+import Alpine from 'alpinejs';
+window.Alpine = Alpine;
+Alpine.start();

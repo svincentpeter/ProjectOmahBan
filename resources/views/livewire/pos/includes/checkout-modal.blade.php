@@ -1,117 +1,93 @@
-<div class="modal fade" id="checkoutModal" tabindex="-1" role="dialog" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+<div wire:ignore.self class="modal fade" id="checkoutModal" tabindex="-1" role="dialog" aria-labelledby="checkoutModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="checkoutModalLabel">
-                    <i class="bi bi-cart-check text-primary"></i> Confirm Sale
+                    <i class="bi bi-cart-check text-primary"></i> Konfirmasi Penjualan
                 </h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="checkout-form" action="{{ route('app.pos.store') }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    @if (session()->has('checkout_message'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <div class="alert-body">
-                                <span>{{ session('checkout_message') }}</span>
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                        </div>
-                    @endif
-                    <div class="row">
-                        <div class="col-lg-7">
-                            <input type="hidden" value="{{ $global_tax }}" name="tax_percentage">
-                            <input type="hidden" value="{{ $global_discount }}" name="discount_percentage">
-                            <input type="hidden" value="{{ $shipping }}" name="shipping_amount">
-                            <div class="form-row">
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label for="total_amount">Total Amount <span class="text-danger">*</span></label>
-                                        <input id="total_amount" type="text" class="form-control" name="total_amount" value="{{ $total_amount }}" readonly required>
+            
+            {{-- Menggunakan Alpine.js untuk mengelola state UI secara lokal --}}
+            <div x-data="{ paymentMethod: @entangle('payment_method') }">
+                <form wire:submit.prevent="store">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <div class="form-row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="total_amount">Total Belanja <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" value="{{ format_currency($total_amount) }}" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="paid_amount">Jumlah Dibayar <span class="text-danger">*</span></label>
+                                            {{-- wire:model.defer agar tidak memicu update sampai form disubmit --}}
+                                            <input wire:model.defer="paid_amount" id="paid_amount" type="text" class="form-control" required>
+                                            @error('paid_amount') <span class="text-danger">{{ $message }}</span> @enderror
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label for="paid_amount">Received Amount <span class="text-danger">*</span></label>
-                                        <input id="paid_amount" type="text" class="form-control" name="paid_amount" value="{{ $total_amount }}" required>
+
+                                <div class="form-group">
+                                    <label>Metode Pembayaran <span class="text-danger">*</span></label>
+                                    <div class="d-flex flex-wrap">
+                                        <div class="form-check form-check-inline">
+                                            <input x-model="paymentMethod" class="form-check-input" type="radio" id="payment_tunai" value="Tunai">
+                                            <label class="form-check-label" for="payment_tunai">Tunai</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input x-model="paymentMethod" class="form-check-input" type="radio" id="payment_transfer" value="Transfer">
+                                            <label class="form-check-label" for="payment_transfer">Transfer</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input x-model="paymentMethod" class="form-check-input" type="radio" id="payment_kredit" value="Kredit">
+                                            <label class="form-check-label" for="payment_kredit">Kredit</label>
+                                        </div>
                                     </div>
                                 </div>
+                                
+                                {{-- x-show akan menampilkan/menyembunyikan kolom bank secara instan --}}
+                                <div x-show="paymentMethod === 'Transfer' || paymentMethod === 'Kredit'" class="form-group mt-2">
+                                    <label for="bank_name">Nama Bank <span class="text-danger">*</span></label>
+                                    <input wire:model.defer="bank_name" type="text" class="form-control" id="bank_name" placeholder="Contoh: BCA, Mandiri, dll.">
+                                    @error('bank_name') <span class="text-danger">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="note">Catatan (Jika Perlu)</label>
+                                    <textarea wire:model.defer="note" id="note" rows="3" class="form-control"></textarea>
+                                </div>
                             </div>
-                            <div class="form-group" x-data="{ paymentMethod: 'Tunai' }">
-    <label>Metode Pembayaran <span class="text-danger">*</span></label>
-    <div class="d-flex flex-wrap">
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="payment_tunai" value="Tunai" name="payment_method" wire:model.live="payment_method" @click="paymentMethod = 'Tunai'">
-            <label class="form-check-label" for="payment_tunai">Tunai</label>
-        </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="payment_transfer" value="Transfer" name="payment_method" wire:model.live="payment_method" @click="paymentMethod = 'Transfer'">
-            <label class="form-check-label" for="payment_transfer">Transfer</label>
-        </div>
-    </div>
-    
-    {{-- Kolom ini hanya akan muncul jika metode pembayaran adalah 'Transfer' --}}
-    <div x-show="paymentMethod === 'Transfer'" x-transition.opacity>
-        <div class="form-group mt-3">
-            <label for="bank_name">Nama Bank <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="bank_name" wire:model="bank_name" placeholder="Contoh: BCA, Mandiri, dll.">
-            @error('bank_name') <span class="text-danger">{{ $message }}</span> @enderror
-        </div>
-    </div>
-</div>
-                            <div class="form-group">
-                                <label for="note">Note (If Needed)</label>
-                                <textarea name="note" id="note" rows="5" class="form-control"></textarea>
-                            </div>
-                        </div>
-                        <div class="col-lg-5">
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <tr>
-                                        <th>Total Products</th>
-                                        <td>
-                                                <span class="badge badge-success">
-                                                    {{ Cart::instance($cart_instance)->count() }}
-                                                </span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Order Tax ({{ $global_tax }}%)</th>
-                                        <td>(+) {{ format_currency(Cart::instance($cart_instance)->tax()) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Discount ({{ $global_discount }}%)</th>
-                                        <td>(-) {{ format_currency(Cart::instance($cart_instance)->discount()) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Shipping</th>
-                                        <input type="hidden" value="{{ $shipping }}" name="shipping_amount">
-                                        <td>(+) {{ format_currency($shipping) }}</td>
-                                    </tr>
-                                    <tr class="text-primary">
-                                        <th>Grand Total</th>
-                                        @php
-                                            $total_with_shipping = Cart::instance($cart_instance)->total() + (float) $shipping
-                                        @endphp
-                                        <th>
-                                            (=) {{ format_currency($total_with_shipping) }}
-                                        </th>
-                                    </tr>
-                                </table>
+                            <div class="col-lg-5">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <tr>
+                                            <th>Total Produk</th>
+                                            <td><span class="badge badge-success">{{ Cart::instance($cart_instance)->count() }}</span></td>
+                                        </tr>
+                                        <tr class="text-primary">
+                                            <th>Grand Total</th>
+                                            <th>(=) {{ format_currency($total_amount) }}</th>
+                                        </tr>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" id="confirm-sale-btn" class="btn btn-primary">Submit</button>
-                </div>
-            </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span wire:loading wire:target="store" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Simpan Transaksi
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
