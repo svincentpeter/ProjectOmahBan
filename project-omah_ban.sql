@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 07, 2025 at 02:15 PM
+-- Generation Time: Aug 08, 2025 at 12:16 PM
 -- Server version: 8.0.30
--- PHP Version: 8.2.26
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -287,7 +287,11 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (41, '2025_08_07_173024_remove_barcode_symbology_from_products_table', 7),
 (42, '2025_08_07_174120_add_category_and_brand_to_product_seconds_table', 8),
 (43, '2025_08_07_183146_add_specs_to_product_seconds_table', 9),
-(44, '2025_08_07_184344_remove_photo_path_from_product_seconds_table', 10);
+(44, '2025_08_07_184344_remove_photo_path_from_product_seconds_table', 10),
+(45, '2025_08_08_125854_AddBankNameToSalesTable', 11),
+(46, '2025_08_08_133851_RemoveCustomerIdFromSalesTable', 12),
+(47, '2025_08_08_150335_remove_customer_name_from_sales_table', 13),
+(48, '2025_08_08_151424_add_hpp_and_profit_to_sales_table', 14);
 
 -- --------------------------------------------------------
 
@@ -448,8 +452,8 @@ CREATE TABLE `products` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `brand_id` bigint UNSIGNED DEFAULT NULL,
-  `product_size` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ring` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `product_size` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ring` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `product_year` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -479,8 +483,8 @@ CREATE TABLE `product_seconds` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   `category_id` bigint UNSIGNED DEFAULT NULL,
   `brand_id` bigint UNSIGNED DEFAULT NULL,
-  `size` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `ring` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `size` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ring` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `product_year` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -790,23 +794,31 @@ CREATE TABLE `sales` (
   `id` bigint UNSIGNED NOT NULL,
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `customer_id` bigint UNSIGNED DEFAULT NULL,
-  `customer_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tax_percentage` int NOT NULL DEFAULT '0',
   `tax_amount` int NOT NULL DEFAULT '0',
   `discount_percentage` int NOT NULL DEFAULT '0',
   `discount_amount` int NOT NULL DEFAULT '0',
   `shipping_amount` int NOT NULL DEFAULT '0',
   `total_amount` int NOT NULL,
+  `total_hpp` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_profit` decimal(15,2) NOT NULL DEFAULT '0.00',
   `paid_amount` int NOT NULL,
   `due_amount` int NOT NULL,
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sales`
+--
+
+INSERT INTO `sales` (`id`, `date`, `reference`, `tax_percentage`, `tax_amount`, `discount_percentage`, `discount_amount`, `shipping_amount`, `total_amount`, `total_hpp`, `total_profit`, `paid_amount`, `due_amount`, `status`, `payment_status`, `payment_method`, `bank_name`, `note`, `created_at`, `updated_at`) VALUES
+(4, '2025-08-08', 'SL-00001', 0, 0, 0, 0, 0, 1425000, 0.00, 14250.00, 0, 1425000, 'Completed', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-08 08:15:20', '2025-08-08 08:15:20');
 
 -- --------------------------------------------------------
 
@@ -836,6 +848,13 @@ CREATE TABLE `sale_details` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sale_details`
+--
+
+INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `productable_id`, `productable_type`, `source_type`, `product_name`, `product_code`, `quantity`, `price`, `hpp`, `unit_price`, `sub_total`, `subtotal_profit`, `product_discount_amount`, `product_discount_type`, `product_tax_amount`, `created_at`, `updated_at`) VALUES
+(2, 4, 'Ban GT Savero', NULL, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 0.00, 1425000, 1425000, 1425000.00, 0, 'fixed', 0, '2025-08-08 08:15:20', '2025-08-08 08:15:20');
 
 -- --------------------------------------------------------
 
@@ -1249,8 +1268,7 @@ ALTER TABLE `role_has_permissions`
 -- Indexes for table `sales`
 --
 ALTER TABLE `sales`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `sales_customer_id_foreign` (`customer_id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `sale_details`
@@ -1396,7 +1414,7 @@ ALTER TABLE `media`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -1474,13 +1492,13 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `sale_details`
 --
 ALTER TABLE `sale_details`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `sale_payments`
@@ -1641,12 +1659,6 @@ ALTER TABLE `quotation_details`
 ALTER TABLE `role_has_permissions`
   ADD CONSTRAINT `role_has_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `role_has_permissions_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `sales`
---
-ALTER TABLE `sales`
-  ADD CONSTRAINT `sales_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `sale_details`

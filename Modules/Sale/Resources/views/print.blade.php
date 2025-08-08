@@ -30,14 +30,6 @@
                         </div>
 
                         <div class="col-xs-4 mb-3 mb-md-0">
-                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Customer Info:</h4>
-                            <div><strong>{{ $customer->customer_name }}</strong></div>
-                            <div>{{ $customer->address }}</div>
-                            <div>Email: {{ $customer->customer_email }}</div>
-                            <div>Phone: {{ $customer->customer_phone }}</div>
-                        </div>
-
-                        <div class="col-xs-4 mb-3 mb-md-0">
                             <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Invoice Info:</h4>
                             <div>Invoice: <strong>INV/{{ $sale->reference }}</strong></div>
                             <div>Date: {{ \Carbon\Carbon::parse($sale->date)->format('d M, Y') }}</div>

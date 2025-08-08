@@ -35,15 +35,7 @@
                                 <div>Email: {{ settings()->company_email }}</div>
                                 <div>Phone: {{ settings()->company_phone }}</div>
                             </div>
-
-                            <div class="col-sm-4 mb-3 mb-md-0">
-                                <h5 class="mb-2 border-bottom pb-2">Customer Info:</h5>
-                                <div><strong>{{ $customer->customer_name }}</strong></div>
-                                <div>{{ $customer->address }}</div>
-                                <div>Email: {{ $customer->customer_email }}</div>
-                                <div>Phone: {{ $customer->customer_phone }}</div>
-                            </div>
-
+                            
                             <div class="col-sm-4 mb-3 mb-md-0">
                                 <h5 class="mb-2 border-bottom pb-2">Invoice Info:</h5>
                                 <div>Invoice: <strong>INV/{{ $sale->reference }}</strong></div>

@@ -7,7 +7,6 @@ use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Modules\People\Entities\Customer;
 use Modules\Product\Entities\Category;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductSecond;
@@ -45,8 +44,6 @@ class PosController extends Controller
         $sale = Sale::create([
             'date' => now()->format('Y-m-d'),
             'reference' => 'PSL',
-            'customer_id' => $request->customer_id,
-            'customer_name' => Customer::findOrFail($request->customer_id)->customer_name,
             'tax_percentage' => $request->tax_percentage,
             'discount_percentage' => $request->discount_percentage,
             'shipping_amount' => $request->shipping_amount * 100,
@@ -56,6 +53,7 @@ class PosController extends Controller
             'status' => 'Completed',
             'payment_status' => $payment_status,
             'payment_method' => $request->payment_method,
+            'bank_name' => $request->payment_method == 'Transfer' ? $request->bank_name : null,
             'note' => $request->note,
             'tax_amount' => Cart::instance('sale')->tax() * 100,
             'discount_amount' => Cart::instance('sale')->discount() * 100,
@@ -154,8 +152,8 @@ class PosController extends Controller
 
         DB::commit();
 
-        toast('POS Sale Created!', 'success');
-        return redirect()->route('sales.index');
+        session()->flash('swal-success', 'Transaksi Berhasil Disimpan!');
+        return redirect()->route('app.pos.index');
 
     } catch (\Exception $e) {
         DB::rollBack();
