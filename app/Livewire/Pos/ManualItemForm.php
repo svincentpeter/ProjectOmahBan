@@ -20,21 +20,28 @@ class ManualItemForm extends Component
     }
 
     public function addToCart()
-    {
-        $this->validate();
+{
+    $this->validate();
 
-        \Cart::add([
-            'id' => 'manual_' . time(), // ID unik untuk item manual
-            'name' => $this->name,
-            'price' => $this->price,
-            'quantity' => 1,
-            'attributes' => [
-                'source_type' => 'manual', // INI KUNCINYA!
-            ]
-        ]);
+    \Cart::instance('sale')->add([
+        'id'       => 'manual_' . time(),
+        'name'     => $this->name,
+        'qty'      => 1, // << UBAH 'quantity' MENJADI 'qty' DI SINI
+        'price'    => $this->price,
+        'weight'   => 0,
+        'options' => [
+            'source_type' => 'manual',
+            'code'        => 'SRV-' . time(),
+            'stock'       => 'N/A',
+            'unit'        => 'pcs',
+            'hpp'         => 0,
+            'profit'      => $this->price,
+        ]
+    ]);
 
-        $this->reset(['name', 'price']); // Kosongkan form setelah berhasil
-        $this->emit('cartUpdated');
-        $this->dispatchBrowserEvent('showSuccess', ['message' => 'Item manual ditambahkan!']);
-    }
+    $this->reset(['name', 'price']);
+    
+    $this->dispatch('cartUpdated');
+    $this->dispatch('showSuccess', ['message' => 'Item manual berhasil ditambahkan!']);
+}
 }
