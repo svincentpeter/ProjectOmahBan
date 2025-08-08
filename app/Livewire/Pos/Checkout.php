@@ -92,7 +92,6 @@ class Checkout extends Component
             // Simpan header Sale
             $sale = Sale::create([
                 'date'               => now()->toDateString(),
-                'user_id'            => auth()->id(),
                 'tax_percentage'     => Cart::instance($this->cart_instance)->tax(),
                 'discount_percentage'=> Cart::instance($this->cart_instance)->discount(),
                 'shipping_amount'    => $this->shipping,
@@ -138,6 +137,7 @@ class Checkout extends Component
                 // Simpan SaleDetails
                 SaleDetails::create([
                     'sale_id'             => $sale->id,
+                    'item_name'              => $item->name,
                     'product_id'          => $model ? $model->id : null,
                     'productable_id'      => $model ? $model->id : null,
                     'productable_type'    => $model ? get_class($model) : null,
@@ -151,6 +151,8 @@ class Checkout extends Component
                     'hpp'                 => $hpp,
                     'subtotal_profit'     => $subProfit,
                     'product_discount_amount'=> $item->options->product_discount,
+                    'product_discount_type'  => $item->options->product_discount_type,
+                    'product_tax_amount'     => $item->options->product_tax,
                     'product_discount_type'  => $item->options->product_discount_type,
                     'product_tax_amount'     => $item->options->product_tax,
                 ]);
@@ -218,7 +220,7 @@ class Checkout extends Component
                 'unit'                  => $product['product_unit'],
                 'product_tax'           => $this->calculate($product)['product_tax'],
                 'unit_price'            => $this->calculate($product)['unit_price'],
-                'source_type'           => 'product', // atur sesuai kebutuhan
+                'source_type'           => 'new', // atur sesuai kebutuhan
             ],
         ]);
 

@@ -3,7 +3,6 @@
 @section('title', 'POS')
 
 @section('third_party_stylesheets')
-
 @endsection
 
 @section('breadcrumb')
@@ -20,43 +19,57 @@
                 @include('utils.alerts')
             </div>
             <div class="col-lg-7">
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="new-product-tab" data-toggle="tab" href="#new-product" role="tab" aria-controls="new-product" aria-selected="true">Produk Baru</a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="second-product-tab" data-toggle="tab" href="#second-product" role="tab" aria-controls="second-product" aria-selected="false">Produk Bekas</a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="manual-item-tab" data-toggle="tab" href="#manual-item" role="tab" aria-controls="manual-item" aria-selected="false">Jasa / Manual</a>
-        </li>
-    </ul>
+                {{-- **Perbaikan baris 16–24**: data-bs-* untuk Bootstrap 5 --}}
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="new-product-tab"
+                            data-bs-toggle="tab" data-bs-target="#new-product"
+                            type="button" role="tab"
+                            aria-controls="new-product" aria-selected="true">
+                            Produk Baru
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="second-product-tab"
+                            data-bs-toggle="tab" data-bs-target="#second-product"
+                            type="button" role="tab"
+                            aria-controls="second-product" aria-selected="false">
+                            Produk Bekas
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="manual-item-tab"
+                            data-bs-toggle="tab" data-bs-target="#manual-item"
+                            type="button" role="tab"
+                            aria-controls="manual-item" aria-selected="false">
+                            Jasa / Manual
+                        </button>
+                    </li>
+                </ul>
 
-    <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="new-product" role="tabpanel" aria-labelledby="new-product-tab">
-            <div class="mt-3">
-                <livewire:search-product/>
-                <livewire:pos.product-list :categories="$product_categories"/>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="new-product" role="tabpanel" aria-labelledby="new-product-tab">
+                        <div class="mt-3">
+                            <livewire:search-product/>
+                            <livewire:pos.product-list :categories="$product_categories"/>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="second-product" role="tabpanel" aria-labelledby="second-product-tab">
+                        <div class="mt-3">
+                            <livewire:pos.product-list-second/>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="manual-item" role="tabpanel" aria-labelledby="manual-item-tab">
+                        <div class="mt-3">
+                            <livewire:pos.manual-item-form/>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <div class="tab-pane fade" id="second-product" role="tabpanel" aria-labelledby="second-product-tab">
-             <div class="mt-3">
-                {{-- Kita akan buat komponen ini di langkah selanjutnya --}}
-                <livewire:pos.product-list-second/>
-             </div>
-        </div>
-
-        <div class="tab-pane fade" id="manual-item" role="tabpanel" aria-labelledby="manual-item-tab">
-            <div class="mt-3">
-                {{-- Kita akan buat komponen ini di langkah selanjutnya --}}
-                <livewire:pos.manual-item-form/>
-            </div>
-        </div>
-    </div>
-</div>
             <div class="col-lg-5">
-                <livewire:pos.checkout :cart-instance="'sale'">
+                <livewire:pos.checkout :cart-instance="'sale'"/>
             </div>
         </div>
     </div>
@@ -65,21 +78,79 @@
 @push('page_scripts')
     <script src="{{ asset('js/jquery-mask-money.js') }}"></script>
     <script>
+        function confirmReset() {
+            Swal.fire({
+                title: 'Anda Yakin?',
+                text: "Semua item di keranjang akan dihapus!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // **Perbaikan baris  sixty-some**: ganti @this.call → Livewire.emit
+                    Livewire.emit('resetCart');
+                    Swal.fire(
+                        'Dihapus!',
+                        'Keranjang Anda telah dikosongkan.',
+                        'success'
+                    )
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.addEventListener('click', function(e) {
+                if (e.target.id === 'confirm-sale-btn') {
+                    const form = document.getElementById('checkout-form');
+                    const totalAmount = document.getElementById('total_amount').value;
+                    const paidAmount = document.getElementById('paid_amount').value;
+
+                    if (!paidAmount) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Received Amount tidak boleh kosong!',
+                        });
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Konfirmasi Transaksi',
+                        html: `Anda akan menyelesaikan transaksi dengan total <strong>${totalAmount}</strong>.<br><br>Apakah Anda yakin?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ya, Lanjutkan!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                }
+            });
+        });
+
         $(document).ready(function () {
             window.addEventListener('showCheckoutModal', event => {
                 $('#checkoutModal').modal('show');
 
                 $('#paid_amount').maskMoney({
-                    prefix:'{{ settings()->currency->symbol }}',
-                    thousands:'{{ settings()->currency->thousand_separator }}',
-                    decimal:'{{ settings()->currency->decimal_sepzarator }}',
+                    prefix: '{{ settings()->currency->symbol }}',
+                    thousands: '{{ settings()->currency->thousand_separator }}',
+                    // **Perbaikan baris berikut**: typo corrected
+                    decimal: '{{ settings()->currency->decimal_separator }}',
                     allowZero: false,
                 });
 
                 $('#total_amount').maskMoney({
-                    prefix:'{{ settings()->currency->symbol }}',
-                    thousands:'{{ settings()->currency->thousand_separator }}',
-                    decimal:'{{ settings()->currency->decimal_separator }}',
+                    prefix: '{{ settings()->currency->symbol }}',
+                    thousands: '{{ settings()->currency->thousand_separator }}',
+                    decimal: '{{ settings()->currency->decimal_separator }}',
                     allowZero: true,
                 });
 
@@ -87,13 +158,12 @@
                 $('#total_amount').maskMoney('mask');
 
                 $('#checkout-form').submit(function () {
-                    var paid_amount = $('#paid_amount').maskMoney('unmasked')[0];
-                    $('#paid_amount').val(paid_amount);
-                    var total_amount = $('#total_amount').maskMoney('unmasked')[0];
-                    $('#total_amount').val(total_amount);
+                    const paid = $('#paid_amount').maskMoney('unmasked')[0];
+                    $('#paid_amount').val(paid);
+                    const total = $('#total_amount').maskMoney('unmasked')[0];
+                    $('#total_amount').val(total);
                 });
             });
         });
     </script>
-
 @endpush

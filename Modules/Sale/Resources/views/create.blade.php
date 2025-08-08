@@ -30,27 +30,27 @@
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="reference">Reference <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="reference" required readonly value="SL">
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            name="reference"
+                                            required
+                                            readonly
+                                            value="SL"
+                                        >
                                     </div>
                                 </div>
+                                
                                 <div class="col-lg-4">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="customer_id">Customer <span class="text-danger">*</span></label>
-                                            <select class="form-control" name="customer_id" id="customer_id" required>
-                                                @foreach(\Modules\People\Entities\Customer::all() as $customer)
-                                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="date">Date <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" name="date" required value="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="date">Date <span class="text-danger">*</span></label>
+                                        <input
+                                            type="date"
+                                            class="form-control"
+                                            name="date"
+                                            required
+                                            value="{{ \Carbon\Carbon::now()->format('Y-m-d') }}"
+                                        >
                                     </div>
                                 </div>
                             </div>
@@ -61,7 +61,12 @@
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="status">Status <span class="text-danger">*</span></label>
-                                        <select class="form-control" name="status" id="status" required>
+                                        <select
+                                            class="form-control"
+                                            name="status"
+                                            id="status"
+                                            required
+                                        >
                                             <option value="Pending">Pending</option>
                                             <option value="Shipped">Shipped</option>
                                             <option value="Completed">Completed</option>
@@ -69,29 +74,42 @@
                                     </div>
                                 </div>
                                 <div class="col-lg-4">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="payment_method">Payment Method <span class="text-danger">*</span></label>
-                                            <select class="form-control" name="payment_method" id="payment_method" required>
-                                                <option value="Cash">Cash</option>
-                                                <option value="Credit Card">Credit Card</option>
-                                                <option value="Bank Transfer">Bank Transfer</option>
-                                                <option value="Cheque">Cheque</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="payment_method">Payment Method <span class="text-danger">*</span></label>
+                                        <select
+                                            class="form-control"
+                                            name="payment_method"
+                                            id="payment_method"
+                                            required
+                                        >
+                                            <option value="Cash">Cash</option>
+                                            <option value="Credit Card">Credit Card</option>
+                                            <option value="Bank Transfer">Bank Transfer</option>
+                                            <option value="Cheque">Cheque</option>
+                                            <option value="Other">Other</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="paid_amount">Amount Received <span class="text-danger">*</span></label>
                                         <div class="input-group">
-                                            <input id="paid_amount" type="text" class="form-control" name="paid_amount" required>
-                                            <div class="input-group-append">
-                                                <button id="getTotalAmount" class="btn btn-primary" type="button">
-                                                    <i class="bi bi-check-square"></i>
-                                                </button>
-                                            </div>
+                                            <input
+                                                id="paid_amount"
+                                                type="text"
+                                                class="form-control"
+                                                name="paid_amount"
+                                                required
+                                            >
+                                            <!-- pindahkan total ke data-total agar JS bebas dari sintaks Blade -->
+                                            <button
+                                                id="getTotalAmount"
+                                                class="btn btn-primary"
+                                                type="button"
+                                                data-total="{!! \Cart::instance('sale')->total() !!}"
+                                            >
+                                                <i class="bi bi-check-square"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -99,7 +117,12 @@
 
                             <div class="form-group">
                                 <label for="note">Note (If Needed)</label>
-                                <textarea name="note" id="note" rows="5" class="form-control"></textarea>
+                                <textarea
+                                    name="note"
+                                    id="note"
+                                    rows="5"
+                                    class="form-control"
+                                ></textarea>
                             </div>
 
                             <div class="mt-3">
@@ -119,20 +142,24 @@
     <script src="{{ asset('js/jquery-mask-money.js') }}"></script>
     <script>
         $(document).ready(function () {
+            // Inisialisasi maskMoney
             $('#paid_amount').maskMoney({
-                prefix:'{{ settings()->currency->symbol }}',
-                thousands:'{{ settings()->currency->thousand_separator }}',
-                decimal:'{{ settings()->currency->decimal_separator }}',
+                prefix: '{{ settings()->currency->symbol }}',
+                thousands: '{{ settings()->currency->thousand_separator }}',
+                decimal: '{{ settings()->currency->decimal_separator }}',
                 allowZero: true,
             });
 
-            $('#getTotalAmount').click(function () {
-                $('#paid_amount').maskMoney('mask', {{ Cart::instance('sale')->total() }});
+            // Tombol "Get Total" sekarang baca dari data-total
+            $('#getTotalAmount').on('click', function () {
+                const total = $(this).data('total');
+                $('#paid_amount').maskMoney('mask', total);
             });
 
-            $('#sale-form').submit(function () {
-                var paid_amount = $('#paid_amount').maskMoney('unmasked')[0];
-                $('#paid_amount').val(paid_amount);
+            // Unmask sebelum submit
+            $('#sale-form').on('submit', function () {
+                const paid = $('#paid_amount').maskMoney('unmasked')[0];
+                $('#paid_amount').val(paid);
             });
         });
     </script>
