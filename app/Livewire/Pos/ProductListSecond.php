@@ -17,6 +17,10 @@ class ProductListSecond extends Component
         $this->resetPage();
     }
 
+    public function selectProduct($product)
+{
+    $this->dispatch('productSelected', product: $product)->to('pos.checkout');
+}
     public function render()
     {
         $products = ProductSecond::where('status', 'available')

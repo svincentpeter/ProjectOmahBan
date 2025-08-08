@@ -32,24 +32,21 @@
         @include('layouts.footer')
     </div>
 
-        @include('includes.main-js')
+    @include('includes.main-js')
     {{-- SweetAlert2 --}}
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    {{-- Script untuk menangkap notifikasi --}}
-    @if (session()->has('swal-success'))
-        <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: "{{ session('swal-success') }}",
-                timer: 3000,
-                showConfirmButton: false
-            });
-        </script>
-    @endif
-
-    @stack('page_scripts') {{-- << Tambahkan ini --}}
+{{-- Script untuk menangkap notifikasi --}}
+@if (session()->has('swal-success'))
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: "{{ session('swal-success') }}",
+            timer: 3000, // Notifikasi akan hilang setelah 3 detik
+            showConfirmButton: false
+        });
+    </script>
+@endif
 </body>
-
 </html>

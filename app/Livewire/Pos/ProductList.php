@@ -45,9 +45,11 @@ class ProductList extends Component
         $this->resetPage();
     }
 
-    public function selectProduct($product) {
-        $this->dispatch('productSelected', $product);
-    }
+    public function selectProduct($product)
+{
+    // Langsung kirim data produk (yang sudah dalam bentuk array) ke komponen checkout
+    $this->dispatch('productSelected', product: $product)->to('pos.checkout');
+}
 
     // === Tambahkan/replace method di bawah ini! ===
     public function addToCart($productId)

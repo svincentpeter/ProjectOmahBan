@@ -121,33 +121,61 @@
 
         $(document).ready(function () {
             window.addEventListener('showCheckoutModal', event => {
-                $('#checkoutModal').modal('show');
+            $('#checkoutModal').modal('show');
+        });
 
-                $('#paid_amount').maskMoney({
-                    prefix: '{{ settings()->currency->symbol }}',
-                    thousands: '{{ settings()->currency->thousand_separator }}',
-                    // **Perbaikan baris berikut**: typo corrected
-                    decimal: '{{ settings()->currency->decimal_separator }}',
-                    allowZero: false,
-                });
-
-                $('#total_amount').maskMoney({
-                    prefix: '{{ settings()->currency->symbol }}',
-                    thousands: '{{ settings()->currency->thousand_separator }}',
-                    decimal: '{{ settings()->currency->decimal_separator }}',
-                    allowZero: true,
-                });
-
-                $('#paid_amount').maskMoney('mask');
-                $('#total_amount').maskMoney('mask');
-
-                $('#checkout-form').submit(function () {
-                    const paid = $('#paid_amount').maskMoney('unmasked')[0];
-                    $('#paid_amount').val(paid);
-                    const total = $('#total_amount').maskMoney('unmasked')[0];
-                    $('#total_amount').val(total);
-                });
+        // Listener untuk notifikasi (jika Anda membutuhkannya)
+        window.addEventListener('showSuccess', event => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: event.detail.message,
+                timer: 2000,
+                showConfirmButton: false
             });
         });
+        
+        window.addEventListener('showWarning', event => {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian!',
+                text: event.detail.message,
+            });
+        });
+
+        window.addEventListener('showError', event => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: event.detail.message,
+            });
+        });
+
+        $('#paid_amount').maskMoney({
+            prefix: '{{ settings()->currency->symbol }}',
+            thousands: '{{ settings()->currency->thousand_separator }}',
+            decimal: '{{ settings()->currency->decimal_separator }}',
+            allowZero: false,
+        });
+
+        $('#total_amount').maskMoney({
+            prefix: '{{ settings()->currency->symbol }}',
+            thousands: '{{ settings()->currency->thousand_separator }}',
+            decimal: '{{ settings()->currency->decimal_separator }}',
+            allowZero: true,
+        });
+
+        $('#paid_amount').maskMoney('mask');
+        $('#total_amount').maskMoney('mask');
+
+        $('#checkout-form').submit(function () {
+            const paid = $('#paid_amount').maskMoney('unmasked')[0];
+            $('#paid_amount').val(paid);
+            const total = $('#total_amount').maskMoney('unmasked')[0];
+            $('#total_amount').val(total);
+        });
+    });
     </script>
+
+    
 @endpush
