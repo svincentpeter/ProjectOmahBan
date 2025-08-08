@@ -2,29 +2,29 @@
 
 namespace App\Livewire\Pos;
 
-use Livewire\Component;
-use Gloudemans\Shoppingcart\Facades\Cart;
-use Illuminate\Support\Facades\DB;
+// Menggunakan path modular yang benar sesuai proyek Anda
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductSecond;
 use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
+// Dependency lain yang dibutuhkan
+use Gloudemans\Shoppingcart\Facades\Cart;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
+use Livewire\Attributes\On;
 
 class Checkout extends Component
 {
-    // Event listeners Livewire
-    public $listeners = ['productSelected', 'discountModalRefresh'];
-
     // Properti keranjang & data pendukung
     public $cart_instance;
-    public $global_discount;
-    public $global_tax;
-    public $shipping;
-    public $quantity;
-    public $check_quantity;
-    public $discount_type;
-    public $item_discount;
+    public $global_discount = 0;
+    public $global_tax = 0;
+    public $shipping = 0.00;
+    public $quantity = [];
+    public $check_quantity = [];
+    public $discount_type = [];
+    public $item_discount = [];
     public $total_amount;
 
     // Properti checkout
@@ -32,294 +32,261 @@ class Checkout extends Component
     public $payment_method = 'Tunai';
     public $bank_name;
     public $note;
+    public $change = 0;
 
-    // Validasi dasar
     protected $rules = [
-        'payment_method'  => 'required|string|in:Tunai,Transfer',
+        'payment_method'  => 'required|string|in:Tunai,Transfer,Kredit',
         'paid_amount'     => 'required|numeric|min:0',
     ];
 
-    public function mount($cartInstance)
+    // Listener terpusat yang menangani semua pembaruan keranjang
+    #[On('cartUpdated')]
+    #[On('discountModalRefresh')]
+    public function refreshCart()
     {
-        $this->cart_instance   = $cartInstance;
-        $this->global_discount = 0;
-        $this->global_tax      = 0;
-        $this->shipping        = 0.00;
-        $this->check_quantity  = [];
-        $this->quantity        = [];
-        $this->discount_type   = [];
-        $this->item_discount   = [];
-        $this->total_amount    = Cart::instance($this->cart_instance)->total();
-        $this->paid_amount     = $this->total_amount;
-    }
-
-    public function hydrate()
-    {
-        // Recalculate total tiap render/hydrate
+        $cart_items = Cart::instance($this->cart_instance)->content();
+        foreach ($cart_items as $item) {
+            $itemId = $item->id;
+            if (!isset($this->quantity[$itemId])) {
+                $this->quantity[$itemId] = $item->qty;
+            }
+            if (!isset($this->check_quantity[$itemId])) {
+                $this->check_quantity[$itemId] = $item->options->stock ?? 999;
+            }
+            if (!isset($this->discount_type[$itemId])) {
+                $this->discount_type[$itemId] = 'fixed';
+            }
+            if (!isset($this->item_discount[$itemId])) {
+                $this->item_discount[$itemId] = 0;
+            }
+        }
         $this->total_amount = $this->calculateTotal();
     }
 
-    public function render()
-    {
-        $cart_items = Cart::instance($this->cart_instance)->content();
-
-        return view('livewire.pos.checkout', [
-            'cart_items' => $cart_items,
-        ]);
-    }
-    /**
-     * Simpan transaksi POS, termasuk bank_name untuk Transfer.
-     */
-    public function store()
-    {
-        // Validasi dasar
-        $this->validate();
-
-        // Validasi kondisional untuk bank_name
-        if ($this->payment_method === 'Transfer') {
-            $this->validate([
-                'bank_name' => 'required|string|max:255',
-            ]);
-        }
-
-        DB::transaction(function () {
-            // Hitung due & status pembayaran
-            $due = $this->total_amount - $this->paid_amount;
-            $paymentStatus = $due <= 0
-                ? 'Paid'
-                : ($due < $this->total_amount ? 'Partial' : 'Unpaid');
-
-            // Simpan header Sale
-            $sale = Sale::create([
-                'date'               => now()->toDateString(),
-                'tax_percentage'     => Cart::instance($this->cart_instance)->tax(),
-                'discount_percentage'=> Cart::instance($this->cart_instance)->discount(),
-                'shipping_amount'    => $this->shipping,
-                'total_amount'       => $this->total_amount,
-                'paid_amount'        => $this->paid_amount,
-                'due_amount'         => $due,
-                'status'             => 'Completed',
-                'payment_status'     => $paymentStatus,
-                'payment_method'     => $this->payment_method,
-                'bank_name'          => $this->payment_method === 'Transfer' ? $this->bank_name : null,
-                'note'               => $this->note,
-            ]);
-
-            $totalHpp = 0;
-
-            // Proses setiap item di keranjang
-            foreach (Cart::instance($this->cart_instance)->content() as $item) {
-                $source = $item->options->source_type; // 'product', 'product_second', atau 'manual'
-                $hpp    = 0;
-                $model  = null;
-
-                if ($source === 'product') {
-                    $model = Product::findOrFail($item->id);
-                    if ($model->product_quantity < $item->qty) {
-                        throw new \Exception("Stok produk {$model->product_name} tidak mencukupi.");
-                    }
-                    $model->decrement('product_quantity', $item->qty);
-                    $hpp = $model->product_cost;
-                }
-                elseif ($source === 'product_second') {
-                    $model = ProductSecond::findOrFail($item->id);
-                    if ($model->status === 'sold') {
-                        throw new \Exception("Produk bekas {$model->name} sudah terjual.");
-                    }
-                    $model->update(['status' => 'sold']);
-                    $hpp = $model->purchase_price;
-                }
-
-                $subTotal  = $item->price * $item->qty;
-                $subProfit = ($item->price - $hpp) * $item->qty;
-                $totalHpp += $hpp * $item->qty;
-
-                // Simpan SaleDetails
-                SaleDetails::create([
-                    'sale_id'             => $sale->id,
-                    'item_name'              => $item->name,
-                    'product_id'          => $model ? $model->id : null,
-                    'productable_id'      => $model ? $model->id : null,
-                    'productable_type'    => $model ? get_class($model) : null,
-                    'source_type'         => $source,
-                    'product_name'        => $item->name,
-                    'product_code'        => $item->options->code ?? null,
-                    'quantity'            => $item->qty,
-                    'price'               => $item->price,
-                    'unit_price'          => $item->options->unit_price,
-                    'sub_total'           => $subTotal,
-                    'hpp'                 => $hpp,
-                    'subtotal_profit'     => $subProfit,
-                    'product_discount_amount'=> $item->options->product_discount,
-                    'product_discount_type'  => $item->options->product_discount_type,
-                    'product_tax_amount'     => $item->options->product_tax,
-                    'product_discount_type'  => $item->options->product_discount_type,
-                    'product_tax_amount'     => $item->options->product_tax,
-                ]);
-            }
-
-            // Update total_hpp & total_profit di header
-            $sale->update([
-                'total_hpp'    => $totalHpp,
-                'total_profit' => $sale->total_amount - $totalHpp,
-            ]);
-
-            // Simpan entry payment jika ada pembayaran
-            if ($sale->paid_amount > 0) {
-                SalePayment::create([
-                    'date'           => now()->toDateString(),
-                    'reference'      => 'INV/' . $sale->reference,
-                    'amount'         => $sale->paid_amount,
-                    'sale_id'        => $sale->id,
-                    'payment_method' => $this->payment_method,
-                ]);
-            }
-
-            // Bersihkan keranjang
-            Cart::instance($this->cart_instance)->destroy();
-        });
-
-        session()->flash('message', 'Transaksi berhasil disimpan!');
-        return redirect()->route('app.pos.index');
-    }
-
-    /** Helper methods untuk manage keranjang **/
-
-    public function calculateTotal()
-    {
-        return Cart::instance($this->cart_instance)->total() + $this->shipping;
-    }
-
-    public function resetCart()
-    {
-        Cart::instance($this->cart_instance)->destroy();
-    }
-
-    public function productSelected($product)
+    #[On('productSelected')]
+    public function productSelected(array $product)
     {
         $cart = Cart::instance($this->cart_instance);
+        $exists = $cart->search(fn($cartItem) => $cartItem->id == $product['id']);
 
-        $exists = $cart->search(fn($ci, $row) => $ci->id == $product['id']);
         if ($exists->isNotEmpty()) {
-            session()->flash('message', 'Product already in cart!');
+            $this->dispatch('showWarning', ['message' => 'Produk sudah ada di keranjang!']);
             return;
         }
+
+        $calculated_price = $this->calculate($product);
 
         $cart->add([
             'id'      => $product['id'],
             'name'    => $product['product_name'],
             'qty'     => 1,
-            'price'   => $this->calculate($product)['price'],
+            'price'   => $calculated_price['price'],
             'weight'  => 1,
             'options' => [
+                'source_type'           => 'new',
                 'product_discount'      => 0.00,
                 'product_discount_type' => 'fixed',
-                'sub_total'             => $this->calculate($product)['sub_total'],
+                'sub_total'             => $calculated_price['sub_total'],
                 'code'                  => $product['product_code'],
                 'stock'                 => $product['product_quantity'],
                 'unit'                  => $product['product_unit'],
-                'product_tax'           => $this->calculate($product)['product_tax'],
-                'unit_price'            => $this->calculate($product)['unit_price'],
-                'source_type'           => 'new', // atur sesuai kebutuhan
+                'product_tax'           => $calculated_price['product_tax'],
+                'unit_price'            => $calculated_price['unit_price'],
+                'hpp'                   => $product['product_cost'],
             ],
         ]);
-
-        $this->check_quantity[$product['id']] = $product['product_quantity'];
-        $this->quantity[$product['id']]       = 1;
-        $this->discount_type[$product['id']]  = 'fixed';
-        $this->item_discount[$product['id']]  = 0;
-        $this->total_amount                   = $this->calculateTotal();
+        
+        $this->dispatch('showSuccess', ['message' => 'Produk berhasil ditambahkan!']);
+        $this->refreshCart();
+    }
+    
+    public function mount($cartInstance)
+    {
+        $this->cart_instance = $cartInstance;
+        $this->refreshCart();
     }
 
+    public function hydrate()
+    {
+        $this->total_amount = $this->calculateTotal();
+        if ($this->paid_amount === null || $this->paid_amount === '') {
+            $this->paid_amount = $this->total_amount;
+        }
+        $this->change = max(0, (float)$this->paid_amount - $this->total_amount);
+    }
+    
+    public function updatedPaidAmount($value)
+    {
+        $this->change = max(0, (float)$value - $this->total_amount);
+    }
+
+    public function render()
+    {
+        $cart_items = Cart::instance($this->cart_instance)->content();
+        return view('livewire.pos.checkout', ['cart_items' => $cart_items]);
+    }
+    
+    public function proceed() 
+    {
+        if (Cart::instance('sale')->count() == 0) {
+            $this->dispatch('showWarning', ['message' => 'Keranjang masih kosong!']);
+            return;
+        }
+        $this->dispatch('showCheckoutModal');
+    }
+    
+    public function store()
+    {
+        $this->validate();
+        if ($this->payment_method !== 'Tunai') {
+            $this->validate(['bank_name' => 'required|string|max:255']);
+        }
+
+        try {
+            $sale = DB::transaction(function () {
+                $cartItems = Cart::instance('sale')->content();
+                $due_amount = $this->total_amount - $this->paid_amount;
+                $paymentStatus = $due_amount <= 0 ? 'Paid' : 'Partial';
+
+                $sale = Sale::create([
+                    'date' => now()->toDateString(),
+                    'reference' => 'SL-' . date('Ymd-His'),
+                    'tax_percentage' => $this->global_tax,
+                    'tax_amount' => Cart::instance('sale')->tax(),
+                    'discount_percentage' => $this->global_discount,
+                    'discount_amount' => Cart::instance('sale')->discount(),
+                    'shipping_amount' => $this->shipping,
+                    'total_amount' => $this->total_amount,
+                    'paid_amount' => $this->paid_amount,
+                    'due_amount' => $due_amount,
+                    'status' => 'Completed',
+                    'payment_status' => $paymentStatus,
+                    'payment_method' => $this->payment_method,
+                    'bank_name' => ($this->payment_method !== 'Tunai') ? $this->bank_name : null,
+                    'note' => $this->note,
+                    'total_hpp' => 0,
+                    'total_profit' => 0,
+                ]);
+
+                $totalHpp = 0;
+                foreach ($cartItems as $item) {
+                    $source = $item->options->source_type;
+                    $hpp = $item->options->hpp ?? 0;
+                    $model = null;
+                    
+                    if ($source === 'new') {
+                        $model = Product::find($item->id);
+                        if ($model) {
+                            $model->decrement('product_quantity', $item->qty);
+                        }
+                    } elseif ($source === 'second') {
+                        $model = ProductSecond::find($item->id);
+                        if ($model) {
+                            $model->update(['status' => 'sold']);
+                        }
+                    }
+
+                    $subTotalProfit = ($item->price - $hpp) * $item->qty;
+                    $totalHpp += $hpp * $item->qty;
+
+                    SaleDetails::create([
+                        'sale_id' => $sale->id,
+                        'product_id' => ($source !== 'manual') ? $item->id : null,
+                        'source_type' => $source,
+                        'product_name' => $item->name,
+                        'product_code' => $item->options->code ?? null,
+                        'quantity' => $item->qty,
+                        'price' => $item->price,
+                        'unit_price' => $item->price,
+                        'sub_total' => $item->subtotal,
+                        'hpp' => $hpp,
+                        'subtotal_profit' => $subTotalProfit,
+                    ]);
+                }
+
+                $sale->update([
+                    'total_hpp' => $totalHpp,
+                    'total_profit' => $this->total_amount - $totalHpp,
+                ]);
+
+                if ($sale->paid_amount > 0) {
+                    SalePayment::create([
+                        'date' => now()->toDateString(),
+                        'reference' => 'INV/' . $sale->reference,
+                        'amount' => $sale->paid_amount,
+                        'sale_id' => $sale->id,
+                        'payment_method' => $this->payment_method,
+                    ]);
+                }
+                
+                return $sale;
+            });
+            
+            Cart::instance('sale')->destroy();
+            session()->flash('swal-success', 'Transaksi Berhasil Disimpan!');
+            return redirect()->route('sales.pos.pdf', $sale->id);
+
+        } catch (\Exception $e) {
+            $this->dispatch('showError', ['message' => 'Gagal menyimpan transaksi: ' . $e->getMessage()]);
+        }
+    }
+    
+    public function calculateTotal() { return Cart::instance($this->cart_instance)->total() + $this->shipping; }
+    
     public function removeItem($rowId)
     {
         Cart::instance($this->cart_instance)->remove($rowId);
-    }
-
-    public function updatedGlobalTax()
-    {
-        Cart::instance($this->cart_instance)->setGlobalTax((int)$this->global_tax);
-    }
-
-    public function updatedGlobalDiscount()
-    {
-        Cart::instance($this->cart_instance)->setGlobalDiscount((int)$this->global_discount);
+        $this->dispatch('cartUpdated');
     }
 
     public function updateQuantity($rowId, $productId)
     {
         if ($this->check_quantity[$productId] < $this->quantity[$productId]) {
-            session()->flash('message', 'Requested quantity exceeds stock.');
+            $this->dispatch('showWarning', ['message' => 'Kuantitas melebihi stok.']);
             return;
         }
-
-        $cart = Cart::instance($this->cart_instance);
-        $cart->update($rowId, $this->quantity[$productId]);
-
-        $ci = $cart->get($rowId);
-        $cart->update($rowId, [
-            'options' => array_merge((array)$ci->options, [
-                'sub_total' => $ci->price * $ci->qty,
-            ]),
-        ]);
-    }
-
-    public function updatedDiscountType($value, $productId)
-    {
-        $this->item_discount[$productId] = 0;
-    }
-
-    public function discountModalRefresh($productId, $rowId)
-    {
-        $this->updateQuantity($rowId, $productId);
+        Cart::instance($this->cart_instance)->update($rowId, $this->quantity[$productId]);
+        $this->dispatch('cartUpdated');
     }
 
     public function setProductDiscount($rowId, $productId)
     {
-        $ci = Cart::instance($this->cart_instance)->get($rowId);
-        $amount = $this->discount_type[$productId] === 'fixed'
-            ? $this->item_discount[$productId]
-            : ($ci->price * ($this->item_discount[$productId] / 100));
+        $cart = Cart::instance($this->cart_instance);
+        $item = $cart->get($rowId);
 
-        Cart::instance($this->cart_instance)->update($rowId, [
-            'price'   => ($ci->price + $ci->options->product_discount) - $amount,
-            'options' => array_merge((array)$ci->options, [
-                'product_discount'       => $amount,
-                'product_discount_type'  => $this->discount_type[$productId],
-                'sub_total'              => ($ci->price + $ci->options->product_discount - $amount) * $ci->qty,
-            ]),
+        $discount_amount = ($this->discount_type[$productId] == 'fixed')
+            ? $this->item_discount[$productId]
+            : ($item->price * $this->item_discount[$productId] / 100);
+        
+        $cart->update($rowId, [
+            'price' => $item->price - $discount_amount
         ]);
 
-        session()->flash("discount_message_{$productId}", 'Discount applied.');
+        session()->flash('discount_message_'. $productId, 'Diskon diterapkan!');
     }
 
     public function calculate($product)
     {
-        $type = $product['product_tax_type'];
         $price = $product['product_price'];
-        $tax   = $price * ($product['product_order_tax']/100);
+        $tax = 0.00;
+        $unit_price = $price;
+        $sub_total = $price;
 
-        if ($type == 1) { // inclusive
-            return [
-                'price'      => $price + $tax,
-                'unit_price' => $price,
-                'product_tax'=> $tax,
-                'sub_total'  => $price + $tax,
-            ];
-        } elseif ($type == 2) { // exclusive
-            return [
-                'price'      => $price,
-                'unit_price' => $price - $tax,
-                'product_tax'=> $tax,
-                'sub_total'  => $price,
-            ];
+        if ($product['product_tax_type'] == 1) { // Inclusive
+            $tax = $price * ($product['product_order_tax'] / 100);
+            $unit_price = $price;
+            $sub_total = $price + $tax;
+        } elseif ($product['product_tax_type'] == 2) { // Exclusive
+            $tax = $price * ($product['product_order_tax'] / 100);
+            $unit_price = $price;
+            $sub_total = $price;
         }
 
         return [
-            'price'      => $price,
-            'unit_price' => $price,
-            'product_tax'=> 0.00,
-            'sub_total'  => $price,
+            'price'       => $price,
+            'unit_price'  => $unit_price,
+            'product_tax' => $tax,
+            'sub_total'   => $sub_total
         ];
     }
 }
