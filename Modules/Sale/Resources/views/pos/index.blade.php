@@ -56,7 +56,7 @@
     </div>
 </div>
             <div class="col-lg-5">
-                <livewire:pos.checkout :cart-instance="'sale'" :customers="$customers"/>
+                <livewire:pos.checkout :cart-instance="'sale'">
             </div>
         </div>
     </div>
@@ -72,7 +72,7 @@
                 $('#paid_amount').maskMoney({
                     prefix:'{{ settings()->currency->symbol }}',
                     thousands:'{{ settings()->currency->thousand_separator }}',
-                    decimal:'{{ settings()->currency->decimal_separator }}',
+                    decimal:'{{ settings()->currency->decimal_sepzarator }}',
                     allowZero: false,
                 });
 

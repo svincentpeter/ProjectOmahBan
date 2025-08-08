@@ -24,7 +24,6 @@
                     @endif
                     <div class="row">
                         <div class="col-lg-7">
-                            <input type="hidden" value="{{ $customer_id }}" name="customer_id">
                             <input type="hidden" value="{{ $global_tax }}" name="tax_percentage">
                             <input type="hidden" value="{{ $global_discount }}" name="discount_percentage">
                             <input type="hidden" value="{{ $shipping }}" name="shipping_amount">
@@ -42,16 +41,28 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="payment_method">Payment Method <span class="text-danger">*</span></label>
-                                <select class="form-control" name="payment_method" id="payment_method" required>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Credit Card">Credit Card</option>
-                                    <option value="Bank Transfer">Bank Transfer</option>
-                                    <option value="Cheque">Cheque</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
+                            <div class="form-group" x-data="{ paymentMethod: 'Tunai' }">
+    <label>Metode Pembayaran <span class="text-danger">*</span></label>
+    <div class="d-flex flex-wrap">
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" id="payment_tunai" value="Tunai" name="payment_method" wire:model.live="payment_method" @click="paymentMethod = 'Tunai'">
+            <label class="form-check-label" for="payment_tunai">Tunai</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" id="payment_transfer" value="Transfer" name="payment_method" wire:model.live="payment_method" @click="paymentMethod = 'Transfer'">
+            <label class="form-check-label" for="payment_transfer">Transfer</label>
+        </div>
+    </div>
+    
+    {{-- Kolom ini hanya akan muncul jika metode pembayaran adalah 'Transfer' --}}
+    <div x-show="paymentMethod === 'Transfer'" x-transition.opacity>
+        <div class="form-group mt-3">
+            <label for="bank_name">Nama Bank <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="bank_name" wire:model="bank_name" placeholder="Contoh: BCA, Mandiri, dll.">
+            @error('bank_name') <span class="text-danger">{{ $message }}</span> @enderror
+        </div>
+    </div>
+</div>
                             <div class="form-group">
                                 <label for="note">Note (If Needed)</label>
                                 <textarea name="note" id="note" rows="5" class="form-control"></textarea>
