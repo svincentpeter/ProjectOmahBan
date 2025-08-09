@@ -64,11 +64,11 @@
                 <br>{{ settings()->company_address }}
             </p>
         </div>
-        <p>
-            Date: {{ \Carbon\Carbon::parse($sale->date)->format('d M, Y') }}<br>
-            Reference: {{ $sale->reference }}<br>
-            Name: {{ $sale->customer_name }}
-        </p>
+        <p style="font-size: 14px; text-align: center; line-height: 1.2;">
+    Tanggal: {{ now()->format('d M Y, H:i') }} <br>
+    Invoice: {{ $sale->reference }} <br>
+    Kasir: {{ auth()->user()->name }}  {{-- << TAMBAHKAN BARIS INI --}}
+</p>
         <table class="table-data">
             <tbody>
             @foreach($sale->saleDetails as $saleDetail)

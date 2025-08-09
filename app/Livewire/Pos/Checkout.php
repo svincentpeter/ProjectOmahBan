@@ -3,7 +3,6 @@
 namespace App\Livewire\Pos;
 
 // Menggunakan path modular yang benar sesuai proyek Anda
-use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductSecond;
 use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
@@ -12,6 +11,7 @@ use Modules\Sale\Entities\SalePayment;
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Modules\Product\Entities\Product;
 use Livewire\Attributes\On;
 
 class Checkout extends Component
@@ -33,6 +33,8 @@ class Checkout extends Component
     public $bank_name;
     public $note;
     public $change = 0;
+    public $sale = null;
+    public $sale_details = null;
 
     protected $rules = [
         'payment_method'  => 'required|string|in:Tunai,Transfer,Kredit',
@@ -47,18 +49,10 @@ class Checkout extends Component
         $cart_items = Cart::instance($this->cart_instance)->content();
         foreach ($cart_items as $item) {
             $itemId = $item->id;
-            if (!isset($this->quantity[$itemId])) {
-                $this->quantity[$itemId] = $item->qty;
-            }
-            if (!isset($this->check_quantity[$itemId])) {
-                $this->check_quantity[$itemId] = $item->options->stock ?? 999;
-            }
-            if (!isset($this->discount_type[$itemId])) {
-                $this->discount_type[$itemId] = 'fixed';
-            }
-            if (!isset($this->item_discount[$itemId])) {
-                $this->item_discount[$itemId] = 0;
-            }
+            if (!isset($this->quantity[$itemId])) { $this->quantity[$itemId] = $item->qty; }
+            if (!isset($this->check_quantity[$itemId])) { $this->check_quantity[$itemId] = $item->options->stock ?? 999; }
+            if (!isset($this->discount_type[$itemId])) { $this->discount_type[$itemId] = 'fixed'; }
+            if (!isset($this->item_discount[$itemId])) { $this->item_discount[$itemId] = 0; }
         }
         $this->total_amount = $this->calculateTotal();
     }
@@ -126,7 +120,7 @@ class Checkout extends Component
         return view('livewire.pos.checkout', ['cart_items' => $cart_items]);
     }
     
-    public function proceed() 
+    public function proceed()
     {
         if (Cart::instance('sale')->count() == 0) {
             $this->dispatch('showWarning', ['message' => 'Keranjang masih kosong!']);
@@ -239,13 +233,17 @@ class Checkout extends Component
         $this->dispatch('cartUpdated');
     }
 
-    public function updateQuantity($rowId, $productId)
+public function updateQuantity($rowId, $productId)
     {
-        if ($this->check_quantity[$productId] < $this->quantity[$productId]) {
+        $product = Product::findOrFail($productId);
+
+        if ($this->quantity[$productId] > $product->product_quantity) {
             $this->dispatch('showWarning', ['message' => 'Kuantitas melebihi stok.']);
+            $this->quantity[$productId] = Cart::instance('sale')->get($rowId)->qty;
             return;
         }
-        Cart::instance($this->cart_instance)->update($rowId, $this->quantity[$productId]);
+        
+        Cart::instance('sale')->update($rowId, $this->quantity[$productId]);
         $this->dispatch('cartUpdated');
     }
 
@@ -258,10 +256,7 @@ class Checkout extends Component
             ? $this->item_discount[$productId]
             : ($item->price * $this->item_discount[$productId] / 100);
         
-        $cart->update($rowId, [
-            'price' => $item->price - $discount_amount
-        ]);
-
+        $cart->update($rowId, ['price' => $item->price - $discount_amount]);
         session()->flash('discount_message_'. $productId, 'Diskon diterapkan!');
     }
 
@@ -272,14 +267,12 @@ class Checkout extends Component
         $unit_price = $price;
         $sub_total = $price;
 
-        if ($product['product_tax_type'] == 1) { // Inclusive
+        if (isset($product['product_tax_type']) && $product['product_tax_type'] == 1) { // Inclusive
             $tax = $price * ($product['product_order_tax'] / 100);
-            $unit_price = $price;
             $sub_total = $price + $tax;
-        } elseif ($product['product_tax_type'] == 2) { // Exclusive
+        } elseif (isset($product['product_tax_type']) && $product['product_tax_type'] == 2) { // Exclusive
             $tax = $price * ($product['product_order_tax'] / 100);
-            $unit_price = $price;
-            $sub_total = $price;
+            $unit_price = $price - $tax;
         }
 
         return [
