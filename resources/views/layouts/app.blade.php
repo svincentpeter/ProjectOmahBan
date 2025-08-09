@@ -10,6 +10,8 @@
     <link rel="icon" href="{{ asset('images/favicon.png') }}">
 
     @include('includes.main-css')
+    {{-- Livewire Styles (pastikan ada di includes.main-css, kalau tidak, uncomment baris ini) --}}
+    {{-- @livewireStyles --}}
 </head>
 
 <body class="c-app">
@@ -32,21 +34,30 @@
         @include('layouts.footer')
     </div>
 
+    {{-- JS utama aplikasi --}}
     @include('includes.main-js')
-    {{-- SweetAlert2 --}}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-{{-- Script untuk menangkap notifikasi --}}
-@if (session()->has('swal-success'))
-    <script>
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            text: "{{ session('swal-success') }}",
-            timer: 3000, // Notifikasi akan hilang setelah 3 detik
-            showConfirmButton: false
-        });
-    </script>
-@endif
+    {{-- Livewire Scripts (pastikan salah satu ini ter-load sekali saja di layout) --}}
+    {{-- Jika includes.main-js belum memuat Livewire, uncomment baris ini --}}
+    {{-- @livewireScripts --}}
+
+    {{-- SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {{-- Notifikasi swal --}}
+    @if (session()->has('swal-success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: @json(session('swal-success')),
+                timer: 3000,
+                showConfirmButton: false
+            });
+        </script>
+    @endif
+
+    {{-- ====== Penting untuk AutoNumeric & script lain yang di-push dari komponen ====== --}}
+    @stack('scripts')
 </body>
 </html>

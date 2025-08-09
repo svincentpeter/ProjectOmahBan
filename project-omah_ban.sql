@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 08, 2025 at 12:16 PM
+-- Generation Time: Aug 09, 2025 at 04:19 PM
 -- Server version: 8.0.30
--- PHP Version: 8.2.12
+-- PHP Version: 8.2.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -291,7 +291,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (45, '2025_08_08_125854_AddBankNameToSalesTable', 11),
 (46, '2025_08_08_133851_RemoveCustomerIdFromSalesTable', 12),
 (47, '2025_08_08_150335_remove_customer_name_from_sales_table', 13),
-(48, '2025_08_08_151424_add_hpp_and_profit_to_sales_table', 14);
+(48, '2025_08_08_151424_add_hpp_and_profit_to_sales_table', 14),
+(49, '2025_08_09_213452_alter_money_columns_to_bigint_on_sales_tables', 15);
 
 -- --------------------------------------------------------
 
@@ -795,19 +796,19 @@ CREATE TABLE `sales` (
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tax_percentage` int NOT NULL DEFAULT '0',
-  `tax_amount` int NOT NULL DEFAULT '0',
+  `tax_amount` decimal(18,2) DEFAULT NULL,
   `discount_percentage` int NOT NULL DEFAULT '0',
-  `discount_amount` int NOT NULL DEFAULT '0',
-  `shipping_amount` int NOT NULL DEFAULT '0',
-  `total_amount` int NOT NULL,
+  `discount_amount` decimal(18,2) DEFAULT NULL,
+  `shipping_amount` decimal(18,2) DEFAULT NULL,
+  `total_amount` decimal(18,2) DEFAULT NULL,
   `total_hpp` decimal(15,2) NOT NULL DEFAULT '0.00',
   `total_profit` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `paid_amount` int NOT NULL,
-  `due_amount` int NOT NULL,
+  `paid_amount` decimal(18,2) DEFAULT NULL,
+  `due_amount` decimal(18,2) DEFAULT NULL,
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -818,7 +819,22 @@ CREATE TABLE `sales` (
 --
 
 INSERT INTO `sales` (`id`, `date`, `reference`, `tax_percentage`, `tax_amount`, `discount_percentage`, `discount_amount`, `shipping_amount`, `total_amount`, `total_hpp`, `total_profit`, `paid_amount`, `due_amount`, `status`, `payment_status`, `payment_method`, `bank_name`, `note`, `created_at`, `updated_at`) VALUES
-(4, '2025-08-08', 'SL-00001', 0, 0, 0, 0, 0, 1425000, 0.00, 14250.00, 0, 1425000, 'Completed', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-08 08:15:20', '2025-08-08 08:15:20');
+(4, '2025-08-08', 'SL-00001', 0, 0.00, 0, 0.00, 0.00, 1425000.00, 0.00, 14250.00, 0.00, 1425000.00, 'Completed', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-08 08:15:20', '2025-08-08 08:15:20'),
+(19, '2025-08-09', 'SL-00005', 0, 0.00, 0, 0.00, 0.00, 1425000.00, 0.00, 0.00, 0.00, 1425000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 13:38:27', '2025-08-09 13:38:27'),
+(20, '2025-08-09', 'SL-00020', 0, 0.00, 0, 0.00, 0.00, 1575000.00, 0.00, 0.00, 0.00, 1575000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
+(21, '2025-08-09', 'SL-00021', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:02:55', '2025-08-09 14:02:55'),
+(22, '2025-08-09', 'SL-00022', 0, 0.00, 0, 0.00, 0.00, 582500000.00, 0.00, 0.00, 0.00, 582500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:37:09', '2025-08-09 14:37:09'),
+(23, '2025-08-09', 'SL-00023', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 142500000.00, 0.00, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-09 14:43:36', '2025-08-09 14:43:46'),
+(24, '2025-08-09', 'SL-00024', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:44:29', '2025-08-09 14:44:29'),
+(25, '2025-08-09', 'SL-00025', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:52:26', '2025-08-09 14:52:26'),
+(26, '2025-08-09', 'SL-00026', 0, 0.00, 0, 0.00, 0.00, 15000000.00, 0.00, 0.00, 0.00, 15000000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:52:54', '2025-08-09 14:52:54'),
+(27, '2025-08-09', 'SL-00027', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:55:16', '2025-08-09 14:55:16'),
+(28, '2025-08-09', 'SL-00028', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:55:44', '2025-08-09 14:55:44'),
+(29, '2025-08-09', 'SL-00029', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:56:11', '2025-08-09 14:56:11'),
+(30, '2025-08-09', 'SL-00030', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:04:34', '2025-08-09 15:04:34'),
+(31, '2025-08-09', 'SL-00031', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:17:00', '2025-08-09 15:17:00'),
+(32, '2025-08-09', 'SL-00032', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:17:49', '2025-08-09 15:17:49'),
+(33, '2025-08-09', 'SL-00033', 0, 0.00, 0, 0.00, 0.00, 142500000.00, 0.00, 0.00, 0.00, 142500000.00, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:18:22', '2025-08-09 15:18:22');
 
 -- --------------------------------------------------------
 
@@ -837,14 +853,14 @@ CREATE TABLE `sale_details` (
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
-  `price` int NOT NULL,
+  `price` bigint NOT NULL,
   `hpp` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `unit_price` int NOT NULL,
-  `sub_total` int NOT NULL,
+  `unit_price` bigint NOT NULL,
+  `sub_total` bigint NOT NULL,
   `subtotal_profit` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `product_discount_amount` int NOT NULL,
+  `product_discount_amount` bigint NOT NULL,
   `product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
-  `product_tax_amount` int NOT NULL,
+  `product_tax_amount` bigint NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -854,7 +870,24 @@ CREATE TABLE `sale_details` (
 --
 
 INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `productable_id`, `productable_type`, `source_type`, `product_name`, `product_code`, `quantity`, `price`, `hpp`, `unit_price`, `sub_total`, `subtotal_profit`, `product_discount_amount`, `product_discount_type`, `product_tax_amount`, `created_at`, `updated_at`) VALUES
-(2, 4, 'Ban GT Savero', NULL, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 0.00, 1425000, 1425000, 1425000.00, 0, 'fixed', 0, '2025-08-08 08:15:20', '2025-08-08 08:15:20');
+(2, 4, 'Ban GT Savero', NULL, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 0.00, 1425000, 1425000, 1425000.00, 0, 'fixed', 0, '2025-08-08 08:15:20', '2025-08-08 08:15:20'),
+(3, 19, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760.00, 1425000, 1425000, 0.00, 0, 'fixed', 0, '2025-08-09 13:38:27', '2025-08-09 13:38:27'),
+(4, 20, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760.00, 1425000, 1425000, 0.00, 0, 'fixed', 0, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
+(5, 20, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', 'SRV-1754751385', 1, 150000, 0.00, 150000, 150000, 0.00, 0, 'fixed', 0, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
+(6, 21, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 14:02:56', '2025-08-09 14:02:56'),
+(7, 22, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 4, 142500000, 1280760.00, 142500000, 570000000, 0.00, 0, 'fixed', 0, '2025-08-09 14:37:09', '2025-08-09 14:37:09'),
+(8, 22, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 12500000, 0.00, 12500000, 12500000, 0.00, 0, 'fixed', 0, '2025-08-09 14:37:09', '2025-08-09 14:37:09'),
+(9, 23, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 14:43:36', '2025-08-09 14:43:36'),
+(10, 24, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 14:44:29', '2025-08-09 14:44:29'),
+(11, 25, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 14:52:26', '2025-08-09 14:52:26'),
+(12, 26, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 15000000, 0.00, 15000000, 15000000, 0.00, 0, 'fixed', 0, '2025-08-09 14:52:54', '2025-08-09 14:52:54'),
+(13, 27, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 14:55:16', '2025-08-09 14:55:16'),
+(14, 28, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 14:55:44', '2025-08-09 14:55:44'),
+(15, 29, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 14:56:11', '2025-08-09 14:56:11'),
+(16, 30, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 15:04:34', '2025-08-09 15:04:34'),
+(17, 31, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 15:17:00', '2025-08-09 15:17:00'),
+(18, 32, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 15:17:49', '2025-08-09 15:17:49'),
+(19, 33, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 142500000, 1280760.00, 142500000, 142500000, 0.00, 0, 'fixed', 0, '2025-08-09 15:18:22', '2025-08-09 15:18:22');
 
 -- --------------------------------------------------------
 
@@ -865,7 +898,7 @@ INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `product
 CREATE TABLE `sale_payments` (
   `id` bigint UNSIGNED NOT NULL,
   `sale_id` bigint UNSIGNED NOT NULL,
-  `amount` int NOT NULL,
+  `amount` bigint NOT NULL,
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -873,6 +906,13 @@ CREATE TABLE `sale_payments` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sale_payments`
+--
+
+INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `payment_method`, `note`, `created_at`, `updated_at`) VALUES
+(1, 23, 142500000, '2025-08-09', 'INV/SL-00023/PMT-214346', 'Tunai', NULL, '2025-08-09 14:43:46', '2025-08-09 14:43:46');
 
 -- --------------------------------------------------------
 
@@ -1414,7 +1454,7 @@ ALTER TABLE `media`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -1492,19 +1532,19 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `sale_details`
 --
 ALTER TABLE `sale_details`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `sale_payments`
 --
 ALTER TABLE `sale_payments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `sale_returns`

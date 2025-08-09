@@ -13,23 +13,29 @@ class SalePayment extends Model
 
     protected $guarded = [];
 
-    public function sale() {
+    public function sale()
+    {
         return $this->belongsTo(Sale::class, 'sale_id', 'id');
     }
 
-    public function setAmountAttribute($value) {
+    public function setAmountAttribute($value)
+    {
         $this->attributes['amount'] = $value * 100;
     }
 
-    public function getAmountAttribute($value) {
+    public function getAmountAttribute($value)
+    {
         return $value / 100;
     }
 
-    public function getDateAttribute($value) {
+
+    public function getDateAttribute($value)
+    {
         return Carbon::parse($value)->format('d M, Y');
     }
 
-    public function scopeBySale($query) {
+    public function scopeBySale($query)
+    {
         return $query->where('sale_id', request()->route('sale_id'));
     }
 }

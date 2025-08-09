@@ -11,15 +11,18 @@ class Sale extends Model
 
     protected $guarded = [];
 
-    public function saleDetails() {
+    public function saleDetails()
+    {
         return $this->hasMany(SaleDetails::class, 'sale_id', 'id');
     }
 
-    public function salePayments() {
+    public function salePayments()
+    {
         return $this->hasMany(SalePayment::class, 'sale_id', 'id');
     }
 
-    public static function boot() {
+    public static function boot()
+    {
         parent::boot();
 
         static::creating(function ($model) {
@@ -28,31 +31,62 @@ class Sale extends Model
         });
     }
 
-    public function scopeCompleted($query) {
+    public function scopeCompleted($query)
+    {
         return $query->where('status', 'Completed');
     }
 
-    public function getShippingAmountAttribute($value) {
+    public function getShippingAmountAttribute($value)
+    {
         return $value / 100;
     }
-
-    public function getPaidAmountAttribute($value) {
-        return $value / 100;
+    public function setShippingAmountAttribute($value)
+    {
+        $this->attributes['shipping_amount'] = (int) round($value * 100);
     }
 
-    public function getTotalAmountAttribute($value) {
+    public function getPaidAmountAttribute($value)
+    {
         return $value / 100;
     }
-
-    public function getDueAmountAttribute($value) {
-        return $value / 100;
+    public function setPaidAmountAttribute($value)
+    {
+        $this->attributes['paid_amount'] = (int) round($value * 100);
     }
 
-    public function getTaxAmountAttribute($value) {
+    public function getTotalAmountAttribute($value)
+    {
         return $value / 100;
     }
+    public function setTotalAmountAttribute($value)
+    {
+        $this->attributes['total_amount'] = (int) round($value * 100);
+    }
 
-    public function getDiscountAmountAttribute($value) {
+    public function getDueAmountAttribute($value)
+    {
         return $value / 100;
+    }
+    public function setDueAmountAttribute($value)
+    {
+        $this->attributes['due_amount'] = (int) round($value * 100);
+    }
+
+    public function getTaxAmountAttribute($value)
+    {
+        return $value / 100;
+    }
+    public function setTaxAmountAttribute($value)
+    {
+        $this->attributes['tax_amount'] = (int) round($value * 100);
+    }
+
+    public function getDiscountAmountAttribute($value)
+    {
+        return $value / 100;
+    }
+    public function setDiscountAmountAttribute($value)
+    {
+        $this->attributes['discount_amount'] = (int) round($value * 100);
     }
 }
