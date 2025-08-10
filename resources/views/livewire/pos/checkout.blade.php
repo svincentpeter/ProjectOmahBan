@@ -29,28 +29,28 @@
 
                 @if($sale->payment_status != 'Paid')
 
-                    {{-- ====== JUMLAH DIBAYAR (AutoNumeric + Livewire hidden binding) ====== --}}
-                    <div class="form-group">
-                        <label for="paid_amount_view">Jumlah Dibayar</label>
+                    {{-- ====== JUMLAH DIBAYAR (AutoNumeric + Alpine entangle ke Livewire) ====== --}}
+<div class="form-group"
+     x-data="paidBox(@entangle('paid_amount').live)"
+     x-init="init()">
+  <label for="paid_amount_view">Jumlah Dibayar</label>
 
-                        {{-- Input tampilan yang diformat (tidak di-wire:model) --}}
-                        <div wire:ignore>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="paid_amount_view"
-                                inputmode="numeric"
-                                placeholder="0"
-                                autocomplete="off"
-                                value="{{ number_format((int)($paid_amount ?? 0), 0, ',', '.') }}"
-                            >
-                        </div>
+  <div wire:ignore>
+    <input
+      type="text"
+      class="form-control"
+      id="paid_amount_view"
+      inputmode="numeric"
+      placeholder="0"
+      autocomplete="off"
+      value="{{ number_format((int)($paid_amount ?? 0), 0, ',', '.') }}"
+    >
+  </div>
 
-                        {{-- Input hidden yang terhubung ke komponen Livewire --}}
-                        <input type="hidden" id="paid_amount_hidden" wire:model.live.debounce.300ms="paid_amount">
+  @error('paid_amount') <span class="text-danger">{{ $message }}</span> @enderror
+</div>
 
-                        @error('paid_amount') <span class="text-danger">{{ $message }}</span> @enderror
-                    </div>
+
 
                     {{-- ====== KEMBALIAN (Tunai) ====== --}}
                     @if($payment_method === 'Tunai')
@@ -65,10 +65,10 @@
                         wire:loading.attr="disabled"
                         class="btn btn-primary btn-block"
                     >
-                        <span wire:loading wire:target="markAsPaid"
-                              class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span wire:loading wire:target="markAsPaid" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                         Tandai Lunas
                     </button>
+
                 @endif
 
                 @if($sale->payment_status == 'Paid')
@@ -182,7 +182,7 @@
                     <table class="table table-striped">
                         <tr>
                             <th>Subtotal</th>
-                            <td>{{ format_currency(Cart::instance('sale')->subtotal()) }}</td>
+                            <td>{{ format_currency(Cart::instance($cart_instance)->subtotal()) }}</td>
                         </tr>
                         <tr>
                             <th>Grand Total</th>
@@ -195,7 +195,7 @@
                     wire:click="createInvoice"
                     wire:loading.attr="disabled"
                     class="btn btn-primary btn-block"
-                    {{ Cart::instance('sale')->count() == 0 ? 'disabled' : '' }}
+                    {{ Cart::instance($cart_instance)->count() == 0 ? 'disabled' : '' }}
                 >
                     <span wire:loading wire:target="createInvoice"
                           class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -206,76 +206,55 @@
     </div>
 </div>
 
+@once
 @push('page_scripts')
-    {{-- AutoNumeric untuk formatting rupiah --}}
-    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
-    <script>
-        (function initPaidAmountAN() {
-            const boot = () => {
-                const view   = document.getElementById('paid_amount_view');
-                const hidden = document.getElementById('paid_amount_hidden'); // <- diperbaiki (ID benar)
+<script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
+<script>
+function paidBox(entangled) {
+  return {
+    an: null,
+    paid: entangled, // <- entangle langsung (dua arah)
 
-                if (!view || !hidden) return;
+    init() {
+      const el = document.getElementById('paid_amount_view');
+      if (!el || !window.AutoNumeric) return;
 
-                // Kalau sudah pernah di-init, cukup sinkronkan lagi
-                if (!view._an) {
-                    view._an = new AutoNumeric(view, {
-                        digitGroupSeparator: '.',
-                        decimalCharacter: ',',
-                        decimalPlaces: 0,
-                        unformatOnSubmit: true,
-                        modifyValueOnWheel: false,
-                        emptyInputBehavior: 'zero',
-                        minimumValue: '0'
-                    });
+      if (!this.an) {
+        this.an = new AutoNumeric(el, {
+          digitGroupSeparator: '.',
+          decimalCharacter: ',',
+          decimalPlaces: 0,
+          unformatOnSubmit: true,
+          modifyValueOnWheel: false,
+        });
 
-                    // set nilai awal dari Livewire ke tampilan
-                    const initial = parseInt(hidden.value || '0', 10);
-                    if (initial > 0) view._an.set(initial);
+        // Tampilkan nilai awal dari Livewire
+        this.$nextTick(() => {
+          const val = Number(this.paid || 0);
+          this.an.set(isNaN(val) ? 0 : val);
+        });
 
-                    const sync = () => {
-                        try {
-                            const numberStr = view._an.getNumber(); // string angka murni
-                            const numberVal = numberStr ? parseInt(numberStr, 10) : 0;
+        // -> Kirim perubahan ke Livewire
+        const pushToLW = () => {
+          const raw = this.an.getNumber();           // "1500000"
+          const val = raw ? parseInt(raw, 10) : 0;   // 1500000
+          if (this.paid !== val) this.paid = val;    // trigger entangle
+        };
+        el.addEventListener('autoNumeric:rawValueModified', pushToLW);
+        el.addEventListener('input',  pushToLW);
+        el.addEventListener('change', pushToLW);
 
-                            // isi hidden agar wire:model kepikup
-                            hidden.value = numberVal;
-
-                            // set langsung ke properti Livewire di komponen ini
-                            if (window.Livewire) {
-                                const root = view.closest('[wire\\:id]');
-                                if (root) {
-                                    const comp = Livewire.find(root.getAttribute('wire:id'));
-                                    if (comp) comp.set('paid_amount', numberVal);
-                                }
-                            }
-                        } catch (e) {
-                            // no-op
-                        }
-                    };
-
-                    view.addEventListener('input', sync);
-                    view.addEventListener('change', sync);
-
-                    // sinkron awal
-                    sync();
-                } else {
-                    // jika sudah ada, pastikan tampilan selaras dgn hidden (Livewire)
-                    const current = parseInt(hidden.value || '0', 10);
-                    view._an.set(current);
-                }
-            };
-
-            // Inisialisasi awal
-            document.addEventListener('DOMContentLoaded', boot);
-
-            // Re-init setiap Livewire morph (v3)
-            if (window.Livewire && Livewire.hook) {
-                Livewire.hook('morph.updated', boot);
-            }
-
-            // Fallback saat navigasi internal Livewire
-            document.addEventListener('livewire:navigated', boot);
-        })();
-    </script>
+        // <- Sinkron dari Livewire ke input tampilan
+        this.$watch('paid', (val) => {
+          const v = Number(val || 0);
+          if (String(v) !== this.an.getNumber()) {
+            this.an.set(isNaN(v) ? 0 : v);
+          }
+        });
+      }
+    }
+  }
+}
+</script>
 @endpush
+@endonce

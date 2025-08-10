@@ -14,6 +14,21 @@ class SaleDetails extends Model
 
     protected $with = ['product'];
 
+    protected static function booted()
+    {
+        static::creating(function (SaleDetails $detail) {
+            // Default fallback untuk kolom yang NOT NULL
+            if (empty($detail->item_name)) {
+                // pakai product_name kalau ada, kalau tidak ada pakai '-'
+                $detail->item_name = $detail->product_name ?? '-';
+            }
+
+            if (empty($detail->product_code)) {
+                $detail->product_code = '-';
+            }
+        });
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id', 'id');
@@ -24,48 +39,6 @@ class SaleDetails extends Model
         return $this->belongsTo(Sale::class, 'sale_id', 'id');
     }
 
-    public function getPriceAttribute($value)
-    {
-        return $value / 100;
-    }
-    public function setPriceAttribute($value)
-    {
-        $this->attributes['price'] = (int) round($value * 100);
-    }
-
-    public function getUnitPriceAttribute($value)
-    {
-        return $value / 100;
-    }
-    public function setUnitPriceAttribute($value)
-    {
-        $this->attributes['unit_price'] = (int) round($value * 100);
-    }
-
-    public function getSubTotalAttribute($value)
-    {
-        return $value / 100;
-    }
-    public function setSubTotalAttribute($value)
-    {
-        $this->attributes['sub_total'] = (int) round($value * 100);
-    }
-
-    public function getProductDiscountAmountAttribute($value)
-    {
-        return $value / 100;
-    }
-    public function setProductDiscountAmountAttribute($value)
-    {
-        $this->attributes['product_discount_amount'] = (int) round($value * 100);
-    }
-
-    public function getProductTaxAmountAttribute($value)
-    {
-        return $value / 100;
-    }
-    public function setProductTaxAmountAttribute($value)
-    {
-        $this->attributes['product_tax_amount'] = (int) round($value * 100);
-    }
+    // HAPUS mutator ×100/÷100 karena DB menyimpan angka rupiah utuh.
+    // Kalau kamu memang butuh format tampilan, formatting lakukan di view (helper/Blade), bukan di DB mutator.
 }
