@@ -1,13 +1,13 @@
-@if ($data->status == 'Pending')
-    <span class="badge badge-info">
-        {{ $data->status }}
-    </span>
-@elseif ($data->status == 'Shipped')
-    <span class="badge badge-primary">
-        {{ $data->status }}
-    </span>
-@else
-    <span class="badge badge-success">
-        {{ $data->status }}
-    </span>
-@endif
+@php
+    // Map status → warna + label Indonesia
+    $map = [
+        'Draft'     => ['badge-secondary', 'Draft'],
+        'Pending'   => ['badge-warning',  'Menunggu'],
+        'Shipped'   => ['badge-info',     'Dikirim'],
+        'Completed' => ['badge-success',  'Selesai'],
+    ];
+
+    [$cls, $label] = $map[$data->status] ?? ['badge-light', ucfirst($data->status)];
+@endphp
+
+<span class="badge {{ $cls }}">{{ $label }}</span>

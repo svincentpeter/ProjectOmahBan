@@ -3,23 +3,19 @@
 namespace Modules\Sale\Http\Controllers;
 
 use Gloudemans\Shoppingcart\Facades\Cart;
-use Illuminate\Contracts\Support\Renderable;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Modules\Product\Entities\Category;
 use Modules\Product\Entities\Product;
-use Modules\Product\Entities\ProductSecond;
 use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
 use Modules\Sale\Http\Requests\StorePosSaleRequest;
 
-
 class PosController extends Controller
 {
-
-    public function index() {
+    public function index()
+    {
         Cart::instance('sale')->destroy();
 
         $product_categories = Category::all();
@@ -27,137 +23,127 @@ class PosController extends Controller
         return view('sale::pos.index', compact('product_categories'));
     }
 
-
     public function store(StorePosSaleRequest $request)
 {
     try {
         DB::beginTransaction();
 
         $due_amount = $request->total_amount - $request->paid_amount;
-        $payment_status = 'Paid';
-        if ($due_amount == $request->total_amount) {
-            $payment_status = 'Unpaid';
-        } elseif ($due_amount > 0) {
-            $payment_status = 'Partial';
-        }
+        $payment_status = $due_amount == $request->total_amount ? 'Unpaid' : ($due_amount > 0 ? 'Partial' : 'Paid');
 
         $sale = Sale::create([
-            'date' => now()->format('Y-m-d'),
-            'reference' => 'PSL',
-            'tax_percentage' => $request->tax_percentage,
+            'date'                => now()->format('Y-m-d'),
+            'reference'           => 'PSL',
+            'user_id'             => auth()->id(),
+            'tax_percentage'      => $request->tax_percentage,
             'discount_percentage' => $request->discount_percentage,
-            'shipping_amount' => $request->shipping_amount * 100,
-            'paid_amount' => $request->paid_amount * 100,
-            'total_amount' => $request->total_amount * 100,
-            'due_amount' => $due_amount * 100,
-            'status' => 'Completed',
-            'payment_status' => $payment_status,
-            'payment_method' => $request->payment_method,
-            'bank_name' => $request->payment_method == 'Transfer' ? $request->bank_name : null,
-            'note' => $request->note,
-            'tax_amount' => Cart::instance('sale')->tax() * 100,
-            'discount_amount' => Cart::instance('sale')->discount() * 100,
+            'shipping_amount'     => (int) $request->shipping_amount,
+            'paid_amount'         => (int) $request->paid_amount,
+            'total_amount'        => (int) $request->total_amount,
+            'due_amount'          => (int) $due_amount,
+            'status'              => 'Completed',
+            'payment_status'      => $payment_status,
+            'payment_method'      => $request->payment_method,
+            'bank_name'           => $request->payment_method == 'Transfer' ? $request->bank_name : null,
+            'note'                => $request->note,
+            'tax_amount'          => (int) Cart::instance('sale')->tax(),
+            'discount_amount'     => (int) Cart::instance('sale')->discount(),
         ]);
 
         $totalHpp = 0;
 
-        foreach (Cart::instance('sale')->content() as $cart_item) {
-            $sourceType = $cart_item->options->source_type ?? null; // 'new', 'second', 'manual'
+        foreach (Cart::instance('sale')->content() as $item) {
+            $sourceType = $item->options->source_type ?? null; // 'new','second','manual'
+            if (!$sourceType) throw new \Exception("Item {$item->name} tidak memiliki source_type.");
+
             $itemHpp = 0;
             $productableId = null;
             $productableType = null;
-            $itemName = $cart_item->name;
-
-            if (!$sourceType) {
-                throw new \Exception("Item {$itemName} tidak memiliki source_type.");
-            }
 
             switch ($sourceType) {
                 case 'new':
-                    $product = Product::findOrFail($cart_item->id);
-                    if ($product->product_quantity < $cart_item->qty) {
+                    $product = \Modules\Product\Entities\Product::findOrFail($item->id);
+                    if ($product->product_quantity < $item->qty) {
                         throw new \Exception('Stok produk ' . $product->product_name . ' tidak cukup.');
                     }
-                    $product->decrement('product_quantity', $cart_item->qty);
-                    $itemHpp = $product->product_cost;
-                    $productableId = $product->id;
-                    $productableType = Product::class;
+                    $product->decrement('product_quantity', $item->qty);
+                    $itemHpp         = (int) $product->product_cost; // simpan rupiah utuh
+                    $productableId   = $product->id;
+                    $productableType = \Modules\Product\Entities\Product::class;
                     break;
 
                 case 'second':
-                    // Ubah import jika ProductSecond di dalam module Product
-                    $product = \Modules\Product\Entities\ProductSecond::findOrFail($cart_item->id);
-                    if ($product->status === 'sold') {
-                        throw new \Exception("Produk bekas {$product->name} sudah terjual.");
+                    $second = \Modules\Product\Entities\ProductSecond::findOrFail($item->id);
+                    if ($second->status === 'sold') {
+                        throw new \Exception("Produk bekas {$second->name} sudah terjual.");
                     }
-                    $product->update(['status' => 'sold']);
-                    $itemHpp = $product->purchase_price;
-                    $productableId = $product->id;
+                    $second->update(['status' => 'sold']);
+                    $itemHpp         = (int) round($second->purchase_price);
+                    $productableId   = $second->id;
                     $productableType = \Modules\Product\Entities\ProductSecond::class;
                     break;
 
                 case 'manual':
                     $itemHpp = 0;
-                    $productableId = null;
-                    $productableType = null;
                     break;
 
                 default:
                     throw new \Exception("source_type {$sourceType} tidak dikenali.");
             }
 
-            $subTotal = $cart_item->price * $cart_item->qty;
-            $subTotalProfit = ($cart_item->price - $itemHpp) * $cart_item->qty;
+            $subTotal       = (int) $item->price * (int) $item->qty;
+            $subTotalProfit = $subTotal - ($itemHpp * (int) $item->qty);
 
             SaleDetails::create([
-                'sale_id'                => $sale->id,
-                'product_id'             => $sourceType !== 'manual' ? $cart_item->id : null,
-                'product_name'           => $itemName,
-                'product_code'           => $cart_item->options->code ?? null,
-                'quantity'               => $cart_item->qty,
-                'price'                  => $cart_item->price * 100,
-                'unit_price'             => $cart_item->options->unit_price * 100 ?? $cart_item->price * 100,
-                'sub_total'              => $cart_item->options->sub_total * 100 ?? $subTotal * 100,
-                'product_discount_amount'=> $cart_item->options->product_discount * 100 ?? 0,
-                'product_discount_type'  => $cart_item->options->product_discount_type ?? 'fixed',
-                'product_tax_amount'     => $cart_item->options->product_tax * 100 ?? 0,
-                // field tambahan
-                'hpp'                    => $itemHpp * 100,
-                'subtotal_profit'        => $subTotalProfit * 100,
-                'source_type'            => $sourceType,
-                'productable_id'         => $productableId,
-                'productable_type'       => $productableType,
+                'sale_id'                 => $sale->id,
+                'product_id'              => $sourceType !== 'manual' ? $item->id : null,
+                'product_name'            => $item->name,
+                'item_name'               => $item->name,
+                'product_code'            => $item->options->code ?? '-',
+                'quantity'                => (int) $item->qty,
+                'price'                   => (int) $item->price,
+                'unit_price'              => (int) ($item->options->unit_price ?? $item->price),
+                'sub_total'               => (int) ($item->options->sub_total ?? $subTotal),
+                'product_discount_amount' => (int) ($item->options->product_discount ?? 0),
+                'product_discount_type'   => $item->options->product_discount_type ?? 'fixed',
+                'product_tax_amount'      => (int) ($item->options->product_tax ?? 0),
+
+                // tambahan
+                'hpp'                     => (int) $itemHpp,
+                'subtotal_profit'         => (int) $subTotalProfit,
+                'source_type'             => $sourceType,
+                'productable_id'          => $productableId,
+                'productable_type'        => $productableType,
             ]);
 
-            $totalHpp += ($itemHpp * $cart_item->qty);
+            $totalHpp += $itemHpp * (int) $item->qty;
         }
 
-        // Update profit ke tabel sale (jika field ada)
         $sale->update([
-            'total_hpp'    => $totalHpp * 100,
-            'total_profit' => ($sale->total_amount - ($totalHpp * 100)),
+            'total_hpp'    => $totalHpp,
+            'total_profit' => (int) $sale->total_amount - $totalHpp,
+            'due_amount'   => max((int)$sale->total_amount - (int)$sale->paid_amount, 0),
         ]);
 
         Cart::instance('sale')->destroy();
 
-        if ($sale->paid_amount > 0) {
+        if ((int)$sale->paid_amount > 0) {
             SalePayment::create([
                 'date'           => now()->format('Y-m-d'),
                 'reference'      => 'INV/' . $sale->reference,
-                'amount'         => $sale->paid_amount,
+                'amount'         => (int) $sale->paid_amount,
                 'sale_id'        => $sale->id,
                 'payment_method' => $request->payment_method,
             ]);
         }
 
         DB::commit();
-
         session()->flash('swal-success', 'Transaksi Berhasil Disimpan!');
         return redirect()->route('app.pos.index');
 
     } catch (\Exception $e) {
         DB::rollBack();
-        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
 }
 
