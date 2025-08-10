@@ -1,13 +1,11 @@
-@if ($data->payment_status == 'Partial')
-    <span class="badge badge-warning">
-        {{ $data->payment_status }}
-    </span>
-@elseif ($data->payment_status == 'Paid')
-    <span class="badge badge-success">
-        {{ $data->payment_status }}
-    </span>
-@else
-    <span class="badge badge-danger">
-        {{ $data->payment_status }}
-    </span>
-@endif
+@php
+    $map = [
+        'Paid'   => ['badge-success', 'Lunas'],
+        'Unpaid' => ['badge-danger',  'Belum Dibayar'],
+        'Partial'=> ['badge-warning', 'Sebagian'],
+    ];
+
+    [$cls, $label] = $map[$data->payment_status] ?? ['badge-light', ucfirst($data->payment_status)];
+@endphp
+
+<span class="badge {{ $cls }}">{{ $label }}</span>
