@@ -31,6 +31,16 @@ class Sale extends Model
         });
     }
 
+    public function details()
+{
+    return $this->hasMany(SaleDetails::class, 'sale_id', 'id');
+}
+
+public function payments() // optional biar konsisten dengan penamaan singkat
+{
+    return $this->hasMany(SalePayment::class, 'sale_id', 'id');
+}
+
     public function scopeCompleted($query)
     {
         return $query->where('status', 'Completed');

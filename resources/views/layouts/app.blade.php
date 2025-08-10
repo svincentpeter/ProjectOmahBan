@@ -58,6 +58,7 @@
     @endif
 
     {{-- ====== Penting untuk AutoNumeric & script lain yang di-push dari komponen ====== --}}
+    @stack('page_scripts')
     @stack('scripts')
 </body>
 </html>
