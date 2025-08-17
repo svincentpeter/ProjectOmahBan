@@ -30,4 +30,12 @@ Route::group(['middleware' => 'auth'], function () {
     //Purchases Return Report
     Route::get('/purchases-return-report', 'ReportsController@purchasesReturnReport')
         ->name('purchases-return-report.index');
+
+    // Ringkas Harian
+    Route::get('/ringkas-report', 'ReportsController@ringkas')
+        ->name('ringkas-report.index');
+
+    // Ringkas Per Kasir
+    Route::get('/ringkas-report/cashier', 'ReportsController@ringkasPerKasir')
+        ->name('ringkas-report.cashier');
 });

@@ -54,22 +54,25 @@ class ProductList extends Component
     // === Tambahkan/replace method di bawah ini! ===
     public function addToCart($productId)
 {
-    $product = Product::findOrFail($productId);
+    $p = Product::findOrFail($productId);
 
-    \Cart::add([
-        'id'       => $product->id,
-        'name'     => $product->product_name,
-        'price'    => $product->product_price,
-        'quantity' => 1,
-        'attributes' => [
-            'source_type' => 'new', // <-- CUKUP TAMBAHKAN BARIS INI!
-            'discount' => 0,
-            'discount_type' => 'fixed',
-            'tax' => 0
-        ]
-    ]);
+    // Susun payload sesuai yang dibutuhkan Checkout::productSelected()
+    $payload = [
+        'id'                 => (int) $p->id,
+        'product_name'       => (string) $p->product_name,
+        'product_code'       => $p->product_code,
+        'product_price'      => (int) $p->product_price,
+        'product_cost'       => (int) $p->product_cost,
+        'product_quantity'   => (int) $p->product_quantity,
+        'product_unit'       => $p->product_unit,
+        'product_order_tax'  => (int) ($p->product_order_tax ?? 0),
+        'product_tax_type'   => (int) ($p->product_tax_type ?? 0), // 0:none, 1:inclusive, 2:exclusive
+    ];
 
-    $this->emit('cartUpdated');
-    $this->dispatchBrowserEvent('showSuccess', ['message' => 'Product Added To Cart!']);
+    // Kirim ke komponen Checkout agar keranjang tunggal via Gloudemans\Shoppingcart
+    $this->dispatch('productSelected', $payload)
+         ->to(\App\Livewire\Pos\Checkout::class);
+
+    $this->dispatchBrowserEvent('showSuccess', ['message' => 'Produk berhasil ditambahkan!']);
 }
 }

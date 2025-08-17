@@ -3,54 +3,91 @@
 namespace App\Livewire\Pos;
 
 use Livewire\Component;
-use Modules\Product\Entities\ProductSecond; // Import model produk bekas kita
 use Livewire\WithPagination;
+use Gloudemans\Shoppingcart\Facades\Cart;
+use Modules\Product\Entities\ProductSecond;
 
 class ProductListSecond extends Component
 {
     use WithPagination;
 
-    public $query = '';
+    protected $paginationTheme = 'bootstrap';
 
-    public function updatingQuery()
+    public string $query = '';
+    public string $cart_instance = 'sale';
+    public function updatingQuery(): void
     {
         $this->resetPage();
     }
 
-    public function selectProduct($product)
-{
-    $this->dispatch('productSelected', product: $product)->to('pos.checkout');
-}
-    public function render()
+    // Backward-compat untuk pemanggilan lama
+    public function addToCart($id): void
     {
-        $products = ProductSecond::where('status', 'available')
-            ->where(function ($queryBuilder) {
-                $queryBuilder->where('name', 'like', '%' . $this->query . '%')
-                             ->orWhere('unique_code', 'like', '%' . $this->query . '%');
-            })
-            ->paginate(9);
-
-        return view('livewire.pos.product-list-second', compact('products'));
+        $this->addSecondToCart($id);
     }
 
-    public function addToCart($productId)
+    public function addSecondToCart($secondId): void
     {
-        $product = ProductSecond::findOrFail($productId);
+        $second = ProductSecond::findOrFail($secondId);
 
-        \Cart::add([
-            'id' => $product->id,
-            'name' => $product->name,
-            'price' => $product->selling_price,
-            'quantity' => 1,
-            'attributes' => [
-                'source_type' => 'second', // INI KUNCINYA!
-                'discount' => 0,
-                'discount_type' => 'fixed',
-                'tax' => 0,
-            ]
+        // Tolak jika status tidak ready/available/tersedia (jika kolom status ada)
+        if (isset($second->status) && !in_array(strtolower($second->status), ['ready', 'available', 'tersedia'])) {
+            $this->dispatch('notify', type: 'warning', message: 'Barang sudah terjual / tidak tersedia.');
+            return;
+        }
+
+        // Cegah duplikat di Cart
+        $dup = Cart::instance($this->cart_instance)->search(function ($cartItem) use ($second) {
+            return ($cartItem->id == $second->id)
+                && (($cartItem->options['source_type'] ?? null) === 'second');
+        });
+
+        if ($dup->isNotEmpty()) {
+            $this->dispatch('notify', type: 'warning', message: 'Item bekas ini sudah di keranjang.');
+            return;
+        }
+
+        Cart::instance($this->cart_instance)->add([
+            'id'      => $second->id,
+            'name'    => $second->name,
+            'qty'     => 1,
+            'price'   => (int) ($second->selling_price ?? $second->price ?? 0),
+            'weight'  => 0,
+            'options' => [
+                'source_type' => 'second',
+                'code'        => $second->unique_code ?? null,
+                'status'      => $second->status ?? 'available',
+                'original_id' => $second->id,            // <-- baru
+            ],
         ]);
 
-        $this->emit('cartUpdated'); // Memberi sinyal ke komponen lain bahwa cart berubah
-        $this->dispatchBrowserEvent('showSuccess', ['message' => 'Produk bekas ditambahkan!']);
+
+        // Sinkronkan UI keranjang
+        if (method_exists($this, 'refreshCart')) {
+            $this->refreshCart();
+        } else {
+            $this->dispatch('cartUpdated'); // Livewire v3
+        }
+
+        $this->dispatch('notify', type: 'success', message: 'Item bekas ditambahkan ke keranjang.');
+    }
+
+    public function render()
+    {
+        $products = ProductSecond::query()
+            ->when(strlen($this->query) > 0, function ($q) {
+                $s = trim($this->query);
+                $q->where(function ($qq) use ($s) {
+                    $qq->where('name', 'like', "%{$s}%")
+                        ->orWhere('unique_code', 'like', "%{$s}%")
+                        ->orWhere('sku', 'like', "%{$s}%");
+                });
+            })
+            ->latest('id')
+            ->paginate(9);
+
+        return view('livewire.pos.product-list-second', [
+            'products' => $products,
+        ]);
     }
 }

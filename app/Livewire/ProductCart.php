@@ -41,14 +41,16 @@ class ProductCart extends Component
             $cart_items = Cart::instance($this->cart_instance)->content();
 
             foreach ($cart_items as $cart_item) {
-                $this->check_quantity[$cart_item->id] = [$cart_item->options->stock];
+                $this->check_quantity[$cart_item->id] = (int) $cart_item->options->stock;
                 $this->quantity[$cart_item->id] = $cart_item->qty;
                 $this->unit_price[$cart_item->id] = $cart_item->price;
                 $this->discount_type[$cart_item->id] = $cart_item->options->product_discount_type;
                 if ($cart_item->options->product_discount_type == 'fixed') {
                     $this->item_discount[$cart_item->id] = $cart_item->options->product_discount;
                 } elseif ($cart_item->options->product_discount_type == 'percentage') {
-                    $this->item_discount[$cart_item->id] = round(100 * ($cart_item->options->product_discount / $cart_item->price));
+                    $this->item_discount[$cart_item->id] = round(
+    $cart_item->price * ($cart_item->options->product_discount / 100)
+);
                 }
             }
         } else {

@@ -24,16 +24,21 @@ Route::group(['middleware' => 'auth'], function () {
         return $pdf->stream('sale-' . $sale->reference . '.pdf');
     })->name('sales.pdf');
 
-    // PDF POS (A7)
+    // PDF POS (A6)
     Route::get('/sales/pos/pdf/{id}', function ($id) {
         $sale = \Modules\Sale\Entities\Sale::findOrFail($id);
+        // Pastikan relasi user dan saleDetails sudah di-load untuk efisiensi
+        $sale->load('user', 'saleDetails.product.brand');
+
         $pdf = \PDF::loadView('sale::print-pos', ['sale' => $sale])
-            ->setPaper('a7')
-            ->setOption('margin-top', 8)
-            ->setOption('margin-bottom', 8)
+            // UBAH BARIS INI: 'a6' dan 'landscape'
+            ->setPaper('a6', 'landscape')
+            ->setOption('margin-top', 5)
+            ->setOption('margin-bottom', 5)
             ->setOption('margin-left', 5)
             ->setOption('margin-right', 5);
-        return $pdf->stream('sale-' . $sale->reference . '.pdf');
+
+        return $pdf->stream('nota-' . $sale->reference . '.pdf');
     })->name('sales.pos.pdf');
 
     // Sales – read only
