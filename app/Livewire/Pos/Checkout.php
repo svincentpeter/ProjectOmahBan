@@ -74,17 +74,17 @@ class Checkout extends Component
     }
 
     public function hydrate()
-{
-    $effectiveTotal = $this->sale
-        ? (int) $this->sale->total_amount
-        : (int) $this->cartTotalInt();
+    {
+        $effectiveTotal = $this->sale
+            ? (int) $this->sale->total_amount
+            : (int) $this->cartTotalInt();
 
-    $this->total_amount = $effectiveTotal;
+        $this->total_amount = $effectiveTotal;
 
-    // ❌ Jangan set default paid_amount di sini.
-    // ✅ Cukup hitung ulang kembalian dari nilai yang ada sekarang.
-    $this->change = max(0, $this->sanitizeMoney($this->paid_amount) - $effectiveTotal);
-}
+        // ❌ Jangan set default paid_amount di sini.
+        // ✅ Cukup hitung ulang kembalian dari nilai yang ada sekarang.
+        $this->change = max(0, $this->sanitizeMoney($this->paid_amount) - $effectiveTotal);
+    }
 
 
 
@@ -263,7 +263,7 @@ class Checkout extends Component
 
                 $sale = Sale::create([
                     'date'                => now()->toDateString(),
-                    'reference'           => $this->reference ?? ('SL-' . now()->format('Ymd-His')),
+                    'reference'           => $this->reference ?? ('SL-' . now()->format('Ymd-His') . '-' . uniqid()),
                     'user_id'             => auth()->id(),
                     'tax_percentage'      => (int) $this->global_tax,
                     'tax_amount'          => (int) ($this->cart()->tax() ?? 0),
@@ -282,31 +282,61 @@ class Checkout extends Component
                     'note'                => $this->note,
                 ]);
 
-                foreach ($cartItems as $item) {
-                    $source      = $item->options->source_type ?? 'new';
-                    $hpp         = (float) ($item->options->hpp ?? 0);
-                    $code        = $item->options->code ?? null;
-                    $discountAmt = (int) ($item->options->discount ?? 0);
-                    $taxAmt      = (int) ($item->options->tax ?? 0);
+                $totalHpp    = 0;
+                $totalProfit = 0;
 
-                    SaleDetails::create([
-                        'sale_id'                 => $sale->id,
-                        'product_id'              => ($source !== 'manual') ? $item->id : null,
-                        'source_type'             => $source,
-                        'item_name'               => $item->name,          // <= PENTING
-                        'product_name'            => $item->name,
-                        'product_code'            => $code ?? '-',
-                        'quantity'                => (int) $item->qty,
-                        'price'                   => (int) $item->price,
-                        'unit_price'              => (int) $item->price,
-                        'sub_total'               => (int) $item->subtotal,
-                        'hpp'                     => $hpp,
-                        'subtotal_profit'         => 0,
-                        'product_discount_amount' => $discountAmt,
-                        'product_discount_type'   => $item->options->discount_type ?? 'fixed',
-                        'product_tax_amount'      => $taxAmt,
+                foreach ($cartItems as $item) {
+                    // Sumber & meta dari options (bukan attributes)
+                    $src  = data_get($item->options, 'source_type', 'new');
+                    $code = data_get($item->options, 'code', $src === 'manual' ? '-' : '-');
+
+                    // id produk asli (kalau disimpan), fallback ke $item->id
+                    $originalId = (int) data_get($item->options, 'original_id', $item->id);
+
+                    // HPP
+                    $hpp = 0;
+                    if ($src === 'new') {
+                        if ($p = \Modules\Product\Entities\Product::find($originalId)) {
+                            $hpp = (int) $p->product_cost;
+                        }
+                    } elseif ($src === 'second') {
+                        if ($s = \Modules\Product\Entities\ProductSecond::find($originalId)) {
+                            $hpp = (int) ($s->purchase_price ?? 0);
+                        }
+                    }
+
+                    $qty       = (int) $item->qty;     // <- qty
+                    $unitPrice = (int) $item->price;
+                    $subTotal  = $qty * $unitPrice;
+
+                    \Modules\Sale\Entities\SaleDetails::create([
+                        'sale_id'         => $sale->id,
+                        'product_id'      => $src !== 'manual' ? $originalId : null,
+                        'source_type'     => $src,
+                        'item_name'       => $item->name,
+                        'product_name'    => $item->name,
+                        'product_code'    => $code,
+                        'quantity'        => $qty,
+                        'price'           => $unitPrice,
+                        'unit_price'      => $unitPrice,
+                        'sub_total'       => $subTotal,
+                        'hpp'             => $hpp,
+                        'subtotal_profit' => max(0, ($unitPrice - $hpp) * $qty),
+
+                        'product_discount_amount' => (int) data_get($item->options, 'discount', 0),
+                        'product_discount_type'   => data_get($item->options, 'discount_type', 'fixed'),
+                        'product_tax_amount'      => (int) data_get($item->options, 'tax', 0),
                     ]);
+
+                    $totalHpp    += $hpp * $qty;
+                    $totalProfit += max(0, ($unitPrice - $hpp) * $qty);
                 }
+
+
+                $sale->update([
+                    'total_hpp'    => $totalHpp,
+                    'total_profit' => $totalProfit,
+                ]);
 
                 return $sale;
             });
@@ -329,6 +359,7 @@ class Checkout extends Component
     }
 
     // ========= Tandai Lunas =========
+
     public function markAsPaid()
     {
         if (!$this->sale) {
@@ -343,6 +374,10 @@ class Checkout extends Component
         $this->validate(['payment_method' => 'required|in:Tunai,Transfer,Kredit']);
         if ($this->payment_method !== 'Tunai') {
             $this->validate(['bank_name' => 'required|string|max:255']);
+        }
+        if ($this->payment_method === 'Transfer' && empty($this->bank_name)) {
+            $this->addError('bank_name', 'Nama bank wajib diisi untuk pembayaran transfer.');
+            return;
         }
 
         $pay   = $this->sanitizeMoney($this->paid_amount);
@@ -362,7 +397,7 @@ class Checkout extends Component
                 SalePayment::create([
                     'date'           => now()->toDateString(),
                     'reference'      => 'INV/' . $sale->reference,
-                    'amount'         => $total,
+                    'amount'         => (int) $total, // simpan dalam satuan rupiah yang sama dengan sales.total_amount
                     'sale_id'        => $sale->id,
                     'payment_method' => $this->payment_method ?: 'Tunai',
                 ]);
@@ -382,8 +417,34 @@ class Checkout extends Component
                     }
                 }
 
+                foreach ($sale->saleDetails as $d) {
+                    if ($d->source_type === 'new' && $d->product_id) {
+                        \DB::table('stock_movements')->insert([
+                            'productable_type' => \Modules\Product\Entities\Product::class,
+                            'productable_id'   => $d->product_id,
+                            'type'             => 'out',
+                            'quantity'         => (int) $d->quantity,
+                            'description'      => 'Sale #' . $sale->reference,
+                            'user_id'          => auth()->id(),
+                            'created_at'       => now(),
+                            'updated_at'       => now(),
+                        ]);
+                    } elseif ($d->source_type === 'second' && $d->product_id) {
+                        \DB::table('stock_movements')->insert([
+                            'productable_type' => \Modules\Product\Entities\ProductSecond::class,
+                            'productable_id'   => $d->product_id,
+                            'type'             => 'out',
+                            'quantity'         => 1,
+                            'description'      => 'Sale (second) #' . $sale->reference,
+                            'user_id'          => auth()->id(),
+                            'created_at'       => now(),
+                            'updated_at'       => now(),
+                        ]);
+                    }
+                }
+
                 $sale->update([
-                    'paid_amount'    => $total,
+                    'paid_amount'    => (int) $total,
                     'due_amount'     => 0,
                     'status'         => 'Completed',
                     'payment_status' => 'Paid',
