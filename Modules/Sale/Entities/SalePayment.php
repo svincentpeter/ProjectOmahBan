@@ -13,19 +13,14 @@ class SalePayment extends Model
 
     protected $guarded = [];
 
+    protected $fillable = [
+    'sale_id','reference','amount','payment_method','note','date'
+];
+
+
     public function sale()
     {
         return $this->belongsTo(Sale::class, 'sale_id', 'id');
-    }
-
-    public function setAmountAttribute($value)
-    {
-        $this->attributes['amount'] = $value * 100;
-    }
-
-    public function getAmountAttribute($value)
-    {
-        return $value / 100;
     }
 
 

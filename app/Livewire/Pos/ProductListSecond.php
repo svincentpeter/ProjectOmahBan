@@ -12,6 +12,8 @@ class ProductListSecond extends Component
     use WithPagination;
 
     protected $paginationTheme = 'bootstrap';
+public int $perPage = 9;
+protected $queryString = ['query' => ['except' => '']];
 
     public string $query = '';
     public string $cart_instance = 'sale';
@@ -27,67 +29,70 @@ class ProductListSecond extends Component
     }
 
     public function addSecondToCart($secondId): void
-    {
-        $second = ProductSecond::findOrFail($secondId);
+{
+    $second = ProductSecond::findOrFail($secondId);
 
-        // Tolak jika status tidak ready/available/tersedia (jika kolom status ada)
-        if (isset($second->status) && !in_array(strtolower($second->status), ['ready', 'available', 'tersedia'])) {
-            $this->dispatch('notify', type: 'warning', message: 'Barang sudah terjual / tidak tersedia.');
-            return;
-        }
-
-        // Cegah duplikat di Cart
-        $dup = Cart::instance($this->cart_instance)->search(function ($cartItem) use ($second) {
-            return ($cartItem->id == $second->id)
-                && (($cartItem->options['source_type'] ?? null) === 'second');
-        });
-
-        if ($dup->isNotEmpty()) {
-            $this->dispatch('notify', type: 'warning', message: 'Item bekas ini sudah di keranjang.');
-            return;
-        }
-
-        Cart::instance($this->cart_instance)->add([
-            'id'      => $second->id,
-            'name'    => $second->name,
-            'qty'     => 1,
-            'price'   => (int) ($second->selling_price ?? $second->price ?? 0),
-            'weight'  => 0,
-            'options' => [
-                'source_type' => 'second',
-                'code'        => $second->unique_code ?? null,
-                'status'      => $second->status ?? 'available',
-                'original_id' => $second->id,            // <-- baru
-            ],
-        ]);
-
-
-        // Sinkronkan UI keranjang
-        if (method_exists($this, 'refreshCart')) {
-            $this->refreshCart();
-        } else {
-            $this->dispatch('cartUpdated'); // Livewire v3
-        }
-
-        $this->dispatch('notify', type: 'success', message: 'Item bekas ditambahkan ke keranjang.');
+    // Hanya boleh kalau available
+    if (strtolower((string)$second->status) !== 'available') {
+        $this->dispatch('notify', type: 'warning', message: 'Barang bekas ini sudah terjual / tidak tersedia.');
+        return;
     }
+
+    // Cegah duplikat (unit unik)
+    $dup = Cart::instance($this->cart_instance)->search(function ($cartItem) use ($second) {
+        return ($cartItem->id == $second->id) && (($cartItem->options['source_type'] ?? null) === 'second');
+    });
+
+    if ($dup->isNotEmpty()) {
+        $this->dispatch('notify', type: 'warning', message: 'Item bekas ini sudah ada di keranjang.');
+        return;
+    }
+
+    Cart::instance($this->cart_instance)->add([
+        'id'      => $second->id,
+        'name'    => $second->name,
+        'qty'     => 1, // unit unik
+        'price'   => (int)$second->selling_price,
+        'weight'  => 1,
+        'options' => [
+            'source_type'  => 'second',
+            'code'         => $second->unique_code,
+            'unit_price'   => (int)$second->selling_price,
+            'hpp'          => (int)($second->purchase_price ?? 0),
+            'size'         => $second->size,
+            'ring'         => $second->ring,
+            'product_year' => $second->product_year,
+        ],
+    ]);
+
+    $this->dispatch('notify', type: 'success', message: 'Item bekas masuk keranjang.');
+    $this->dispatch('cartUpdated');
+}
+
 
     public function render()
-    {
-        $products = ProductSecond::query()
-            ->when(strlen($this->query) > 0, function ($q) {
-                $s = trim($this->query);
-                $q->where(function ($qq) use ($s) {
-                    $qq->where('name', 'like', "%{$s}%")
-                        ->orWhere('unique_code', 'like', "%{$s}%")
-                        ->orWhere('sku', 'like', "%{$s}%");
-                });
-            })
-            ->latest('id')
-            ->paginate(9);
+{
+    $products = ProductSecond::query()
+        ->when(strlen($this->query) > 0, function ($q) {
+            $s = trim($this->query);
+            $q->where(function ($qq) use ($s) {
+                $qq->where('name', 'like', "%{$s}%")
+                   ->orWhere('unique_code', 'like', "%{$s}%")
+                   ->orWhere('size', 'like', "%{$s}%")
+                   ->orWhere('ring', 'like', "%{$s}%");
+                if (ctype_digit($s)) {
+                    $qq->orWhere('product_year', (int)$s);
+                }
+            });
+        })
+        // Tampilkan yang available dulu
+        ->orderByRaw("CASE WHEN status='available' THEN 0 ELSE 1 END")
+        ->latest('id')
+        ->paginate($this->perPage);
 
-        return view('livewire.pos.product-list-second', [
-            'products' => $products,
-        ]);
-    }
+    return view('livewire.pos.product-list-second', [
+        'products' => $products,
+    ]);
+}
+
 }

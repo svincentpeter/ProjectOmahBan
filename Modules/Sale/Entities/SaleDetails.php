@@ -13,6 +13,26 @@ class SaleDetails extends Model
     protected $guarded = [];
     protected $with = ['product'];
 
+    protected $fillable = [
+    'sale_id',
+    'item_name',                 // <-- TAMBAH INI
+    'product_id',
+    'productable_id',
+    'productable_type',
+    'source_type',
+    'product_name',
+    'product_code',
+    'quantity',
+    'price',
+    'hpp',
+    'unit_price',
+    'sub_total',
+    'subtotal_profit',
+    'product_discount_amount',
+    'product_discount_type',
+    'product_tax_amount',
+];
+
     protected static function booted()
     {
         static::creating(function (SaleDetails $d) {

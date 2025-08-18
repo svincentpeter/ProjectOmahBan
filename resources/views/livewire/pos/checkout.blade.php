@@ -54,11 +54,15 @@
                         </div>
                     @endif
 
-                    <button wire:click="markAsPaid" wire:loading.attr="disabled" class="btn btn-primary btn-block">
-                        <span wire:loading wire:target="markAsPaid" class="spinner-border spinner-border-sm"
-                            role="status" aria-hidden="true"></span>
-                        Tandai Lunas
-                    </button>
+                    <button wire:click="markAsPaid"
+        wire:loading.attr="disabled"
+        class="btn btn-primary btn-block"
+        @disabled(($paid_amount ?? 0) < (int)($sale->total_amount ?? 0))
+        title="Jumlah dibayar harus ≥ total">
+    <span wire:loading wire:target="markAsPaid" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Tandai Lunas
+</button>
+
 
                 @endif
 

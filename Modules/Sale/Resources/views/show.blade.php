@@ -11,6 +11,15 @@
 @endsection
 
 @section('content')
+@php
+    // Mapping badge jenis item
+    $jenisMap = [
+        'new'    => ['Baru',   'success'],
+        'second' => ['Bekas',  'warning'],
+        'manual' => ['Manual', 'secondary'],
+    ];
+@endphp
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-lg-12">
@@ -50,7 +59,6 @@
 
                             <div class="mt-1">
                                 Status:
-                                {{-- gunakan partial badge yang sudah ada bila tersedia --}}
                                 @includeIf('sale::partials.status', ['data' => $sale])
                             </div>
 
@@ -94,49 +102,63 @@
                             <tbody>
                             @php
                                 $i = 1;
-                                $totalQty   = 0;
-                                $totalJual  = 0;
-                                $totalHpp   = 0;
-                                $totalLaba  = 0;
-
-                                $jenisMap  = ['new' => ['Baru','success'], 'second' => ['Bekas','warning'], 'manual' => ['Manual','secondary']];
+                                $totalQty  = 0;
+                                $totalJual = 0;
+                                $totalHpp  = 0;
+                                $totalLaba = 0;
                             @endphp
 
                             @foreach($sale->saleDetails as $item)
                                 @php
-                                    $qty       = (int) $item->quantity;
-                                    $hppUnit   = (int) $item->hpp;
-                                    $hppTotal  = $hppUnit * $qty;
+                                    // Ambil field dengan fallback agar aman untuk item manual
+                                    $type     = (string)($item->source_type ?? 'new');
+                                    [$jenisText, $jenisColor] = $jenisMap[$type] ?? ['-', 'light'];
 
-                                    $unitPrice = (int) $item->unit_price;
-                                    $subTotal  = (int) $item->sub_total;
+                                    $name     = $item->product_name ?? $item->item_name ?? $item->name ?? '-';
+                                    $code     = $item->product_code ?? $item->code ?? '-';
 
-                                    $diskon    = (int) $item->product_discount_amount;
-                                    $pajak     = (int) $item->product_tax_amount;
+                                    // Qty khusus second = 1
+                                    $qty      = ($type === 'second') ? 1 : (int)($item->quantity ?? $item->qty ?? 1);
 
-                                    $labaItem  = !is_null($item->subtotal_profit) ? (int)$item->subtotal_profit : ($subTotal - $hppTotal);
+                                    $hppUnit  = (int)($item->hpp ?? 0);
+                                    $unitPrice= (int)($item->unit_price ?? $item->price ?? 0);
+                                    $diskon   = (int)($item->product_discount_amount ?? $item->discount ?? 0);
+                                    $pajak    = (int)($item->product_tax_amount ?? $item->tax ?? 0);
 
+                                    // Subtotal: pakai field bila ada, jika tidak hitung
+                                    $subTotal = (int)($item->sub_total ?? max(0, $unitPrice * $qty - $diskon + $pajak));
+
+                                    $hppTotal = $hppUnit * $qty;
+
+                                    // Laba per baris (fallback ke hitung jika field subtotal_profit tidak ada)
+                                    $labaItem = !is_null($item->subtotal_profit ?? null)
+                                        ? (int) $item->subtotal_profit
+                                        : ($subTotal - $hppTotal);
+
+                                    // Akumulasi
                                     $totalQty  += $qty;
                                     $totalJual += $subTotal;
                                     $totalHpp  += $hppTotal;
                                     $totalLaba += $labaItem;
-
-                                    [$jenisText,$jenisColor] = $jenisMap[$item->source_type ?? 'manual'] ?? ['-','light'];
                                 @endphp
 
                                 <tr>
                                     <td class="align-middle">{{ $i++ }}</td>
-                                    <td class="align-middle">{{ $item->product_name ?? $item->item_name }}</td>
+
                                     <td class="align-middle">
-                                        <span class="badge badge-success">{{ $item->product_code ?? '-' }}</span>
+                                        {{ $name }}
                                     </td>
+
+                                    <td class="align-middle">
+                                        <span class="badge badge-success">{{ $code ?: '-' }}</span>
+                                    </td>
+
                                     <td class="align-middle">
                                         <span class="badge badge-{{ $jenisColor }}">{{ $jenisText }}</span>
                                     </td>
 
                                     <td class="align-middle text-right">{{ format_currency($hppUnit) }}</td>
                                     <td class="align-middle text-right">{{ format_currency($unitPrice) }}</td>
-
                                     <td class="align-middle text-center">{{ $qty }}</td>
 
                                     <td class="align-middle text-right">{{ format_currency($diskon) }}</td>
@@ -173,11 +195,11 @@
                             <table class="table">
                                 <tbody>
                                 <tr>
-                                    <td class="left"><strong>Diskon ({{ $sale->discount_percentage }}%)</strong></td>
+                                    <td class="left"><strong>Diskon ({{ (int)$sale->discount_percentage }}%)</strong></td>
                                     <td class="right">{{ format_currency((int)$sale->discount_amount) }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="left"><strong>Pajak ({{ $sale->tax_percentage }}%)</strong></td>
+                                    <td class="left"><strong>Pajak ({{ (int)$sale->tax_percentage }}%)</strong></td>
                                     <td class="right">{{ format_currency((int)$sale->tax_amount) }}</td>
                                 </tr>
                                 <tr>
@@ -195,8 +217,9 @@
                                 <tr>
                                     <td class="left"><strong>Total Laba</strong></td>
                                     <td class="right">
-                                        <span class="badge {{ ($sale->total_profit ?? $totalLaba) >= 0 ? 'badge-success' : 'badge-danger' }}">
-                                            {{ format_currency((int)($sale->total_profit ?? $totalLaba)) }}
+                                        @php $grandProfit = (int)($sale->total_profit ?? $totalLaba); @endphp
+                                        <span class="badge {{ $grandProfit >= 0 ? 'badge-success' : 'badge-danger' }}">
+                                            {{ format_currency($grandProfit) }}
                                         </span>
                                     </td>
                                 </tr>

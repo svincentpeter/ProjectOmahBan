@@ -40,7 +40,7 @@
                         aria-labelledby="new-product-tab">
                         <div class="mt-3">
                             <livewire:search-product />
-                            <livewire:pos.product-list :categories="$product_categories" />
+                            <livewire:pos.product-list :categories="$categories" />
                         </div>
                     </div>
 

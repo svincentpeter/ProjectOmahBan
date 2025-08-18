@@ -13,19 +13,22 @@ class UpdateSaleRequest extends FormRequest
      * @return array
      */
     public function rules()
-    {
-        return [
-            'reference' => 'required|string|max:255',
-            'tax_percentage' => 'required|integer|min:0|max:100',
-            'discount_percentage' => 'required|integer|min:0|max:100',
-            'shipping_amount' => 'required|numeric',
-            'total_amount' => 'required|numeric',
-            'paid_amount' => 'required|numeric|max:' . $this->sale->total_amount,
-            'status' => 'required|string|max:255',
-            'payment_method' => 'required|string|max:255',
-            'note' => 'nullable|string|max:1000'
-        ];
-    }
+{
+    return [
+        'reference'            => ['required','string'],
+        'date'                 => ['required','date'],
+        'status'               => ['required','in:Pending,Shipped,Completed'],
+        'payment_method'       => ['required','in:Tunai,Transfer,QRIS'],
+        'bank_name'            => ['nullable','string','max:100'],
+        'shipping_amount'      => ['nullable','numeric','min:0'],
+        'tax_percentage'       => ['nullable','numeric','min:0','max:100'],
+        'discount_percentage'  => ['nullable','numeric','min:0','max:100'],
+        // 'total_amount' => HAPUS
+        'paid_amount'          => ['nullable','numeric','min:0'], // Hapus 'max:...'
+        'note'                 => ['nullable','string'],
+    ];
+}
+
 
     /**
      * Determine if the user is authorized to make this request.
