@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 17, 2025 at 06:25 AM
+-- Generation Time: Aug 18, 2025 at 05:31 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.26
 
@@ -868,15 +868,15 @@ INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `tax_percentage`, `ta
 (44, '2025-08-10', 'SL-00041', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:08:39', '2025-08-10 06:08:39'),
 (45, '2025-08-10', 'SL-00045', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:11:54', '2025-08-10 06:11:56'),
 (46, '2025-08-10', 'SL-00046', 1, 0, 0, 0, 0, 0, 150000, 0, 150000, 0, 150000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:12:16', '2025-08-10 06:12:16'),
-(47, '2025-08-10', 'SL-00047', 1, 0, 0, 0, 0, 0, 150000, 0, 150000, 15000000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:19:30', '2025-08-10 06:19:53'),
+(47, '2025-08-10', 'SL-00047', 1, 0, 0, 0, 0, 0, 200000, 0, 200000, 200000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:19:30', '2025-08-18 16:18:52'),
 (48, '2025-08-10', 'SL-00048', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:20:10', '2025-08-10 06:20:10'),
 (49, '2025-08-10', 'SL-00049', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:20:39', '2025-08-10 06:20:39'),
 (50, '2025-08-10', 'SL-00050', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:28:26', '2025-08-10 06:28:26'),
 (51, '2025-08-10', 'SL-00051', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:29:20', '2025-08-10 06:29:20'),
 (52, '2025-08-10', 'SL-00052', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:33:33', '2025-08-10 06:34:17'),
-(53, '2025-08-12', 'SL-00053', 1, 0, 0, 0, 0, 0, 100000, 0, 0, 100000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:14:18', '2025-08-12 04:14:41'),
+(53, '2025-08-12', 'SL-00053', 1, 0, 0, 0, 0, 0, 0, 0, 0, 100000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:14:18', '2025-08-18 15:52:12'),
 (54, '2025-08-12', 'SL-00054', 1, 0, 0, 0, 0, 0, 1425000, 0, 0, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-12 04:16:16', '2025-08-12 04:16:16'),
-(55, '2025-08-17', 'SL-00055', 1, 0, 0, 0, 0, 0, 2275000, 1800000, 475000, 2275000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-17 05:24:44', '2025-08-17 05:24:47');
+(55, '2025-08-17', 'SL-00055', 1, 0, 0, 0, 0, 0, 2400000, 0, 2400000, 2400000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-17 05:24:44', '2025-08-18 13:41:51');
 
 -- --------------------------------------------------------
 
@@ -940,16 +940,17 @@ INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `product
 (27, 44, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:08:39', '2025-08-10 06:08:39'),
 (28, 45, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:11:54', '2025-08-10 06:11:54'),
 (29, 46, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-10 06:12:16', '2025-08-10 06:12:16'),
-(30, 47, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-10 06:19:30', '2025-08-10 06:19:30'),
 (31, 48, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:20:10', '2025-08-10 06:20:10'),
 (32, 49, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:20:39', '2025-08-10 06:20:39'),
 (33, 50, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:28:26', '2025-08-10 06:28:26'),
 (34, 51, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:29:20', '2025-08-10 06:29:20'),
 (35, 52, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:33:33', '2025-08-10 06:33:33'),
-(36, 53, 'Jasa Balancing', NULL, NULL, NULL, 'manual', 'Jasa Balancing', '-', 4, 25000, 0, 25000, 100000, 0, 0, 'fixed', 0, '2025-08-12 04:14:18', '2025-08-12 04:14:18'),
 (37, 54, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 0, 0, 'fixed', 0, '2025-08-12 04:16:16', '2025-08-12 04:16:16'),
-(38, 55, 'Velg Bekas HSR Ring 16 Black Polish', 3, NULL, NULL, 'second', 'Velg Bekas HSR Ring 16 Black Polish', 'SEC-HSR-R16-BP-001', 1, 2250000, 1800000, 2250000, 2250000, 450000, 0, 'fixed', 0, '2025-08-17 05:24:44', '2025-08-17 05:24:44'),
-(39, 55, 'Balancing', NULL, NULL, NULL, 'manual', 'Balancing', '-', 1, 25000, 0, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-17 05:24:44', '2025-08-17 05:24:44');
+(43, 55, 'Velg Bekas HSR Ring 16 Black Polish', NULL, NULL, NULL, 'second', 'Velg Bekas HSR Ring 16 Black Polish', 'SEC-HSR-R16-BP-001', 1, 2250000, 0, 2250000, 2250000, 2250000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
+(44, 55, 'Balancing', NULL, NULL, NULL, 'manual', 'Balancing', '-', 1, 25000, 0, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
+(45, 55, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 125000, 0, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
+(49, 47, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
+(50, 47, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 2, 25000, 0, 25000, 50000, 50000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52');
 
 -- --------------------------------------------------------
 
@@ -979,7 +980,10 @@ INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `pa
 (7, 47, 150000, '2025-08-10', 'INV/SL-00047', 'Tunai', NULL, '2025-08-10 06:19:53', '2025-08-10 06:19:53'),
 (8, 52, 1425000, '2025-08-10', 'INV/SL-00052', 'Tunai', NULL, '2025-08-10 06:34:17', '2025-08-10 06:34:17'),
 (9, 53, 100000, '2025-08-12', 'INV/SL-00053', 'Tunai', NULL, '2025-08-12 04:14:41', '2025-08-12 04:14:41'),
-(10, 55, 227500000, '2025-08-17', 'INV/SL-00055', 'Transfer', NULL, '2025-08-17 05:24:47', '2025-08-17 05:24:47');
+(10, 55, 227500000, '2025-08-17', 'INV/SL-00055', 'Transfer', NULL, '2025-08-17 05:24:47', '2025-08-17 05:24:47'),
+(11, 55, 12500000, '2025-08-18', 'ADJ-20250818161158', 'Tunai', 'Penyesuaian pembayaran saat edit', '2025-08-18 09:11:58', '2025-08-18 09:11:58'),
+(12, 47, 14850000, '2025-08-18', 'SP-20250818-230945-SFXCN', 'Tunai', 'Penyesuaian saat edit (refund)', '2025-08-18 16:09:45', '2025-08-18 16:09:45'),
+(13, 47, 50000, '2025-08-18', 'SP-20250818-231852-GTOSJ', 'Tunai', 'Penyesuaian saat edit (+)', '2025-08-18 16:18:52', '2025-08-18 16:18:52');
 
 -- --------------------------------------------------------
 
@@ -1303,7 +1307,9 @@ ALTER TABLE `product_seconds`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `product_seconds_unique_code_unique` (`unique_code`),
   ADD KEY `product_seconds_category_id_foreign` (`category_id`),
-  ADD KEY `product_seconds_brand_id_foreign` (`brand_id`);
+  ADD KEY `product_seconds_brand_id_foreign` (`brand_id`),
+  ADD KEY `idx_product_seconds_status` (`status`),
+  ADD KEY `idx_product_seconds_year` (`product_year`);
 
 --
 -- Indexes for table `purchases`
@@ -1615,13 +1621,13 @@ ALTER TABLE `sales`
 -- AUTO_INCREMENT for table `sale_details`
 --
 ALTER TABLE `sale_details`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT for table `sale_payments`
 --
 ALTER TABLE `sale_payments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `sale_returns`

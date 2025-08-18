@@ -3,10 +3,12 @@
 namespace Modules\Sale\Http\Controllers;
 
 use Gloudemans\Shoppingcart\Facades\Cart;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Modules\Product\Entities\Category;
 use Modules\Product\Entities\Product;
+use Modules\Product\Entities\ProductSecond;
 use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
@@ -14,137 +16,254 @@ use Modules\Sale\Http\Requests\StorePosSaleRequest;
 
 class PosController extends Controller
 {
+    /**
+     * Tampilkan halaman POS.
+     */
     public function index()
     {
-        Cart::instance('sale')->destroy();
+        // Siapkan data pendukung untuk tab produk
+        $categories = Category::orderBy('category_name')->get();
 
-        $product_categories = Category::all();
+        // Pastikan instance keranjang POS konsisten
+        if (!session()->has('cart_instance')) {
+            session(['cart_instance' => 'sale']);
+        }
 
-        return view('sale::pos.index', compact('product_categories'));
+        return view('sale::pos.index', [
+    'categories' => $categories,
+    'product_categories' => $categories, // alias agar view lama tetap hidup
+]);
     }
 
+    /**
+     * Simpan transaksi POS.
+     *
+     * Catatan penting:
+     * - Semua nominal uang disimpan sebagai integer (rupiah utuh).
+     * - Produk baru akan mengurangi stok kuantitas.
+     * - Produk bekas (second) ditandai sold (1 unit unik).
+     * - Detail second menggunakan kolom polymorphic productable_*
+     */
     public function store(StorePosSaleRequest $request)
-{
-    try {
+    {
+        $cart = Cart::instance('sale');
+
+        if ($cart->count() <= 0) {
+            return back()->with('error', 'Keranjang masih kosong.');
+        }
+
+        // --- Normalisasi input uang ---
+        $shippingAmount     = $this->sanitizeMoney($request->input('shipping_amount'));
+        $paidAmountRequest  = $this->sanitizeMoney($request->input('paid_amount'));
+        $taxPercent         = (int) ($request->input('tax_percentage') ?? 0);
+        $discountPercent    = (int) ($request->input('discount_percentage') ?? 0);
+
+        // --- Hitung subtotal berdasarkan item keranjang ---
+        $items = $cart->content();
+        $subtotal    = 0;
+        $totalHpp    = 0;
+
+        foreach ($items as $item) {
+            $qty        = (int) $item->qty;
+            $unitPrice  = (int) $item->price;
+            $line       = $unitPrice * $qty;
+
+            $itemDisc   = (int) data_get($item->options, 'discount', 0);
+            $itemTax    = (int) data_get($item->options, 'tax', 0);
+            $lineNet    = $line - $itemDisc + $itemTax;
+
+            $subtotal  += $lineNet;
+            $totalHpp  += ((int) data_get($item->options, 'hpp', 0)) * $qty;
+        }
+
+        $taxAmount       = (int) round($subtotal * ($taxPercent / 100));
+        $discountAmount  = (int) round($subtotal * ($discountPercent / 100));
+
+        $grandTotal      = max(0, $subtotal + $taxAmount - $discountAmount + $shippingAmount);
+
+        // Lindungi dari input salah: paid tidak boleh > total
+        $paidAmount      = (int) min($grandTotal, max(0, $paidAmountRequest));
+        $dueAmount       = max(0, $grandTotal - $paidAmount);
+        $paymentStatus   = $paidAmount >= $grandTotal ? 'Paid' : ($paidAmount > 0 ? 'Partial' : 'Unpaid');
+
         DB::beginTransaction();
 
-        $due_amount = $request->total_amount - $request->paid_amount;
-        $payment_status = $due_amount == $request->total_amount ? 'Unpaid' : ($due_amount > 0 ? 'Partial' : 'Paid');
+        try {
+            // Kunci produk yang akan terlibat agar tidak race condition
+            $this->assertStockSufficientOrAvailable($items);
 
-        $sale = Sale::create([
-            'date'                => now()->format('Y-m-d'),
-            'reference'           => 'PSL',
-            'user_id'             => auth()->id(),
-            'tax_percentage'      => $request->tax_percentage,
-            'discount_percentage' => $request->discount_percentage,
-            'shipping_amount'     => (int) $request->shipping_amount,
-            'paid_amount'         => (int) $request->paid_amount,
-            'total_amount'        => (int) $request->total_amount,
-            'due_amount'          => (int) $due_amount,
-            'status'              => 'Completed',
-            'payment_status'      => $payment_status,
-            'payment_method'      => $request->payment_method,
-            'bank_name'           => $request->payment_method == 'Transfer' ? $request->bank_name : null,
-            'note'                => $request->note,
-            'tax_amount'          => (int) Cart::instance('sale')->tax(),
-            'discount_amount'     => (int) Cart::instance('sale')->discount(),
-        ]);
+            // Buat nomor referensi sederhana (bisa diganti dengan generator terpisah)
+            $reference = 'SL-' . now()->format('Ymd-His');
 
-        $totalHpp = 0;
+            // Simpan header sale
+            $sale = Sale::create([
+                'date'                => now()->toDateString(),
+                'reference'           => $reference,
+                'user_id'             => auth()->id(),
+                'tax_percentage'      => $taxPercent,
+                'discount_percentage' => $discountPercent,
+                'shipping_amount'     => $shippingAmount,
+                'paid_amount'         => $paidAmount,
+                'total_amount'        => $grandTotal,
+                'due_amount'          => $dueAmount,
+                'status'              => 'Completed',
+                'payment_status'      => $paymentStatus,
+                'payment_method'      => $request->input('payment_method', 'Tunai'),
+                'bank_name'           => $request->input('payment_method') === 'Transfer' ? $request->input('bank_name') : null,
+                'note'                => $request->input('note'),
+                'tax_amount'          => $taxAmount,
+                'discount_amount'     => $discountAmount,
+                'total_hpp'           => $totalHpp,
+                'total_profit'        => max(0, $grandTotal - $taxAmount + $discountAmount - $shippingAmount - $totalHpp), // pendekatan konservatif
+            ]);
 
-        foreach (Cart::instance('sale')->content() as $item) {
-            $sourceType = $item->options->source_type ?? null; // 'new','second','manual'
-            if (!$sourceType) throw new \Exception("Item {$item->name} tidak memiliki source_type.");
+            // Simpan detail + lakukan mutasi stok/status
+            foreach ($items as $item) {
+                $qty        = (int) $item->qty;
+                $unitPrice  = (int) $item->price;
+                $line       = $unitPrice * $qty;
 
-            $itemHpp = 0;
-            $productableId = null;
-            $productableType = null;
+                $itemDisc   = (int) data_get($item->options, 'discount', 0);
+                $itemTax    = (int) data_get($item->options, 'tax', 0);
+                $lineNet    = $line - $itemDisc + $itemTax;
 
-            switch ($sourceType) {
-                case 'new':
-                    $product = \Modules\Product\Entities\Product::findOrFail($item->id);
-                    if ($product->product_quantity < $item->qty) {
-                        throw new \Exception('Stok produk ' . $product->product_name . ' tidak cukup.');
+                $source     = data_get($item->options, 'source_type', 'new');
+                $code       = (string) data_get($item->options, 'code', data_get($item->options, 'product_code', 'MANUAL'));
+                $hpp        = (int) data_get($item->options, 'hpp', 0);
+                $name       = $item->name;
+
+                $productId        = null;
+                $productableType  = null;
+                $productableId    = null;
+
+                if ($source === 'new') {
+                    $productId = (int) $item->id;
+
+                    // Kurangi stok produk baru
+                    /** @var Product $p */
+                    $p = Product::lockForUpdate()->findOrFail($productId);
+                    if ($p->product_quantity < $qty) {
+                        throw new \RuntimeException("Stok produk {$p->product_name} tidak mencukupi.");
                     }
-                    $product->decrement('product_quantity', $item->qty);
-                    $itemHpp         = (int) $product->product_cost; // simpan rupiah utuh
-                    $productableId   = $product->id;
-                    $productableType = \Modules\Product\Entities\Product::class;
-                    break;
+                    $p->decrement('product_quantity', $qty);
 
-                case 'second':
-                    $second = \Modules\Product\Entities\ProductSecond::findOrFail($item->id);
-                    if ($second->status === 'sold') {
-                        throw new \Exception("Produk bekas {$second->name} sudah terjual.");
+                    // Catat mutasi
+                    DB::table('stock_movements')->insert([
+                        'productable_type' => Product::class,
+                        'productable_id'   => $p->id,
+                        'type'             => 'out',
+                        'quantity'         => $qty,
+                        'description'      => 'Sale #' . $reference,
+                        'user_id'          => auth()->id(),
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                } elseif ($source === 'second') {
+                    // Tandai sold
+                    $second = ProductSecond::lockForUpdate()->findOrFail((int)$item->id);
+                    if (strtolower((string)$second->status) !== 'available') {
+                        throw new \RuntimeException("Produk bekas {$second->name} sudah terjual/tidak tersedia.");
                     }
                     $second->update(['status' => 'sold']);
-                    $itemHpp         = (int) round($second->purchase_price);
+
+                    $productableType = ProductSecond::class;
                     $productableId   = $second->id;
-                    $productableType = \Modules\Product\Entities\ProductSecond::class;
-                    break;
 
-                case 'manual':
-                    $itemHpp = 0;
-                    break;
+                    // Catat mutasi keluar 1 unit
+                    DB::table('stock_movements')->insert([
+                        'productable_type' => ProductSecond::class,
+                        'productable_id'   => $second->id,
+                        'type'             => 'out',
+                        'quantity'         => 1,
+                        'description'      => 'Sale (second) #' . $reference,
+                        'user_id'          => auth()->id(),
+                        'created_at'       => now(),
+                        'updated_at'       => now(),
+                    ]);
+                } else {
+                    // manual service/item
+                    // tidak ada mutasi stok
+                }
 
-                default:
-                    throw new \Exception("source_type {$sourceType} tidak dikenali.");
+                SaleDetails::create([
+                    'sale_id'                => $sale->id,
+                    'item_name'              => $name,
+                    'product_id'             => $productId,
+                    'productable_type'       => $productableType,
+                    'productable_id'         => $productableId,
+                    'source_type'            => $source,
+                    'product_name'           => $name,
+                    'product_code'           => $code,
+                    'quantity'               => $qty,
+                    'price'                  => $unitPrice,
+                    'hpp'                    => $hpp,
+                    'unit_price'             => $unitPrice,
+                    'sub_total'              => $lineNet,
+                    'subtotal_profit'        => max(0, ($unitPrice - $hpp) * $qty),
+                    'product_discount_amount'=> $itemDisc,
+                    'product_discount_type'  => data_get($item->options, 'discount_type', 'fixed'),
+                    'product_tax_amount'     => $itemTax,
+                ]);
             }
 
-            $subTotal       = (int) $item->price * (int) $item->qty;
-            $subTotalProfit = $subTotal - ($itemHpp * (int) $item->qty);
-
-            SaleDetails::create([
-                'sale_id'                 => $sale->id,
-                'product_id'              => $sourceType !== 'manual' ? $item->id : null,
-                'product_name'            => $item->name,
-                'item_name'               => $item->name,
-                'product_code'            => $item->options->code ?? '-',
-                'quantity'                => (int) $item->qty,
-                'price'                   => (int) $item->price,
-                'unit_price'              => (int) ($item->options->unit_price ?? $item->price),
-                'sub_total'               => (int) ($item->options->sub_total ?? $subTotal),
-                'product_discount_amount' => (int) ($item->options->product_discount ?? 0),
-                'product_discount_type'   => $item->options->product_discount_type ?? 'fixed',
-                'product_tax_amount'      => (int) ($item->options->product_tax ?? 0),
-
-                // tambahan
-                'hpp'                     => (int) $itemHpp,
-                'subtotal_profit'         => (int) $subTotalProfit,
-                'source_type'             => $sourceType,
-                'productable_id'          => $productableId,
-                'productable_type'        => $productableType,
-            ]);
-
-            $totalHpp += $itemHpp * (int) $item->qty;
-        }
-
-        $sale->update([
-            'total_hpp'    => $totalHpp,
-            'total_profit' => (int) $sale->total_amount - $totalHpp,
-            'due_amount'   => max((int)$sale->total_amount - (int)$sale->paid_amount, 0),
-        ]);
-
-        Cart::instance('sale')->destroy();
-
-        if ((int)$sale->paid_amount > 0) {
+            // Catat pembayaran jika ada (boleh 0)
             SalePayment::create([
-                'date'           => now()->format('Y-m-d'),
+                'date'           => now()->toDateString(),
                 'reference'      => 'INV/' . $sale->reference,
-                'amount'         => (int) $sale->paid_amount,
+                'amount'         => $paidAmount,
                 'sale_id'        => $sale->id,
-                'payment_method' => $request->payment_method,
+                'payment_method' => $request->input('payment_method', 'Tunai'),
+                'note'           => $request->input('payment_method') === 'Transfer' ? (string) $request->input('bank_name') : null,
             ]);
+
+            // Bersihkan keranjang setelah sukses
+            $cart->destroy();
+
+            DB::commit();
+
+            session()->flash('swal-success', 'Transaksi Berhasil Disimpan!');
+            return redirect()->route('app.pos.index');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-
-        DB::commit();
-        session()->flash('swal-success', 'Transaksi Berhasil Disimpan!');
-        return redirect()->route('app.pos.index');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
-}
 
+    /**
+     * Pastikan stok produk baru cukup dan second masih available.
+     * Dilakukan sebelum membuat transaksi untuk menghindari setengah jalan.
+     */
+    protected function assertStockSufficientOrAvailable($items): void
+    {
+        foreach ($items as $item) {
+            $source = data_get($item->options, 'source_type', 'new');
+            $qty    = (int) $item->qty;
+
+            if ($source === 'new') {
+                /** @var Product $p */
+                $p = Product::lockForUpdate()->findOrFail((int) $item->id);
+                if ($p->product_quantity < $qty) {
+                    throw new \RuntimeException("Stok {$p->product_name} tidak mencukupi.");
+                }
+            } elseif ($source === 'second') {
+                $second = ProductSecond::lockForUpdate()->findOrFail((int) $item->id);
+                if (strtolower((string)$second->status) !== 'available') {
+                    throw new \RuntimeException("Produk bekas {$second->name} sudah terjual/tidak tersedia.");
+                }
+            } else {
+                // manual item: ok
+            }
+        }
+    }
+
+    /**
+     * Ubah angka berformat (mis. "1.250.000") menjadi integer rupiah 1250000.
+     */
+    protected function sanitizeMoney($value): int
+    {
+        if (is_null($value)) return 0;
+        if (is_int($value)) return $value;
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+        return $digits === '' ? 0 : (int) $digits;
+    }
 }

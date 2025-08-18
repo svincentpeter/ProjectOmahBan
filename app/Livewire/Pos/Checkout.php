@@ -310,23 +310,26 @@ class Checkout extends Component
                     $subTotal  = $qty * $unitPrice;
 
                     \Modules\Sale\Entities\SaleDetails::create([
-                        'sale_id'         => $sale->id,
-                        'product_id'      => $src !== 'manual' ? $originalId : null,
-                        'source_type'     => $src,
-                        'item_name'       => $item->name,
-                        'product_name'    => $item->name,
-                        'product_code'    => $code,
-                        'quantity'        => $qty,
-                        'price'           => $unitPrice,
-                        'unit_price'      => $unitPrice,
-                        'sub_total'       => $subTotal,
-                        'hpp'             => $hpp,
-                        'subtotal_profit' => max(0, ($unitPrice - $hpp) * $qty),
+    'sale_id'         => $sale->id,
+    'product_id'      => $src === 'new' ? $originalId : null,
+    'productable_type'=> $src === 'second' ? \Modules\Product\Entities\ProductSecond::class : null,
+    'productable_id'  => $src === 'second' ? $originalId : null,
+    'source_type'     => $src,
+    'item_name'       => $item->name,
+    'product_name'    => $item->name,
+    'product_code'    => $code,
+    'quantity'        => $qty,
+    'price'           => $unitPrice,
+    'unit_price'      => $unitPrice,
+    'sub_total'       => $subTotal,
+    'hpp'             => $hpp,
+    'subtotal_profit' => max(0, ($unitPrice - $hpp) * $qty),
 
-                        'product_discount_amount' => (int) data_get($item->options, 'discount', 0),
-                        'product_discount_type'   => data_get($item->options, 'discount_type', 'fixed'),
-                        'product_tax_amount'      => (int) data_get($item->options, 'tax', 0),
-                    ]);
+    'product_discount_amount' => (int) data_get($item->options, 'discount', 0),
+    'product_discount_type'   => data_get($item->options, 'discount_type', 'fixed'),
+    'product_tax_amount'      => (int) data_get($item->options, 'tax', 0),
+]);
+
 
                     $totalHpp    += $hpp * $qty;
                     $totalProfit += max(0, ($unitPrice - $hpp) * $qty);
@@ -395,12 +398,14 @@ class Checkout extends Component
 
                 // Catat payment (sebesar total)
                 SalePayment::create([
-                    'date'           => now()->toDateString(),
-                    'reference'      => 'INV/' . $sale->reference,
-                    'amount'         => (int) $total, // simpan dalam satuan rupiah yang sama dengan sales.total_amount
-                    'sale_id'        => $sale->id,
-                    'payment_method' => $this->payment_method ?: 'Tunai',
-                ]);
+    'date'           => now()->toDateString(),
+    'reference'      => 'INV/' . $sale->reference,
+    'amount'         => (int) min($total, max(0, (int)$this->sanitizeMoney($this->paid_amount))),
+    'sale_id'        => $sale->id,
+    'payment_method' => $this->payment_method ?: 'Tunai',
+    'note'           => $this->payment_method !== 'Tunai' ? (string) $this->bank_name : null,
+]);
+
 
                 // Kurangi stok saat status naik ke Completed (jika belum)
                 if ($sale->status !== 'Completed') {
@@ -429,18 +434,19 @@ class Checkout extends Component
                             'created_at'       => now(),
                             'updated_at'       => now(),
                         ]);
-                    } elseif ($d->source_type === 'second' && $d->product_id) {
-                        \DB::table('stock_movements')->insert([
-                            'productable_type' => \Modules\Product\Entities\ProductSecond::class,
-                            'productable_id'   => $d->product_id,
-                            'type'             => 'out',
-                            'quantity'         => 1,
-                            'description'      => 'Sale (second) #' . $sale->reference,
-                            'user_id'          => auth()->id(),
-                            'created_at'       => now(),
-                            'updated_at'       => now(),
-                        ]);
-                    }
+                    } elseif ($d->source_type === 'second' && $d->productable_id) {
+    \DB::table('stock_movements')->insert([
+        'productable_type' => \Modules\Product\Entities\ProductSecond::class,
+        'productable_id'   => $d->productable_id,
+        'type'             => 'out',
+        'quantity'         => 1,
+        'description'      => 'Sale (second) #' . $sale->reference,
+        'user_id'          => auth()->id(),
+        'created_at'       => now(),
+        'updated_at'       => now(),
+    ]);
+}
+
                 }
 
                 $sale->update([

@@ -66,11 +66,11 @@ class SalePaymentsController extends Controller
                 $payment_status = 'Paid';
             }
 
-            $sale->update([
-                'paid_amount' => ($sale->paid_amount + $request->amount) * 100,
-                'due_amount' => $due_amount * 100,
-                'payment_status' => $payment_status
-            ]);
+            $$sale->update([
+    'paid_amount' => $sale->paid_amount + $request->amount,
+    'due_amount' => $due_amount,
+    'payment_status' => $payment_status
+]);
         });
 
         toast('Sale Payment Created!', 'success');
@@ -114,10 +114,10 @@ class SalePaymentsController extends Controller
             }
 
             $sale->update([
-                'paid_amount' => (($sale->paid_amount - $salePayment->amount) + $request->amount) * 100,
-                'due_amount' => $due_amount * 100,
-                'payment_status' => $payment_status
-            ]);
+    'paid_amount' => ($sale->paid_amount - $salePayment->amount) + $request->amount,
+    'due_amount' => $due_amount,
+    'payment_status' => $payment_status
+]);
 
             $salePayment->update([
                 'date' => $request->date,
