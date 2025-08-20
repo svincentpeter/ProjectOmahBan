@@ -11,20 +11,22 @@
         </a>
 
         @can('access_sale_payments')
-            <a href="{{ route('sale-payments.index', $data->id) }}" class="dropdown-item">
-                <i class="bi bi-cash-coin mr-2 text-warning" style="line-height: 1;"></i>
-                Lihat Pembayaran
-            </a>
-        @endcan
-
-        @can('access_sale_payments')
-            @if((int) $data->due_amount > 0)
-                <a href="{{ route('sale-payments.create', $data->id) }}" class="dropdown-item">
-                    <i class="bi bi-plus-circle-dotted mr-2 text-success" style="line-height: 1;"></i>
-                    Tambah Pembayaran
+            @if (Route::has('sale-payments.index'))
+                <a href="{{ route('sale-payments.index', $data->id) }}" class="dropdown-item">
+                    <i class="bi bi-cash-coin mr-2 text-warning" style="line-height: 1;"></i>
+                    Lihat Pembayaran
                 </a>
             @endif
         @endcan
+
+        {{-- Tambah Pembayaran (prioritas utama) --}}
+@if ((int) $data->due_amount > 0 && Route::has('sale-payments.create'))
+    <a href="{{ route('sale-payments.create', $data->id) }}" class="dropdown-item">
+        <i class="bi bi-plus-circle-dotted mr-2 text-success" style="line-height: 1;"></i>
+        Tambah Pembayaran
+    </a>
+@endif
+
 
         @can('show_sales')
             <a href="{{ route('sales.show', $data->id) }}" class="dropdown-item">

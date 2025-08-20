@@ -31,21 +31,32 @@ class SalesDataTable extends DataTable
             ->addColumn('paid_amount',  fn ($s) => format_currency((int)$s->paid_amount))
             ->addColumn('due_amount',   fn ($s) => format_currency((int)$s->due_amount))
 
-            // Profit = sum(sub_total) - sum(hpp * qty) dari relasi
+            // Profit: utamakan subtotal_profit dari relasi; fallback hitung manual JIKA kolom tersedia
             ->addColumn('total_profit', function ($s) {
                 $profit = $s->saleDetails->sum(function ($d) {
-                    $qty   = (int)($d->quantity ?? 0);
-                    $sub   = (int)($d->sub_total ?? 0);
-                    $hppT  = (float)($d->hpp ?? 0) * $qty;
-                    return $sub - (int)round($hppT);
+                    // 1) Pakai subtotal_profit kalau ada (aman di schema kamu sekarang)
+                    if (isset($d->subtotal_profit)) {
+                        return (int)$d->subtotal_profit;
+                    }
+                    // 2) Fallback: jika suatu saat kolom hpp tersedia, boleh dipakai TANPA memaksa SELECT
+                    $qty  = (int)($d->quantity ?? 0);
+                    $sub  = (int)($d->sub_total ?? 0);
+                    $hpp  = (int)($d->hpp ?? 0); // jika tidak ada kolomnya, ini hanya null->0
+                    return $sub - ($hpp * $qty);
                 });
                 return format_currency((int)$profit);
             })
 
+            // === Pembayaran terakhir (metode + bank) ===
             ->addColumn('payment_method', function ($s) {
-                $m = $s->payment_method ?: '-';
-                return !empty($s->bank_name) ? "$m ($s->bank_name)" : $m;
+                // Ambil pembayaran terakhir dari eager-loaded relation (sudah diurutkan terbaru dulu)
+                $last   = $s->salePayments->first();
+                $method = $last->payment_method ?? $s->payment_method ?? '-';
+                $bank   = $last->bank_name     ?? $s->bank_name;
+
+                return $bank ? "{$method} ({$bank})" : $method;
             })
+
             ->addColumn('action', fn ($s) => view('sale::partials.actions', ['data' => $s]))
             ->rawColumns(['row_detail','status','payment_status','action'])
 
@@ -92,16 +103,17 @@ class SalesDataTable extends DataTable
 
     public function query(Sale $model)
     {
-        $q = $model->newQuery()->with([
-            'saleDetails' => function ($r) {
-                $r->select(
-                    'id','sale_id','item_name','product_id',
-                    'productable_id','productable_type','source_type',
-                    'product_name','product_code','quantity','price',
-                    'hpp','unit_price','sub_total','subtotal_profit'
-                );
-            }
-        ]);
+        $q = $model->newQuery()
+            ->with([
+                // Detail item untuk profit — TIDAK menyertakan 'hpp' agar aman di schema lama
+                'saleDetails:id,sale_id,product_name,product_code,quantity,price,sub_total,subtotal_profit',
+                // Pembayaran diurutkan terbaru dulu agar ->first() = pembayaran terakhir
+                'salePayments' => function ($q) {
+                    $q->select('id','sale_id','payment_method','bank_name','date')
+                      ->orderByDesc('date')
+                      ->orderByDesc('id');
+                },
+            ]);
 
         // Kompatibel dengan preXhr (range > month > preset)
         $preset = request('preset');

@@ -109,12 +109,12 @@ class PosController extends Controller
                 'status'              => 'Completed',
                 'payment_status'      => $paymentStatus,
                 'payment_method'      => $request->input('payment_method', 'Tunai'),
-                'bank_name'           => $request->input('payment_method') === 'Transfer' ? $request->input('bank_name') : null,
+                'bank_name'           => $request->input('payment_method') === 'Transfer' ? (string) $request->input('bank_name') : null,
                 'note'                => $request->input('note'),
                 'tax_amount'          => $taxAmount,
                 'discount_amount'     => $discountAmount,
                 'total_hpp'           => $totalHpp,
-                'total_profit'        => max(0, $grandTotal - $taxAmount + $discountAmount - $shippingAmount - $totalHpp), // pendekatan konservatif
+                'total_profit'        => max(0, $grandTotal - $taxAmount - $discountAmount - $shippingAmount - $totalHpp), // konservatif
             ]);
 
             // Simpan detail + lakukan mutasi stok/status
@@ -213,7 +213,7 @@ class PosController extends Controller
                 'amount'         => $paidAmount,
                 'sale_id'        => $sale->id,
                 'payment_method' => $request->input('payment_method', 'Tunai'),
-                'note'           => $request->input('payment_method') === 'Transfer' ? (string) $request->input('bank_name') : null,
+                'note' => $request->input('payment_method') === 'Transfer' ? (string) $request->input('bank_name') : null,
             ]);
 
             // Bersihkan keranjang setelah sukses
@@ -266,4 +266,19 @@ class PosController extends Controller
         $digits = preg_replace('/[^\d]/', '', (string) $value);
         return $digits === '' ? 0 : (int) $digits;
     }
+
+    public function printPos(Sale $sale)
+{
+    $sale->load('user', 'saleDetails.product.brand');
+
+    $pdf = \PDF::loadView('sale::print-pos', ['sale' => $sale])
+        ->setPaper('a6', 'landscape')
+        ->setOption('margin-top', 5)
+        ->setOption('margin-bottom', 5)
+        ->setOption('margin-left', 5)
+        ->setOption('margin-right', 5);
+
+    return $pdf->stream('nota-' . $sale->reference . '.pdf');
+}
+
 }

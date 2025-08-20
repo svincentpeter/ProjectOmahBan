@@ -23,6 +23,6 @@ class Filter extends Component
     }
 
     public function updatedShowCount() {
-        $this->dispatch('showCount', $this->category);
+        $this->dispatch('showCount', $this->showCount);
     }
 }

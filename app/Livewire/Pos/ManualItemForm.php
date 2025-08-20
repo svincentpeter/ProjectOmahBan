@@ -1,70 +1,102 @@
 <?php
 
 namespace App\Livewire\Pos;
-
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Livewire\Component;
 
+
 class ManualItemForm extends Component
 {
-    public $cart_instance = 'sale';
-    public $name = '';
-    public $price = ''; // angka mentah
+    public string $cart_instance = 'sale';
+    public string $name = '';
+    public string $price = '';
 
-    protected function rules()
+
+    protected function rules(): array
     {
         return [
-            'name'  => 'required|string|min:2|max:100',
-            'price' => 'required|numeric|min:1',
+            'name' => 'required|string|max:255',
+            'price' => 'required', // dibersihkan manual → integer
         ];
     }
 
-    public function render()
+
+    private function moneyToInt($v): int
     {
-        // Minta front-end re-init AutoNumeric setiap render
-        $this->dispatch('init-manual-item-autonumeric')->self();
-        return view('livewire.pos.manual-item-form');
+        if ($v === null || $v === '') return 0;
+        if (is_numeric($v)) return (int) $v;
+        return (int) preg_replace('/[^\d]/', '', (string) $v);
     }
 
-    public function addToCart()
+
+    public function add(): void
     {
         $this->validate();
-
-        // Konversi nilai mentah dari AutoNumeric menjadi integer yang benar.
-        // Input "125.000" dari AutoNumeric akan menjadi string "125000".
-        // Kita pastikan ini adalah integer.
-        $numericPrice = (int) $this->price;
-
-        if ($numericPrice <= 0) {
-            $this->addError('price', 'Harga harus lebih besar dari 0.');
+        $numeric = $this->moneyToInt($this->price);
+        if ($numeric <= 0) {
+            $this->dispatch('swal-warning', 'Harga harus lebih dari 0.');
             return;
         }
 
+
         Cart::instance($this->cart_instance)->add([
-            'id'     => 'manual-' . uniqid(),
-            'name'   => $this->name,
-            'qty'    => 1,
-            'price'  => $numericPrice, // Gunakan harga yang sudah pasti integer
+            'id' => 'MAN-' . uniqid(),
+            'name' => $this->name,
+            'qty' => 1,
+            'price' => $numeric,
             'weight' => 1,
             'options' => [
-                'source_type'           => 'manual',
-                'product_discount'      => 0,
-                'product_discount_type' => 'fixed',
-                'sub_total'             => $numericPrice, // Gunakan harga yang sudah pasti integer
-                'code'                  => '-',
-                'stock'                 => 1,
-                'unit'                  => 'unit',
-                'product_tax'           => 0,
-                'unit_price'            => $numericPrice, // Gunakan harga yang sudah pasti integer
-                'hpp'                   => 0,
-                'discount'              => 0,
-                'tax'                   => 0,
+                'source_type' => 'manual',
+                'code' => '-'
             ],
         ]);
 
+
         $this->reset(['name', 'price']);
-        // Ganti event 'cartUpdated' agar lebih spesifik targetnya ke komponen Checkout
         $this->dispatch('cartUpdated')->to(\App\Livewire\Pos\Checkout::class);
-        $this->dispatch('showSuccess', ['message' => 'Item manual ditambahkan!']);
+        $this->dispatch('swal-success', 'Item manual ditambahkan.');
+    }
+
+    public function addToCart(): void
+{
+    // Alias untuk kompatibilitas dengan view lama yang memanggil addToCart
+    if (method_exists($this, 'add')) {
+        $this->add();
+        return;
+    }
+
+    // fallback minimal jika add() belum ada (aman tetap jalan)
+    $this->validate([
+        'name'  => 'required|string|max:255',
+        'price' => 'required',
+    ]);
+
+    $numeric = (int) preg_replace('/[^\d]/', '', (string) $this->price);
+    if ($numeric <= 0) {
+        $this->dispatch('swal-warning', 'Harga harus lebih dari 0.');
+        return;
+    }
+
+    Cart::instance($this->cart_instance ?? 'sale')->add([
+        'id'      => 'MAN-' . uniqid(),
+        'name'    => $this->name,
+        'qty'     => 1,
+        'price'   => $numeric,
+        'weight'  => 1,
+        'options' => [
+            'source_type' => 'manual',
+            'code'        => '-',
+        ],
+    ]);
+
+    $this->reset(['name', 'price']);
+    $this->dispatch('cartUpdated')->to(\App\Livewire\Pos\Checkout::class);
+    $this->dispatch('swal-success', 'Item manual ditambahkan.');
+}
+
+
+    public function render()
+    {
+        return view('livewire.pos.manual-item-form');
     }
 }

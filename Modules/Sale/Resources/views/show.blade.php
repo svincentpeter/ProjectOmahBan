@@ -68,10 +68,18 @@
                             </div>
 
                             <div class="mt-1">
-                                Metode:
-                                <span class="badge badge-pill badge-primary">
-                                    {{ $sale->payment_method }}{{ $sale->bank_name ? ' ('.$sale->bank_name.')' : '' }}
-                                </span>
+                                @php
+    $lastPay = $sale->payments()->select('payment_method','bank_name','date','id')
+                ->latest('date')->latest('id')->first();
+    $method  = $lastPay->payment_method ?? $sale->payment_method;
+    $bank    = $lastPay->bank_name ?? $sale->bank_name;
+@endphp
+<div class="mt-1">
+    Metode:
+    <span class="badge badge-pill badge-primary">
+        {{ $method }}{{ $bank ? ' ('.$bank.')' : '' }}
+    </span>
+</div>
                             </div>
 
                             @if($sale->note)

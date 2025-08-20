@@ -34,7 +34,7 @@ protected $queryString = ['query' => ['except' => '']];
 
     // Hanya boleh kalau available
     if (strtolower((string)$second->status) !== 'available') {
-        $this->dispatch('notify', type: 'warning', message: 'Barang bekas ini sudah terjual / tidak tersedia.');
+        $this->dispatch('swal-warning', 'Barang bekas ini sudah terjual / tidak tersedia.');
         return;
     }
 
@@ -44,7 +44,7 @@ protected $queryString = ['query' => ['except' => '']];
     });
 
     if ($dup->isNotEmpty()) {
-        $this->dispatch('notify', type: 'warning', message: 'Item bekas ini sudah ada di keranjang.');
+         $this->dispatch('swal-warning', 'Item bekas ini sudah ada di keranjang.');
         return;
     }
 
@@ -65,7 +65,7 @@ protected $queryString = ['query' => ['except' => '']];
         ],
     ]);
 
-    $this->dispatch('notify', type: 'success', message: 'Item bekas masuk keranjang.');
+   $this->dispatch('swal-success', 'Item bekas masuk keranjang.');
     $this->dispatch('cartUpdated');
 }
 
