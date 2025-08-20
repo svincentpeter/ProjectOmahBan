@@ -83,17 +83,6 @@
     </div>
 
     @once
-        @push('page_scripts')
-        <script>
-            window.addEventListener('notify', (e) => {
-                const d = e.detail || {};
-                if (window.toastr) {
-                    toastr[d.type || 'info'](d.message || 'OK');
-                } else {
-                    alert((d.type ? d.type.toUpperCase() + ': ' : '') + (d.message || 'OK'));
-                }
-            });
-        </script>
-        @endpush
+        
     @endonce
 </div>

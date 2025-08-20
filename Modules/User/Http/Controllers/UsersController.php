@@ -34,7 +34,8 @@ class UsersController extends Controller
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|max:255|confirmed'
+            'password' => 'required|string|min:8|max:255|confirmed',
+            'role' => ['required', Rule::exists('roles','name')],
         ]);
 
         $user = User::create([
@@ -45,6 +46,8 @@ class UsersController extends Controller
         ]);
 
         $user->assignRole($request->role);
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
 
         if ($request->has('image')) {
             $tempFile = Upload::where('folder', $request->image)->first();
@@ -76,6 +79,7 @@ class UsersController extends Controller
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|max:255|unique:users,email,'.$user->id,
+            'role' => ['required', Rule::exists('roles','name')],
         ]);
 
         $user->update([
@@ -85,6 +89,7 @@ class UsersController extends Controller
         ]);
 
         $user->syncRoles($request->role);
+app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
         if ($request->has('image')) {
             $tempFile = Upload::where('folder', $request->image)->first();

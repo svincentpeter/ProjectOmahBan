@@ -38,6 +38,8 @@ class RolesController extends Controller
         ]);
 
         $role->givePermissionTo($request->permissions);
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
 
         toast('Role Created With Selected Permissions!', 'success');
 
@@ -59,7 +61,7 @@ class RolesController extends Controller
     abort_if(Gate::denies('access_user_management'), 403);
 
     $request->validate([
-        'name' => 'required|string|max:255',
+        'name' => 'required|string|max:255|unique:roles,name', // di update pakai unique:roles,name,'.$role->id
         'permissions' => 'required|array'
     ]);
 

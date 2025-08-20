@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 18, 2025 at 05:31 PM
+-- Generation Time: Aug 20, 2025 at 02:25 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.26
 
@@ -299,7 +299,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (49, '2025_08_09_213452_alter_money_columns_to_bigint_on_sales_tables', 15),
 (51, '2025_08_10_121940_add_user_id_to_sales_table', 16),
 (52, '2025_08_14_202349_alter_sale_payments_amount_to_decimal', 17),
-(53, '2025_08_14_210716_normalize_money_to_bigint', 18);
+(53, '2025_08_14_210716_normalize_money_to_bigint', 18),
+(54, '2025_08_19_150401_add_bank_name_to_sale_payments_table', 19);
 
 -- --------------------------------------------------------
 
@@ -507,7 +508,7 @@ CREATE TABLE `product_seconds` (
 
 INSERT INTO `product_seconds` (`id`, `name`, `unique_code`, `condition_notes`, `purchase_price`, `selling_price`, `status`, `created_at`, `updated_at`, `deleted_at`, `category_id`, `brand_id`, `size`, `ring`, `product_year`) VALUES
 (1, 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', 'SEC-DN-26565R17-001', 'Kondisi 80%, tahun 2021, tambalan 0, ban seragam, masih empuk', 600000, 850000, 'available', '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 2, 3, '265/65', '17', 2021),
-(2, 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', 'SEC-GT-23570R16-001', 'Kondisi 70%, tahun 2020, ada serat halus, masih layak harian', 400000, 650000, 'available', '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 2, 1, '235/70', '16', 2020),
+(2, 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', 'SEC-GT-23570R16-001', 'Kondisi 70%, tahun 2020, ada serat halus, masih layak harian', 400000, 650000, 'sold', '2025-08-17 05:04:07', '2025-08-20 13:25:00', NULL, 2, 1, '235/70', '16', 2020),
 (3, 'Velg Bekas HSR Ring 16 Black Polish', 'SEC-HSR-R16-BP-001', 'Cat mulus 90%, lurus, PCD 5x114.3, lebar 7J, ET42', 1800000, 2250000, 'sold', '2025-08-17 05:04:07', '2025-08-17 05:24:47', NULL, 3, 4, NULL, '16', 2022),
 (4, 'Velg Bekas OEM Ertiga Ring 15', 'SEC-OEM-ERT-R15-001', 'OEM Suzuki Ertiga, kondisi 85%, ada baret tipis, lurus', 1000000, 1400000, 'available', '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 3, 5, NULL, '15', 2019);
 
@@ -861,22 +862,26 @@ INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `tax_percentage`, `ta
 (34, '2025-08-10', 'SL-00034', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 03:42:31', '2025-08-10 03:42:31'),
 (35, '2025-08-10', 'SL-00035', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:02:39', '2025-08-10 04:02:39'),
 (36, '2025-08-10', 'SL-00036', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:13:37', '2025-08-10 04:13:37'),
-(37, '2025-08-10', 'SL-00037', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:33:26', '2025-08-10 04:33:26'),
+(37, '2025-08-10', 'SL-00037', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 04:33:26', '2025-08-20 11:32:45'),
 (38, '2025-08-10', 'SL-00038', NULL, 0, 0, 0, 0, 0, 12500000, 0, 12500000, 0, 12500000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:58:25', '2025-08-10 04:58:25'),
 (39, '2025-08-10', 'SL-00039', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:59:06', '2025-08-10 04:59:06'),
 (40, '2025-08-10', 'SL-00040', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:59:58', '2025-08-10 04:59:58'),
 (44, '2025-08-10', 'SL-00041', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:08:39', '2025-08-10 06:08:39'),
 (45, '2025-08-10', 'SL-00045', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:11:54', '2025-08-10 06:11:56'),
-(46, '2025-08-10', 'SL-00046', 1, 0, 0, 0, 0, 0, 150000, 0, 150000, 0, 150000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:12:16', '2025-08-10 06:12:16'),
+(46, '2025-08-10', 'SL-00046', 1, 0, 0, 0, 0, 0, 150000, 0, 150000, 150000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:12:16', '2025-08-20 11:32:59'),
 (47, '2025-08-10', 'SL-00047', 1, 0, 0, 0, 0, 0, 200000, 0, 200000, 200000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:19:30', '2025-08-18 16:18:52'),
-(48, '2025-08-10', 'SL-00048', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:20:10', '2025-08-10 06:20:10'),
-(49, '2025-08-10', 'SL-00049', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:20:39', '2025-08-10 06:20:39'),
-(50, '2025-08-10', 'SL-00050', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:28:26', '2025-08-10 06:28:26'),
+(48, '2025-08-10', 'SL-00048', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:20:10', '2025-08-20 12:18:55'),
+(49, '2025-08-10', 'SL-00049', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:20:39', '2025-08-20 12:27:33'),
+(50, '2025-08-10', 'SL-00050', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:28:26', '2025-08-20 12:27:59'),
 (51, '2025-08-10', 'SL-00051', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:29:20', '2025-08-10 06:29:20'),
 (52, '2025-08-10', 'SL-00052', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:33:33', '2025-08-10 06:34:17'),
 (53, '2025-08-12', 'SL-00053', 1, 0, 0, 0, 0, 0, 0, 0, 0, 100000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:14:18', '2025-08-18 15:52:12'),
-(54, '2025-08-12', 'SL-00054', 1, 0, 0, 0, 0, 0, 1425000, 0, 0, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-12 04:16:16', '2025-08-12 04:16:16'),
-(55, '2025-08-17', 'SL-00055', 1, 0, 0, 0, 0, 0, 2400000, 0, 2400000, 2400000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-17 05:24:44', '2025-08-18 13:41:51');
+(54, '2025-08-12', 'SL-00054', 1, 0, 0, 0, 0, 0, 1425000, 0, 0, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:16:16', '2025-08-20 11:32:24'),
+(55, '2025-08-17', 'SL-00055', 1, 0, 0, 0, 0, 0, 2400000, 0, 2400000, 2400000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-17 05:24:44', '2025-08-18 13:41:51'),
+(56, '2025-08-19', 'SL-00056', 1, 0, 0, 0, 0, 0, 1450000, 1280760, 169240, 1450000, 1450000, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 04:58:30', '2025-08-19 06:49:21'),
+(57, '2025-08-19', 'SL-00057', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 05:23:41', '2025-08-20 10:07:07'),
+(58, '2025-08-19', 'SL-00058', 1, 0, 0, 0, 0, 0, 125000, 0, 125000, 125000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 06:17:01', '2025-08-19 06:17:47'),
+(59, '2025-08-20', 'SL-20250820-202448-68a5dab0793ff', NULL, 0, NULL, 0, NULL, NULL, 650000, 0, 0, 650000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-20 13:24:48', '2025-08-20 13:25:00');
 
 -- --------------------------------------------------------
 
@@ -950,7 +955,12 @@ INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `product
 (44, 55, 'Balancing', NULL, NULL, NULL, 'manual', 'Balancing', '-', 1, 25000, 0, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
 (45, 55, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 125000, 0, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
 (49, 47, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
-(50, 47, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 2, 25000, 0, 25000, 50000, 50000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52');
+(50, 47, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 2, 25000, 0, 25000, 50000, 50000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
+(53, 57, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-19 05:23:41', '2025-08-19 05:23:41'),
+(54, 58, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 125000, 0, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-19 06:17:01', '2025-08-19 06:17:01'),
+(55, 56, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
+(56, 56, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 1, 25000, 0, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
+(57, 59, 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', NULL, 2, 'Modules\\Product\\Entities\\ProductSecond', 'second', 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', 'SEC-GT-23570R16-001', 1, 650000, 400000, 650000, 650000, 250000, 0, 'fixed', 0, '2025-08-20 13:24:48', '2025-08-20 13:24:48');
 
 -- --------------------------------------------------------
 
@@ -965,6 +975,7 @@ CREATE TABLE `sale_payments` (
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -974,16 +985,26 @@ CREATE TABLE `sale_payments` (
 -- Dumping data for table `sale_payments`
 --
 
-INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `payment_method`, `note`, `created_at`, `updated_at`) VALUES
-(1, 23, 1425000, '2025-08-09', 'INV/SL-00023/PMT-214346', 'Tunai', NULL, '2025-08-09 14:43:46', '2025-08-09 14:43:46'),
-(6, 45, 1425000, '2025-08-10', 'INV/SL-00045', 'Tunai', NULL, '2025-08-10 06:11:56', '2025-08-10 06:11:56'),
-(7, 47, 150000, '2025-08-10', 'INV/SL-00047', 'Tunai', NULL, '2025-08-10 06:19:53', '2025-08-10 06:19:53'),
-(8, 52, 1425000, '2025-08-10', 'INV/SL-00052', 'Tunai', NULL, '2025-08-10 06:34:17', '2025-08-10 06:34:17'),
-(9, 53, 100000, '2025-08-12', 'INV/SL-00053', 'Tunai', NULL, '2025-08-12 04:14:41', '2025-08-12 04:14:41'),
-(10, 55, 227500000, '2025-08-17', 'INV/SL-00055', 'Transfer', NULL, '2025-08-17 05:24:47', '2025-08-17 05:24:47'),
-(11, 55, 12500000, '2025-08-18', 'ADJ-20250818161158', 'Tunai', 'Penyesuaian pembayaran saat edit', '2025-08-18 09:11:58', '2025-08-18 09:11:58'),
-(12, 47, 14850000, '2025-08-18', 'SP-20250818-230945-SFXCN', 'Tunai', 'Penyesuaian saat edit (refund)', '2025-08-18 16:09:45', '2025-08-18 16:09:45'),
-(13, 47, 50000, '2025-08-18', 'SP-20250818-231852-GTOSJ', 'Tunai', 'Penyesuaian saat edit (+)', '2025-08-18 16:18:52', '2025-08-18 16:18:52');
+INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `payment_method`, `bank_name`, `note`, `created_at`, `updated_at`) VALUES
+(1, 23, 1425000, '2025-08-09', 'INV/SL-00023/PMT-214346', 'Tunai', NULL, NULL, '2025-08-09 14:43:46', '2025-08-09 14:43:46'),
+(6, 45, 1425000, '2025-08-10', 'INV/SL-00045', 'Tunai', NULL, NULL, '2025-08-10 06:11:56', '2025-08-10 06:11:56'),
+(7, 47, 150000, '2025-08-10', 'INV/SL-00047', 'Tunai', NULL, NULL, '2025-08-10 06:19:53', '2025-08-10 06:19:53'),
+(8, 52, 1425000, '2025-08-10', 'INV/SL-00052', 'Tunai', NULL, NULL, '2025-08-10 06:34:17', '2025-08-10 06:34:17'),
+(9, 53, 100000, '2025-08-12', 'INV/SL-00053', 'Tunai', NULL, NULL, '2025-08-12 04:14:41', '2025-08-12 04:14:41'),
+(10, 55, 227500000, '2025-08-17', 'INV/SL-00055', 'Transfer', NULL, NULL, '2025-08-17 05:24:47', '2025-08-17 05:24:47'),
+(11, 55, 12500000, '2025-08-18', 'ADJ-20250818161158', 'Tunai', NULL, 'Penyesuaian pembayaran saat edit', '2025-08-18 09:11:58', '2025-08-18 09:11:58'),
+(12, 47, 14850000, '2025-08-18', 'SP-20250818-230945-SFXCN', 'Tunai', NULL, 'Penyesuaian saat edit (refund)', '2025-08-18 16:09:45', '2025-08-18 16:09:45'),
+(13, 47, 50000, '2025-08-18', 'SP-20250818-231852-GTOSJ', 'Tunai', NULL, 'Penyesuaian saat edit (+)', '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
+(14, 58, 125000, '2025-08-19', 'INV/SL-00058', 'Tunai', NULL, NULL, '2025-08-19 06:17:47', '2025-08-19 06:17:47'),
+(15, 56, 1450000, '2025-08-19', 'SP-20250819-134921-LYGUG', 'Tunai', NULL, 'Penyesuaian saat edit (+)', '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
+(16, 57, 1425000, '2025-08-20', 'INV/SL-00057/PMT-170707', 'Transfer', 'Mandiri', NULL, '2025-08-20 10:07:07', '2025-08-20 10:07:07'),
+(17, 54, 1425000, '2025-08-20', 'SP-00017', 'Tunai', NULL, 'Pelunasan', '2025-08-20 11:32:24', '2025-08-20 11:32:24'),
+(18, 37, 1425000, '2025-08-20', 'SP-00018', 'Tunai', NULL, NULL, '2025-08-20 11:32:45', '2025-08-20 11:32:45'),
+(19, 46, 150000, '2025-08-20', 'SP-00019', 'Tunai', NULL, 'Pelunasan', '2025-08-20 11:32:59', '2025-08-20 11:32:59'),
+(20, 48, 1425000, '2025-08-20', 'SP-00020', 'Transfer', 'Mandiri', NULL, '2025-08-20 12:18:55', '2025-08-20 12:18:55'),
+(21, 49, 1425000, '2025-08-20', 'SP-00021', 'Transfer', 'BCA', NULL, '2025-08-20 12:27:33', '2025-08-20 12:27:33'),
+(22, 50, 1425000, '2025-08-20', 'SP-00022', 'QRIS', 'BCA', NULL, '2025-08-20 12:27:59', '2025-08-20 12:27:59'),
+(23, 59, 650000, '2025-08-20', 'INV/SL-20250820-202448-68a5dab0793ff', 'Transfer', NULL, 'BCA', '2025-08-20 13:25:00', '2025-08-20 13:25:00');
 
 -- --------------------------------------------------------
 
@@ -1105,7 +1126,8 @@ CREATE TABLE `stock_movements` (
 --
 
 INSERT INTO `stock_movements` (`id`, `productable_type`, `productable_id`, `type`, `quantity`, `description`, `user_id`, `created_at`, `updated_at`) VALUES
-(1, 'Modules\\Product\\Entities\\ProductSecond', 3, 'out', 1, 'Sale (second) #SL-00055', 1, '2025-08-17 05:24:47', '2025-08-17 05:24:47');
+(1, 'Modules\\Product\\Entities\\ProductSecond', 3, 'out', 1, 'Sale (second) #SL-00055', 1, '2025-08-17 05:24:47', '2025-08-17 05:24:47'),
+(2, 'Modules\\Product\\Entities\\ProductSecond', 2, 'out', 1, 'Sale (second) #SL-20250820-202448-68a5dab0793ff', 1, '2025-08-20 13:25:00', '2025-08-20 13:25:00');
 
 -- --------------------------------------------------------
 
@@ -1537,7 +1559,7 @@ ALTER TABLE `media`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -1615,19 +1637,19 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `sale_details`
 --
 ALTER TABLE `sale_details`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT for table `sale_payments`
 --
 ALTER TABLE `sale_payments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `sale_returns`
@@ -1657,7 +1679,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `stock_movements`
 --
 ALTER TABLE `stock_movements`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `suppliers`

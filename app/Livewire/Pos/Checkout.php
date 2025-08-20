@@ -37,6 +37,9 @@ class Checkout extends Component
     public $sale = null;
     public $sale_details = null;
 
+    // [A] UI flag: form pembayaran hanya muncul setelah ditekan "Lanjut ke Pembayaran"
+    public bool $show_payment = false;
+
     protected $rules = [
         'payment_method' => 'required|string|in:Tunai,Transfer,Kredit',
         'paid_amount'    => 'nullable|numeric|min:0',
@@ -80,13 +83,9 @@ class Checkout extends Component
             : (int) $this->cartTotalInt();
 
         $this->total_amount = $effectiveTotal;
-
-        // ❌ Jangan set default paid_amount di sini.
-        // ✅ Cukup hitung ulang kembalian dari nilai yang ada sekarang.
+        // Jangan overwrite nilai input user
         $this->change = max(0, $this->sanitizeMoney($this->paid_amount) - $effectiveTotal);
     }
-
-
 
     // ========= Listener =========
     #[On('cartUpdated')]
@@ -108,40 +107,87 @@ class Checkout extends Component
     }
 
     #[On('productSelected')]
-    public function productSelected(array $product)
+    public function productSelected($payload): void
     {
-        $cart   = $this->cart();
-        $exists = $cart->search(fn($cartItem) => $cartItem->id == $product['id']);
-
-        if ($exists->isNotEmpty()) {
-            $this->dispatch('showWarning', ['message' => 'Produk sudah ada di keranjang!']);
+        // Terima 3 pola: int ID, {product: id}, atau array lengkap
+        if (is_int($payload)) {
+            $product = $this->buildProductPayloadFromId($payload);
+        } elseif (is_array($payload)) {
+            if (isset($payload['product']) && is_int($payload['product'])) {
+                $product = $this->buildProductPayloadFromId($payload['product']);
+            } else {
+                $product = $payload; // sudah lengkap
+            }
+        } else {
+            $this->dispatch('swal-error', 'Payload produk tidak dikenal.');
             return;
         }
 
+        if (!isset($product['id'])) {
+            $this->dispatch('swal-error', 'Produk tidak valid.');
+            return;
+        }
+
+        // Cegah duplikasi
+        $cart   = $this->cart();
+        $exists = $cart->search(fn($ci) => $ci->id == $product['id']);
+        if ($exists->isNotEmpty()) {
+            $this->dispatch('swal-warning', 'Produk sudah ada di keranjang!');
+            return;
+        }
+
+        // Hitung harga/tax/diskon sesuai fungsi existing
         $calculated = $this->calculate($product);
 
         $cart->add([
             'id'      => $product['id'],
-            'name'    => $product['product_name'],
+            'name'    => $product['product_name'] ?? 'Produk',
             'qty'     => 1,
-            'price'   => $calculated['price'],
+            'price'   => (int) ($calculated['price'] ?? $product['product_price'] ?? 0),
             'weight'  => 1,
             'options' => [
-                'source_type'           => 'new', // new | second | manual
-                'product_discount'      => 0.00,
-                'product_discount_type' => 'fixed',
-                'sub_total'             => $calculated['sub_total'],
-                'code'                  => $product['product_code'] ?? null,
-                'stock'                 => $product['product_quantity'] ?? 0,
-                'unit'                  => $product['product_unit'] ?? null,
-                'product_tax'           => $calculated['product_tax'],
-                'unit_price'            => $calculated['unit_price'],
-                'hpp'                   => $product['product_cost'] ?? 0,
+                'source_type'  => 'new',
+                'code'         => $product['product_code'] ?? '-',
+                'stock'        => (int) ($product['product_quantity'] ?? $product['stock'] ?? 999),
+                'unit_price'   => (int) ($calculated['unit_price'] ?? $product['product_price'] ?? 0),
+                'hpp'          => (int) ($product['product_cost'] ?? 0),
+                'tax'          => (int) ($calculated['tax'] ?? $product['product_order_tax'] ?? 0),
+                'tax_type'     => $product['product_tax_type'] ?? null,
+                'discount'     => (int) ($calculated['discount'] ?? 0),
             ],
         ]);
 
-        $this->dispatch('showSuccess', ['message' => 'Produk berhasil ditambahkan!']);
-        $this->refreshCart();
+        // Sinkronkan state array agar baris baru kenal default-nya
+        $pid = $product['id'];
+        $this->quantity[$pid]        = 1;
+        $this->check_quantity[$pid]  = (int) ($product['product_quantity'] ?? $product['stock'] ?? 999);
+        $this->discount_type[$pid]   = 'fixed';
+        $this->item_discount[$pid]   = 0;
+
+        $this->total_amount = $this->calculateTotal();
+        $this->dispatch('swal-success', 'Produk berhasil ditambahkan!');
+        $this->dispatch('paid-input-ready'); // re-init AutoNumeric
+    }
+
+    /**
+     * Ambil Product dari DB dan susun payload standar untuk perhitungan
+     */
+    private function buildProductPayloadFromId(int $id): array
+    {
+        $p = Product::find($id);
+        if (!$p) return [];
+
+        return [
+            'id'                => $p->id,
+            'product_name'      => (string) $p->product_name,
+            'product_code'      => (string) $p->product_code,
+            'product_price'     => (int) $p->product_price,
+            'product_cost'      => (int) ($p->product_cost ?? 0),
+            'product_order_tax' => (int) ($p->product_order_tax ?? 0),
+            'product_tax_type'  => $p->product_tax_type ?? null,
+            'product_quantity'  => (int) ($p->product_quantity ?? 0),
+            'source_type'       => 'new',
+        ];
     }
 
     // ========= Perhitungan =========
@@ -198,7 +244,7 @@ class Checkout extends Component
     public function proceed()
     {
         if ($this->cart()->count() === 0) {
-            $this->dispatch('showWarning', ['message' => 'Keranjang masih kosong!']);
+            $this->dispatch('swal-warning', 'Keranjang masih kosong!');
             return;
         }
         $this->dispatch('showCheckoutModal');
@@ -215,7 +261,7 @@ class Checkout extends Component
         if ($sourceType === 'new') {
             $product = Product::findOrFail($productId);
             if (($this->quantity[$productId] ?? 1) > $product->product_quantity) {
-                $this->dispatch('showWarning', ['message' => 'Kuantitas melebihi stok.']);
+                $this->dispatch('swal-warning', 'Kuantitas melebihi stok.');
                 $this->quantity[$productId] = $this->cart()->get($rowId)->qty;
                 return;
             }
@@ -286,55 +332,50 @@ class Checkout extends Component
                 $totalProfit = 0;
 
                 foreach ($cartItems as $item) {
-                    // Sumber & meta dari options (bukan attributes)
                     $src  = data_get($item->options, 'source_type', 'new');
                     $code = data_get($item->options, 'code', $src === 'manual' ? '-' : '-');
 
-                    // id produk asli (kalau disimpan), fallback ke $item->id
                     $originalId = (int) data_get($item->options, 'original_id', $item->id);
 
                     // HPP
                     $hpp = 0;
                     if ($src === 'new') {
-                        if ($p = \Modules\Product\Entities\Product::find($originalId)) {
+                        if ($p = Product::find($originalId)) {
                             $hpp = (int) $p->product_cost;
                         }
                     } elseif ($src === 'second') {
-                        if ($s = \Modules\Product\Entities\ProductSecond::find($originalId)) {
+                        if ($s = ProductSecond::find($originalId)) {
                             $hpp = (int) ($s->purchase_price ?? 0);
                         }
                     }
 
-                    $qty       = (int) $item->qty;     // <- qty
+                    $qty       = (int) $item->qty;
                     $unitPrice = (int) $item->price;
                     $subTotal  = $qty * $unitPrice;
 
-                    \Modules\Sale\Entities\SaleDetails::create([
-    'sale_id'         => $sale->id,
-    'product_id'      => $src === 'new' ? $originalId : null,
-    'productable_type'=> $src === 'second' ? \Modules\Product\Entities\ProductSecond::class : null,
-    'productable_id'  => $src === 'second' ? $originalId : null,
-    'source_type'     => $src,
-    'item_name'       => $item->name,
-    'product_name'    => $item->name,
-    'product_code'    => $code,
-    'quantity'        => $qty,
-    'price'           => $unitPrice,
-    'unit_price'      => $unitPrice,
-    'sub_total'       => $subTotal,
-    'hpp'             => $hpp,
-    'subtotal_profit' => max(0, ($unitPrice - $hpp) * $qty),
-
-    'product_discount_amount' => (int) data_get($item->options, 'discount', 0),
-    'product_discount_type'   => data_get($item->options, 'discount_type', 'fixed'),
-    'product_tax_amount'      => (int) data_get($item->options, 'tax', 0),
-]);
-
+                    SaleDetails::create([
+                        'sale_id'               => $sale->id,
+                        'product_id'            => $src === 'new' ? $originalId : null,
+                        'productable_type'      => $src === 'second' ? ProductSecond::class : null,
+                        'productable_id'        => $src === 'second' ? $originalId : null,
+                        'source_type'           => $src,
+                        'item_name'             => $item->name,
+                        'product_name'          => $item->name,
+                        'product_code'          => $code,
+                        'quantity'              => $qty,
+                        'price'                 => $unitPrice,
+                        'unit_price'            => $unitPrice,
+                        'sub_total'             => $subTotal,
+                        'hpp'                   => $hpp,
+                        'subtotal_profit'       => max(0, ($unitPrice - $hpp) * $qty),
+                        'product_discount_amount' => (int) data_get($item->options, 'discount', 0),
+                        'product_discount_type'   => data_get($item->options, 'discount_type', 'fixed'),
+                        'product_tax_amount'      => (int) data_get($item->options, 'tax', 0),
+                    ]);
 
                     $totalHpp    += $hpp * $qty;
                     $totalProfit += max(0, ($unitPrice - $hpp) * $qty);
                 }
-
 
                 $sale->update([
                     'total_hpp'    => $totalHpp,
@@ -350,19 +391,35 @@ class Checkout extends Component
             $this->cart()->destroy(); // kosongkan keranjang setelah jadi invoice
 
             // Default paid_amount = total invoice (mempermudah "Tandai Lunas")
-            $this->paid_amount = (int) $sale->total_amount;
+            $this->paid_amount   = (int) $sale->total_amount;
+            $this->show_payment  = false; // [E] invoice dulu, bayar belakangan
             $this->calculateChange();
 
             $this->dispatch('paid-input-ready');
-            $this->dispatch('swal-success', 'Invoice berhasil dibuat. Silakan proses pembayaran.');
+            $this->dispatch('swal-success', 'Invoice berhasil dibuat. Silakan cetak & lanjut ke pembayaran.');
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('swal-error', 'Gagal membuat invoice. ' . $e->getMessage());
         }
     }
 
-    // ========= Tandai Lunas =========
+    // ========= Lanjut ke Pembayaran (tampilkan form) =========
+    public function showPayment(): void
+    {
+        if (!$this->sale) {
+            $this->dispatch('swal-warning', 'Buat invoice dulu.');
+            return;
+        }
+        if ($this->sale->payment_status === 'Paid') {
+            $this->dispatch('swal-warning', 'Invoice ini sudah lunas.');
+            return;
+        }
 
+        $this->show_payment = true;
+        $this->dispatch('paid-input-ready'); // init AutoNumeric saat form muncul
+    }
+
+    // ========= Tandai Lunas =========
     public function markAsPaid()
     {
         if (!$this->sale) {
@@ -398,14 +455,13 @@ class Checkout extends Component
 
                 // Catat payment (sebesar total)
                 SalePayment::create([
-    'date'           => now()->toDateString(),
-    'reference'      => 'INV/' . $sale->reference,
-    'amount'         => (int) min($total, max(0, (int)$this->sanitizeMoney($this->paid_amount))),
-    'sale_id'        => $sale->id,
-    'payment_method' => $this->payment_method ?: 'Tunai',
-    'note'           => $this->payment_method !== 'Tunai' ? (string) $this->bank_name : null,
-]);
-
+                    'date'           => now()->toDateString(),
+                    'reference'      => 'INV/' . $sale->reference,
+                    'amount'         => (int) min($total, max(0, (int)$this->sanitizeMoney($this->paid_amount))),
+                    'sale_id'        => $sale->id,
+                    'payment_method' => $this->payment_method ?: 'Tunai',
+                    'note'           => $this->payment_method !== 'Tunai' ? (string) $this->bank_name : null,
+                ]);
 
                 // Kurangi stok saat status naik ke Completed (jika belum)
                 if ($sale->status !== 'Completed') {
@@ -414,18 +470,19 @@ class Checkout extends Component
                             if ($p = Product::find($d->product_id)) {
                                 $p->decrement('product_quantity', $d->quantity);
                             }
-                        } elseif ($d->source_type === 'second' && $d->product_id) {
-                            if ($s = ProductSecond::find($d->product_id)) {
+                        } elseif ($d->source_type === 'second' && $d->productable_id) {
+                            if ($s = ProductSecond::find($d->productable_id)) {
                                 $s->update(['status' => 'sold']);
                             }
                         }
                     }
                 }
 
+                // Catat stock movements (out)
                 foreach ($sale->saleDetails as $d) {
                     if ($d->source_type === 'new' && $d->product_id) {
                         \DB::table('stock_movements')->insert([
-                            'productable_type' => \Modules\Product\Entities\Product::class,
+                            'productable_type' => Product::class,
                             'productable_id'   => $d->product_id,
                             'type'             => 'out',
                             'quantity'         => (int) $d->quantity,
@@ -435,18 +492,17 @@ class Checkout extends Component
                             'updated_at'       => now(),
                         ]);
                     } elseif ($d->source_type === 'second' && $d->productable_id) {
-    \DB::table('stock_movements')->insert([
-        'productable_type' => \Modules\Product\Entities\ProductSecond::class,
-        'productable_id'   => $d->productable_id,
-        'type'             => 'out',
-        'quantity'         => 1,
-        'description'      => 'Sale (second) #' . $sale->reference,
-        'user_id'          => auth()->id(),
-        'created_at'       => now(),
-        'updated_at'       => now(),
-    ]);
-}
-
+                        \DB::table('stock_movements')->insert([
+                            'productable_type' => ProductSecond::class,
+                            'productable_id'   => $d->productable_id,
+                            'type'             => 'out',
+                            'quantity'         => 1,
+                            'description'      => 'Sale (second) #' . $sale->reference,
+                            'user_id'          => auth()->id(),
+                            'created_at'       => now(),
+                            'updated_at'       => now(),
+                        ]);
+                    }
                 }
 
                 $sale->update([
@@ -464,6 +520,7 @@ class Checkout extends Component
 
             // kembalian dihitung client-side (this->change sudah di-set saat updatedPaidAmount/hydrate)
             $this->sale->refresh();
+            $this->show_payment = false; // [G] sembunyikan form setelah lunas
             $this->dispatch('swal-success', 'Pembayaran diterima. Transaksi telah dilunasi.');
         } catch (\Throwable $e) {
             report($e);
@@ -481,6 +538,7 @@ class Checkout extends Component
         $this->note           = null;
         $this->change         = 0;
         $this->payment_method = 'Tunai';
+        $this->show_payment   = false; // [D]
 
         $this->refreshCart();
         $this->dispatch('paid-input-ready');

@@ -50,26 +50,15 @@ class SalePaymentsDataTable extends DataTable
 
     protected function getColumns() {
         return [
-            Column::make('date')
-                ->className('align-middle text-center'),
-
-            Column::make('reference')
-                ->className('align-middle text-center'),
-
-            Column::computed('amount')
-                ->className('align-middle text-center'),
-
-            Column::make('payment_method')
-                ->className('align-middle text-center'),
-
-            Column::computed('action')
-                ->exportable(false)
-                ->printable(false)
-                ->className('align-middle text-center'),
-
-            Column::make('created_at')
-                ->visible(false),
-        ];
+    Column::make('date')->className('align-middle text-center'),
+    Column::make('reference')->className('align-middle text-center'),
+    Column::make('payment_method')->className('align-middle text-center'),
+    Column::make('bank_name')->className('align-middle text-center'),
+    Column::computed('amount_formatted')->className('align-middle text-right'),
+    Column::make('note')->className('align-middle'),
+    Column::make('created_at'),
+    Column::computed('actions')->exportable(false)->printable(false)->className('align-middle text-center'),
+];
     }
 
     protected function filename(): string {

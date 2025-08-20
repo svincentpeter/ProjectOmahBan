@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Modules\Expense\Entities\Expense;
 use Modules\Purchase\Entities\Purchase;
@@ -17,29 +16,50 @@ use Modules\SalesReturn\Entities\SaleReturnPayment;
 class HomeController extends Controller
 {
 
-    public function index() {
-        $sales = Sale::completed()->sum('total_amount');
-        $sale_returns = SaleReturn::completed()->sum('total_amount');
-        $purchase_returns = PurchaseReturn::completed()->sum('total_amount');
-        $product_costs = 0;
+    public function index()
+    {
+        // =========================
+        // 1) Ganti ::completed() -> where('status','Completed')
+        // =========================
+        $sales = Sale::query()
+            ->where('status', 'Completed')
+            ->sum('total_amount');
 
-        foreach (Sale::completed()->with('saleDetails')->get() as $sale) {
-            foreach ($sale->saleDetails as $saleDetail) {
-                if (!is_null($saleDetail->product)) {
-                    $product_costs += $saleDetail->product->product_cost * $saleDetail->quantity;
-                }
-            }
-        }
+        $sale_returns = SaleReturn::query()
+            ->where('status', 'Completed')
+            ->sum('total_amount');
 
-        $revenue = ($sales - $sale_returns) / 100;
-        $profit = $revenue - $product_costs;
+        $purchase_returns = PurchaseReturn::query()
+            ->where('status', 'Completed')
+            ->sum('total_amount');
 
-        return view('home', [
-            'revenue'          => $revenue,
-            'sale_returns'     => $sale_returns / 100,
-            'purchase_returns' => $purchase_returns / 100,
-            'profit'           => $profit
-        ]);
+        // =========================
+        // 2) Hitung product_costs lebih efisien:
+        //    gunakan kolom hpp di sale_details * quantity
+        //    hanya untuk penjualan Completed
+        // =========================
+        $product_costs = (int) DB::table('sale_details as sd')
+            ->join('sales as s', 's.id', '=', 'sd.sale_id')
+            ->where('s.status', 'Completed')
+            ->sum(DB::raw('sd.hpp * sd.quantity'));
+
+        // =========================
+        // 3) Revenue & profit
+        //    (ikutan logika lama: rupiah/100 bila memang datanya cent—tapi di DB kamu bigints rupiah murni.
+        //    Dari dump SQL kamu, angka sudah rupiah penuh, jadi TIDAK dibagi 100.)
+        // =========================
+        $revenue = ($sales - $sale_returns); // rupiah
+        $profit  = $revenue - $product_costs;
+
+        // TODO: kembalikan ke view sesuai file kamu
+        return view('home', compact(
+            'sales',
+            'sale_returns',
+            'purchase_returns',
+            'revenue',
+            'profit',
+            'product_costs'
+        ));
     }
 
 

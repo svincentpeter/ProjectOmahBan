@@ -39,6 +39,17 @@ if (!function_exists('format_currency')) {
     }
 }
 
+if (!function_exists('merge_bank_into_note')) {
+    function merge_bank_into_note(string $method, ?string $bank, ?string $note): ?string {
+        $parts = [];
+        if (in_array($method, ['Transfer','QRIS']) && $bank) {
+            $parts[] = 'Bank: '.$bank;
+        }
+        if ($note) { $parts[] = $note; }
+        return $parts ? implode(' | ', $parts) : null;
+    }
+}
+
 
 if (!function_exists('make_reference_id')) {
     function make_reference_id($prefix, $number)

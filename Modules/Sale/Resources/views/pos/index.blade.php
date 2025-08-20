@@ -65,12 +65,12 @@
 @endsection
 
 @push('page_scripts')
-    <script src="{{ asset('js/jquery-mask-money.js') }}"></script>
     <script>
+        // Konfirmasi reset keranjang
         function confirmReset() {
             Swal.fire({
                 title: 'Anda Yakin?',
-                text: "Semua item di keranjang akan dihapus!",
+                text: 'Semua item di keranjang akan dihapus!',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -78,106 +78,29 @@
                 confirmButtonText: 'Ya, Hapus!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
-                if (result.isConfirmed) {
-                    Livewire.emit('resetCart');
-                    Swal.fire(
-                        'Dihapus!',
-                        'Keranjang Anda telah dikosongkan.',
-                        'success'
-                    )
-                }
+                if (result.isConfirmed) Livewire.emit('resetCart');
             });
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.body.addEventListener('click', function(e) {
-                if (e.target.id === 'confirm-sale-btn') {
-                    const form = document.getElementById('checkout-form');
-                    const totalAmount = document.getElementById('total_amount').value;
-                    const paidAmount = document.getElementById('paid_amount').value;
 
-                    if (!paidAmount) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: 'Received Amount tidak boleh kosong!',
-                        });
-                        return;
-                    }
+        // Listener swal standar dari Livewire
+        window.addEventListener('swal-success', e => Swal.fire({
+            icon: 'success',
+            title: 'Sukses',
+            text: e.detail
+        }));
+        window.addEventListener('swal-error', e => Swal.fire({
+            icon: 'error',
+            title: 'Gagal',
+            text: e.detail
+        }));
+        window.addEventListener('swal-warning', e => Swal.fire({
+            icon: 'warning',
+            title: 'Perhatian',
+            text: e.detail
+        }));
 
-                    Swal.fire({
-                        title: 'Konfirmasi Transaksi',
-                        html: `Anda akan menyelesaikan transaksi dengan total <strong>${totalAmount}</strong>.<br><br>Apakah Anda yakin?`,
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33',
-                        confirmButtonText: 'Ya, Lanjutkan!',
-                        cancelButtonText: 'Batal'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
-                    });
-                }
-            });
-        });
-
-        $(document).ready(function() {
-            window.addEventListener('showCheckoutModal', event => {
-                $('#checkoutModal').modal('show');
-            });
-
-            // Listener untuk notifikasi (jika Anda membutuhkannya)
-            window.addEventListener('showSuccess', event => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: event.detail.message,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            });
-
-            window.addEventListener('showWarning', event => {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Perhatian!',
-                    text: event.detail.message,
-                });
-            });
-
-            window.addEventListener('showError', event => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: event.detail.message,
-                });
-            });
-
-            $('#paid_amount').maskMoney({
-                prefix: '{{ settings()->currency->symbol }}',
-                thousands: '{{ settings()->currency->thousand_separator }}',
-                decimal: '{{ settings()->currency->decimal_separator }}',
-                allowZero: false,
-            });
-
-            $('#total_amount').maskMoney({
-                prefix: '{{ settings()->currency->symbol }}',
-                thousands: '{{ settings()->currency->thousand_separator }}',
-                decimal: '{{ settings()->currency->decimal_separator }}',
-                allowZero: true,
-            });
-
-            $('#paid_amount').maskMoney('mask');
-            $('#total_amount').maskMoney('mask');
-
-            $('#checkout-form').submit(function() {
-                const paid = $('#paid_amount').maskMoney('unmasked')[0];
-                $('#paid_amount').val(paid);
-                const total = $('#total_amount').maskMoney('unmasked')[0];
-                $('#total_amount').val(total);
-            });
-        });
+        // Opsional: jika masih ada modal checkout di masa depan
+        window.addEventListener('showCheckoutModal', () => $('#checkoutModal').modal('show'));
     </script>
 @endpush

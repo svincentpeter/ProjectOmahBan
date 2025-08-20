@@ -15,6 +15,8 @@ use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
 use Modules\Sale\Http\Requests\StoreSaleRequest;
 use Illuminate\Support\Str;
+use Modules\Sale\Http\Requests\UpdateSaleRequest;
+
 
 
 class SaleController extends Controller
@@ -188,7 +190,7 @@ class SaleController extends Controller
     /**
      * UPDATE: tulis ulang header & detail dari cart, dan catat delta payment.
      */
-    public function update(Request $request, Sale $sale)
+    public function update(UpdateSaleRequest $request, Sale $sale)
 {
     $data = $request->validate([
         'date'                 => ['required','date'],
@@ -519,6 +521,16 @@ private function paymentStatus(int $grand, int $paid): string
         'subtotalItems'  => $subtotal,
         'formatted'      => ['subtotalItems' => number_format($subtotal,0,',','.')],
     ]);
+}
+
+
+public function printA4(Sale $sale)
+{
+    // Eager load seperlunya
+    $sale->load('user', 'saleDetails.product.brand');
+
+    $pdf = \PDF::loadView('sale::print', ['sale' => $sale])->setPaper('a4');
+    return $pdf->stream('sale-' . $sale->reference . '.pdf');
 }
 
     /**
