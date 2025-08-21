@@ -2,6 +2,7 @@
 
 namespace Modules\Sale\Entities;
 
+use App\Models\User; // <-- TAMBAHKAN BARIS INI
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -22,11 +23,21 @@ class Sale extends Model
         'payment_method',    // info default di header
         'bank_name',         // opsional (di header)
         'note',
+        'user_id' // <-- TAMBAHKAN INI
     ];
 
     /* =========================================================
      |                        RELATIONSHIPS
      |=========================================================*/
+
+    /**
+     * FUNGSI INI YANG MEMPERBAIKI ERROR ANDA
+     * Mendefinisikan relasi ke model User.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     /**
      * Pembayaran (SalePayment).
@@ -117,16 +128,30 @@ class Sale extends Model
     }
 
     public function salePayments()
-{
-    // semua pembayaran milik sale ini
-    return $this->hasMany(\Modules\Sale\Entities\SalePayment::class, 'sale_id');
-}
+    {
+        // semua pembayaran milik sale ini
+        return $this->hasMany(\Modules\Sale\Entities\SalePayment::class, 'sale_id');
+    }
 
-public function latestPayment()
-{
-    // pembayaran terakhir berdasarkan tanggal (dan id sebagai tie-breaker)
-    // Catatan: latestOfMany('date') butuh Laravel 9+. Jika versi Anda < 9, abaikan method ini.
-    return $this->hasOne(\Modules\Sale\Entities\SalePayment::class, 'sale_id')
-                ->latestOfMany('date');
-}
+    public function latestPayment()
+    {
+        // pembayaran terakhir berdasarkan tanggal (dan id sebagai tie-breaker)
+        return $this->hasOne(\Modules\Sale\Entities\SalePayment::class, 'sale_id')
+                    ->latestOfMany('date');
+    }
+
+    /**
+     * Method ini akan berjalan otomatis saat ada data baru dibuat.
+     * Kita akan membuat nomor referensi di sini.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            // 1. Ambil ID terakhir, tambahkan 1 untuk nomor berikutnya.
+            $number = Sale::max('id') + 1;
+            // 2. Gunakan helper untuk membuat format 'OB2-00001'
+            $model->reference = make_reference_id('OB2', $number);
+        });
+    }
 }

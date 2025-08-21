@@ -7,6 +7,8 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Modules\Product\Entities\Product;
+use Modules\Product\Entities\ProductSecond;
 use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SalePayment;
 use Yajra\DataTables\Facades\DataTables;
@@ -128,20 +130,46 @@ class SalePaymentsController extends Controller
             }
 
             $pay = new SalePayment();
-$pay->sale_id        = $sale->id;
-$pay->reference      = $reference;
-$pay->amount         = $amount;
-$pay->payment_method = $data['payment_method']; // ⬅️ tidak akan jadi 'Tunai' lagi
-$pay->note           = $payload['note'] ?? null;
-$pay->date           = $data['date'];
+            $pay->sale_id        = $sale->id;
+            $pay->reference      = $reference;
+            $pay->amount         = $amount;
+            $pay->payment_method = $data['payment_method'];
+            $pay->note           = $payload['note'] ?? null;
+            $pay->date           = $data['date'];
 
-if (Schema::hasColumn('sale_payments', 'bank_name')) {
-    $pay->bank_name = $data['bank_name'] ?? null;
-}
-$pay->save();
+            if (Schema::hasColumn('sale_payments', 'bank_name')) {
+                $pay->bank_name = $data['bank_name'] ?? null;
+            }
+            $pay->save();
 
-            // Recalc & auto-map status
+            // ==================== [START] REVISI PENGURANGAN STOK ====================
+            // Simpan status sebelum dihitung ulang untuk perbandingan.
+            $statusSebelumnya = $sale->status;
+
+            // Recalc & auto-map status pembayaran dan penjualan.
             $sale->recalcPaymentAndStatus();
+
+            // Jika status penjualan berubah dari BUKAN 'Completed' menjadi 'Completed',
+            // maka lakukan pengurangan stok.
+            if ($statusSebelumnya !== 'Completed' && $sale->status === 'Completed') {
+                // Muat ulang relasi saleDetails untuk memastikan data terbaru.
+                $sale->load('saleDetails');
+                
+                foreach ($sale->saleDetails as $detail) {
+                    // Jika item adalah produk baru (new)
+                    if ($detail->source_type === 'new' && $detail->product_id) {
+                        if ($produk = Product::find($detail->product_id)) {
+                            $produk->decrement('product_quantity', $detail->quantity);
+                        }
+                    // Jika item adalah produk bekas (second)
+                    } elseif ($detail->source_type === 'second' && $detail->productable_id) {
+                        if ($produkBekas = ProductSecond::find($detail->productable_id)) {
+                            $produkBekas->update(['status' => 'sold']);
+                        }
+                    }
+                }
+            }
+            // ==================== [END] REVISI PENGURANGAN STOK ====================
 
             // Sukses: kembali ke daftar bila sudah paid, agar alur cepat
             if ($sale->payment_status === 'Paid') {
@@ -284,16 +312,16 @@ $pay->save();
             }
 
             $pay = new SalePayment();
-$pay->sale_id        = $sale->id;
-$pay->reference      = $reference;
-$pay->amount         = $amount;
-$pay->payment_method = $data['payment_method'];
-$pay->note           = $payload['note'] ?? null;
-$pay->date           = $data['date'];
-if (Schema::hasColumn('sale_payments', 'bank_name')) {
-    $pay->bank_name = $data['bank_name'] ?? null;
-}
-$pay->save();
+            $pay->sale_id        = $sale->id;
+            $pay->reference      = $reference;
+            $pay->amount         = $amount;
+            $pay->payment_method = $data['payment_method'];
+            $pay->note           = $payload['note'] ?? null;
+            $pay->date           = $data['date'];
+            if (Schema::hasColumn('sale_payments', 'bank_name')) {
+                $pay->bank_name = $data['bank_name'] ?? null;
+            }
+            $pay->save();
 
             $sale->recalcPaymentAndStatus();
 

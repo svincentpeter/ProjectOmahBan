@@ -269,7 +269,12 @@ class PosController extends Controller
 
     public function printPos(Sale $sale)
 {
-    $sale->load('user', 'saleDetails.product.brand');
+    // PERBAIKAN: Memuat semua relasi yang dibutuhkan untuk nota
+    $sale->load([
+        'user',
+        'saleDetails.product.brand',     // Untuk produk baru
+        'saleDetails.productable.brand'  // Untuk produk bekas
+    ]);
 
     $pdf = \PDF::loadView('sale::print-pos', ['sale' => $sale])
         ->setPaper('a6', 'landscape')

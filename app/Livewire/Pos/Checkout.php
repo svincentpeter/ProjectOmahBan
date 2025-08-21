@@ -309,7 +309,6 @@ class Checkout extends Component
 
                 $sale = Sale::create([
                     'date'                => now()->toDateString(),
-                    'reference'           => $this->reference ?? ('SL-' . now()->format('Ymd-His') . '-' . uniqid()),
                     'user_id'             => auth()->id(),
                     'tax_percentage'      => (int) $this->global_tax,
                     'tax_amount'          => (int) ($this->cart()->tax() ?? 0),
