@@ -2,94 +2,150 @@
 
 namespace Modules\Expense\Http\Controllers;
 
-use Modules\Expense\DataTables\ExpensesDataTable;
-use Illuminate\Contracts\Support\Renderable;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 use Modules\Expense\Entities\Expense;
-use PhpOffice\PhpSpreadsheet\Calculation\MathTrig\Exp;
+use Modules\Expense\Entities\ExpenseCategory;
+use Modules\Expense\Http\Requests\StoreExpenseRequest;
+use Modules\Expense\Http\Requests\UpdateExpenseRequest;
 
 class ExpenseController extends Controller
 {
-
-    public function index(ExpensesDataTable $dataTable) {
+    /**
+     * List & filter pengeluaran (tanggal dari–sampai, kategori) + ringkasan total.
+     */
+    public function index(Request $request)
+    {
         abort_if(Gate::denies('access_expenses'), 403);
 
-        return $dataTable->render('expense::expenses.index');
+        $q = Expense::with(['category', 'user'])
+            ->when($request->filled('from'), fn ($qq) => $qq->whereDate('date', '>=', $request->from))
+            ->when($request->filled('to'),   fn ($qq) => $qq->whereDate('date', '<=', $request->to))
+            ->when($request->filled('category_id'), fn ($qq) => $qq->where('category_id', $request->category_id))
+            ->latest('date');
+
+        // Ambil data untuk tabel (pagination) + total ringkasan
+        $expenses   = $q->paginate(15)->withQueryString();
+        $categories = ExpenseCategory::orderBy('category_name')->get();
+        $total      = (clone $q)->sum('amount');
+
+        return view('expense::expenses.index', compact('expenses', 'categories', 'total'));
     }
 
-
-    public function create() {
+    /**
+     * Halaman create.
+     */
+    public function create()
+    {
         abort_if(Gate::denies('create_expenses'), 403);
 
-        return view('expense::expenses.create');
+        $categories = ExpenseCategory::orderBy('category_name')->get();
+        return view('expense::expenses.create', compact('categories'));
     }
 
-
-    public function store(Request $request) {
+    /**
+     * Simpan pengeluaran baru.
+     * - Reference dihasilkan otomatis via Expense::nextReference($date)
+     * - Simpan user_id (pemilik input)
+     * - Dukung payment_method (Tunai/Transfer) + bank_name (hanya jika Transfer)
+     * - Dukung unggah lampiran ke storage publik
+     */
+    public function store(StoreExpenseRequest $request)
+    {
         abort_if(Gate::denies('create_expenses'), 403);
 
-        $request->validate([
-            'date' => 'required|date',
-            'reference' => 'required|string|max:255',
-            'category_id' => 'required',
-            'amount' => 'required|numeric|max:2147483647',
-            'details' => 'nullable|string|max:1000'
+        $date = Carbon::parse($request->date);
+
+        $expense = Expense::create([
+            'category_id'    => $request->category_id,
+            'date'           => $date,
+            'reference'      => Expense::nextReference($date),
+            'details'        => $request->details,
+            'amount'         => (int) $request->amount,
+            'user_id'        => auth()->id(),
+            'payment_method' => $request->payment_method, // contoh: 'Tunai' | 'Transfer'
+            'bank_name'      => $request->payment_method === 'Transfer' ? $request->bank_name : null,
         ]);
 
-        Expense::create([
-            'date' => $request->date,
-            'category_id' => $request->category_id,
-            'amount' => $request->amount,
-            'details' => $request->details
-        ]);
+        if ($request->hasFile('attachment')) {
+            $path = $request->file('attachment')->store('attachments/expenses', 'public');
+            $expense->update(['attachment_path' => $path]);
+        }
 
-        toast('Expense Created!', 'success');
+        // Gunakan toast jika tersedia; fallback ke session flash biasa pun aman.
+        if (function_exists('toast')) {
+            toast('Pengeluaran tersimpan.', 'success');
+        }
 
-        return redirect()->route('expenses.index');
+        return redirect()->route('expenses.index')->with('success', 'Pengeluaran tersimpan.');
     }
 
-
-    public function edit(Expense $expense) {
+    /**
+     * Halaman edit.
+     */
+    public function edit(Expense $expense)
+    {
         abort_if(Gate::denies('edit_expenses'), 403);
 
-        return view('expense::expenses.edit', compact('expense'));
+        $categories = ExpenseCategory::orderBy('category_name')->get();
+        return view('expense::expenses.edit', compact('expense', 'categories'));
     }
 
-
-    public function update(Request $request, Expense $expense) {
+    /**
+     * Update pengeluaran.
+     * - Reference tidak diubah (tetap auto-generate saat create)
+     * - Ganti lampiran: hapus file lama jika ada
+     */
+    public function update(UpdateExpenseRequest $request, Expense $expense)
+    {
         abort_if(Gate::denies('edit_expenses'), 403);
 
-        $request->validate([
-            'date' => 'required|date',
-            'reference' => 'required|string|max:255',
-            'category_id' => 'required',
-            'amount' => 'required|numeric|max:2147483647',
-            'details' => 'nullable|string|max:1000'
-        ]);
+        $date = Carbon::parse($request->date);
 
         $expense->update([
-            'date' => $request->date,
-            'reference' => $request->reference,
-            'category_id' => $request->category_id,
-            'amount' => $request->amount,
-            'details' => $request->details
+            'category_id'    => $request->category_id,
+            'date'           => $date,
+            'details'        => $request->details,
+            'amount'         => (int) $request->amount,
+            'payment_method' => $request->payment_method,
+            'bank_name'      => $request->payment_method === 'Transfer' ? $request->bank_name : null,
         ]);
 
-        toast('Expense Updated!', 'info');
+        if ($request->hasFile('attachment')) {
+            if ($expense->attachment_path) {
+                Storage::disk('public')->delete($expense->attachment_path);
+            }
+            $path = $request->file('attachment')->store('attachments/expenses', 'public');
+            $expense->update(['attachment_path' => $path]);
+        }
 
-        return redirect()->route('expenses.index');
+        if (function_exists('toast')) {
+            toast('Pengeluaran diperbarui.', 'info');
+        }
+
+        return redirect()->route('expenses.index')->with('success', 'Pengeluaran diperbarui.');
     }
 
-
-    public function destroy(Expense $expense) {
+    /**
+     * Hapus pengeluaran + lampiran (jika ada).
+     */
+    public function destroy(Expense $expense)
+    {
         abort_if(Gate::denies('delete_expenses'), 403);
+
+        if ($expense->attachment_path) {
+            Storage::disk('public')->delete($expense->attachment_path);
+        }
 
         $expense->delete();
 
-        toast('Expense Deleted!', 'warning');
+        if (function_exists('toast')) {
+            toast('Pengeluaran dihapus.', 'warning');
+        }
 
-        return redirect()->route('expenses.index');
+        return redirect()->route('expenses.index')->with('success', 'Pengeluaran dihapus.');
     }
 }

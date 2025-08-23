@@ -28,6 +28,7 @@ class ExpenseServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+        $this->loadViewsFrom(module_path('Expense', 'Resources/views'), 'expense');
     }
 
     /**

@@ -5,10 +5,32 @@ namespace Modules\Expense\Entities;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Expense extends Model
 {
     use HasFactory;
+    use SoftDeletes;
+
+    protected $fillable = [
+        'category_id', 'date', 'reference', 'details', 'amount',
+        'user_id', 'payment_method', 'bank_name', 'attachment_path',
+    ];
+
+    protected $casts = [
+        'date'   => 'date',
+        'amount' => 'integer',
+    ];
+
+    public function user()     { return $this->belongsTo(\App\Models\User::class); }
+
+    public static function nextReference(Carbon $date): string
+    {
+        $prefix = 'EX-' . $date->format('Ymd') . '-';
+        $last = static::whereDate('date', $date)->max('reference');
+        $seq  = ($last && preg_match('/-(\d+)$/', $last, $m)) ? ((int)$m[1] + 1) : 1;
+        return $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
+    }
 
     protected $guarded = [];
 
