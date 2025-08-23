@@ -94,7 +94,7 @@
       <div class="card">
         <div class="card-body">
           <div class="table-responsive">
-            {!! $dataTable->table() !!}
+            {{ $dataTable->table() }}
           </div>
         </div>
       </div>
@@ -105,7 +105,7 @@
 @endsection
 
 @push('page_scripts')
-  {!! $dataTable->scripts() !!}
+  {{ $dataTable->scripts() }}
 
   <style>
     .filter-card{border:1px solid #e9ecef;border-radius:.5rem}

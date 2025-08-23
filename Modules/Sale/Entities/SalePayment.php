@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Sale\Entities\Sale;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class SalePayment extends Model
 {
 
-    use HasFactory;
-
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'sale_id',

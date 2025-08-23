@@ -66,12 +66,20 @@
                                         <div class="form-group">
                                             <label for="payment_method">Payment Method <span class="text-danger">*</span></label>
                                             <select class="form-control" name="payment_method" id="payment_method" required>
-                                                <option {{ $salePayment->payment_method == 'Cash' ? 'selected' : '' }} value="Cash">Cash</option>
-                                                <option {{ $salePayment->payment_method == 'Credit Card' ? 'selected' : '' }} value="Credit Card">Credit Card</option>
-                                                <option {{ $salePayment->payment_method == 'Bank Transfer' ? 'selected' : '' }} value="Bank Transfer">Bank Transfer</option>
-                                                <option {{ $salePayment->payment_method == 'Cheque' ? 'selected' : '' }} value="Cheque">Cheque</option>
-                                                <option {{ $salePayment->payment_method == 'Other' ? 'selected' : '' }} value="Other">Other</option>
-                                            </select>
+    <option value="Tunai"    {{ $salePayment->payment_method === 'Tunai'    ? 'selected' : '' }}>Tunai</option>
+    <option value="Transfer" {{ $salePayment->payment_method === 'Transfer' ? 'selected' : '' }}>Transfer</option>
+    <option value="QRIS"     {{ $salePayment->payment_method === 'QRIS'     ? 'selected' : '' }}>QRIS</option>
+</select>
+
+{{-- Tampilkan bank_name saat Transfer/QRIS --}}
+<div class="mt-2" x-data="{ pm: '{{ $salePayment->payment_method }}' }" x-show="pm==='Transfer' || pm==='QRIS'">
+    <label class="mb-1">Bank / Rekening <span class="text-danger">*</span></label>
+    <input type="text" name="bank_name" id="bank_name" class="form-control"
+           :required="pm==='Transfer' || pm==='QRIS'"
+           value="{{ old('bank_name', $salePayment->bank_name) }}" placeholder="BCA a.n. ...">
+    <small class="text-muted">Wajib untuk Transfer/QRIS (dicatat di pembayaran).</small>
+</div>
+
                                         </div>
                                     </div>
                                 </div>

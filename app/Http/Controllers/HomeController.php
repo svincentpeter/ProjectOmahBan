@@ -68,13 +68,13 @@ class HomeController extends Controller
 
         $currentMonthSales = Sale::where('status', 'Completed')->whereMonth('date', date('m'))
                 ->whereYear('date', date('Y'))
-                ->sum('total_amount') / 100;
+                ->sum('total_amount');
         $currentMonthPurchases = Purchase::where('status', 'Completed')->whereMonth('date', date('m'))
                 ->whereYear('date', date('Y'))
-                ->sum('total_amount') / 100;
+                ->sum('total_amount');
         $currentMonthExpenses = Expense::whereMonth('date', date('m'))
                 ->whereYear('date', date('Y'))
-                ->sum('amount') / 100;
+                ->sum('amount');
 
         return response()->json([
             'sales'     => $currentMonthSales,
@@ -195,7 +195,7 @@ class HomeController extends Controller
         $data = [];
         $days = [];
         foreach ($dates as $key => $value) {
-            $data[] = $value / 100;
+            $data[] = $value;
             $days[] = $key;
         }
 
@@ -227,7 +227,7 @@ class HomeController extends Controller
         $data = [];
         $days = [];
         foreach ($dates as $key => $value) {
-            $data[] = $value / 100;
+            $data[] = $value;
             $days[] = $key;
         }
 

@@ -106,7 +106,7 @@
                                                 id="getTotalAmount"
                                                 class="btn btn-primary"
                                                 type="button"
-                                                data-total="{!! \Cart::instance('sale')->total() !!}"
+                                                data-total="{{ \Cart::instance('sale')->total() }}"
                                             >
                                                 <i class="bi bi-check-square"></i>
                                             </button>

@@ -38,4 +38,61 @@
     .select2-container--default .select2-selection--single .select2-selection__arrow b {
         margin-top: 2px;
     }
+
+    /* === Sidebar Polish (Omah Ban) === */
+#sidebar.c-sidebar { background-color: #20222b; }
+#sidebar .c-sidebar-brand { border-bottom: 1px solid rgba(255,255,255,.06); }
+
+#sidebar .c-sidebar-nav-title {
+  text-transform: uppercase;
+  font-size: .72rem;
+  letter-spacing: .08em;
+  opacity: .6;
+  padding: .75rem 1rem .25rem;
+}
+
+#sidebar .c-sidebar-nav-link,
+#sidebar .c-sidebar-nav-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  border-radius: .5rem;
+  margin: 2px 8px;
+  padding: .5rem .75rem;
+  transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+#sidebar .c-sidebar-nav-link .bi,
+#sidebar .c-sidebar-nav-dropdown-toggle .bi {
+  font-size: 1rem;
+  width: 1.25rem;
+  text-align: center;
+}
+
+/* Active / current route */
+#sidebar .c-sidebar-nav-link.c-active,
+#sidebar .c-sidebar-nav-link.active,
+#sidebar .c-sidebar-nav-dropdown.c-show > .c-sidebar-nav-dropdown-toggle {
+  background: linear-gradient(135deg, #5a67d8, #805ad5);
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(90,103,216,.35);
+}
+
+/* Submenu guide line */
+#sidebar .c-sidebar-nav-dropdown-items {
+  border-left: 1px dashed rgba(255,255,255,.12);
+  margin-left: 1.75rem;
+}
+
+/* Hover state halus */
+#sidebar .c-sidebar-nav-link:hover,
+#sidebar .c-sidebar-nav-dropdown-toggle:hover {
+  background-color: rgba(255,255,255,.06);
+}
+
+/* Unfoldable width on hover (CoreUI) */
+.c-sidebar-minimized.c-sidebar-unfoldable:hover .c-sidebar {
+  width: 260px;
+}
+
 </style>
