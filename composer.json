@@ -15,7 +15,7 @@
         "laravel/ui": "^4.0",
         "livewire/livewire": "^3.0",
         "milon/barcode": "^10.0",
-        "nwidart/laravel-modules": "^10.0",
+        "nwidart/laravel-modules": "11",
         "realrashid/sweet-alert": "^6.0",
         "spatie/laravel-medialibrary": "^10.0",
         "spatie/laravel-permission": "^5.0",
@@ -66,7 +66,10 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "wikimedia/composer-merge-plugin": true
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true
