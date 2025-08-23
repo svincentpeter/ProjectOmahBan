@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 21, 2025 at 07:05 AM
+-- Generation Time: Aug 23, 2025 at 08:07 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.26
 
@@ -171,7 +171,12 @@ CREATE TABLE `expenses` (
   `details` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `amount` int NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL,
+  `payment_method` enum('Tunai','Transfer') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Tunai',
+  `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attachment_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -187,6 +192,13 @@ CREATE TABLE `expense_categories` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `expense_categories`
+--
+
+INSERT INTO `expense_categories` (`id`, `category_name`, `category_description`, `created_at`, `updated_at`) VALUES
+(1, 'Bensin', NULL, '2025-08-23 06:16:46', '2025-08-23 06:16:46');
 
 -- --------------------------------------------------------
 
@@ -300,7 +312,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (51, '2025_08_10_121940_add_user_id_to_sales_table', 16),
 (52, '2025_08_14_202349_alter_sale_payments_amount_to_decimal', 17),
 (53, '2025_08_14_210716_normalize_money_to_bigint', 18),
-(54, '2025_08_19_150401_add_bank_name_to_sale_payments_table', 19);
+(54, '2025_08_19_150401_add_bank_name_to_sale_payments_table', 19),
+(55, '2025_08_23_115755_add_operational_fields_to_expenses_table', 20);
 
 -- --------------------------------------------------------
 
@@ -525,13 +538,13 @@ CREATE TABLE `purchases` (
   `supplier_id` bigint UNSIGNED DEFAULT NULL,
   `supplier_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tax_percentage` int NOT NULL DEFAULT '0',
-  `tax_amount` int NOT NULL DEFAULT '0',
+  `tax_amount` bigint NOT NULL DEFAULT '0',
   `discount_percentage` int NOT NULL DEFAULT '0',
-  `discount_amount` int NOT NULL DEFAULT '0',
-  `shipping_amount` int NOT NULL DEFAULT '0',
-  `total_amount` int NOT NULL,
-  `paid_amount` int NOT NULL,
-  `due_amount` int NOT NULL,
+  `discount_amount` bigint NOT NULL DEFAULT '0',
+  `shipping_amount` bigint NOT NULL DEFAULT '0',
+  `total_amount` bigint NOT NULL DEFAULT '0',
+  `paid_amount` bigint NOT NULL DEFAULT '0',
+  `due_amount` bigint NOT NULL DEFAULT '0',
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -572,7 +585,7 @@ CREATE TABLE `purchase_details` (
 CREATE TABLE `purchase_payments` (
   `id` bigint UNSIGNED NOT NULL,
   `purchase_id` bigint UNSIGNED NOT NULL,
-  `amount` int NOT NULL,
+  `amount` bigint NOT NULL,
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -820,69 +833,70 @@ CREATE TABLE `sales` (
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
   `tax_percentage` int NOT NULL DEFAULT '0',
-  `tax_amount` bigint DEFAULT NULL,
+  `tax_amount` bigint NOT NULL DEFAULT '0',
   `discount_percentage` int NOT NULL DEFAULT '0',
-  `discount_amount` bigint DEFAULT NULL,
-  `shipping_amount` bigint DEFAULT NULL,
-  `total_amount` bigint DEFAULT NULL,
+  `discount_amount` bigint NOT NULL DEFAULT '0',
+  `shipping_amount` bigint NOT NULL DEFAULT '0',
+  `total_amount` bigint NOT NULL DEFAULT '0',
   `total_hpp` bigint NOT NULL DEFAULT '0',
   `total_profit` bigint NOT NULL DEFAULT '0',
-  `paid_amount` bigint DEFAULT NULL,
-  `due_amount` bigint DEFAULT NULL,
+  `paid_amount` bigint NOT NULL DEFAULT '0',
+  `due_amount` bigint NOT NULL DEFAULT '0',
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ;
 
 --
 -- Dumping data for table `sales`
 --
 
-INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `tax_percentage`, `tax_amount`, `discount_percentage`, `discount_amount`, `shipping_amount`, `total_amount`, `total_hpp`, `total_profit`, `paid_amount`, `due_amount`, `status`, `payment_status`, `payment_method`, `bank_name`, `note`, `created_at`, `updated_at`) VALUES
-(4, '2025-08-08', 'SL-00001', NULL, 0, 0, 0, 0, 0, 1425000, 0, 1425000, 0, 1425000, 'Completed', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-08 08:15:20', '2025-08-08 08:15:20'),
-(19, '2025-08-09', 'SL-00005', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 13:38:27', '2025-08-09 13:38:27'),
-(20, '2025-08-09', 'SL-00020', NULL, 0, 0, 0, 0, 0, 1575000, 1280760, 294240, 0, 1575000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
-(21, '2025-08-09', 'SL-00021', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:02:55', '2025-08-09 14:02:55'),
-(22, '2025-08-09', 'SL-00022', NULL, 0, 0, 0, 0, 0, 18200000, 5123040, 13076960, 0, 18200000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:37:09', '2025-08-09 14:37:09'),
-(23, '2025-08-09', 'SL-00023', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-09 14:43:36', '2025-08-09 14:43:46'),
-(24, '2025-08-09', 'SL-00024', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:44:29', '2025-08-09 14:44:29'),
-(25, '2025-08-09', 'SL-00025', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:52:26', '2025-08-09 14:52:26'),
-(26, '2025-08-09', 'SL-00026', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:52:54', '2025-08-09 14:52:54'),
-(27, '2025-08-09', 'SL-00027', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:55:16', '2025-08-09 14:55:16'),
-(28, '2025-08-09', 'SL-00028', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:55:44', '2025-08-09 14:55:44'),
-(29, '2025-08-09', 'SL-00029', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:56:11', '2025-08-09 14:56:11'),
-(30, '2025-08-09', 'SL-00030', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:04:34', '2025-08-09 15:04:34'),
-(31, '2025-08-09', 'SL-00031', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:17:00', '2025-08-09 15:17:00'),
-(32, '2025-08-09', 'SL-00032', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:17:49', '2025-08-09 15:17:49'),
-(33, '2025-08-09', 'SL-00033', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:18:22', '2025-08-09 15:18:22'),
-(34, '2025-08-10', 'SL-00034', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 03:42:31', '2025-08-10 03:42:31'),
-(35, '2025-08-10', 'SL-00035', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:02:39', '2025-08-10 04:02:39'),
-(36, '2025-08-10', 'SL-00036', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:13:37', '2025-08-10 04:13:37'),
-(37, '2025-08-10', 'SL-00037', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 04:33:26', '2025-08-20 11:32:45'),
-(38, '2025-08-10', 'SL-00038', NULL, 0, 0, 0, 0, 0, 12500000, 0, 12500000, 0, 12500000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:58:25', '2025-08-10 04:58:25'),
-(39, '2025-08-10', 'SL-00039', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:59:06', '2025-08-10 04:59:06'),
-(40, '2025-08-10', 'SL-00040', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:59:58', '2025-08-10 04:59:58'),
-(44, '2025-08-10', 'SL-00041', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:08:39', '2025-08-10 06:08:39'),
-(45, '2025-08-10', 'SL-00045', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:11:54', '2025-08-10 06:11:56'),
-(46, '2025-08-10', 'SL-00046', 1, 0, 0, 0, 0, 0, 150000, 0, 150000, 150000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:12:16', '2025-08-20 11:32:59'),
-(47, '2025-08-10', 'SL-00047', 1, 0, 0, 0, 0, 0, 200000, 0, 200000, 200000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:19:30', '2025-08-18 16:18:52'),
-(48, '2025-08-10', 'SL-00048', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:20:10', '2025-08-20 12:18:55'),
-(49, '2025-08-10', 'SL-00049', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:20:39', '2025-08-20 12:27:33'),
-(50, '2025-08-10', 'SL-00050', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:28:26', '2025-08-20 12:27:59'),
-(51, '2025-08-10', 'SL-00051', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:29:20', '2025-08-21 04:20:36'),
-(52, '2025-08-10', 'SL-00052', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:33:33', '2025-08-10 06:34:17'),
-(53, '2025-08-12', 'SL-00053', 1, 0, 0, 0, 0, 0, 0, 0, 0, 100000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:14:18', '2025-08-18 15:52:12'),
-(54, '2025-08-12', 'SL-00054', 1, 0, 0, 0, 0, 0, 1425000, 0, 0, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:16:16', '2025-08-20 11:32:24'),
-(55, '2025-08-17', 'SL-00055', 1, 0, 0, 0, 0, 0, 2400000, 0, 2400000, 2400000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-17 05:24:44', '2025-08-18 13:41:51'),
-(56, '2025-08-19', 'SL-00056', 1, 0, 0, 0, 0, 0, 1450000, 1280760, 169240, 1450000, 1450000, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 04:58:30', '2025-08-19 06:49:21'),
-(57, '2025-08-19', 'SL-00057', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 05:23:41', '2025-08-20 10:07:07'),
-(58, '2025-08-19', 'SL-00058', 1, 0, 0, 0, 0, 0, 125000, 0, 125000, 125000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 06:17:01', '2025-08-19 06:17:47'),
-(59, '2025-08-20', 'SL-20250820-202448-68a5dab0793ff', NULL, 0, NULL, 0, NULL, NULL, 650000, 0, 0, 650000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-20 13:24:48', '2025-08-20 13:25:00'),
-(60, '2025-08-21', 'OB2-00060', NULL, 0, NULL, 0, NULL, NULL, 850000, 0, 0, 850000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-21 02:08:07', '2025-08-21 02:08:13');
+INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `tax_percentage`, `tax_amount`, `discount_percentage`, `discount_amount`, `shipping_amount`, `total_amount`, `total_hpp`, `total_profit`, `paid_amount`, `due_amount`, `status`, `payment_status`, `payment_method`, `bank_name`, `note`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(4, '2025-08-08', 'SL-00001', NULL, 0, 0, 0, 0, 0, 1425000, 0, 1425000, 0, 1425000, 'Completed', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-08 08:15:20', '2025-08-08 08:15:20', NULL),
+(19, '2025-08-09', 'SL-00005', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 13:38:27', '2025-08-09 13:38:27', NULL),
+(20, '2025-08-09', 'SL-00020', NULL, 0, 0, 0, 0, 0, 1575000, 1280760, 294240, 0, 1575000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 13:56:29', '2025-08-09 13:56:29', NULL),
+(21, '2025-08-09', 'SL-00021', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:02:55', '2025-08-09 14:02:55', NULL),
+(22, '2025-08-09', 'SL-00022', NULL, 0, 0, 0, 0, 0, 18200000, 5123040, 13076960, 0, 18200000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:37:09', '2025-08-09 14:37:09', NULL),
+(23, '2025-08-09', 'SL-00023', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-09 14:43:36', '2025-08-09 14:43:46', NULL),
+(24, '2025-08-09', 'SL-00024', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:44:29', '2025-08-09 14:44:29', NULL),
+(25, '2025-08-09', 'SL-00025', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:52:26', '2025-08-09 14:52:26', NULL),
+(26, '2025-08-09', 'SL-00026', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:52:54', '2025-08-09 14:52:54', NULL),
+(27, '2025-08-09', 'SL-00027', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:55:16', '2025-08-09 14:55:16', NULL),
+(28, '2025-08-09', 'SL-00028', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:55:44', '2025-08-09 14:55:44', NULL),
+(29, '2025-08-09', 'SL-00029', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:56:11', '2025-08-09 14:56:11', NULL),
+(30, '2025-08-09', 'SL-00030', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:04:34', '2025-08-09 15:04:34', NULL),
+(31, '2025-08-09', 'SL-00031', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:17:00', '2025-08-09 15:17:00', NULL),
+(32, '2025-08-09', 'SL-00032', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:17:49', '2025-08-09 15:17:49', NULL),
+(33, '2025-08-09', 'SL-00033', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:18:22', '2025-08-09 15:18:22', NULL),
+(34, '2025-08-10', 'SL-00034', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 03:42:31', '2025-08-10 03:42:31', NULL),
+(35, '2025-08-10', 'SL-00035', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:02:39', '2025-08-10 04:02:39', NULL),
+(36, '2025-08-10', 'SL-00036', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:13:37', '2025-08-10 04:13:37', NULL),
+(37, '2025-08-10', 'SL-00037', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 04:33:26', '2025-08-20 11:32:45', NULL),
+(38, '2025-08-10', 'SL-00038', NULL, 0, 0, 0, 0, 0, 12500000, 0, 12500000, 0, 12500000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:58:25', '2025-08-10 04:58:25', NULL),
+(39, '2025-08-10', 'SL-00039', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:59:06', '2025-08-10 04:59:06', NULL),
+(40, '2025-08-10', 'SL-00040', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:59:58', '2025-08-10 04:59:58', NULL),
+(44, '2025-08-10', 'SL-00041', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:08:39', '2025-08-10 06:08:39', NULL),
+(45, '2025-08-10', 'SL-00045', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:11:54', '2025-08-10 06:11:56', NULL),
+(46, '2025-08-10', 'SL-00046', 1, 0, 0, 0, 0, 0, 150000, 0, 150000, 150000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:12:16', '2025-08-20 11:32:59', NULL),
+(47, '2025-08-10', 'SL-00047', 1, 0, 0, 0, 0, 0, 200000, 0, 200000, 200000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:19:30', '2025-08-18 16:18:52', NULL),
+(48, '2025-08-10', 'SL-00048', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:20:10', '2025-08-20 12:18:55', NULL),
+(49, '2025-08-10', 'SL-00049', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:20:39', '2025-08-20 12:27:33', NULL),
+(50, '2025-08-10', 'SL-00050', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:28:26', '2025-08-20 12:27:59', NULL),
+(51, '2025-08-10', 'SL-00051', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:29:20', '2025-08-21 04:20:36', NULL),
+(52, '2025-08-10', 'SL-00052', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:33:33', '2025-08-10 06:34:17', NULL),
+(53, '2025-08-12', 'SL-00053', 1, 0, 0, 0, 0, 0, 0, 0, 0, 100000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:14:18', '2025-08-18 15:52:12', NULL),
+(54, '2025-08-12', 'SL-00054', 1, 0, 0, 0, 0, 0, 1425000, 0, 0, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:16:16', '2025-08-20 11:32:24', NULL),
+(55, '2025-08-17', 'SL-00055', 1, 0, 0, 0, 0, 0, 2400000, 0, 2400000, 2400000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-17 05:24:44', '2025-08-18 13:41:51', NULL),
+(56, '2025-08-19', 'SL-00056', 1, 0, 0, 0, 0, 0, 1450000, 1280760, 169240, 1450000, 1450000, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 04:58:30', '2025-08-19 06:49:21', NULL),
+(57, '2025-08-19', 'SL-00057', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 05:23:41', '2025-08-20 10:07:07', NULL),
+(58, '2025-08-19', 'SL-00058', 1, 0, 0, 0, 0, 0, 125000, 0, 125000, 125000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 06:17:01', '2025-08-19 06:17:47', NULL),
+(59, '2025-08-20', 'SL-20250820-202448-68a5dab0793ff', NULL, 0, 0, 0, 0, 0, 650000, 0, 0, 650000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-20 13:24:48', '2025-08-20 13:25:00', NULL),
+(60, '2025-08-21', 'OB2-00060', NULL, 0, 0, 0, 0, 0, 850000, 0, 0, 850000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-21 02:08:07', '2025-08-21 02:08:13', NULL);
 
 -- --------------------------------------------------------
 
@@ -980,35 +994,36 @@ CREATE TABLE `sale_payments` (
   `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ;
 
 --
 -- Dumping data for table `sale_payments`
 --
 
-INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `payment_method`, `bank_name`, `note`, `created_at`, `updated_at`) VALUES
-(1, 23, 1425000, '2025-08-09', 'INV/SL-00023/PMT-214346', 'Tunai', NULL, NULL, '2025-08-09 14:43:46', '2025-08-09 14:43:46'),
-(6, 45, 1425000, '2025-08-10', 'INV/SL-00045', 'Tunai', NULL, NULL, '2025-08-10 06:11:56', '2025-08-10 06:11:56'),
-(7, 47, 150000, '2025-08-10', 'INV/SL-00047', 'Tunai', NULL, NULL, '2025-08-10 06:19:53', '2025-08-10 06:19:53'),
-(8, 52, 1425000, '2025-08-10', 'INV/SL-00052', 'Tunai', NULL, NULL, '2025-08-10 06:34:17', '2025-08-10 06:34:17'),
-(9, 53, 100000, '2025-08-12', 'INV/SL-00053', 'Tunai', NULL, NULL, '2025-08-12 04:14:41', '2025-08-12 04:14:41'),
-(10, 55, 227500000, '2025-08-17', 'INV/SL-00055', 'Transfer', NULL, NULL, '2025-08-17 05:24:47', '2025-08-17 05:24:47'),
-(11, 55, 12500000, '2025-08-18', 'ADJ-20250818161158', 'Tunai', NULL, 'Penyesuaian pembayaran saat edit', '2025-08-18 09:11:58', '2025-08-18 09:11:58'),
-(12, 47, 14850000, '2025-08-18', 'SP-20250818-230945-SFXCN', 'Tunai', NULL, 'Penyesuaian saat edit (refund)', '2025-08-18 16:09:45', '2025-08-18 16:09:45'),
-(13, 47, 50000, '2025-08-18', 'SP-20250818-231852-GTOSJ', 'Tunai', NULL, 'Penyesuaian saat edit (+)', '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
-(14, 58, 125000, '2025-08-19', 'INV/SL-00058', 'Tunai', NULL, NULL, '2025-08-19 06:17:47', '2025-08-19 06:17:47'),
-(15, 56, 1450000, '2025-08-19', 'SP-20250819-134921-LYGUG', 'Tunai', NULL, 'Penyesuaian saat edit (+)', '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
-(16, 57, 1425000, '2025-08-20', 'INV/SL-00057/PMT-170707', 'Transfer', 'Mandiri', NULL, '2025-08-20 10:07:07', '2025-08-20 10:07:07'),
-(17, 54, 1425000, '2025-08-20', 'SP-00017', 'Tunai', NULL, 'Pelunasan', '2025-08-20 11:32:24', '2025-08-20 11:32:24'),
-(18, 37, 1425000, '2025-08-20', 'SP-00018', 'Tunai', NULL, NULL, '2025-08-20 11:32:45', '2025-08-20 11:32:45'),
-(19, 46, 150000, '2025-08-20', 'SP-00019', 'Tunai', NULL, 'Pelunasan', '2025-08-20 11:32:59', '2025-08-20 11:32:59'),
-(20, 48, 1425000, '2025-08-20', 'SP-00020', 'Transfer', 'Mandiri', NULL, '2025-08-20 12:18:55', '2025-08-20 12:18:55'),
-(21, 49, 1425000, '2025-08-20', 'SP-00021', 'Transfer', 'BCA', NULL, '2025-08-20 12:27:33', '2025-08-20 12:27:33'),
-(22, 50, 1425000, '2025-08-20', 'SP-00022', 'QRIS', 'BCA', NULL, '2025-08-20 12:27:59', '2025-08-20 12:27:59'),
-(23, 59, 650000, '2025-08-20', 'INV/SL-20250820-202448-68a5dab0793ff', 'Transfer', NULL, 'BCA', '2025-08-20 13:25:00', '2025-08-20 13:25:00'),
-(24, 60, 850000, '2025-08-21', 'INV/OB2-00060', 'Tunai', NULL, NULL, '2025-08-21 02:08:13', '2025-08-21 02:08:13'),
-(25, 51, 1425000, '2025-08-21', 'SP-00025', 'Tunai', NULL, NULL, '2025-08-21 04:20:36', '2025-08-21 04:20:36');
+INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `payment_method`, `bank_name`, `note`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 23, 1425000, '2025-08-09', 'INV/SL-00023/PMT-214346', 'Tunai', NULL, NULL, '2025-08-09 14:43:46', '2025-08-09 14:43:46', NULL),
+(6, 45, 1425000, '2025-08-10', 'INV/SL-00045', 'Tunai', NULL, NULL, '2025-08-10 06:11:56', '2025-08-10 06:11:56', NULL),
+(7, 47, 150000, '2025-08-10', 'INV/SL-00047', 'Tunai', NULL, NULL, '2025-08-10 06:19:53', '2025-08-10 06:19:53', NULL),
+(8, 52, 1425000, '2025-08-10', 'INV/SL-00052', 'Tunai', NULL, NULL, '2025-08-10 06:34:17', '2025-08-10 06:34:17', NULL),
+(9, 53, 100000, '2025-08-12', 'INV/SL-00053', 'Tunai', NULL, NULL, '2025-08-12 04:14:41', '2025-08-12 04:14:41', NULL),
+(10, 55, 227500000, '2025-08-17', 'INV/SL-00055', 'Transfer', NULL, NULL, '2025-08-17 05:24:47', '2025-08-17 05:24:47', NULL),
+(11, 55, 12500000, '2025-08-18', 'ADJ-20250818161158', 'Tunai', NULL, 'Penyesuaian pembayaran saat edit', '2025-08-18 09:11:58', '2025-08-18 09:11:58', NULL),
+(12, 47, 14850000, '2025-08-18', 'SP-20250818-230945-SFXCN', 'Tunai', NULL, 'Penyesuaian saat edit (refund)', '2025-08-18 16:09:45', '2025-08-18 16:09:45', NULL),
+(13, 47, 50000, '2025-08-18', 'SP-20250818-231852-GTOSJ', 'Tunai', NULL, 'Penyesuaian saat edit (+)', '2025-08-18 16:18:52', '2025-08-18 16:18:52', NULL),
+(14, 58, 125000, '2025-08-19', 'INV/SL-00058', 'Tunai', NULL, NULL, '2025-08-19 06:17:47', '2025-08-19 06:17:47', NULL),
+(15, 56, 1450000, '2025-08-19', 'SP-20250819-134921-LYGUG', 'Tunai', NULL, 'Penyesuaian saat edit (+)', '2025-08-19 06:49:21', '2025-08-19 06:49:21', NULL),
+(16, 57, 1425000, '2025-08-20', 'INV/SL-00057/PMT-170707', 'Transfer', 'Mandiri', NULL, '2025-08-20 10:07:07', '2025-08-20 10:07:07', NULL),
+(17, 54, 1425000, '2025-08-20', 'SP-00017', 'Tunai', NULL, 'Pelunasan', '2025-08-20 11:32:24', '2025-08-20 11:32:24', NULL),
+(18, 37, 1425000, '2025-08-20', 'SP-00018', 'Tunai', NULL, NULL, '2025-08-20 11:32:45', '2025-08-20 11:32:45', NULL),
+(19, 46, 150000, '2025-08-20', 'SP-00019', 'Tunai', NULL, 'Pelunasan', '2025-08-20 11:32:59', '2025-08-20 11:32:59', NULL),
+(20, 48, 1425000, '2025-08-20', 'SP-00020', 'Transfer', 'Mandiri', NULL, '2025-08-20 12:18:55', '2025-08-20 12:18:55', NULL),
+(21, 49, 1425000, '2025-08-20', 'SP-00021', 'Transfer', 'BCA', NULL, '2025-08-20 12:27:33', '2025-08-20 12:27:33', NULL),
+(22, 50, 1425000, '2025-08-20', 'SP-00022', 'QRIS', 'BCA', NULL, '2025-08-20 12:27:59', '2025-08-20 12:27:59', NULL),
+(23, 59, 650000, '2025-08-20', 'INV/SL-20250820-202448-68a5dab0793ff', 'Transfer', NULL, 'BCA', '2025-08-20 13:25:00', '2025-08-20 13:25:00', NULL),
+(24, 60, 850000, '2025-08-21', 'INV/OB2-00060', 'Tunai', NULL, NULL, '2025-08-21 02:08:13', '2025-08-21 02:08:13', NULL),
+(25, 51, 1425000, '2025-08-21', 'SP-00025', 'Tunai', NULL, NULL, '2025-08-21 04:20:36', '2025-08-21 04:20:36', NULL);
 
 -- --------------------------------------------------------
 
@@ -1262,7 +1277,9 @@ ALTER TABLE `customers`
 --
 ALTER TABLE `expenses`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `expenses_category_id_foreign` (`category_id`);
+  ADD KEY `expenses_category_id_foreign` (`category_id`),
+  ADD KEY `expenses_user_id_foreign` (`user_id`),
+  ADD KEY `expenses_date_category_idx` (`date`,`category_id`);
 
 --
 -- Indexes for table `expense_categories`
@@ -1416,9 +1433,11 @@ ALTER TABLE `role_has_permissions`
 --
 ALTER TABLE `sales`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `sales_reference_unique` (`reference`),
   ADD KEY `sales_user_id_foreign` (`user_id`),
   ADD KEY `idx_sales_date` (`date`),
-  ADD KEY `idx_sales_reference` (`reference`);
+  ADD KEY `idx_sales_status` (`status`),
+  ADD KEY `idx_sales_payment_status` (`payment_status`);
 
 --
 -- Indexes for table `sale_details`
@@ -1426,14 +1445,19 @@ ALTER TABLE `sales`
 ALTER TABLE `sale_details`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sale_details_sale_id_foreign` (`sale_id`),
-  ADD KEY `sale_details_product_id_foreign` (`product_id`);
+  ADD KEY `sale_details_product_id_foreign` (`product_id`),
+  ADD KEY `idx_sale_details_sale_created` (`sale_id`,`created_at`),
+  ADD KEY `idx_sale_details_productable` (`productable_type`,`productable_id`);
 
 --
 -- Indexes for table `sale_payments`
 --
 ALTER TABLE `sale_payments`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `sale_payments_sale_id_foreign` (`sale_id`);
+  ADD UNIQUE KEY `sale_payments_reference_unique` (`reference`),
+  ADD KEY `sale_payments_sale_id_foreign` (`sale_id`),
+  ADD KEY `idx_sale_payments_date` (`date`),
+  ADD KEY `idx_sale_payments_method` (`payment_method`);
 
 --
 -- Indexes for table `sale_returns`
@@ -1546,7 +1570,7 @@ ALTER TABLE `expenses`
 -- AUTO_INCREMENT for table `expense_categories`
 --
 ALTER TABLE `expense_categories`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -1564,7 +1588,7 @@ ALTER TABLE `media`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -1642,7 +1666,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sale_details`
@@ -1654,7 +1678,7 @@ ALTER TABLE `sale_details`
 -- AUTO_INCREMENT for table `sale_payments`
 --
 ALTER TABLE `sale_payments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sale_returns`
@@ -1724,7 +1748,8 @@ ALTER TABLE `adjusted_products`
 -- Constraints for table `expenses`
 --
 ALTER TABLE `expenses`
-  ADD CONSTRAINT `expenses_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `expense_categories` (`id`) ON DELETE RESTRICT;
+  ADD CONSTRAINT `expenses_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `expense_categories` (`id`) ON DELETE RESTRICT,
+  ADD CONSTRAINT `expenses_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `model_has_permissions`

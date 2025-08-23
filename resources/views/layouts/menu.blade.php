@@ -227,38 +227,54 @@
 ======================= --}}
 <li class="c-sidebar-nav-title">Pengeluaran</li>
 
-@can('access_expenses')
 <li class="c-sidebar-nav-item c-sidebar-nav-dropdown
     {{ request()->routeIs('expenses.*') || request()->routeIs('expense-categories.*') ? 'c-show' : '' }}">
   <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
     <i class="c-sidebar-nav-icon bi bi-wallet2" style="line-height: 1;"></i> Pengeluaran
   </a>
+
   <ul class="c-sidebar-nav-dropdown-items">
+
+    {{-- Kategori --}}
     @can('access_expense_categories')
-      <li class="c-sidebar-nav-item">
-        <a class="c-sidebar-nav-link {{ request()->routeIs('expense-categories.*') ? 'c-active' : '' }}"
-           href="{{ route('expense-categories.index') }}">
-          <i class="c-sidebar-nav-icon bi bi-collection" style="line-height: 1;"></i> Kategori
-        </a>
-      </li>
+      @if(Route::has('expense-categories.index'))
+        <li class="c-sidebar-nav-item">
+          <a class="c-sidebar-nav-link {{ request()->routeIs('expense-categories.*') ? 'c-active' : '' }}"
+             href="{{ route('expense-categories.index') }}">
+            <i class="c-sidebar-nav-icon bi bi-collection" style="line-height: 1;"></i> Kategori
+          </a>
+        </li>
+      @endif
     @endcan
+
+    {{-- Input Pengeluaran Baru --}}
     @can('create_expenses')
-      <li class="c-sidebar-nav-item">
-        <a class="c-sidebar-nav-link {{ request()->routeIs('expenses.create') ? 'c-active' : '' }}"
-           href="{{ route('expenses.create') }}">
-          <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Input Pengeluaran Baru
-        </a>
-      </li>
+      @if(Route::has('expenses.create'))
+        <li class="c-sidebar-nav-item">
+          <a class="c-sidebar-nav-link {{ request()->routeIs('expenses.create') ? 'c-active' : '' }}"
+             href="{{ route('expenses.create') }}">
+            <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Input Pengeluaran Baru
+          </a>
+        </li>
+      @endif
     @endcan
-    <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('expenses.index') ? 'c-active' : '' }}"
-         href="{{ route('expenses.index') }}">
-        <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Semua Pengeluaran
-      </a>
-    </li>
+
+    {{-- Daftar Pengeluaran --}}
+    @can('access_expenses')
+      @if(Route::has('expenses.index'))
+        <li class="c-sidebar-nav-item">
+          <a class="c-sidebar-nav-link {{ request()->routeIs('expenses.index') ? 'c-active' : '' }}"
+             href="{{ route('expenses.index') }}">
+            <i class="c-sidebar-nav-icon bi bi-list-ul" style="line-height: 1;"></i> Daftar Pengeluaran
+          </a>
+        </li>
+      @endif
+    @endcan
+
   </ul>
 </li>
-@endcan
+
+
 
 {{-- =======================
      KONTAK
