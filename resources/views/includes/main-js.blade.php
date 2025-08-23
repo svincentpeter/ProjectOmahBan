@@ -7,6 +7,29 @@
 <script defer src="{{ asset('vendor/datatables/buttons.server-side.js') }}"></script>
 
 @include('sweetalert::alert')
+<script>
+(function() {
+  const key = 'ob:sidebar:minimized';
+  const body = document.body;
+
+  // Persist minimize
+  if (localStorage.getItem(key) === '1') body.classList.add('c-sidebar-minimized');
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.c-sidebar-minimizer');
+    if (!btn) return;
+    setTimeout(function() {
+      localStorage.setItem(key, body.classList.contains('c-sidebar-minimized') ? '1' : '0');
+    }, 0);
+  });
+
+  // Inisialisasi PerfectScrollbar (OPSIONAL SAJA)
+  // Hanya jalan kalau <ul class="c-sidebar-nav" data-perfect-scrollbar> dipasang.
+  const nav = document.querySelector('#sidebar .c-sidebar-nav');
+  if (nav && nav.hasAttribute('data-perfect-scrollbar') && window.PerfectScrollbar) {
+    new PerfectScrollbar(nav, { wheelPropagation: false, suppressScrollX: true });
+  }
+})();
+</script>
 
 @yield('third_party_scripts')
 

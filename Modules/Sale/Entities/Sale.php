@@ -5,10 +5,11 @@ namespace Modules\Sale\Entities;
 use App\Models\User; // <-- TAMBAHKAN BARIS INI
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'sales';
 
@@ -137,7 +138,7 @@ class Sale extends Model
     {
         // pembayaran terakhir berdasarkan tanggal (dan id sebagai tie-breaker)
         return $this->hasOne(\Modules\Sale\Entities\SalePayment::class, 'sale_id')
-                    ->latestOfMany('date');
+            ->latestOfMany('date');
     }
 
     /**
@@ -148,10 +149,14 @@ class Sale extends Model
     {
         parent::boot();
         static::creating(function ($model) {
-            // 1. Ambil ID terakhir, tambahkan 1 untuk nomor berikutnya.
-            $number = Sale::max('id') + 1;
-            // 2. Gunakan helper untuk membuat format 'OB2-00001'
-            $model->reference = make_reference_id('OB2', $number);
+            if (empty($model->reference)) {
+                $number = Sale::max('id') + 1;
+                $model->reference = make_reference_id('OB2', $number);
+            }
         });
+    }
+    public function scopeCompleted($q)
+    {
+        return $q->where('status', 'Completed');
     }
 }

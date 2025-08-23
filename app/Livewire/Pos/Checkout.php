@@ -12,6 +12,7 @@ use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
 
+
 class Checkout extends Component
 {
     // ========= Properti keranjang & data pendukung =========
