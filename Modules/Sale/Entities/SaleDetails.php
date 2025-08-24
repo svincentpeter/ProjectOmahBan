@@ -55,4 +55,16 @@ class SaleDetails extends Model
     {
         return $this->belongsTo(Sale::class, 'sale_id', 'id');
     }
+
+    // ====== PATCH ======
+protected $casts = [
+        'quantity'   => 'integer',
+        'unit_price' => 'integer',
+        'sub_total'  => 'integer',
+        'hpp'        => 'integer',
+        'subtotal_profit' => 'integer',
+    ];
+
+    
+
 }

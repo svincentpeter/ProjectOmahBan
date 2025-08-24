@@ -13,6 +13,11 @@ class ProductSecond extends Model implements HasMedia
 {
     use HasFactory, SoftDeletes, InteractsWithMedia;
 
+    protected $casts = [
+        'purchase_price' => 'integer',
+        'selling_price'  => 'integer',
+    ];
+    
     protected $fillable = [
         'name',
         'unique_code',

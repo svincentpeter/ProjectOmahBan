@@ -28,7 +28,7 @@
         </header>
 
         <div class="c-body">
-            <main class="c-main">
+            <main class="c-main px-3 px-xl-4">
                 @yield('content')
             </main>
         </div>

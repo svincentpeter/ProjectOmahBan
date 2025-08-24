@@ -314,69 +314,117 @@
 <li class="c-sidebar-nav-title">Laporan</li>
 
 @can('access_reports')
-<li class="c-sidebar-nav-item c-sidebar-nav-dropdown
-    {{ request()->routeIs('*-report.index')
-        || request()->routeIs('ringkas-report.index')
-        || request()->routeIs('ringkas-report.cashier')
-        ? 'c-show' : '' }}">
+@php
+    // Buka dropdown bila route saat ini termasuk salah satu pola berikut
+    $openReports =
+        request()->routeIs('reports.*') ||
+        request()->routeIs('ringkas-report.*') ||
+        request()->routeIs('*-report.*');
+
+    // Helper: link dengan fallback (pakai route baru dulu; jika tak ada, coba route lama)
+    $link = function(array $names) {
+        foreach ($names as $name) {
+            if (\Illuminate\Support\Facades\Route::has($name)) {
+                return route($name);
+            }
+        }
+        return '#';
+    };
+
+    // Helper: cek active berdasarkan beberapa pola route
+    $isActive = function(array $patterns) {
+        foreach ($patterns as $p) {
+            if (request()->routeIs($p)) return true;
+        }
+        return false;
+    };
+@endphp
+
+<li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ $openReports ? 'c-show' : '' }}">
   <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-    <i class="c-sidebar-nav-icon bi bi-graph-up" style="line-height: 1;"></i> Laporan
+    <i class="c-sidebar-nav-icon bi bi-graph-up" style="line-height:1;"></i> Laporan
   </a>
+
   <ul class="c-sidebar-nav-dropdown-items">
-    {{-- Tambahan: Report Ringkas --}}
+    {{-- Laporan Kas Harian --}}
+<li class="c-sidebar-nav-item">
+  <a class="c-sidebar-nav-link {{ $isActive(['reports.daily.*']) ? 'c-active' : '' }}"
+     href="{{ route('reports.daily.index') }}">
+    <i class="c-sidebar-nav-icon bi bi-journal-text" style="line-height:1;"></i>
+    Laporan Kas Harian
+  </a>
+</li>
+
+    {{-- (Opsional) Ringkas per Kasir, bila masih dipakai --}}
+    @if (\Illuminate\Support\Facades\Route::has('ringkas-report.cashier'))
+{{-- Report Ringkas (Per Kasir) --}}
+<li class="c-sidebar-nav-item">
+  <a class="c-sidebar-nav-link {{ $isActive(['ringkas-report.*']) ? 'c-active' : '' }}"
+     href="{{ route('ringkas-report.cashier') }}">
+    <i class="c-sidebar-nav-icon bi bi-people" style="line-height:1;"></i>
+    Report Ringkas (Per Kasir)
+  </a>
+</li>
+
+    @endif
+
+    {{-- Laba / Rugi --}}
     <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('ringkas-report.index') ? 'c-active' : '' }}"
-         href="{{ route('ringkas-report.index') }}">
-        <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Report Ringkas (Harian)
-      </a>
-    </li>
-    <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('ringkas-report.cashier') ? 'c-active' : '' }}"
-         href="{{ route('ringkas-report.cashier') }}">
-        <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Report Ringkas (Per Kasir)
+      <a class="c-sidebar-nav-link {{ $isActive(['reports.profit_loss.*','profit-loss-report.*']) ? 'c-active' : '' }}"
+         href="{{ $link(['reports.profit_loss.index','profit-loss-report.index']) }}">
+        <i class="c-sidebar-nav-icon bi bi-cash-coin" style="line-height:1;"></i>
+        Laporan Laba / Rugi
       </a>
     </li>
 
-    {{-- Report bawaan --}}
+    {{-- Pembayaran --}}
     <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('profit-loss-report.index') ? 'c-active' : '' }}"
-         href="{{ route('profit-loss-report.index') }}">
-        <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Laporan Laba / Rugi
+      <a class="c-sidebar-nav-link {{ $isActive(['reports.payments.*','payments-report.*']) ? 'c-active' : '' }}"
+         href="{{ $link(['reports.payments.index','payments-report.index']) }}">
+        <i class="c-sidebar-nav-icon bi bi-credit-card" style="line-height:1;"></i>
+        Laporan Pembayaran
       </a>
     </li>
+
+    {{-- Penjualan --}}
     <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('payments-report.index') ? 'c-active' : '' }}"
-         href="{{ route('payments-report.index') }}">
-        <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Laporan Pembayaran
+      <a class="c-sidebar-nav-link {{ $isActive(['reports.sales.*','sales-report.*']) ? 'c-active' : '' }}"
+         href="{{ $link(['reports.sales.index','sales-report.index']) }}">
+        <i class="c-sidebar-nav-icon bi bi-receipt" style="line-height:1;"></i>
+        Laporan Penjualan
       </a>
     </li>
+
+    {{-- Pembelian --}}
     <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('sales-report.index') ? 'c-active' : '' }}"
-         href="{{ route('sales-report.index') }}">
-        <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Laporan Penjualan
+      <a class="c-sidebar-nav-link {{ $isActive(['reports.purchases.*','purchases-report.*']) ? 'c-active' : '' }}"
+         href="{{ $link(['reports.purchases.index','purchases-report.index']) }}">
+        <i class="c-sidebar-nav-icon bi bi-bag-check" style="line-height:1;"></i>
+        Laporan Pembelian
       </a>
     </li>
+
+    {{-- Retur Penjualan --}}
     <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('purchases-report.index') ? 'c-active' : '' }}"
-         href="{{ route('purchases-report.index') }}">
-        <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Laporan Pembelian
+      <a class="c-sidebar-nav-link {{ $isActive(['reports.sales_return.*','sales-return-report.*']) ? 'c-active' : '' }}"
+         href="{{ $link(['reports.sales_return.index','sales-return-report.index']) }}">
+        <i class="c-sidebar-nav-icon bi bi-arrow-90deg-left" style="line-height:1;"></i>
+        Laporan Retur Penjualan
       </a>
     </li>
+
+    {{-- Retur Pembelian --}}
     <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('sales-return-report.index') ? 'c-active' : '' }}"
-         href="{{ route('sales-return-report.index') }}">
-        <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Laporan Retur Penjualan
-      </a>
-    </li>
-    <li class="c-sidebar-nav-item">
-      <a class="c-sidebar-nav-link {{ request()->routeIs('purchases-return-report.index') ? 'c-active' : '' }}"
-         href="{{ route('purchases-return-report.index') }}">
-        <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Laporan Retur Pembelian
+      <a class="c-sidebar-nav-link {{ $isActive(['reports.purchases_return.*','purchases-return-report.*']) ? 'c-active' : '' }}"
+         href="{{ $link(['reports.purchases_return.index','purchases-return-report.index']) }}">
+        <i class="c-sidebar-nav-icon bi bi-arrow-90deg-right" style="line-height:1;"></i>
+        Laporan Retur Pembelian
       </a>
     </li>
   </ul>
 </li>
 @endcan
+
 
 {{-- =======================
      MANAJEMEN PENGGUNA

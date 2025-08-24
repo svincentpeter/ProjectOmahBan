@@ -39,6 +39,13 @@ if (!function_exists('format_currency')) {
     }
 }
 
+if (!function_exists('rupiah')) {
+    function rupiah($value) {
+        return format_currency($value, true);
+    }
+}
+
+
 if (!function_exists('merge_bank_into_note')) {
     function merge_bank_into_note(string $method, ?string $bank, ?string $note): ?string {
         $parts = [];

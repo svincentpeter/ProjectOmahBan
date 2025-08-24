@@ -6,9 +6,46 @@ use App\Models\User; // <-- TAMBAHKAN BARIS INI
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class Sale extends Model
 {
+     // ====== PATCH: casts & relations & scopes ======
+    protected $casts = [
+        'total_amount' => 'integer',
+        'total_hpp'    => 'integer',
+        'total_profit' => 'integer',
+        'date'         => 'datetime',
+    ];
+
+    public function saleDetails(): HasMany
+    {
+        return $this->hasMany(SaleDetails::class, 'sale_id');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SalePayment::class, 'sale_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
+    public function scopeBetween(Builder $q, $from, $to): Builder
+    {
+        $from = Carbon::parse($from)->startOfDay();
+        $to   = Carbon::parse($to)->endOfDay();
+        return $q->whereBetween('date', [$from, $to]);
+    }
+
+
+// ====== END PATCH ======
+
     use HasFactory, SoftDeletes;
 
     protected $table = 'sales';
@@ -31,22 +68,7 @@ class Sale extends Model
      |                        RELATIONSHIPS
      |=========================================================*/
 
-    /**
-     * FUNGSI INI YANG MEMPERBAIKI ERROR ANDA
-     * Mendefinisikan relasi ke model User.
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    /**
-     * Pembayaran (SalePayment).
-     */
-    public function payments()
-    {
-        return $this->hasMany(SalePayment::class, 'sale_id');
-    }
+    
 
     /**
      * Detail item (alias generik).
@@ -57,15 +79,13 @@ class Sale extends Model
         return $this->hasMany(SaleDetails::class, 'sale_id');
     }
 
-    /**
-     * ALIAS untuk kompatibilitas lama.
-     * Beberapa query/DataTable memanggil relasi bernama "saleDetails".
-     */
-    public function saleDetails()
-    {
-        return $this->hasMany(SaleDetails::class, 'sale_id');
-    }
 
+    
+
+public function scopeDatedBetween($q, $start, $end)
+{
+    return $q->whereBetween('date', [$start, $end]);
+}
     /* =========================================================
      |                           HELPERS
      |=========================================================*/
@@ -156,7 +176,7 @@ class Sale extends Model
         });
     }
     public function scopeCompleted($q)
-    {
-        return $q->where('status', 'Completed');
-    }
+{
+    return $q->where('status', 'Completed')->whereNull('deleted_at');
+}
 }

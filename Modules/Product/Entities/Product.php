@@ -16,6 +16,12 @@ class Product extends Model implements HasMedia
 
     protected $guarded = [];
 
+    protected $casts = [
+        'product_cost'  => 'integer',
+        'product_price' => 'integer',
+        'product_quantity' => 'integer',
+    ];
+
     // GANTI SELURUH ARRAY $fillable MENJADI SEPERTI INI:
     protected $fillable = [
         'product_name',
