@@ -1,41 +1,75 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
+use Illuminate\Support\Facades\Route;
+use Modules\Reports\Http\Controllers\ReportsController;
 
-Route::group(['middleware' => 'auth'], function () {
-    //Profit Loss Report
-    Route::get('/profit-loss-report', 'ReportsController@profitLossReport')
-        ->name('profit-loss-report.index');
-    //Payments Report
-    Route::get('/payments-report', 'ReportsController@paymentsReport')
-        ->name('payments-report.index');
-    //Sales Report
-    Route::get('/sales-report', 'ReportsController@salesReport')
-        ->name('sales-report.index');
-    //Purchases Report
-    Route::get('/purchases-report', 'ReportsController@purchasesReport')
-        ->name('purchases-report.index');
-    //Sales Return Report
-    Route::get('/sales-return-report', 'ReportsController@salesReturnReport')
-        ->name('sales-return-report.index');
-    //Purchases Return Report
-    Route::get('/purchases-return-report', 'ReportsController@purchasesReturnReport')
-        ->name('purchases-return-report.index');
+// ======================================================
+// Reports (nama rute diselaraskan dgn Menu.blade)
+// ======================================================
+Route::middleware(['web', 'auth', 'can:access_reports'])
+    ->prefix('reports')
+    ->name('reports.')
+    ->group(function () {
 
-    // Ringkas Harian
-    Route::get('/ringkas-report', 'ReportsController@ringkas')
-        ->name('ringkas-report.index');
+        // Laporan Kas Harian
+        Route::get('/daily', [ReportsController::class, 'dailyIndex'])
+            ->name('daily.index');
+        Route::post('/daily', [ReportsController::class, 'generateDailyReport'])
+            ->name('daily.generate');
 
-    // Ringkas Per Kasir
-    Route::get('/ringkas-report/cashier', 'ReportsController@ringkasPerKasir')
+        // Laba Rugi
+        Route::get('/profit-loss', [ReportsController::class, 'profitLossIndex'])
+            ->name('profit_loss.index');
+        Route::post('/profit-loss', [ReportsController::class, 'generateProfitLossReport'])
+            ->name('profit_loss.generate');
+
+        // Pembayaran
+        Route::get('/payments', [ReportsController::class, 'paymentsIndex'])
+            ->name('payments.index');
+        Route::post('/payments', [ReportsController::class, 'generatePaymentsReport'])
+            ->name('payments.generate');
+
+        // Penjualan
+        Route::get('/sales', [ReportsController::class, 'salesIndex'])
+            ->name('sales.index');
+        Route::post('/sales', [ReportsController::class, 'generateSalesReport'])
+            ->name('sales.generate');
+
+        // Pembelian
+        Route::get('/purchases', [ReportsController::class, 'purchasesIndex'])
+            ->name('purchases.index');
+        Route::post('/purchases', [ReportsController::class, 'generatePurchasesReport'])
+            ->name('purchases.generate');
+
+        // Retur Penjualan
+        Route::get('/sales-return', [ReportsController::class, 'salesReturnIndex'])
+            ->name('sales_return.index');
+        Route::post('/sales-return', [ReportsController::class, 'generateSalesReturnReport'])
+            ->name('sales_return.generate');
+
+        // Retur Pembelian
+        Route::get('/purchases-return', [ReportsController::class, 'purchasesReturnIndex'])
+            ->name('purchases_return.index');
+        Route::post('/purchases-return', [ReportsController::class, 'generatePurchasesReturnReport'])
+            ->name('purchases_return.generate');
+    });
+
+// ======================================================
+// Alias/redirect untuk NAMA LAMA (agar menu fallback tetap jalan)
+// ======================================================
+Route::middleware(['web','auth','can:access_reports'])->group(function () {
+
+    // Daily cash report
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/daily', [ReportsController::class, 'dailyIndex'])->name('daily.index');
+        Route::post('/daily', [ReportsController::class, 'generateDailyReport'])->name('daily.generate');
+
+        // Profit & Loss
+        Route::get('/profit-loss', [ReportsController::class, 'profitLossIndex'])->name('profit_loss.index');
+        Route::post('/profit-loss', [ReportsController::class, 'generateProfitLossReport'])->name('profit_loss.generate');
+    });
+
+    // Ringkas per kasir (route lama yang diinginkan sidebar)
+    Route::get('/reports/ringkas/cashier', [ReportsController::class, 'ringkasCashier'])
         ->name('ringkas-report.cashier');
 });

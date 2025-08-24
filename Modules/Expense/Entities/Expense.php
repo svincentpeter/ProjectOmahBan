@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class Expense extends Model
 {
@@ -58,4 +60,11 @@ class Expense extends Model
     public function getAmountAttribute($value) {
         return ($value / 100);
     }
+    public function scopeBetween(Builder $q, $from, $to): Builder
+    {
+        $from = Carbon::parse($from)->startOfDay();
+        $to   = Carbon::parse($to)->endOfDay();
+        return $q->whereBetween('date', [$from, $to]);
+    }
+
 }

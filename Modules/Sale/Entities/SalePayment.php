@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Sale\Entities\Sale;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class SalePayment extends Model
 {
-
+    
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
@@ -39,4 +40,12 @@ class SalePayment extends Model
     {
         return $query->where('sale_id', request()->route('sale_id'));
     }
+
+    
+public function scopeBetween(Builder $q, $from, $to): Builder
+{
+    $from = Carbon::parse($from)->startOfDay();
+    $to   = Carbon::parse($to)->endOfDay();
+    return $q->whereBetween('date', [$from, $to]);
+}
 }
