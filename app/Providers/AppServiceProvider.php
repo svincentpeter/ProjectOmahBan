@@ -28,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading(!app()->isProduction());
         Blade::directive('money', function ($expr) {
         return "<?php echo e(format_currency($expr)); ?>";
+        Blade::directive('rupiah', function ($expr) {
+    return "<?php echo e(format_currency($expr)); ?>";
+});
+        
     });
     }
 }

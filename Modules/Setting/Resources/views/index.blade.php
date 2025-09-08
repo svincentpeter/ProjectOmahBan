@@ -1,183 +1,134 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Settings')
+@section('title', 'Pengaturan')
 
 @section('breadcrumb')
     <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item active">Settings</li>
+        <li class="breadcrumb-item"><a href="{{ route('home') }}">Beranda</a></li>
+        <li class="breadcrumb-item active">Pengaturan</li>
     </ol>
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-12">
-                @include('utils.alerts')
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">General Settings</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('settings.update') }}" method="POST">
-                            @csrf
-                            @method('patch')
-                            <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="company_name">Company Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="company_name" value="{{ $settings->company_name }}" required>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="company_email">Company Email <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="company_email" value="{{ $settings->company_email }}" required>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="company_phone">Company Phone <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="company_phone" value="{{ $settings->company_phone }}" required>
-                                    </div>
-                                </div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-xl-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0">Pengaturan Umum</h5>
+                </div>
+                <div class="card-body">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <div class="fw-bold mb-1">Periksa kembali input Anda:</div>
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $err)
+                                    <li>{{ $err }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('settings.update') }}" method="POST" autocomplete="off">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="company_name">Nama Perusahaan</label>
+                                <input type="text" id="company_name" name="company_name"
+                                       class="form-control @error('company_name') is-invalid @enderror"
+                                       value="{{ old('company_name', $settings->company_name) }}" required>
+                                @error('company_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
-                            <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="default_currency_id">Default Currency <span class="text-danger">*</span></label>
-                                        <select name="default_currency_id" id="default_currency_id" class="form-control" required>
-                                            @foreach(\Modules\Currency\Entities\Currency::all() as $currency)
-                                                <option {{ $settings->default_currency_id == $currency->id ? 'selected' : '' }} value="{{ $currency->id }}">{{ $currency->currency_name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="default_currency_position">Default Currency Position <span class="text-danger">*</span></label>
-                                        <select name="default_currency_position" id="default_currency_position" class="form-control" required>
-                                            <option {{ $settings->default_currency_position == 'prefix' ? 'selected' : '' }} value="prefix">Prefix</option>
-                                            <option {{ $settings->default_currency_position == 'suffix' ? 'selected' : '' }} value="suffix">Suffix</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="notification_email">Notification Email <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="notification_email" value="{{ $settings->notification_email }}" required>
-                                    </div>
-                                </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="company_email">Email Perusahaan</label>
+                                <input type="email" id="company_email" name="company_email"
+                                       class="form-control @error('company_email') is-invalid @enderror"
+                                       value="{{ old('company_email', $settings->company_email) }}" required>
+                                @error('company_email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
-                            <div class="form-row">
-                                <div class="col-lg-12">
-                                    <div class="form-group">
-                                        <label for="company_address">Company Address <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="company_address" value="{{ $settings->company_address }}">
-                                    </div>
-                                </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="company_phone">Telepon Perusahaan</label>
+                                <input type="text" id="company_phone" name="company_phone"
+                                       class="form-control @error('company_phone') is-invalid @enderror"
+                                       value="{{ old('company_phone', $settings->company_phone) }}">
+                                @error('company_phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
-                            <div class="form-group mb-0">
-                                <button type="submit" class="btn btn-primary"><i class="bi bi-check"></i> Save Changes</button>
+                            <div class="col-md-6">
+                                <label class="form-label" for="notification_email">Email Notifikasi</label>
+                                <input type="email" id="notification_email" name="notification_email"
+                                       class="form-control @error('notification_email') is-invalid @enderror"
+                                       value="{{ old('notification_email', $settings->notification_email) }}">
+                                @error('notification_email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
-                        </form>
-                    </div>
+
+                            <div class="col-12">
+                                <label class="form-label" for="company_address">Alamat Perusahaan</label>
+                                <textarea id="company_address" name="company_address" rows="3"
+                                          class="form-control @error('company_address') is-invalid @enderror">{{ old('company_address', $settings->company_address) }}</textarea>
+                                @error('company_address') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
+
+                            {{-- Mata uang (dikunci) --}}
+                            <div class="col-md-6">
+                                <label class="form-label" for="default_currency_id">Mata Uang Default</label>
+                                <select id="default_currency_id" class="form-control" disabled>
+                                    @foreach(\Modules\Currency\Entities\Currency::query()->orderBy('currency_name')->get() as $currency)
+                                        <option value="{{ $currency->id }}"
+                                            {{ (old('default_currency_id', $settings->default_currency_id) == $currency->id) ? 'selected' : '' }}>
+                                            {{ $currency->currency_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <input type="hidden" name="default_currency_id" value="{{ old('default_currency_id', $settings->default_currency_id) }}">
+                                <small class="text-muted">Dikunci. Tampilan uang: <strong>Rp 100.000</strong>.</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="default_currency_position">Posisi Simbol</label>
+                                <select id="default_currency_position" class="form-control" disabled>
+                                    <option selected>Prefix (Rp 100.000)</option>
+                                </select>
+                                <input type="hidden" name="default_currency_position" value="prefix">
+                                <small class="text-muted">Dikunci agar konsisten.</small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i> Simpan
+                            </button>
+                            <a href="{{ route('settings.index') }}" class="btn btn-outline-secondary">Batal</a>
+                        </div>
+                    </form>
                 </div>
             </div>
+        </div>
 
-            <div class="col-lg-12">
-                @if (session()->has('settings_smtp_message'))
-                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        <div class="alert-body">
-                            <span>{{ session('settings_smtp_message') }}</span>
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">×</span>
-                            </button>
-                        </div>
-                    </div>
-                @endif
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Mail Settings</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('settings.smtp.update') }}" method="POST">
-                            @csrf
-                            @method('patch')
-                            <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="mail_mailer">MAIL_MAILER <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="mail_mailer" value="{{ env('MAIL_MAILER') }}" required>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="mail_host">MAIL_HOST <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="mail_host" value="{{ env('MAIL_HOST') }}" required>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="mail_port">MAIL_PORT <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control" name="mail_port" value="{{ env('MAIL_PORT') }}" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="mail_mailer">MAIL_MAILER</label>
-                                        <input type="text" class="form-control" name="mail_mailer" value="{{ env('MAIL_MAILER') }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="mail_username">MAIL_USERNAME</label>
-                                        <input type="text" class="form-control" name="mail_username" value="{{ env('MAIL_USERNAME') }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="mail_password">MAIL_PASSWORD</label>
-                                        <input type="password" class="form-control" name="mail_password" value="{{ env('MAIL_PASSWORD') }}">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="mail_encryption">MAIL_ENCRYPTION</label>
-                                        <input type="text" class="form-control" name="mail_encryption" value="{{ env('MAIL_ENCRYPTION') }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-5">
-                                    <div class="form-group">
-                                        <label for="mail_from_address">MAIL_FROM_ADDRESS</label>
-                                        <input type="email" class="form-control" name="mail_from_address" value="{{ env('MAIL_FROM_ADDRESS') }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-5">
-                                    <div class="form-group">
-                                        <label for="mail_from_name">MAIL_FROM_NAME <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="mail_from_name" value="{{ env('MAIL_FROM_NAME') }}" required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group mb-0">
-                                <button type="submit" class="btn btn-primary"><i class="bi bi-check"></i> Save Changes</button>
-                            </div>
-                        </form>
-                    </div>
+        {{-- Kartu info --}}
+        <div class="col-12 col-xl-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Info Format Uang</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-2">
+                        <li>Simbol: <strong>Rp</strong></li>
+                        <li>Posisi: <strong>Prefix</strong> (di depan)</li>
+                        <li>Pemisah ribuan: <strong>.</strong></li>
+                        <li>Desimal: <strong>0</strong> (tidak ditampilkan)</li>
+                    </ul>
+                    <p class="mb-0">
+                        Di Blade gunakan: <code>@{{ rupiah(100000) }}</code> atau
+                        <code>@{{ money(100000) }}</code> → <strong>Rp 100.000</strong>.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
+</div>
 @endsection
-

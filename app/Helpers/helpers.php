@@ -19,23 +19,20 @@ if (!function_exists('format_currency')) {
             return (int) round((float) $value, 0, PHP_ROUND_HALF_UP);
         }
 
-        $settings  = settings();
-        $currency  = $settings->currency ?? null;
+        // Paksa gaya Indonesia: Rp 100.000 (tanpa desimal)
+        $symbol             = 'Rp';
+        $thousand_separator = '.';  // 1.000
+        $decimal_separator  = ',';  // tidak dipakai karena 0 desimal
+        $position           = 'prefix'; // selalu "Rp 100.000"
 
-        // Default fallback kalau setting/currency belum lengkap
-        $symbol             = $currency->symbol ?? 'Rp';
-        $thousand_separator = $currency->thousand_separator ?? '.';
-        $decimal_separator  = $currency->decimal_separator ?? ','; // tak terpakai untuk 0 desimal, tapi biarkan saja
-        $position           = $settings->default_currency_position ?? 'prefix';
-
-        // Pastikan nilainya dibulatkan ke 0 desimal
+        // Bulatkan ke 0 desimal dan pastikan integer
         $intValue = (int) round((float) $value, 0, PHP_ROUND_HALF_UP);
 
-        // Format angka Indonesia tanpa desimal: 1.425.000
+        // Format angka: 1.425.000
         $number = number_format($intValue, 0, $decimal_separator, $thousand_separator);
 
-        // Prefix/suffix sesuai setting
-        return $position === 'prefix' ? ($symbol . $number) : ($number . $symbol);
+        // Tambahkan spasi antara simbol dan angka
+        return $position === 'prefix' ? ($symbol . ' ' . $number) : ($number . ' ' . $symbol);
     }
 }
 

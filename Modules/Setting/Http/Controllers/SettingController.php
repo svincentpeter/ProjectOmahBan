@@ -18,7 +18,8 @@ class SettingController extends Controller
     public function index() {
         abort_if(Gate::denies('access_settings'), 403);
 
-        $settings = Setting::firstOrFail();
+        // L21 — eager load currency agar konsisten dengan cache
+        $settings = Setting::with('currency')->firstOrFail();
 
         return view('setting::index', compact('settings'));
     }
@@ -35,7 +36,11 @@ class SettingController extends Controller
             'default_currency_position' => $request->default_currency_position,
         ]);
 
+        // L38–L42 — invalidate & warm cache
         cache()->forget('settings');
+        cache()->remember('settings', 24 * 60, function () {
+            return \Modules\Setting\Entities\Setting::with('currency')->first();
+        });
 
         toast('Settings Updated!', 'info');
 
@@ -45,7 +50,8 @@ class SettingController extends Controller
 
     public function updateSmtp(StoreSmtpSettingsRequest $request) {
         $toReplace = array(
-            'MAIL_MAILER='.env('MAIL_HOST'),
+            // L48 — perbaiki: ambil MAIL_MAILER dari env MAIL_MAILER, bukan MAIL_HOST
+            'MAIL_MAILER='.env('MAIL_MAILER'),
             'MAIL_HOST="'.env('MAIL_HOST').'"',
             'MAIL_PORT='.env('MAIL_PORT'),
             'MAIL_FROM_ADDRESS="'.env('MAIL_FROM_ADDRESS').'"',
@@ -63,7 +69,8 @@ class SettingController extends Controller
             'MAIL_FROM_NAME="'.$request->mail_from_name.'"',
             'MAIL_USERNAME="'.$request->mail_username.'"',
             'MAIL_PASSWORD="'.$request->mail_password.'"',
-            'MAIL_ENCRYPTION="'.$request->mail_encryption.'"');
+            'MAIL_ENCRYPTION="'.$request->mail_encryption.'"'
+        );
 
         try {
             file_put_contents(base_path('.env'), str_replace($toReplace, $replaceWith, file_get_contents(base_path('.env'))));

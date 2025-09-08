@@ -1,27 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>@yield('title') || {{ config('app.name') }}</title>
+    <title>@yield('title', config('app.name'))</title>
     <meta content="Vincent Peter" name="author">
-    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
 
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('images/favicon.png') }}">
 
     @include('includes.main-css')
-    {{-- Livewire Styles (pastikan ada di includes.main-css, kalau tidak, uncomment baris ini) --}}
     {{-- @livewireStyles --}}
+    @stack('page_styles')
+    @yield('third_party_stylesheets')
 </head>
 
 <body class="c-app">
+    {{-- Sidebar kiri --}}
     @include('layouts.sidebar')
 
     <div class="c-wrapper">
+        {{-- Header (INI YANG BENAR, bukan layouts.navbar) --}}
         <header class="c-header c-header-light c-header-fixed">
             @include('layouts.header')
+
             <div class="c-subheader justify-content-between px-3">
                 @yield('breadcrumb')
             </div>
@@ -33,20 +36,16 @@
             </main>
         </div>
 
+        {{-- Footer --}}
         @include('layouts.footer')
     </div>
 
-    {{-- JS utama aplikasi --}}
+    {{-- JS utama --}}
     @include('includes.main-js')
-
-    {{-- Livewire Scripts (pastikan salah satu ini ter-load sekali saja di layout) --}}
-    {{-- Jika includes.main-js belum memuat Livewire, uncomment baris ini --}}
     {{-- @livewireScripts --}}
 
     {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    {{-- Notifikasi swal --}}
     @if (session()->has('swal-success'))
         <script>
             Swal.fire({
@@ -59,7 +58,6 @@
         </script>
     @endif
 
-    {{-- ====== Penting untuk AutoNumeric & script lain yang di-push dari komponen ====== --}}
     @stack('page_scripts')
     @stack('scripts')
 </body>

@@ -15,8 +15,15 @@ class Expense extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'category_id', 'date', 'reference', 'details', 'amount',
-        'user_id', 'payment_method', 'bank_name', 'attachment_path',
+        'category_id',
+        'date',
+        'reference',
+        'details',
+        'amount',
+        'user_id',
+        'payment_method',
+        'bank_name',
+        'attachment_path',
     ];
 
     protected $casts = [
@@ -24,7 +31,10 @@ class Expense extends Model
         'amount' => 'integer',
     ];
 
-    public function user()     { return $this->belongsTo(\App\Models\User::class); }
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 
     public static function nextReference(Carbon $date): string
     {
@@ -36,11 +46,13 @@ class Expense extends Model
 
     protected $guarded = [];
 
-    public function category() {
+    public function category()
+    {
         return $this->belongsTo(ExpenseCategory::class, 'category_id', 'id');
     }
 
-    public static function boot() {
+    public static function boot()
+    {
         parent::boot();
 
         static::creating(function ($model) {
@@ -49,22 +61,15 @@ class Expense extends Model
         });
     }
 
-    public function getDateAttribute($value) {
+    public function getDateAttribute($value)
+    {
         return Carbon::parse($value)->format('d M, Y');
     }
 
-    public function setAmountAttribute($value) {
-        $this->attributes['amount'] = ($value * 100);
-    }
-
-    public function getAmountAttribute($value) {
-        return ($value / 100);
-    }
     public function scopeBetween(Builder $q, $from, $to): Builder
     {
         $from = Carbon::parse($from)->startOfDay();
         $to   = Carbon::parse($to)->endOfDay();
         return $q->whereBetween('date', [$from, $to]);
     }
-
 }

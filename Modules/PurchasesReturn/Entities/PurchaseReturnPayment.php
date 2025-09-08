@@ -12,23 +12,25 @@ class PurchaseReturnPayment extends Model
 
     protected $guarded = [];
 
-    public function purchaseReturn() {
+    // + Tambahkan setelah baris 13
+    protected $casts = [
+        'amount' => 'integer',
+        'date'   => 'date',
+    ];
+
+
+    public function purchaseReturn()
+    {
         return $this->belongsTo(PurchaseReturn::class, 'purchase_return_id', 'id');
     }
 
-    public function setAmountAttribute($value) {
-        $this->attributes['amount'] = $value * 100;
-    }
-
-    public function getAmountAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getDateAttribute($value) {
+    public function getDateAttribute($value)
+    {
         return Carbon::parse($value)->format('d M, Y');
     }
 
-    public function scopeByPurchaseReturn($query) {
+    public function scopeByPurchaseReturn($query)
+    {
         return $query->where('purchase_return_id', request()->route('purchase_return_id'));
     }
 }

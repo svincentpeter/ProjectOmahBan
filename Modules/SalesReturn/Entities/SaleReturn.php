@@ -11,15 +11,28 @@ class SaleReturn extends Model
 
     protected $guarded = [];
 
-    public function saleReturnDetails() {
+    protected $casts = [
+        // semua kolom uang disimpan sebagai IDR integer
+        'total_amount'    => 'integer',
+        'paid_amount'     => 'integer',
+        'due_amount'      => 'integer',
+        'tax_amount'      => 'integer',
+        'discount_amount' => 'integer',
+        'shipping_amount' => 'integer',
+    ];
+
+    public function saleReturnDetails()
+    {
         return $this->hasMany(SaleReturnDetail::class, 'sale_return_id', 'id');
     }
 
-    public function saleReturnPayments() {
+    public function saleReturnPayments()
+    {
         return $this->hasMany(SaleReturnPayment::class, 'sale_return_id', 'id');
     }
 
-    public static function boot() {
+    public static function boot()
+    {
         parent::boot();
 
         static::creating(function ($model) {
@@ -28,31 +41,8 @@ class SaleReturn extends Model
         });
     }
 
-    public function scopeCompleted($query) {
+    public function scopeCompleted($query)
+    {
         return $query->where('status', 'Completed');
-    }
-
-    public function getShippingAmountAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getPaidAmountAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getTotalAmountAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getDueAmountAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getTaxAmountAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getDiscountAmountAttribute($value) {
-        return $value / 100;
     }
 }
