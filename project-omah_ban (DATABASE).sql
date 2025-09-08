@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 23, 2025 at 08:07 AM
+-- Generation Time: Sep 08, 2025 at 02:39 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.26
 
@@ -137,7 +137,7 @@ CREATE TABLE `currencies` (
 --
 
 INSERT INTO `currencies` (`id`, `currency_name`, `code`, `symbol`, `thousand_separator`, `decimal_separator`, `exchange_rate`, `created_at`, `updated_at`) VALUES
-(1, 'Rupiah', 'IDR', 'Rp', '.', ',', NULL, '2025-08-05 14:46:12', '2025-08-06 01:40:41');
+(1, 'Rupiah', 'IDR', 'Rp', '.', ',', NULL, '2025-08-05 14:46:12', '2025-09-08 08:30:37');
 
 -- --------------------------------------------------------
 
@@ -169,7 +169,7 @@ CREATE TABLE `expenses` (
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `details` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `amount` int NOT NULL,
+  `amount` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
@@ -313,7 +313,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (52, '2025_08_14_202349_alter_sale_payments_amount_to_decimal', 17),
 (53, '2025_08_14_210716_normalize_money_to_bigint', 18),
 (54, '2025_08_19_150401_add_bank_name_to_sale_payments_table', 19),
-(55, '2025_08_23_115755_add_operational_fields_to_expenses_table', 20);
+(55, '2025_08_23_115755_add_operational_fields_to_expenses_table', 20),
+(56, '2025_09_08_133151_normalize_money_to_idr', 21),
+(57, '2025_09_08_150741_align_settings_currency_to_idr', 22);
 
 -- --------------------------------------------------------
 
@@ -484,7 +486,7 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `category_id`, `product_name`, `product_code`, `product_quantity`, `stok_awal`, `product_cost`, `product_price`, `product_unit`, `product_stock_alert`, `product_order_tax`, `product_tax_type`, `product_note`, `created_at`, `updated_at`, `brand_id`, `product_size`, `ring`, `product_year`) VALUES
-(1, 2, 'Ban GT Savero', 'GT_Savero', 12, 5, 128076000, 142500000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-08-21 04:20:36', 1, '31x10,5', '15', NULL),
+(1, 2, 'Ban GT Savero', 'GT_Savero', 11, 5, 128076000, 142500000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-08-23 15:12:37', 1, '31x10,5', '15', NULL),
 (2, 2, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 20, 20, 725000, 925000, 'PC', 4, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 2, '185/65', '15', 2024),
 (3, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 12, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 3, '205/65', '16', 2024),
 (4, 2, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 16, 16, 640000, 835000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 1, '195/65', '15', 2024),
@@ -635,12 +637,12 @@ CREATE TABLE `purchase_return_details` (
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
-  `price` int NOT NULL,
+  `price` bigint UNSIGNED DEFAULT NULL,
   `unit_price` int NOT NULL,
-  `sub_total` int NOT NULL,
-  `product_discount_amount` int NOT NULL,
+  `sub_total` bigint UNSIGNED DEFAULT NULL,
+  `product_discount_amount` bigint UNSIGNED DEFAULT NULL,
   `product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
-  `product_tax_amount` int NOT NULL,
+  `product_tax_amount` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -896,7 +898,10 @@ INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `tax_percentage`, `ta
 (57, '2025-08-19', 'SL-00057', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 05:23:41', '2025-08-20 10:07:07', NULL),
 (58, '2025-08-19', 'SL-00058', 1, 0, 0, 0, 0, 0, 125000, 0, 125000, 125000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 06:17:01', '2025-08-19 06:17:47', NULL),
 (59, '2025-08-20', 'SL-20250820-202448-68a5dab0793ff', NULL, 0, 0, 0, 0, 0, 650000, 0, 0, 650000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-20 13:24:48', '2025-08-20 13:25:00', NULL),
-(60, '2025-08-21', 'OB2-00060', NULL, 0, 0, 0, 0, 0, 850000, 0, 0, 850000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-21 02:08:07', '2025-08-21 02:08:13', NULL);
+(60, '2025-08-21', 'OB2-00060', NULL, 0, 0, 0, 0, 0, 850000, 0, 0, 850000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-21 02:08:07', '2025-08-21 02:08:13', NULL),
+(61, '2025-08-23', 'OB2-00061', 1, 0, 0, 0, 0, 0, 1550000, 0, 0, 1550000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-23 15:12:31', '2025-08-23 15:12:37', NULL),
+(62, '2025-08-23', 'OB2-00062', 1, 0, 0, 0, 0, 0, 150000, 0, 0, 150000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-23 15:12:56', '2025-08-23 15:12:59', NULL),
+(63, '2025-08-23', 'OB2-00063', 1, 0, 0, 0, 0, 0, 50000, 0, 0, 50000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-23 15:13:36', '2025-08-23 15:13:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -976,7 +981,11 @@ INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `product
 (55, 56, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
 (56, 56, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 1, 25000, 0, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
 (57, 59, 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', NULL, 2, 'Modules\\Product\\Entities\\ProductSecond', 'second', 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', 'SEC-GT-23570R16-001', 1, 650000, 400000, 650000, 650000, 250000, 0, 'fixed', 0, '2025-08-20 13:24:48', '2025-08-20 13:24:48'),
-(58, 60, 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', NULL, 1, 'Modules\\Product\\Entities\\ProductSecond', 'second', 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', 'SEC-DN-26565R17-001', 1, 850000, 600000, 850000, 850000, 250000, 0, 'fixed', 0, '2025-08-21 02:08:07', '2025-08-21 02:08:07');
+(58, 60, 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', NULL, 1, 'Modules\\Product\\Entities\\ProductSecond', 'second', 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', 'SEC-DN-26565R17-001', 1, 850000, 600000, 850000, 850000, 250000, 0, 'fixed', 0, '2025-08-21 02:08:07', '2025-08-21 02:08:07'),
+(59, 61, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-23 15:12:31', '2025-08-23 15:12:31'),
+(60, 61, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 125000, 0, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-23 15:12:31', '2025-08-23 15:12:31'),
+(61, 62, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-23 15:12:56', '2025-08-23 15:12:56'),
+(62, 63, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 1, 50000, 0, 50000, 50000, 50000, 0, 'fixed', 0, '2025-08-23 15:13:36', '2025-08-23 15:13:36');
 
 -- --------------------------------------------------------
 
@@ -1023,7 +1032,10 @@ INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `pa
 (22, 50, 1425000, '2025-08-20', 'SP-00022', 'QRIS', 'BCA', NULL, '2025-08-20 12:27:59', '2025-08-20 12:27:59', NULL),
 (23, 59, 650000, '2025-08-20', 'INV/SL-20250820-202448-68a5dab0793ff', 'Transfer', NULL, 'BCA', '2025-08-20 13:25:00', '2025-08-20 13:25:00', NULL),
 (24, 60, 850000, '2025-08-21', 'INV/OB2-00060', 'Tunai', NULL, NULL, '2025-08-21 02:08:13', '2025-08-21 02:08:13', NULL),
-(25, 51, 1425000, '2025-08-21', 'SP-00025', 'Tunai', NULL, NULL, '2025-08-21 04:20:36', '2025-08-21 04:20:36', NULL);
+(25, 51, 1425000, '2025-08-21', 'SP-00025', 'Tunai', NULL, NULL, '2025-08-21 04:20:36', '2025-08-21 04:20:36', NULL),
+(26, 61, 1550000, '2025-08-23', 'INV/OB2-00061', 'Tunai', NULL, NULL, '2025-08-23 15:12:37', '2025-08-23 15:12:37', NULL),
+(27, 62, 150000, '2025-08-23', 'INV/OB2-00062', 'Tunai', NULL, NULL, '2025-08-23 15:12:59', '2025-08-23 15:12:59', NULL),
+(28, 63, 50000, '2025-08-23', 'INV/OB2-00063', 'Transfer', NULL, 'BCA', '2025-08-23 15:13:49', '2025-08-23 15:13:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -1066,12 +1078,12 @@ CREATE TABLE `sale_return_details` (
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
-  `price` int NOT NULL,
+  `price` bigint UNSIGNED DEFAULT NULL,
   `unit_price` int NOT NULL,
-  `sub_total` int NOT NULL,
-  `product_discount_amount` int NOT NULL,
+  `sub_total` bigint UNSIGNED DEFAULT NULL,
+  `product_discount_amount` bigint UNSIGNED DEFAULT NULL,
   `product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
-  `product_tax_amount` int NOT NULL,
+  `product_tax_amount` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1108,6 +1120,8 @@ CREATE TABLE `settings` (
   `site_logo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `default_currency_id` int NOT NULL,
   `default_currency_position` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `thousand_separator` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `decimal_separator` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `notification_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `footer_text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `company_address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1119,8 +1133,8 @@ CREATE TABLE `settings` (
 -- Dumping data for table `settings`
 --
 
-INSERT INTO `settings` (`id`, `company_name`, `company_email`, `company_phone`, `site_logo`, `default_currency_id`, `default_currency_position`, `notification_email`, `footer_text`, `company_address`, `created_at`, `updated_at`) VALUES
-(1, 'Omah Ban 2', 'vincentpeter789@gmail.com', '085325579921', NULL, 1, 'prefix', 'vincentpeter789@gmail.com', 'Triangle Pos © 2021 || Developed by <strong><a target=\"_blank\" href=\"https://fahimanzam.me\">Fahim Anzam</a></strong>', 'Jl. Empu Sendok 2A, Gedawang (Banyumanik), Semarang', '2025-08-05 14:46:12', '2025-08-10 17:16:29');
+INSERT INTO `settings` (`id`, `company_name`, `company_email`, `company_phone`, `site_logo`, `default_currency_id`, `default_currency_position`, `thousand_separator`, `decimal_separator`, `notification_email`, `footer_text`, `company_address`, `created_at`, `updated_at`) VALUES
+(1, 'Omah Ban 2', 'vincentpeter789@gmail.com', '085325579921', NULL, 1, 'prefix', '.', ',', 'vincentpeter789@gmail.com', 'Triangle Pos © 2021 || Developed by <strong><a target=\"_blank\" href=\"https://fahimanzam.me\">Fahim Anzam</a></strong>', 'Jl. Empu Sendok 2A, Gedawang (Banyumanik), Semarang', '2025-08-05 14:46:12', '2025-09-08 08:30:37');
 
 -- --------------------------------------------------------
 
@@ -1147,7 +1161,8 @@ CREATE TABLE `stock_movements` (
 INSERT INTO `stock_movements` (`id`, `productable_type`, `productable_id`, `type`, `quantity`, `description`, `user_id`, `created_at`, `updated_at`) VALUES
 (1, 'Modules\\Product\\Entities\\ProductSecond', 3, 'out', 1, 'Sale (second) #SL-00055', 1, '2025-08-17 05:24:47', '2025-08-17 05:24:47'),
 (2, 'Modules\\Product\\Entities\\ProductSecond', 2, 'out', 1, 'Sale (second) #SL-20250820-202448-68a5dab0793ff', 1, '2025-08-20 13:25:00', '2025-08-20 13:25:00'),
-(3, 'Modules\\Product\\Entities\\ProductSecond', 1, 'out', 1, 'Sale (second) #OB2-00060', 1, '2025-08-21 02:08:13', '2025-08-21 02:08:13');
+(3, 'Modules\\Product\\Entities\\ProductSecond', 1, 'out', 1, 'Sale (second) #OB2-00060', 1, '2025-08-21 02:08:13', '2025-08-21 02:08:13'),
+(4, 'Modules\\Product\\Entities\\Product', 1, 'out', 1, 'Sale #OB2-00061', 1, '2025-08-23 15:12:37', '2025-08-23 15:12:37');
 
 -- --------------------------------------------------------
 
@@ -1279,7 +1294,8 @@ ALTER TABLE `expenses`
   ADD PRIMARY KEY (`id`),
   ADD KEY `expenses_category_id_foreign` (`category_id`),
   ADD KEY `expenses_user_id_foreign` (`user_id`),
-  ADD KEY `expenses_date_category_idx` (`date`,`category_id`);
+  ADD KEY `expenses_date_category_idx` (`date`,`category_id`),
+  ADD KEY `expenses_date_method_bank_idx` (`date`,`payment_method`,`bank_name`);
 
 --
 -- Indexes for table `expense_categories`
@@ -1437,7 +1453,8 @@ ALTER TABLE `sales`
   ADD KEY `sales_user_id_foreign` (`user_id`),
   ADD KEY `idx_sales_date` (`date`),
   ADD KEY `idx_sales_status` (`status`),
-  ADD KEY `idx_sales_payment_status` (`payment_status`);
+  ADD KEY `idx_sales_payment_status` (`payment_status`),
+  ADD KEY `sales_date_user_status_payment_idx` (`date`,`user_id`,`status`,`payment_status`);
 
 --
 -- Indexes for table `sale_details`
@@ -1457,7 +1474,9 @@ ALTER TABLE `sale_payments`
   ADD UNIQUE KEY `sale_payments_reference_unique` (`reference`),
   ADD KEY `sale_payments_sale_id_foreign` (`sale_id`),
   ADD KEY `idx_sale_payments_date` (`date`),
-  ADD KEY `idx_sale_payments_method` (`payment_method`);
+  ADD KEY `idx_sale_payments_method` (`payment_method`),
+  ADD KEY `sale_payments_date_method_bank_idx` (`date`,`payment_method`,`bank_name`),
+  ADD KEY `sale_payments_sale_id_idx` (`sale_id`);
 
 --
 -- Indexes for table `sale_returns`
@@ -1588,7 +1607,7 @@ ALTER TABLE `media`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -1672,7 +1691,7 @@ ALTER TABLE `sales`
 -- AUTO_INCREMENT for table `sale_details`
 --
 ALTER TABLE `sale_details`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `sale_payments`
@@ -1708,7 +1727,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `stock_movements`
 --
 ALTER TABLE `stock_movements`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `suppliers`

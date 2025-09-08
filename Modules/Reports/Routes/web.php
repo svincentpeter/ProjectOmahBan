@@ -59,16 +59,6 @@ Route::middleware(['web', 'auth', 'can:access_reports'])
 // ======================================================
 Route::middleware(['web','auth','can:access_reports'])->group(function () {
 
-    // Daily cash report
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/daily', [ReportsController::class, 'dailyIndex'])->name('daily.index');
-        Route::post('/daily', [ReportsController::class, 'generateDailyReport'])->name('daily.generate');
-
-        // Profit & Loss
-        Route::get('/profit-loss', [ReportsController::class, 'profitLossIndex'])->name('profit_loss.index');
-        Route::post('/profit-loss', [ReportsController::class, 'generateProfitLossReport'])->name('profit_loss.generate');
-    });
-
     // Ringkas per kasir (route lama yang diinginkan sidebar)
     Route::get('/reports/ringkas/cashier', [ReportsController::class, 'ringkasCashier'])
         ->name('ringkas-report.cashier');

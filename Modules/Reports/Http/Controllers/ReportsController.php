@@ -13,6 +13,8 @@ use Modules\Sale\Entities\SalePayment;
 use Modules\Expense\Entities\Expense;
 use Modules\Reports\Http\Requests\ProfitLossRequest;
 use Modules\Reports\Http\Requests\DailyReportRequest;
+use Modules\SalesReturn\Entities\SaleReturn;
+use Modules\SalesReturn\Entities\SaleReturnDetail;
 
 // (Opsional next phase) use Modules\Sale\Entities\SaleReturn; use Modules\Purchase\Entities\Purchase; dst.
 
@@ -52,13 +54,13 @@ class ReportsController extends Controller
                 'saleDetails' => fn($q) => $q->select('id','sale_id','item_name','product_name','quantity','unit_price','sub_total'),
                 'payments'    => fn($q) => $q->select('id','sale_id','amount','date','reference','payment_method','bank_name'),
             ])
-            ->where('date', $reportDate)
+           ->whereDate('date', $reportDate)
             ->orderBy('created_at')
             ->get(['id','date','reference','total_amount','created_at']);
 
         $expenses = Expense::query()
             ->with(['category:id,category_name','user:id,name'])
-            ->where('date', $reportDate)
+            ->whereDate('date', $reportDate)
             ->orderBy('created_at')
             ->get(['id','date','reference','category_id','details','amount','user_id','created_at']);
 
@@ -72,7 +74,7 @@ class ReportsController extends Controller
                 DB::raw("COALESCE(bank_name, '—') AS bank_name"),
                 DB::raw('SUM(amount) AS total'),
             ])
-            ->where('date', $reportDate)
+            ->whereDate('date', $reportDate)
             ->groupBy('payment_method', 'bank_name')
             ->orderBy('payment_method')->orderBy('bank_name')
             ->get();
@@ -134,6 +136,20 @@ class ReportsController extends Controller
         $cogs    = (int) Sale::completed()
     ->between($startDate, $endDate)
     ->sum('total_hpp');
+
+    // Total nominal return penjualan (nilai jual yang dikembalikan)
+$returnRevenue = (int) SaleReturn::query()
+    ->whereBetween('date', [$startDate, $endDate])
+    ->sum('total_amount'); // sesuaikan field total bila berbeda
+
+// Total HPP dari barang yang diretur
+$returnCogs = (int) SaleReturnDetail::query()
+    ->whereHas('saleReturn', fn($q) => $q->whereBetween('date', [$startDate, $endDate]))
+    ->sum('hpp'); // sesuaikan field hpp bila berbeda
+
+// Sesuaikan revenue & cogs
+$revenue = max(0, $revenue - $returnRevenue);
+$cogs    = max(0, $cogs    - $returnCogs);
 
         // 4) Gross Profit
         $grossProfit = $revenue - $cogs;
