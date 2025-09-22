@@ -1,5 +1,8 @@
 <footer class="c-footer">
-    <div>Triangle Pos © {{ date('Y') }} || Developed by <strong><a target="_blank" href="https://fahimanzam.netlify.app">Fahim Anzam Dip</a></strong></div>
-
-    <div class="mfs-auto d-md-down-none">Version <strong class="text-danger">1.0</strong></div>
+    <div>
+        Dibuat dengan <i class="bi bi-heart-fill text-danger"></i> oleh <strong>Vincent Peter S.</strong>
+    </div>
+    <div class="ms-auto">
+        Omah Ban POS © {{ date('Y') }} · Versi <strong class="text-danger">1.0</strong>
+    </div>
 </footer>

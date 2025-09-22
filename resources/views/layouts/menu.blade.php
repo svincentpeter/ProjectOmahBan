@@ -349,7 +349,7 @@
     {{-- Laporan Kas Harian --}}
 <li class="c-sidebar-nav-item">
   <a class="c-sidebar-nav-link {{ $isActive(['reports.daily.*']) ? 'c-active' : '' }}"
-     href="{{ route('reports.daily.index') }}">
+   href="{{ $link(['reports.daily.index']) }}">
     <i class="c-sidebar-nav-icon bi bi-journal-text" style="line-height:1;"></i>
     Laporan Kas Harian
   </a>
