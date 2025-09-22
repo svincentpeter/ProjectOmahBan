@@ -11,7 +11,7 @@
     <link rel="icon" href="{{ asset('images/favicon.png') }}">
 
     @include('includes.main-css')
-    {{-- @livewireStyles --}}
+@livewireStyles
     @stack('page_styles')
     @yield('third_party_stylesheets')
 </head>
@@ -42,7 +42,8 @@
 
     {{-- JS utama --}}
     @include('includes.main-js')
-    {{-- @livewireScripts --}}
+@livewireScripts
+
 
     {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
