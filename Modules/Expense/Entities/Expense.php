@@ -44,8 +44,6 @@ class Expense extends Model
         return $prefix . str_pad((string)$seq, 4, '0', STR_PAD_LEFT);
     }
 
-    protected $guarded = [];
-
     public function category()
     {
         return $this->belongsTo(ExpenseCategory::class, 'category_id', 'id');

@@ -10,7 +10,6 @@ class SaleDetails extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
     protected $with = ['product'];
 
     protected $fillable = [

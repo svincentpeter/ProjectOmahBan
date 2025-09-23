@@ -1,2 +1,9 @@
 node_modules
 vendor/
+/.env
+/storage/*.key
+/public/storage
+/vendor/
+/node_modules/
+/.phpunit.cache
+/.fleet
