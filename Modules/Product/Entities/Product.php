@@ -13,9 +13,6 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class Product extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
-
-    protected $guarded = [];
-
     protected $casts = [
         'product_cost'  => 'integer',
         'product_price' => 'integer',

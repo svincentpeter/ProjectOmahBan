@@ -158,9 +158,13 @@ class SalePaymentsController extends Controller
                 foreach ($sale->saleDetails as $detail) {
                     // Jika item adalah produk baru (new)
                     if ($detail->source_type === 'new' && $detail->product_id) {
-                        if ($produk = Product::find($detail->product_id)) {
-                            $produk->decrement('product_quantity', $detail->quantity);
-                        }
+                        $produk = Product::lockForUpdate()->find($detail->product_id);
+if ($produk) {
+    if ($produk->product_quantity < $detail->quantity) {
+        throw new \RuntimeException("Stok {$produk->product_name} kurang untuk penyelesaian pembayaran.");
+    }
+    $produk->decrement('product_quantity', $detail->quantity);
+}
                     // Jika item adalah produk bekas (second)
                     } elseif ($detail->source_type === 'second' && $detail->productable_id) {
                         if ($produkBekas = ProductSecond::find($detail->productable_id)) {

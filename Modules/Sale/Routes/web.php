@@ -76,6 +76,12 @@ Route::prefix('sales/{sale}/payments')->name('sale-payments.')->group(function (
     Route::delete('/{payment}', [\Modules\Sale\Http\Controllers\SalePaymentsController::class, 'destroy'])->name('destroy');
 });
 
+// Laporan stok menipis
+Route::get('/sales/reports/low-stock', [ReportController::class, 'lowStockReport'])
+    ->name('sales.reports.low_stock')
+    ->middleware('can:access_reports');
+
+
     // ===================== Laporan =====================
     Route::get('/sales/reports/profit', [ReportController::class, 'profitReport'])->name('sales.reports.profit');
 });
