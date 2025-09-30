@@ -24,11 +24,18 @@ class StoreSaleRequest extends FormRequest
             'status' => 'required|string|max:255',
             'payment_method' => 'required|string|max:255',
             'bank_name' => 'nullable|string|max:255',
-            'note' => 'nullable|string|max:1000'
-            
+            'note' => 'nullable|string|max:1000',
+            'payment_method' => 'required|string|in:Tunai,Transfer,Kredit',
+            'bank_name'      => 'nullable|string|max:255',
         ];
     }
 
+    public function withValidator($validator)
+    {
+        $validator->sometimes('bank_name', 'required', function ($input) {
+            return ($input->payment_method ?? null) === 'Transfer';
+        });
+    }
     /**
      * Determine if the user is authorized to make this request.
      *

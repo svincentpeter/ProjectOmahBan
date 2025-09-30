@@ -13,22 +13,30 @@ class UpdateSaleRequest extends FormRequest
      * @return array
      */
     public function rules()
-{
-    return [
-        'reference'            => ['required','string'],
-        'date'                 => ['required','date'],
-        'status'               => ['required','in:Pending,Shipped,Completed'],
-        'payment_method'       => ['required','in:Tunai,Transfer,QRIS'],
-        'bank_name'            => ['nullable','string','max:100'],
-        'shipping_amount'      => ['nullable','numeric','min:0'],
-        'tax_percentage'       => ['nullable','numeric','min:0','max:100'],
-        'discount_percentage'  => ['nullable','numeric','min:0','max:100'],
-        // 'total_amount' => HAPUS
-        'paid_amount'          => ['nullable','numeric','min:0'], // Hapus 'max:...'
-        'note'                 => ['nullable','string'],
-    ];
-}
+    {
+        return [
+            'reference'            => ['required', 'string'],
+            'date'                 => ['required', 'date'],
+            'status'               => ['required', 'in:Pending,Shipped,Completed'],
+            'payment_method'       => ['required', 'in:Tunai,Transfer,QRIS'],
+            'bank_name'            => ['nullable', 'string', 'max:100'],
+            'shipping_amount'      => ['nullable', 'numeric', 'min:0'],
+            'tax_percentage'       => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'discount_percentage'  => ['nullable', 'numeric', 'min:0', 'max:100'],
+            // 'total_amount' => HAPUS
+            'paid_amount'          => ['nullable', 'numeric', 'min:0'], // Hapus 'max:...'
+            'note'                 => ['nullable', 'string'],
+            'payment_method' => 'required|string|in:Tunai,Transfer,Kredit',
+            'bank_name'      => 'nullable|string|max:255',
+        ];
+    }
 
+    public function withValidator($validator)
+    {
+        $validator->sometimes('bank_name', 'required', function ($input) {
+            return ($input->payment_method ?? null) === 'Transfer';
+        });
+    }
 
     /**
      * Determine if the user is authorized to make this request.
