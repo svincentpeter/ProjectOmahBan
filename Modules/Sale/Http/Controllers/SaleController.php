@@ -17,8 +17,6 @@ use Modules\Sale\Http\Requests\StoreSaleRequest;
 use Illuminate\Support\Str;
 use Modules\Sale\Http\Requests\UpdateSaleRequest;
 
-
-
 class SaleController extends Controller
 {
     public function index(SalesDataTable $dataTable)
@@ -58,6 +56,7 @@ class SaleController extends Controller
 
     /**
      * STORE transaksi baru.
+     * (Direvisi: pre-check stok pakai StockService.)
      */
     public function store(StoreSaleRequest $request)
     {
@@ -85,8 +84,13 @@ class SaleController extends Controller
 
         DB::beginTransaction();
         try {
-            // Precheck stok/status
-            $this->assertStockOk($cart->content());
+            // === Precheck stok/status (pakai StockService)
+            $stock = app(\App\Services\Inventory\StockService::class);
+            foreach ($cart->content() as $it) {
+                if (data_get($it->options, 'source_type', 'new') === 'new') {
+                    $stock->assertAndLockNewProduct((int) $it->id, (int) $it->qty);
+                }
+            }
 
             $reference = 'SL-' . now()->format('Ymd-His');
 
@@ -150,235 +154,229 @@ class SaleController extends Controller
      * Edit: reset cart saat berpindah sale & rebuild dari detail jika cart kosong.
      */
     public function edit(Sale $sale)
-{
-    $cart = Cart::instance('sale');
-    $flag = 'editing_sale_id';
+    {
+        $cart = Cart::instance('sale');
+        $flag = 'editing_sale_id';
 
-    // Jika pindah ke sale lain → kosongkan cart dan set flag baru
-    if (session($flag) !== $sale->id) {
-        $cart->destroy();
-        session([$flag => $sale->id]);
-    }
-
-    // Rebuild hanya jika kosong (supaya item manual baru tidak hilang)
-    if ($cart->count() === 0) {
-        foreach ($sale->saleDetails as $d) {
-            $cart->add([
-                'id'      => 'detail-'.$d->id, // rowId unik & stabil
-                'name'    => $d->product_name,
-                'qty'     => $d->source_type === 'second' ? 1 : (int) $d->quantity,
-                'price'   => (int) $d->price,
-                'weight'  => 0, // <- penting untuk beberapa versi shoppingcart
-                'options' => [
-                    'source_type'       => $d->source_type,
-                    'code'              => $d->product_code ?: '-',
-                    'discount'          => (int) $d->product_discount_amount,
-                    'tax'               => (int) $d->product_tax_amount,
-                    'hpp'               => (int) $d->hpp,
-                    'product_id'        => $d->product_id,
-                    'productable_type'  => $d->productable_type,
-                    'productable_id'    => $d->productable_id,
-                ],
-            ]);
+        // Jika pindah ke sale lain → kosongkan cart dan set flag baru
+        if (session($flag) !== $sale->id) {
+            $cart->destroy();
+            session([$flag => $sale->id]);
         }
+
+        // Rebuild hanya jika kosong (supaya item manual baru tidak hilang)
+        if ($cart->count() === 0) {
+            foreach ($sale->saleDetails as $d) {
+                $cart->add([
+                    'id'      => 'detail-'.$d->id, // rowId unik & stabil
+                    'name'    => $d->product_name,
+                    'qty'     => $d->source_type === 'second' ? 1 : (int) $d->quantity,
+                    'price'   => (int) $d->price,
+                    'weight'  => 0, // <- penting untuk beberapa versi shoppingcart
+                    'options' => [
+                        'source_type'       => $d->source_type,
+                        'code'              => $d->product_code ?: '-',
+                        'discount'          => (int) $d->product_discount_amount,
+                        'tax'               => (int) $d->product_tax_amount,
+                        'hpp'               => (int) $d->hpp,
+                        'product_id'        => $d->product_id,
+                        'productable_type'  => $d->productable_type,
+                        'productable_id'    => $d->productable_id,
+                    ],
+                ]);
+            }
+        }
+
+        return view('sale::edit', compact('sale'));
     }
-
-    return view('sale::edit', compact('sale'));
-}
-
 
     /**
      * UPDATE: tulis ulang header & detail dari cart, dan catat delta payment.
      */
     public function update(UpdateSaleRequest $request, Sale $sale)
-{
-    $data = $request->validate([
-        'date'                 => ['required','date'],
-        'status'               => ['required','in:Pending,Shipped,Completed'],
-        'payment_method'       => ['required','in:Tunai,Transfer,QRIS'],
-        'bank_name'            => ['nullable','string','max:120'],
-        'shipping_amount'      => ['nullable','integer','min:0'],
-        'tax_percentage'       => ['nullable','integer','min:0','max:100'],
-        'discount_percentage'  => ['nullable','integer','min:0','max:100'],
-        'paid_amount'          => ['nullable','integer','min:0'],
-        'note'                 => ['nullable','string'],
-    ]);
+    {
+        $data = $request->validate([
+            'date'                 => ['required','date'],
+            'status'               => ['required','in:Pending,Shipped,Completed'],
+            'payment_method'       => ['required','in:Tunai,Transfer,QRIS'],
+            'bank_name'            => ['nullable','string','max:120'],
+            'shipping_amount'      => ['nullable','integer','min:0'],
+            'tax_percentage'       => ['nullable','integer','min:0','max:100'],
+            'discount_percentage'  => ['nullable','integer','min:0','max:100'],
+            'paid_amount'          => ['nullable','integer','min:0'],
+            'note'                 => ['nullable','string'],
+        ]);
 
-    $items = Cart::instance('sale')->content();
+        $items = Cart::instance('sale')->content();
 
-    // 1) Fail-fast: dilarang update kalau cart kosong → mencegah detail hilang.
-    if ($items->isEmpty()) {
-        return back()->with('swal-error', 'Keranjang kosong. Tambahkan item terlebih dahulu.')
-                     ->withInput();
-    }
+        // 1) Fail-fast: dilarang update kalau cart kosong → mencegah detail hilang.
+        if ($items->isEmpty()) {
+            return back()->with('swal-error', 'Keranjang kosong. Tambahkan item terlebih dahulu.')
+                         ->withInput();
+        }
 
-    // 2) Hitung subtotal item (qty untuk 'second' dipaksa 1)
-    $subtotalItems = $items->sum(function ($i) {
-        $price = (int) $i->price;
-        $qty   = data_get($i->options, 'source_type') === 'second' ? 1 : (int) $i->qty;
-        $disc  = (int) data_get($i->options, 'discount', 0);
-        $tax   = (int) data_get($i->options, 'tax', 0);
-        return max(0, $price * $qty - $disc + $tax);
-    });
-
-    $ship   = (int) ($data['shipping_amount'] ?? 0);
-    $taxPct = (int) ($data['tax_percentage'] ?? 0);
-    $disPct = (int) ($data['discount_percentage'] ?? 0);
-
-    $taxAmt  = (int) round($subtotalItems * ($taxPct / 100));
-    $discAmt = (int) round($subtotalItems * ($disPct / 100));
-    $grand   = max(0, $subtotalItems + $taxAmt - $discAmt + $ship);
-
-    // Paid saat ini/target
-    $existingPaid = (int) ($sale->paid_amount ?? 0);
-    $targetPaid   = (int) ($data['paid_amount'] ?? $existingPaid);
-
-    $paymentStatus = 'Unpaid';
-    if ($targetPaid >= $grand)      $paymentStatus = 'Paid';
-    elseif ($targetPaid > 0)        $paymentStatus = 'Partial';
-
-    try {
-        DB::transaction(function () use (
-            $sale, $data, $items, $grand, $subtotalItems, $taxPct, $disPct, $ship,
-            $paymentStatus, $existingPaid, $targetPaid
-        ) {
-            // 3) Update header
-            $sale->date                 = $data['date'];
-            $sale->status               = $data['status'];
-            $sale->payment_method       = $data['payment_method'];
-            $sale->bank_name            = $data['payment_method'] === 'Transfer' ? ($data['bank_name'] ?? null) : null;
-            $sale->shipping_amount      = $ship;
-            $sale->tax_percentage       = $taxPct;
-            $sale->discount_percentage  = $disPct;
-            $sale->total_amount         = $grand;
-            $sale->payment_status       = $paymentStatus;
-            $sale->note                 = $data['note'] ?? $sale->note;
-            $sale->save();
-
-            // 4) Tulis ulang detail (tanpa mutasi stok saat UPDATE)
-            SaleDetails::where('sale_id', $sale->id)->delete();
-
-            $totalHpp   = 0;
-            $inserted   = 0;
-
-            foreach ($items as $i) {
-                $src   = (string) data_get($i->options, 'source_type', 'new');
-                $qty   = $src === 'second' ? 1 : (int) $i->qty;
-                $price = (int) $i->price;
-                $disc  = (int) data_get($i->options, 'discount', 0);
-                $tax   = (int) data_get($i->options, 'tax', 0);
-                $hpp   = (int) data_get($i->options, 'hpp', 0);
-                $code  = (string) data_get($i->options, 'code', '-');
-
-                $sub   = max(0, $price * $qty - $disc + $tax);
-
-                SaleDetails::create([
-                    'sale_id'                 => $sale->id,
-                    'item_name'               => $i->name, // <- kolom wajib
-                    'product_id'              => data_get($i->options, 'product_id'),
-                    'productable_type'        => data_get($i->options, 'productable_type'),
-                    'productable_id'          => data_get($i->options, 'productable_id'),
-                    'source_type'             => $src, // new | second | manual
-                    'product_name'            => $i->name,
-                    'product_code'            => $code,
-                    'quantity'                => $qty,
-                    'price'                   => $price,
-                    'hpp'                     => $hpp,
-                    'unit_price'              => $price,
-                    'sub_total'               => $sub,
-                    'subtotal_profit'         => ($price - $hpp) * $qty, // bisa negatif
-                    'product_discount_amount' => $disc,
-                    'product_discount_type'   => 'fixed',
-                    'product_tax_amount'      => $tax,
-                ]);
-
-                $totalHpp += ($hpp * $qty);
-                $inserted++;
-            }
-
-            // Safety net: kalau tidak ada baris tersimpan, batalkan
-            if ($inserted === 0) {
-                throw new \RuntimeException('Tidak ada item yang disimpan.');
-            }
-
-            // 5) Hitung ulang agregat profit/hpp
-            $sale->total_hpp    = $totalHpp;
-            $sale->total_profit = max(0, $subtotalItems - $totalHpp); // pakai subtotal bersih item
-            $sale->save();
-
-            // 6) Catat delta pembayaran (positif=bayar, negatif=refund)
-            // 6) Catat delta pembayaran (positif=bayar, negatif=refund)
-$delta = $targetPaid - $existingPaid;
-if ($delta !== 0) {
-    \Modules\Sale\Entities\SalePayment::create([
-        'sale_id'        => $sale->id,
-        'reference'      => $this->makePaymentReference(),   // <-- WAJIB: isi reference
-        'amount'         => abs($delta),                      // simpan nilai absolut
-        'payment_method' => $data['payment_method'],
-        'note'           => $delta > 0 ? 'Penyesuaian saat edit (+)' : 'Penyesuaian saat edit (refund)',
-        'date'           => now(),
-    ]);
-
-    // sinkronkan header paid_amount ke target
-    $sale->paid_amount    = max(0, $existingPaid + $delta);
-    $sale->payment_status = ($sale->paid_amount >= $sale->total_amount)
-                            ? 'Paid' : (($sale->paid_amount > 0) ? 'Partial' : 'Unpaid');
-    $sale->save();
-}
-
+        // 2) Hitung subtotal item (qty untuk 'second' dipaksa 1)
+        $subtotalItems = $items->sum(function ($i) {
+            $price = (int) $i->price;
+            $qty   = data_get($i->options, 'source_type') === 'second' ? 1 : (int) $i->qty;
+            $disc  = (int) data_get($i->options, 'discount', 0);
+            $tax   = (int) data_get($i->options, 'tax', 0);
+            return max(0, $price * $qty - $disc + $tax);
         });
-    } catch (\Throwable $e) {
-        // Rollback sudah otomatis; tampilkan pesan ramah
-        return back()->with('swal-error', 'Gagal menyimpan perubahan: '.$e->getMessage())
-                     ->withInput();
+
+        $ship   = (int) ($data['shipping_amount'] ?? 0);
+        $taxPct = (int) ($data['tax_percentage'] ?? 0);
+        $disPct = (int) ($data['discount_percentage'] ?? 0);
+
+        $taxAmt  = (int) round($subtotalItems * ($taxPct / 100));
+        $discAmt = (int) round($subtotalItems * ($disPct / 100));
+        $grand   = max(0, $subtotalItems + $taxAmt - $discAmt + $ship);
+
+        // Paid saat ini/target
+        $existingPaid = (int) ($sale->paid_amount ?? 0);
+        $targetPaid   = (int) ($data['paid_amount'] ?? $existingPaid);
+
+        $paymentStatus = 'Unpaid';
+        if ($targetPaid >= $grand)      $paymentStatus = 'Paid';
+        elseif ($targetPaid > 0)        $paymentStatus = 'Partial';
+
+        try {
+            DB::transaction(function () use (
+                $sale, $data, $items, $grand, $subtotalItems, $taxPct, $disPct, $ship,
+                $paymentStatus, $existingPaid, $targetPaid
+            ) {
+                // 3) Update header
+                $sale->date                 = $data['date'];
+                $sale->status               = $data['status'];
+                $sale->payment_method       = $data['payment_method'];
+                $sale->bank_name            = $data['payment_method'] === 'Transfer' ? ($data['bank_name'] ?? null) : null;
+                $sale->shipping_amount      = $ship;
+                $sale->tax_percentage       = $taxPct;
+                $sale->discount_percentage  = $disPct;
+                $sale->total_amount         = $grand;
+                $sale->payment_status       = $paymentStatus;
+                $sale->note                 = $data['note'] ?? $sale->note;
+                $sale->save();
+
+                // 4) Tulis ulang detail (tanpa mutasi stok saat UPDATE)
+                SaleDetails::where('sale_id', $sale->id)->delete();
+
+                $totalHpp   = 0;
+                $inserted   = 0;
+
+                foreach ($items as $i) {
+                    $src   = (string) data_get($i->options, 'source_type', 'new');
+                    $qty   = $src === 'second' ? 1 : (int) $i->qty;
+                    $price = (int) $i->price;
+                    $disc  = (int) data_get($i->options, 'discount', 0);
+                    $tax   = (int) data_get($i->options, 'tax', 0);
+                    $hpp   = (int) data_get($i->options, 'hpp', 0);
+                    $code  = (string) data_get($i->options, 'code', '-');
+
+                    $sub   = max(0, $price * $qty - $disc + $tax);
+
+                    SaleDetails::create([
+                        'sale_id'                 => $sale->id,
+                        'item_name'               => $i->name, // <- kolom wajib
+                        'product_id'              => data_get($i->options, 'product_id'),
+                        'productable_type'        => data_get($i->options, 'productable_type'),
+                        'productable_id'          => data_get($i->options, 'productable_id'),
+                        'source_type'             => $src, // new | second | manual
+                        'product_name'            => $i->name,
+                        'product_code'            => $code,
+                        'quantity'                => $qty,
+                        'price'                   => $price,
+                        'hpp'                     => $hpp,
+                        'unit_price'              => $price,
+                        'sub_total'               => $sub,
+                        'subtotal_profit'         => ($price - $hpp) * $qty, // bisa negatif
+                        'product_discount_amount' => $disc,
+                        'product_discount_type'   => 'fixed',
+                        'product_tax_amount'      => $tax,
+                    ]);
+
+                    $totalHpp += ($hpp * $qty);
+                    $inserted++;
+                }
+
+                // Safety net: kalau tidak ada baris tersimpan, batalkan
+                if ($inserted === 0) {
+                    throw new \RuntimeException('Tidak ada item yang disimpan.');
+                }
+
+                // 5) Hitung ulang agregat profit/hpp
+                $sale->total_hpp    = $totalHpp;
+                $sale->total_profit = max(0, $subtotalItems - $totalHpp); // pakai subtotal bersih item
+                $sale->save();
+
+                // 6) Catat delta pembayaran (positif=bayar, negatif=refund)
+                $delta = $targetPaid - $existingPaid;
+                if ($delta !== 0) {
+                    \Modules\Sale\Entities\SalePayment::create([
+                        'sale_id'        => $sale->id,
+                        'reference'      => $this->makePaymentReference(),   // reference unik
+                        'amount'         => abs($delta),                      // simpan nilai absolut
+                        'payment_method' => $data['payment_method'],
+                        'note'           => $delta > 0 ? 'Penyesuaian saat edit (+)' : 'Penyesuaian saat edit (refund)',
+                        'date'           => now(),
+                    ]);
+
+                    // sinkronkan header paid_amount ke target
+                    $sale->paid_amount    = max(0, $existingPaid + $delta);
+                    $sale->payment_status = ($sale->paid_amount >= $sale->total_amount)
+                                            ? 'Paid' : (($sale->paid_amount > 0) ? 'Partial' : 'Unpaid');
+                    $sale->save();
+                }
+            });
+        } catch (\Throwable $e) {
+            // Rollback sudah otomatis; tampilkan pesan ramah
+            return back()->with('swal-error', 'Gagal menyimpan perubahan: '.$e->getMessage())
+                         ->withInput();
+        }
+
+        // selesai edit: kosongkan cart & hapus penanda sesi supaya tidak "nyangkut"
+        Cart::instance('sale')->destroy();
+        session()->forget('editing_sale_id');
+
+        return redirect()->route('sales.show', $sale)->with('swal-success', 'Sale berhasil diperbarui.');
     }
 
-    // selesai edit: kosongkan cart & hapus penanda sesi supaya tidak "nyangkut"
-    Cart::instance('sale')->destroy();
-    session()->forget('editing_sale_id');
-
-    return redirect()->route('sales.show', $sale)->with('swal-success', 'Sale berhasil diperbarui.');
-}
-
-/**
- * Buat reference unik untuk sale_payments.
- * Format: SP-YYYYMMDD-HHMMSS-XXXXX
- */
-private function makePaymentReference(): string
-{
-    $ref = 'SP-'.now()->format('Ymd-His').'-'.Str::upper(Str::random(5));
-    // Jika ada constraint unique, pastikan unik dengan loop ringan
-    while (\Modules\Sale\Entities\SalePayment::where('reference', $ref)->exists()) {
-        $ref = 'SP-'.now()->format('Ymd-His').'-'.Str::upper(Str::random(6));
+    /**
+     * Buat reference unik untuk sale_payments.
+     * Format: SP-YYYYMMDD-HHMMSS-XXXXX
+     */
+    private function makePaymentReference(): string
+    {
+        $ref = 'SP-'.now()->format('Ymd-His').'-'.Str::upper(Str::random(5));
+        // Jika ada constraint unique, pastikan unik dengan loop ringan
+        while (\Modules\Sale\Entities\SalePayment::where('reference', $ref)->exists()) {
+            $ref = 'SP-'.now()->format('Ymd-His').'-'.Str::upper(Str::random(6));
+        }
+        return $ref;
     }
-    return $ref;
-}
 
+    /**
+     * Konversi string uang masked → integer rupiah.
+     */
+    private function toInt($value): int
+    {
+        if (is_null($value)) return 0;
+        if (is_int($value))  return $value;
+        // buang karakter non-digit (termasuk titik/koma/space)
+        $num = preg_replace('/[^\d\-]/', '', (string)$value);
+        if ($num === '' || $num === '-') return 0;
+        return (int) $num;
+    }
 
-
-/**
- * Konversi string uang masked → integer rupiah.
- */
-private function toInt($value): int
-{
-    if (is_null($value)) return 0;
-    if (is_int($value))  return $value;
-    // buang karakter non-digit (termasuk titik/koma/space)
-    $num = preg_replace('/[^\d\-]/', '', (string)$value);
-    if ($num === '' || $num === '-') return 0;
-    return (int) $num;
-}
-
-/**
- * Tentukan status pembayaran dari grand total & paid.
- */
-private function paymentStatus(int $grand, int $paid): string
-{
-    if ($paid <= 0)          return 'Unpaid';
-    if ($paid >= $grand)     return 'Paid';
-    return 'Partial';
-}
-
+    /**
+     * Tentukan status pembayaran dari grand total & paid.
+     */
+    private function paymentStatus(int $grand, int $paid): string
+    {
+        if ($paid <= 0)          return 'Unpaid';
+        if ($paid >= $grand)     return 'Paid';
+        return 'Partial';
+    }
 
     public function destroy(Sale $sale)
     {
@@ -429,6 +427,7 @@ private function paymentStatus(int $grand, int $paid): string
 
     /**
      * Precheck stok produk baru & status second sebelum commit.
+     * (Dipertahankan untuk kompatibilitas; saat ini precheck utama dilakukan di store() via StockService.)
      */
     protected function assertStockOk($items): void
     {
@@ -468,7 +467,7 @@ private function paymentStatus(int $grand, int $paid): string
             $price = (int) $i->price;
             $qty   = data_get($i->options, 'source_type') === 'second' ? 1 : (int) $i->qty;
             $disc  = (int) data_get($i->options, 'discount', 0);
-            $tax   = (int) data_get($i->options, 'tax', 0);
+            $tax   = (int) $i->options['tax'] ?? 0;
             return max(0, $price * $qty - $disc + $tax);
         });
 
@@ -480,61 +479,61 @@ private function paymentStatus(int $grand, int $paid): string
 
     // ========== AJAX: Tambah item manual (jasa/biaya) ke keranjang edit ==========
     public function addManualLine(Request $request)
-{
-    $data = $request->validate([
-        'name'  => ['required','string','max:255'],
-        'price' => ['required','integer','min:1'],
-        'qty'   => ['required','integer','min:1'],
-    ]);
+    {
+        $data = $request->validate([
+            'name'  => ['required','string','max:255'],
+            'price' => ['required','integer','min:1'],
+            'qty'   => ['required','integer','min:1'],
+        ]);
 
-    $cart = Cart::instance('sale');
-    $item = $cart->add([
-        'id'      => 'manual-'.Str::uuid(),
-        'name'    => $data['name'],
-        'qty'     => $data['qty'],
-        'price'   => $data['price'],
-        'weight'  => 0, // <- WAJIB agar tidak error "weight"
-        'options' => [
-            'source_type' => 'manual',
-            'code'        => '-',
-            'discount'    => 0,
-            'tax'         => 0,
-            'hpp'         => 0,
-        ],
-    ]);
+        $cart = Cart::instance('sale');
+        $item = $cart->add([
+            'id'      => 'manual-'.Str::uuid(),
+            'name'    => $data['name'],
+            'qty'     => $data['qty'],
+            'price'   => $data['price'],
+            'weight'  => 0, // <- WAJIB agar tidak error "weight"
+            'options' => [
+                'source_type' => 'manual',
+                'code'        => '-',
+                'discount'    => 0,
+                'tax'         => 0,
+                'hpp'         => 0,
+            ],
+        ]);
 
-    // Hitung subtotal server
-    $subtotal = 0;
-    foreach ($cart->content() as $ci) {
-        $p = (int)$ci->price;
-        $q = (int)$ci->qty;
-        $d = (int) data_get($ci->options,'discount',0);
-        $t = (int) data_get($ci->options,'tax',0);
-        $subtotal += max(0, ($p - $d + $t) * $q);
+        // Hitung subtotal server
+        $subtotal = 0;
+        foreach ($cart->content() as $ci) {
+            $p = (int)$ci->price;
+            $q = (int)$ci->qty;
+            $d = (int) data_get($ci->options,'discount',0);
+            $t = (int) data_get($ci->options,'tax',0);
+            $subtotal += max(0, ($p - $d + $t) * $q);
+        }
+
+        $rowHtml = view('sale::partials.edit-row', ['it' => $item])->render();
+
+        return response()->json([
+            'ok'             => true,
+            'rowHtml'        => $rowHtml,
+            'subtotalItems'  => $subtotal,
+            'formatted'      => ['subtotalItems' => number_format($subtotal,0,',','.')],
+        ]);
     }
 
-    $rowHtml = view('sale::partials.edit-row', ['it' => $item])->render();
+    public function printA4(Sale $sale)
+    {
+        // Eager load seperlunya
+        $sale->load('user', 'saleDetails.product.brand');
 
-    return response()->json([
-        'ok'             => true,
-        'rowHtml'        => $rowHtml,
-        'subtotalItems'  => $subtotal,
-        'formatted'      => ['subtotalItems' => number_format($subtotal,0,',','.')],
-    ]);
-}
-
-
-public function printA4(Sale $sale)
-{
-    // Eager load seperlunya
-    $sale->load('user', 'saleDetails.product.brand');
-
-    $pdf = \PDF::loadView('sale::print', ['sale' => $sale])->setPaper('a4');
-    return $pdf->stream('sale-' . $sale->reference . '.pdf');
-}
+        $pdf = \PDF::loadView('sale::print', ['sale' => $sale])->setPaper('a4');
+        return $pdf->stream('sale-' . $sale->reference . '.pdf');
+    }
 
     /**
      * Simpan baris detail + lakukan mutasi stok/status sesuai sumber item (untuk STORE).
+     * (Direvisi: mutasi stok dipindah ke StockService.)
      */
     protected function persistDetailAndMutateStock(Sale $sale, string $reference, $item): void
     {
@@ -555,47 +554,34 @@ public function printA4(Sale $sale)
         $productableType = null;
         $productableId   = null;
 
+        // siapkan service
+        $stock = app(\App\Services\Inventory\StockService::class);
+
         if ($src === 'new') {
+            // lock ulang + mutasi via service (aman untuk race condition)
             $p = Product::lockForUpdate()->findOrFail((int) $item->id);
             if (in_array($sale->status, ['Shipped','Completed'])) {
+                // safety check (redundan dgn precheck, tapi aman)
                 if ($p->product_quantity < $qty) {
                     throw new \RuntimeException("Stok {$p->product_name} tidak mencukupi.");
                 }
-                $p->decrement('product_quantity', $qty);
-
-                DB::table('stock_movements')->insert([
-                    'productable_type' => Product::class,
-                    'productable_id'   => $p->id,
-                    'type'             => 'out',
-                    'quantity'         => $qty,
-                    'description'      => 'Sale #'.$reference,
-                    'user_id'          => auth()->id(),
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
-                ]);
+                $stock->decrementNew($p, (int) $item->qty, $reference, auth()->id());
             }
             $productId = $p->id;
-        } elseif ($src === 'second') {
-            $s = ProductSecond::lockForUpdate()->findOrFail((int) $item->id);
-            if (in_array($sale->status, ['Shipped','Completed'])) {
-                if (strtolower((string) $s->status) !== 'available') {
-                    throw new \RuntimeException("Produk bekas {$s->name} sudah terjual/tidak tersedia.");
-                }
-                $s->update(['status' => 'sold']);
 
-                DB::table('stock_movements')->insert([
-                    'productable_type' => ProductSecond::class,
-                    'productable_id'   => $s->id,
-                    'type'             => 'out',
-                    'quantity'         => 1,
-                    'description'      => 'Sale (second) #'.$reference,
-                    'user_id'          => auth()->id(),
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
-                ]);
+        } elseif ($src === 'second') {
+            // lock + mutasi via service (ubah status → sold + movement)
+            if (in_array($sale->status, ['Shipped','Completed'])) {
+                $s = ProductSecond::lockForUpdate()->findOrFail((int) $item->id);
+                $stock->markSecondAsSold($s, $reference, auth()->id());
+                $productableType = ProductSecond::class;
+                $productableId   = $s->id;
+            } else {
+                // jika belum shipped/completed, tetap rekam referensi produk bekas
+                $s = ProductSecond::findOrFail((int) $item->id);
+                $productableType = ProductSecond::class;
+                $productableId   = $s->id;
             }
-            $productableType = ProductSecond::class;
-            $productableId   = $s->id;
         } // manual: tidak ada mutasi stok
 
         SaleDetails::create([

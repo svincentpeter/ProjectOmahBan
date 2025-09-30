@@ -10,28 +10,20 @@ use Yajra\DataTables\Services\DataTable;
 class ProductDataTable extends DataTable
 {
     public function dataTable($query)
-    {
-        return datatables()
-            ->eloquent($query)
-            ->addColumn('action', function ($data) {
-                return view('product::products.partials.actions', compact('data'));
-            })
-            ->addColumn('product_price', function ($data) {
-                return format_currency($data->product_price);
-            })
-            ->addColumn('product_cost', function ($data) {
-                return format_currency($data->product_cost);
-            })
-            // Menambahkan kolom 'stok_sisa' yang dinamis
-            ->addColumn('stok_sisa', function ($data) {
-                return $data->product_quantity . ' ' . $data->product_unit;
-            })
-            // Menambahkan kolom 'merk' dari relasi
-            ->addColumn('merk', function ($data) {
-                // Jika produk punya brand, tampilkan namanya. Jika tidak, tampilkan strip.
-                return $data->brand ? $data->brand->name : '-';
-            });
-    }
+{
+    return datatables()
+        ->eloquent($query)
+        ->addColumn('action', function ($data) {
+            // tombol edit/hapus dsb (HTML)
+            return view('product::partials.actions', compact('data'))->render();
+        })
+        ->addColumn('product_price', fn($d) => format_currency($d->product_price))
+        ->addColumn('product_cost',  fn($d) => format_currency($d->product_cost))
+        ->addColumn('stok_sisa',     fn($d) => $d->product_quantity.' '.$d->product_unit)
+        ->addColumn('merk',          fn($d) => $d->brand? $d->brand->name : '-')
+        ->rawColumns(['action']); // <-- hanya kolom aksi yang raw
+}
+
 
     public function query(Product $model)
     {
