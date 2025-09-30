@@ -3,7 +3,7 @@
 </a>
 <button id="delete" class="btn btn-danger btn-sm" onclick="
     event.preventDefault();
-    if (confirm('Are you sure? It will delete the data permanently!')) {
+    if (confirm('Apakah Anda yakin? Data akan dihapus secara permanen!')) {
     document.getElementById('destroy{{ $data->id }}').submit();
     }
     ">

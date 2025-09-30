@@ -5,8 +5,6 @@ namespace Modules\User\DataTables;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
 class RolesDataTable extends DataTable
@@ -23,7 +21,6 @@ class RolesDataTable extends DataTable
                     'data' => $data
                 ]);
             });
-
     }
 
     public function query(Role $model) {
@@ -56,19 +53,23 @@ class RolesDataTable extends DataTable
     protected function getColumns() {
         return [
             Column::make('id')
+                ->title('ID')
                 ->addClass('text-center')
                 ->addClass('align-middle'),
 
             Column::make('name')
+                ->title('Nama Peran')
                 ->addClass('text-center')
                 ->addClass('align-middle'),
 
             Column::computed('permissions')
+                ->title('Hak Akses (Contoh)')
                 ->addClass('text-center')
                 ->addClass('align-middle')
                 ->width('700px'),
 
             Column::computed('action')
+                ->title('Aksi')
                 ->exportable(false)
                 ->printable(false)
                 ->addClass('text-center')

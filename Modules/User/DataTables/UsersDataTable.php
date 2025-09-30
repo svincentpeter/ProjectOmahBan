@@ -5,8 +5,6 @@ namespace Modules\User\DataTables;
 use App\Models\User;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
 class UsersDataTable extends DataTable
@@ -25,9 +23,9 @@ class UsersDataTable extends DataTable
             })
             ->addColumn('status', function ($data) {
                 if ($data->is_active == 1) {
-                    $html = '<span class="badge badge-success">Active</span>';
+                    $html = '<span class="badge badge-success">Aktif</span>';
                 } else {
-                    $html = '<span class="badge badge-warning">Deactivated</span>';
+                    $html = '<span class="badge badge-warning">Nonaktif</span>';
                 }
 
                 return $html;
@@ -37,15 +35,12 @@ class UsersDataTable extends DataTable
 
                 return '<img src="' . $url . '" style="width:50px;height:50px;" class="img-thumbnail rounded-circle"/>';
             })
-            ->rawColumns(['image', 'status']);
+            // TAMBAHKAN BARIS INI
+            ->rawColumns(['image', 'status', 'action', 'role']);
     }
 
     public function query(User $model) {
-        return $model->newQuery()
-            ->with(['roles' => function ($query) {
-                $query->select('name')->get();
-            }])
-            ->where('id', '!=', auth()->id());
+        return $model->newQuery()->where('id', '!=', auth()->id());
     }
 
     public function html() {
@@ -72,21 +67,27 @@ class UsersDataTable extends DataTable
     protected function getColumns() {
         return [
             Column::computed('image')
+                ->title('Gambar')
                 ->className('text-center align-middle'),
 
             Column::make('name')
+                ->title('Nama')
                 ->className('text-center align-middle'),
 
             Column::make('email')
+                ->title('Email')
                 ->className('text-center align-middle'),
 
             Column::computed('role')
+                ->title('Peran')
                 ->className('text-center align-middle'),
 
             Column::computed('status')
+                ->title('Status')
                 ->className('text-center align-middle'),
 
             Column::computed('action')
+                ->title('Aksi')
                 ->exportable(false)
                 ->printable(false)
                 ->className('text-center align-middle'),

@@ -3,7 +3,6 @@
 namespace Modules\User\Http\Controllers;
 
 use Modules\User\DataTables\RolesDataTable;
-use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
@@ -29,7 +28,7 @@ class RolesController extends Controller
         abort_if(Gate::denies('access_user_management'), 403);
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:roles,name',
             'permissions' => 'required|array'
         ]);
 
@@ -40,8 +39,7 @@ class RolesController extends Controller
         $role->givePermissionTo($request->permissions);
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
-
-        toast('Role Created With Selected Permissions!', 'success');
+        toast('Peran berhasil dibuat dengan hak akses yang dipilih!', 'success');
 
         return redirect()->route('roles.index');
     }
@@ -50,40 +48,30 @@ class RolesController extends Controller
     public function edit(Role $role) {
     abort_if(Gate::denies('access_user_management'), 403);
 
-    $rolePermissions = $role->getPermissionNames()->toArray(); // ['show_total_stats', ...]
+    // Baris ini mengambil semua nama permission yang dimiliki oleh peran ini
+    $rolePermissions = $role->getPermissionNames()->toArray(); 
+
+    // Pastikan 'rolePermissions' ada di dalam compact()
     return view('user::roles.edit', compact('role', 'rolePermissions'));
 }
 
 
-
     public function update(Request $request, Role $role) {
+        abort_if(Gate::denies('access_user_management'), 403);
 
-    abort_if(Gate::denies('access_user_management'), 403);
+        $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
+            'permissions' => 'required|array'
+        ]);
 
-    $request->validate([
-        'name' => 'required|string|max:255|unique:roles,name', // di update pakai unique:roles,name,'.$role->id
-        'permissions' => 'required|array'
-    ]);
+        $role->update(['name' => $request->name]);
+        $role->syncPermissions($request->permissions);
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
-    $role->update(['name' => $request->name]);
+        toast('Peran berhasil diperbarui dengan hak akses yang dipilih!', 'info');
 
-    // Pastikan semua permission yang dikirim form sudah ada di DB (guard web)
-    foreach ($request->permissions as $permName) {
-        \Spatie\Permission\Models\Permission::firstOrCreate(
-            ['name' => $permName, 'guard_name' => 'web']
-        );
+        return redirect()->route('roles.index');
     }
-
-    // Sinkronkan
-    $role->syncPermissions($request->permissions);
-
-    // Reset cache permission supaya efeknya langsung
-    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-
-    toast('Role Updated With Selected Permissions!', 'success');
-    return redirect()->route('roles.index');
-}
-
 
 
     public function destroy(Role $role) {
@@ -91,7 +79,7 @@ class RolesController extends Controller
 
         $role->delete();
 
-        toast('Role Deleted!', 'success');
+        toast('Peran berhasil dihapus!', 'warning');
 
         return redirect()->route('roles.index');
     }

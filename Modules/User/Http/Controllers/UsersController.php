@@ -4,12 +4,12 @@ namespace Modules\User\Http\Controllers;
 
 use Modules\User\DataTables\UsersDataTable;
 use App\Models\User;
-use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Modules\Upload\Entities\Upload;
 
 class UsersController extends Controller
@@ -60,7 +60,7 @@ class UsersController extends Controller
             }
         }
 
-        toast("User Created & Assigned '$request->role' Role!", 'success');
+        toast("Pengguna berhasil dibuat & diberi peran '$request->role'!", 'success');
 
         return redirect()->route('users.index');
     }
@@ -89,7 +89,7 @@ class UsersController extends Controller
         ]);
 
         $user->syncRoles($request->role);
-app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
         if ($request->has('image')) {
             $tempFile = Upload::where('folder', $request->image)->first();
@@ -106,7 +106,7 @@ app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
             }
         }
 
-        toast("User Updated & Assigned '$request->role' Role!", 'info');
+        toast("Pengguna berhasil diperbarui & diberi peran '$request->role'!", 'info');
 
         return redirect()->route('users.index');
     }
@@ -117,7 +117,7 @@ app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
         $user->delete();
 
-        toast('User Deleted!', 'warning');
+        toast('Pengguna berhasil dihapus!', 'warning');
 
         return redirect()->route('users.index');
     }

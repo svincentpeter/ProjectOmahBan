@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 08, 2025 at 02:39 PM
+-- Generation Time: Sep 30, 2025 at 03:04 PM
 -- Server version: 8.0.30
--- PHP Version: 8.2.26
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -35,7 +35,7 @@ CREATE TABLE `adjusted_products` (
   `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `adjusted_products`
@@ -117,6 +117,20 @@ INSERT INTO `categories` (`id`, `category_code`, `category_name`, `created_at`, 
 -- --------------------------------------------------------
 
 --
+-- Stand-in structure for view `categories_view`
+-- (See below for the actual view)
+--
+CREATE TABLE `categories_view` (
+`id` bigint unsigned
+,`category_code` varchar(255)
+,`name` varchar(255)
+,`created_at` timestamp
+,`updated_at` timestamp
+);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `currencies`
 --
 
@@ -174,9 +188,9 @@ CREATE TABLE `expenses` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `payment_method` enum('Tunai','Transfer') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Tunai',
-  `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `attachment_path` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+  `payment_method` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -346,7 +360,8 @@ CREATE TABLE `model_has_roles` (
 --
 
 INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
-(2, 'App\\Models\\User', 1);
+(2, 'App\\Models\\User', 1),
+(1, 'App\\Models\\User', 2);
 
 -- --------------------------------------------------------
 
@@ -486,7 +501,7 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `category_id`, `product_name`, `product_code`, `product_quantity`, `stok_awal`, `product_cost`, `product_price`, `product_unit`, `product_stock_alert`, `product_order_tax`, `product_tax_type`, `product_note`, `created_at`, `updated_at`, `brand_id`, `product_size`, `ring`, `product_year`) VALUES
-(1, 2, 'Ban GT Savero', 'GT_Savero', 11, 5, 128076000, 142500000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-08-23 15:12:37', 1, '31x10,5', '15', NULL),
+(1, 2, 'Ban GT Savero', 'GT_Savero', 11, 5, 1280760, 1425000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-08-23 15:12:37', 1, '31x10,5', '15', NULL),
 (2, 2, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 20, 20, 725000, 925000, 'PC', 4, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 2, '185/65', '15', 2024),
 (3, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 12, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 3, '205/65', '16', 2024),
 (4, 2, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 16, 16, 640000, 835000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 1, '195/65', '15', 2024),
@@ -568,12 +583,12 @@ CREATE TABLE `purchase_details` (
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
-  `price` int NOT NULL,
-  `unit_price` int NOT NULL,
-  `sub_total` int NOT NULL,
-  `product_discount_amount` int NOT NULL,
+  `price` bigint NOT NULL,
+  `unit_price` bigint NOT NULL,
+  `sub_total` bigint NOT NULL,
+  `product_discount_amount` bigint NOT NULL,
   `product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
-  `product_tax_amount` int NOT NULL,
+  `product_tax_amount` bigint NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -609,13 +624,13 @@ CREATE TABLE `purchase_returns` (
   `supplier_id` bigint UNSIGNED DEFAULT NULL,
   `supplier_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tax_percentage` int NOT NULL DEFAULT '0',
-  `tax_amount` int NOT NULL DEFAULT '0',
+  `tax_amount` bigint NOT NULL DEFAULT '0',
   `discount_percentage` int NOT NULL DEFAULT '0',
-  `discount_amount` int NOT NULL DEFAULT '0',
-  `shipping_amount` int NOT NULL DEFAULT '0',
-  `total_amount` int NOT NULL,
-  `paid_amount` int NOT NULL,
-  `due_amount` int NOT NULL,
+  `discount_amount` bigint NOT NULL DEFAULT '0',
+  `shipping_amount` bigint NOT NULL DEFAULT '0',
+  `total_amount` bigint NOT NULL,
+  `paid_amount` bigint NOT NULL,
+  `due_amount` bigint NOT NULL,
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -638,7 +653,7 @@ CREATE TABLE `purchase_return_details` (
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
   `price` bigint UNSIGNED DEFAULT NULL,
-  `unit_price` int NOT NULL,
+  `unit_price` bigint NOT NULL,
   `sub_total` bigint UNSIGNED DEFAULT NULL,
   `product_discount_amount` bigint UNSIGNED DEFAULT NULL,
   `product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
@@ -656,7 +671,7 @@ CREATE TABLE `purchase_return_details` (
 CREATE TABLE `purchase_return_payments` (
   `id` bigint UNSIGNED NOT NULL,
   `purchase_return_id` bigint UNSIGNED NOT NULL,
-  `amount` int NOT NULL,
+  `amount` bigint NOT NULL,
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -678,11 +693,11 @@ CREATE TABLE `quotations` (
   `customer_id` bigint UNSIGNED DEFAULT NULL,
   `customer_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tax_percentage` int NOT NULL DEFAULT '0',
-  `tax_amount` int NOT NULL DEFAULT '0',
+  `tax_amount` bigint NOT NULL DEFAULT '0',
   `discount_percentage` int NOT NULL DEFAULT '0',
-  `discount_amount` int NOT NULL DEFAULT '0',
-  `shipping_amount` int NOT NULL DEFAULT '0',
-  `total_amount` int NOT NULL,
+  `discount_amount` bigint NOT NULL DEFAULT '0',
+  `shipping_amount` bigint NOT NULL DEFAULT '0',
+  `total_amount` bigint NOT NULL,
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -702,12 +717,12 @@ CREATE TABLE `quotation_details` (
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
-  `price` int NOT NULL,
-  `unit_price` int NOT NULL,
-  `sub_total` int NOT NULL,
-  `product_discount_amount` int NOT NULL,
+  `price` bigint NOT NULL,
+  `unit_price` bigint NOT NULL,
+  `sub_total` bigint NOT NULL,
+  `product_discount_amount` bigint NOT NULL,
   `product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
-  `product_tax_amount` int NOT NULL,
+  `product_tax_amount` bigint NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -818,10 +833,8 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 (139, 1),
 (140, 1),
 (141, 1),
-(142, 1),
-(143, 1),
-(144, 1),
-(145, 1);
+(145, 1),
+(146, 1);
 
 -- --------------------------------------------------------
 
@@ -894,7 +907,7 @@ INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `tax_percentage`, `ta
 (53, '2025-08-12', 'SL-00053', 1, 0, 0, 0, 0, 0, 0, 0, 0, 100000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:14:18', '2025-08-18 15:52:12', NULL),
 (54, '2025-08-12', 'SL-00054', 1, 0, 0, 0, 0, 0, 1425000, 0, 0, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:16:16', '2025-08-20 11:32:24', NULL),
 (55, '2025-08-17', 'SL-00055', 1, 0, 0, 0, 0, 0, 2400000, 0, 2400000, 2400000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-17 05:24:44', '2025-08-18 13:41:51', NULL),
-(56, '2025-08-19', 'SL-00056', 1, 0, 0, 0, 0, 0, 1450000, 1280760, 169240, 1450000, 1450000, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 04:58:30', '2025-08-19 06:49:21', NULL),
+(56, '2025-08-19', 'SL-00056', 1, 0, 0, 0, 0, 0, 1450000, 1280760, 169240, 1450000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 04:58:30', '2025-08-19 06:49:21', NULL),
 (57, '2025-08-19', 'SL-00057', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 05:23:41', '2025-08-20 10:07:07', NULL),
 (58, '2025-08-19', 'SL-00058', 1, 0, 0, 0, 0, 0, 125000, 0, 125000, 125000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 06:17:01', '2025-08-19 06:17:47', NULL),
 (59, '2025-08-20', 'SL-20250820-202448-68a5dab0793ff', NULL, 0, 0, 0, 0, 0, 650000, 0, 0, 650000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-20 13:24:48', '2025-08-20 13:25:00', NULL),
@@ -930,14 +943,14 @@ CREATE TABLE `sale_details` (
   `product_tax_amount` bigint NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ;
 
 --
 -- Dumping data for table `sale_details`
 --
 
 INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `productable_id`, `productable_type`, `source_type`, `product_name`, `product_code`, `quantity`, `price`, `hpp`, `unit_price`, `sub_total`, `subtotal_profit`, `product_discount_amount`, `product_discount_type`, `product_tax_amount`, `created_at`, `updated_at`) VALUES
-(2, 4, 'Ban GT Savero', NULL, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 0, 1425000, 1425000, 1425000, 0, 'fixed', 0, '2025-08-08 08:15:20', '2025-08-08 08:15:20'),
+(2, 4, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 0, 1425000, 1425000, 1425000, 0, 'fixed', 0, '2025-08-08 08:15:20', '2025-08-08 08:15:20'),
 (3, 19, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 13:38:27', '2025-08-09 13:38:27'),
 (4, 20, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
 (5, 20, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', 'SRV-1754751385', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
@@ -971,7 +984,7 @@ INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `product
 (34, 51, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:29:20', '2025-08-10 06:29:20'),
 (35, 52, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:33:33', '2025-08-10 06:33:33'),
 (37, 54, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 0, 0, 'fixed', 0, '2025-08-12 04:16:16', '2025-08-12 04:16:16'),
-(43, 55, 'Velg Bekas HSR Ring 16 Black Polish', NULL, NULL, NULL, 'second', 'Velg Bekas HSR Ring 16 Black Polish', 'SEC-HSR-R16-BP-001', 1, 2250000, 0, 2250000, 2250000, 2250000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
+(43, 55, 'Velg Bekas HSR Ring 16 Black Polish', NULL, 3, 'Modules\\Product\\Entities\\ProductSecond', 'second', 'Velg Bekas HSR Ring 16 Black Polish', 'SEC-HSR-R16-BP-001', 1, 2250000, 0, 2250000, 2250000, 2250000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
 (44, 55, 'Balancing', NULL, NULL, NULL, 'manual', 'Balancing', '-', 1, 25000, 0, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
 (45, 55, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 125000, 0, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
 (49, 47, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
@@ -987,6 +1000,66 @@ INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `product
 (61, 62, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-23 15:12:56', '2025-08-23 15:12:56'),
 (62, 63, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 1, 50000, 0, 50000, 50000, 50000, 0, 'fixed', 0, '2025-08-23 15:13:36', '2025-08-23 15:13:36');
 
+--
+-- Triggers `sale_details`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_sale_details_chk_bi` BEFORE INSERT ON `sale_details` FOR EACH ROW BEGIN
+  IF NEW.source_type NOT IN ('new','second','manual') THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details: source_type harus new|second|manual';
+  END IF;
+
+  IF NEW.quantity IS NULL OR NEW.quantity <= 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details: quantity harus > 0';
+  END IF;
+
+  IF NEW.source_type = 'new' THEN
+    IF NEW.product_id IS NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='source_type=new -> product_id NOT NULL, productable_* NULL';
+    END IF;
+  ELSEIF NEW.source_type = 'second' THEN
+    IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NULL
+       OR NEW.productable_type <> 'Modules\Product\Entities\ProductSecond' THEN
+      SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT='source_type=second -> product_id NULL, productable_id NOT NULL, productable_type=Modules\Product\Entities\ProductSecond';
+    END IF;
+  ELSEIF NEW.source_type = 'manual' THEN
+    IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='source_type=manual -> product_id & productable_* harus NULL';
+    END IF;
+  END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_sale_details_chk_bu` BEFORE UPDATE ON `sale_details` FOR EACH ROW BEGIN
+  IF NEW.source_type NOT IN ('new','second','manual') THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details (update): source_type harus new|second|manual';
+  END IF;
+
+  IF NEW.quantity IS NULL OR NEW.quantity <= 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details (update): quantity harus > 0';
+  END IF;
+
+  IF NEW.source_type = 'new' THEN
+    IF NEW.product_id IS NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) source_type=new -> product_id NOT NULL, productable_* NULL';
+    END IF;
+  ELSEIF NEW.source_type = 'second' THEN
+    IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NULL
+       OR NEW.productable_type <> 'Modules\Product\Entities\ProductSecond' THEN
+      SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT='(update) source_type=second -> product_id NULL, productable_id NOT NULL, productable_type=Modules\Product\Entities\ProductSecond';
+    END IF;
+  ELSEIF NEW.source_type = 'manual' THEN
+    IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) source_type=manual -> product_id & productable_* harus NULL';
+    END IF;
+  END IF;
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -1000,7 +1073,7 @@ CREATE TABLE `sale_payments` (
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `bank_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -1016,10 +1089,10 @@ INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `pa
 (6, 45, 1425000, '2025-08-10', 'INV/SL-00045', 'Tunai', NULL, NULL, '2025-08-10 06:11:56', '2025-08-10 06:11:56', NULL),
 (7, 47, 150000, '2025-08-10', 'INV/SL-00047', 'Tunai', NULL, NULL, '2025-08-10 06:19:53', '2025-08-10 06:19:53', NULL),
 (8, 52, 1425000, '2025-08-10', 'INV/SL-00052', 'Tunai', NULL, NULL, '2025-08-10 06:34:17', '2025-08-10 06:34:17', NULL),
-(9, 53, 100000, '2025-08-12', 'INV/SL-00053', 'Tunai', NULL, NULL, '2025-08-12 04:14:41', '2025-08-12 04:14:41', NULL),
-(10, 55, 227500000, '2025-08-17', 'INV/SL-00055', 'Transfer', NULL, NULL, '2025-08-17 05:24:47', '2025-08-17 05:24:47', NULL),
-(11, 55, 12500000, '2025-08-18', 'ADJ-20250818161158', 'Tunai', NULL, 'Penyesuaian pembayaran saat edit', '2025-08-18 09:11:58', '2025-08-18 09:11:58', NULL),
-(12, 47, 14850000, '2025-08-18', 'SP-20250818-230945-SFXCN', 'Tunai', NULL, 'Penyesuaian saat edit (refund)', '2025-08-18 16:09:45', '2025-08-18 16:09:45', NULL),
+(9, 53, 1000, '2025-08-12', 'INV/SL-00053', 'Tunai', NULL, NULL, '2025-08-12 04:14:41', '2025-08-12 04:14:41', NULL),
+(10, 55, 2275000, '2025-08-17', 'INV/SL-00055', 'Transfer', NULL, NULL, '2025-08-17 05:24:47', '2025-08-17 05:24:47', NULL),
+(11, 55, 125000, '2025-08-18', 'ADJ-20250818161158', 'Tunai', NULL, 'Penyesuaian pembayaran saat edit', '2025-08-18 09:11:58', '2025-08-18 09:11:58', NULL),
+(12, 47, 148500, '2025-08-18', 'SP-20250818-230945-SFXCN', 'Tunai', NULL, 'Penyesuaian saat edit (refund)', '2025-08-18 16:09:45', '2025-08-18 16:09:45', NULL),
 (13, 47, 50000, '2025-08-18', 'SP-20250818-231852-GTOSJ', 'Tunai', NULL, 'Penyesuaian saat edit (+)', '2025-08-18 16:18:52', '2025-08-18 16:18:52', NULL),
 (14, 58, 125000, '2025-08-19', 'INV/SL-00058', 'Tunai', NULL, NULL, '2025-08-19 06:17:47', '2025-08-19 06:17:47', NULL),
 (15, 56, 1450000, '2025-08-19', 'SP-20250819-134921-LYGUG', 'Tunai', NULL, 'Penyesuaian saat edit (+)', '2025-08-19 06:49:21', '2025-08-19 06:49:21', NULL),
@@ -1030,7 +1103,7 @@ INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `pa
 (20, 48, 1425000, '2025-08-20', 'SP-00020', 'Transfer', 'Mandiri', NULL, '2025-08-20 12:18:55', '2025-08-20 12:18:55', NULL),
 (21, 49, 1425000, '2025-08-20', 'SP-00021', 'Transfer', 'BCA', NULL, '2025-08-20 12:27:33', '2025-08-20 12:27:33', NULL),
 (22, 50, 1425000, '2025-08-20', 'SP-00022', 'QRIS', 'BCA', NULL, '2025-08-20 12:27:59', '2025-08-20 12:27:59', NULL),
-(23, 59, 650000, '2025-08-20', 'INV/SL-20250820-202448-68a5dab0793ff', 'Transfer', NULL, 'BCA', '2025-08-20 13:25:00', '2025-08-20 13:25:00', NULL),
+(23, 59, 650000, '2025-08-20', 'INV/SL-20250820-202448-68a5dab0793ff', 'Transfer', 'BCA', NULL, '2025-08-20 13:25:00', '2025-08-20 13:25:00', NULL),
 (24, 60, 850000, '2025-08-21', 'INV/OB2-00060', 'Tunai', NULL, NULL, '2025-08-21 02:08:13', '2025-08-21 02:08:13', NULL),
 (25, 51, 1425000, '2025-08-21', 'SP-00025', 'Tunai', NULL, NULL, '2025-08-21 04:20:36', '2025-08-21 04:20:36', NULL),
 (26, 61, 1550000, '2025-08-23', 'INV/OB2-00061', 'Tunai', NULL, NULL, '2025-08-23 15:12:37', '2025-08-23 15:12:37', NULL),
@@ -1050,13 +1123,13 @@ CREATE TABLE `sale_returns` (
   `customer_id` bigint UNSIGNED DEFAULT NULL,
   `customer_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tax_percentage` int NOT NULL DEFAULT '0',
-  `tax_amount` int NOT NULL DEFAULT '0',
+  `tax_amount` bigint NOT NULL DEFAULT '0',
   `discount_percentage` int NOT NULL DEFAULT '0',
-  `discount_amount` int NOT NULL DEFAULT '0',
-  `shipping_amount` int NOT NULL DEFAULT '0',
-  `total_amount` int NOT NULL,
-  `paid_amount` int NOT NULL,
-  `due_amount` int NOT NULL,
+  `discount_amount` bigint NOT NULL DEFAULT '0',
+  `shipping_amount` bigint NOT NULL DEFAULT '0',
+  `total_amount` bigint NOT NULL,
+  `paid_amount` bigint NOT NULL,
+  `due_amount` bigint NOT NULL,
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1079,7 +1152,7 @@ CREATE TABLE `sale_return_details` (
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
   `price` bigint UNSIGNED DEFAULT NULL,
-  `unit_price` int NOT NULL,
+  `unit_price` bigint NOT NULL,
   `sub_total` bigint UNSIGNED DEFAULT NULL,
   `product_discount_amount` bigint UNSIGNED DEFAULT NULL,
   `product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
@@ -1097,7 +1170,7 @@ CREATE TABLE `sale_return_details` (
 CREATE TABLE `sale_return_payments` (
   `id` bigint UNSIGNED NOT NULL,
   `sale_return_id` bigint UNSIGNED NOT NULL,
-  `amount` int NOT NULL,
+  `amount` bigint NOT NULL,
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1118,10 +1191,10 @@ CREATE TABLE `settings` (
   `company_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `company_phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `site_logo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `default_currency_id` int NOT NULL,
+  `default_currency_id` bigint UNSIGNED NOT NULL,
   `default_currency_position` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `thousand_separator` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `decimal_separator` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `thousand_separator` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `decimal_separator` varchar(2) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `notification_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `footer_text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `company_address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1151,7 +1224,9 @@ CREATE TABLE `stock_movements` (
   `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `out_key` varchar(255) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when (`type` = _utf8mb4'out') then concat(`productable_type`,_utf8mb4'#',`productable_id`) else NULL end)) STORED,
+  `second_out_key` varchar(255) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when ((`type` = _utf8mb4'out') and (`productable_type` = _utf8mb4'Modules\\Product\\Entities\\ProductSecond')) then concat(`productable_type`,_utf8mb4'#',`productable_id`) else NULL end)) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1219,6 +1294,13 @@ CREATE TABLE `uploads` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `uploads`
+--
+
+INSERT INTO `uploads` (`id`, `folder`, `filename`, `created_at`, `updated_at`) VALUES
+(1, '68dbea0a9aeb5-1759242762', '1759242762.jpg', '2025-09-30 13:32:43', '2025-09-30 13:32:43');
+
 -- --------------------------------------------------------
 
 --
@@ -1234,15 +1316,17 @@ CREATE TABLE `users` (
   `is_active` tinyint(1) NOT NULL,
   `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is_active`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Administrator', 'super.admin@test.com', NULL, '$2y$10$SefjCt2y1ea0RvhAa7Y15etzlm/0AbhzYWguTxRnAx3Gzu7/DnqqG', 1, NULL, '2025-08-05 14:46:12', '2025-08-05 14:46:12');
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is_active`, `remember_token`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Administrator', 'super.admin@test.com', NULL, '$2y$10$SefjCt2y1ea0RvhAa7Y15etzlm/0AbhzYWguTxRnAx3Gzu7/DnqqG', 1, NULL, '2025-08-05 14:46:12', '2025-08-05 14:46:12', NULL),
+(2, 'Vincent Peter', 'peter@gmail.com', NULL, '$2y$10$I.vdDrP.XxjClFo3975c0e/BwmBASgAFGebwpp/66G5FWfYec543C', 1, NULL, '2025-09-30 13:32:44', '2025-09-30 13:32:44', NULL);
 
 --
 -- Indexes for dumped tables
@@ -1253,7 +1337,8 @@ INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is
 --
 ALTER TABLE `adjusted_products`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `adjusted_products_adjustment_id_foreign` (`adjustment_id`);
+  ADD KEY `adjusted_products_adjustment_id_foreign` (`adjustment_id`),
+  ADD KEY `adjusted_products_product_id_foreign` (`product_id`);
 
 --
 -- Indexes for table `adjustments`
@@ -1358,7 +1443,9 @@ ALTER TABLE `products`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `products_product_code_unique` (`product_code`),
   ADD KEY `products_category_id_foreign` (`category_id`),
-  ADD KEY `products_brand_id_foreign` (`brand_id`);
+  ADD KEY `products_brand_id_foreign` (`brand_id`),
+  ADD KEY `idx_products_year` (`product_year`);
+ALTER TABLE `products` ADD FULLTEXT KEY `ft_products_search` (`product_name`,`product_code`,`product_size`,`ring`);
 
 --
 -- Indexes for table `product_seconds`
@@ -1370,13 +1457,16 @@ ALTER TABLE `product_seconds`
   ADD KEY `product_seconds_brand_id_foreign` (`brand_id`),
   ADD KEY `idx_product_seconds_status` (`status`),
   ADD KEY `idx_product_seconds_year` (`product_year`);
+ALTER TABLE `product_seconds` ADD FULLTEXT KEY `ft_product_seconds_search` (`name`,`unique_code`,`size`,`ring`);
 
 --
 -- Indexes for table `purchases`
 --
 ALTER TABLE `purchases`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `purchases_supplier_id_foreign` (`supplier_id`);
+  ADD UNIQUE KEY `purchases_reference_unique` (`reference`),
+  ADD KEY `purchases_supplier_id_foreign` (`supplier_id`),
+  ADD KEY `idx_purchases_date` (`date`);
 
 --
 -- Indexes for table `purchase_details`
@@ -1398,6 +1488,7 @@ ALTER TABLE `purchase_payments`
 --
 ALTER TABLE `purchase_returns`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `purchase_returns_reference_unique` (`reference`),
   ADD KEY `purchase_returns_supplier_id_foreign` (`supplier_id`);
 
 --
@@ -1420,6 +1511,7 @@ ALTER TABLE `purchase_return_payments`
 --
 ALTER TABLE `quotations`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `quotations_reference_unique` (`reference`),
   ADD KEY `quotations_customer_id_foreign` (`customer_id`);
 
 --
@@ -1454,7 +1546,8 @@ ALTER TABLE `sales`
   ADD KEY `idx_sales_date` (`date`),
   ADD KEY `idx_sales_status` (`status`),
   ADD KEY `idx_sales_payment_status` (`payment_status`),
-  ADD KEY `sales_date_user_status_payment_idx` (`date`,`user_id`,`status`,`payment_status`);
+  ADD KEY `sales_date_user_status_payment_idx` (`date`,`user_id`,`status`,`payment_status`),
+  ADD KEY `sales_user_date_index` (`user_id`,`date`);
 
 --
 -- Indexes for table `sale_details`
@@ -1464,7 +1557,8 @@ ALTER TABLE `sale_details`
   ADD KEY `sale_details_sale_id_foreign` (`sale_id`),
   ADD KEY `sale_details_product_id_foreign` (`product_id`),
   ADD KEY `idx_sale_details_sale_created` (`sale_id`,`created_at`),
-  ADD KEY `idx_sale_details_productable` (`productable_type`,`productable_id`);
+  ADD KEY `idx_sale_details_productable` (`productable_type`,`productable_id`),
+  ADD KEY `sale_details_sale_product_index` (`sale_id`,`product_id`);
 
 --
 -- Indexes for table `sale_payments`
@@ -1476,13 +1570,14 @@ ALTER TABLE `sale_payments`
   ADD KEY `idx_sale_payments_date` (`date`),
   ADD KEY `idx_sale_payments_method` (`payment_method`),
   ADD KEY `sale_payments_date_method_bank_idx` (`date`,`payment_method`,`bank_name`),
-  ADD KEY `sale_payments_sale_id_idx` (`sale_id`);
+  ADD KEY `sale_payments_sale_date_index` (`sale_id`,`date`);
 
 --
 -- Indexes for table `sale_returns`
 --
 ALTER TABLE `sale_returns`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `sale_returns_reference_unique` (`reference`),
   ADD KEY `sale_returns_customer_id_foreign` (`customer_id`);
 
 --
@@ -1491,7 +1586,8 @@ ALTER TABLE `sale_returns`
 ALTER TABLE `sale_return_details`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sale_return_details_sale_return_id_foreign` (`sale_return_id`),
-  ADD KEY `sale_return_details_product_id_foreign` (`product_id`);
+  ADD KEY `sale_return_details_product_id_foreign` (`product_id`),
+  ADD KEY `srd_return_product_index` (`sale_return_id`,`product_id`);
 
 --
 -- Indexes for table `sale_return_payments`
@@ -1504,13 +1600,15 @@ ALTER TABLE `sale_return_payments`
 -- Indexes for table `settings`
 --
 ALTER TABLE `settings`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `settings_default_currency_id_foreign` (`default_currency_id`);
 
 --
 -- Indexes for table `stock_movements`
 --
 ALTER TABLE `stock_movements`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_stock_movements_second_out_once` (`second_out_key`),
   ADD KEY `stock_movements_productable_type_productable_id_index` (`productable_type`,`productable_id`),
   ADD KEY `stock_movements_user_id_foreign` (`user_id`);
 
@@ -1547,7 +1645,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `adjusted_products`
 --
 ALTER TABLE `adjusted_products`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `adjustments`
@@ -1691,7 +1789,7 @@ ALTER TABLE `sales`
 -- AUTO_INCREMENT for table `sale_details`
 --
 ALTER TABLE `sale_details`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sale_payments`
@@ -1745,13 +1843,22 @@ ALTER TABLE `units`
 -- AUTO_INCREMENT for table `uploads`
 --
 ALTER TABLE `uploads`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `categories_view`
+--
+DROP TABLE IF EXISTS `categories_view`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY INVOKER VIEW `categories_view`  AS SELECT `categories`.`id` AS `id`, `categories`.`category_code` AS `category_code`, `categories`.`category_name` AS `name`, `categories`.`created_at` AS `created_at`, `categories`.`updated_at` AS `updated_at` FROM `categories` ;
 
 --
 -- Constraints for dumped tables
@@ -1761,7 +1868,8 @@ ALTER TABLE `users`
 -- Constraints for table `adjusted_products`
 --
 ALTER TABLE `adjusted_products`
-  ADD CONSTRAINT `adjusted_products_adjustment_id_foreign` FOREIGN KEY (`adjustment_id`) REFERENCES `adjustments` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `adjusted_products_adjustment_id_foreign` FOREIGN KEY (`adjustment_id`) REFERENCES `adjustments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `adjusted_products_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT;
 
 --
 -- Constraints for table `expenses`
@@ -1891,6 +1999,12 @@ ALTER TABLE `sale_return_details`
 --
 ALTER TABLE `sale_return_payments`
   ADD CONSTRAINT `sale_return_payments_sale_return_id_foreign` FOREIGN KEY (`sale_return_id`) REFERENCES `sale_returns` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `settings`
+--
+ALTER TABLE `settings`
+  ADD CONSTRAINT `settings_default_currency_id_foreign` FOREIGN KEY (`default_currency_id`) REFERENCES `currencies` (`id`) ON DELETE RESTRICT;
 
 --
 -- Constraints for table `stock_movements`
