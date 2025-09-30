@@ -9,7 +9,7 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-sm">
+                    <table class="table table-sm mb-2">
                         <tbody>
                             @foreach ($sale_details as $detail)
                                 <tr>
@@ -23,9 +23,9 @@
                     </table>
                 </div>
 
-                <hr>
+                <hr class="my-3">
                 <h4 class="text-center">Total: {{ format_currency($sale->total_amount) }}</h4>
-                <hr>
+                <hr class="my-3">
 
                 {{-- ====== STATUS + CETAK ====== --}}
                 @if ($sale->payment_status === 'Paid')
@@ -52,66 +52,84 @@
 
                     {{-- ====== FORM PEMBAYARAN (muncul setelah klik tombol di atas) ====== --}}
                     @if ($show_payment)
-                        <hr>
+                        <hr class="my-3">
 
-                        {{-- Metode Pembayaran --}}
-                        <div class="form-group">
-                            <label class="d-block font-weight-bold mb-2">Metode Pembayaran</label>
-                            <div class="custom-control custom-radio">
-                                <input type="radio" id="payCash" class="custom-control-input" wire:model.live="payment_method" value="Tunai">
-                                <label class="custom-control-label" for="payCash">Tunai</label>
-                            </div>
-                            <div class="custom-control custom-radio">
-                                <input type="radio" id="payTransfer" class="custom-control-input" wire:model.live="payment_method" value="Transfer">
-                                <label class="custom-control-label" for="payTransfer">Transfer</label>
-                            </div>
-                            <div class="custom-control custom-radio">
-                                <input type="radio" id="payCredit" class="custom-control-input" wire:model.live="payment_method" value="Kredit">
-                                <label class="custom-control-label" for="payCredit">Kredit</label>
-                            </div>
-                        </div>
-
-                        {{-- Nama bank hanya saat non-tunai --}}
-                        @if (in_array($payment_method, ['Transfer','Kredit']))
+                        <form wire:submit.prevent="markAsPaid" novalidate>
+                            {{-- Metode Pembayaran --}}
                             <div class="form-group">
-                                <label>Nama Bank</label>
-                                <input type="text" class="form-control" wire:model.live="bank_name" placeholder="Mandiri / BCA / BRI ...">
-                                @error('bank_name') <small class="text-danger">{{ $message }}</small> @enderror
+                                <label class="d-block font-weight-bold mb-2">Metode Pembayaran</label>
+
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" id="payCash" class="custom-control-input"
+                                           wire:model.live="payment_method" value="Tunai">
+                                    <label class="custom-control-label" for="payCash">Tunai</label>
+                                </div>
+
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" id="payTransfer" class="custom-control-input"
+                                           wire:model.live="payment_method" value="Transfer">
+                                    <label class="custom-control-label" for="payTransfer">Transfer</label>
+                                </div>
+
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" id="payCredit" class="custom-control-input"
+                                           wire:model.live="payment_method" value="Kredit">
+                                    <label class="custom-control-label" for="payCredit">Kredit</label>
+                                </div>
+
+                                @error('payment_method')
+                                    <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                @enderror
                             </div>
-                        @endif
 
-                        {{-- Jumlah Dibayar (AutoNumeric + Alpine entangle) --}}
-                        <div class="form-group" x-data="paidBox(@entangle('paid_amount').live)" x-init="init()">
-                            <label for="paid_amount_view">Jumlah Dibayar</label>
-                            <div wire:ignore>
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    id="paid_amount_view"
-                                    inputmode="numeric"
-                                    placeholder="0"
-                                    autocomplete="off"
-                                    value="{{ number_format((int) ($paid_amount ?? 0), 0, ',', '.') }}">
+                            {{-- Nama bank hanya saat non-tunai --}}
+                            @if (in_array($payment_method, ['Transfer','Kredit']))
+                                <div class="form-group">
+                                    <label>Nama Bank</label>
+                                    <input type="text" class="form-control" wire:model.live="bank_name" placeholder="Mandiri / BCA / BRI ...">
+                                    @error('bank_name') <small class="text-danger">{{ $message }}</small> @enderror
+                                </div>
+                            @endif
+
+                            {{-- Jumlah Dibayar (AutoNumeric + Alpine entangle) --}}
+                            <div class="form-group" x-data="paidBox(@entangle('paid_amount').live)" x-init="init()">
+                                <label for="paid_amount_view">Jumlah Dibayar</label>
+                                <div wire:ignore>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="paid_amount_view"
+                                        inputmode="numeric"
+                                        placeholder="0"
+                                        autocomplete="off"
+                                        value="{{ number_format((int) ($paid_amount ?? 0), 0, ',', '.') }}">
+                                </div>
+                                @error('paid_amount') <small class="text-danger">{{ $message }}</small> @enderror
                             </div>
-                            @error('paid_amount') <span class="text-danger">{{ $message }}</span> @enderror
-                        </div>
 
-                        {{-- Kembalian (tampilkan saja; untuk non-tunai biasanya 0) --}}
-                        <div class="alert alert-primary d-flex justify-content-between align-items-center">
-                            <strong>Kembalian</strong>
-                            <span>{{ format_currency($change ?? 0) }}</span>
-                        </div>
+                            {{-- Ringkasan bayaran --}}
+                            @php
+                                $total = (int)($sale->total_amount ?? 0);
+                                $paid  = (int)($paid_amount ?? 0);
+                                $diff  = $paid - $total;
+                            @endphp
 
-                        {{-- Tombol Tandai Lunas --}}
-                        <button
-                            wire:click="markAsPaid"
-                            wire:loading.attr="disabled"
-                            class="btn btn-success btn-block"
-                            @disabled(($paid_amount ?? 0) < (int)($sale->total_amount ?? 0))
-                            title="Jumlah dibayar harus ≥ total">
-                            <span wire:loading wire:target="markAsPaid" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            Tandai Lunas
-                        </button>
+                            <div class="alert {{ $diff >= 0 ? 'alert-primary' : 'alert-warning' }} d-flex justify-content-between align-items-center">
+                                <strong>{{ $diff >= 0 ? 'Kembalian' : 'Sisa yang harus dibayar' }}</strong>
+                                <span>{{ format_currency(abs($diff)) }}</span>
+                            </div>
+
+                            {{-- Tombol Tandai Lunas --}}
+                            <button
+                                type="submit"
+                                wire:loading.attr="disabled"
+                                class="btn btn-success btn-block"
+                                @disabled(($paid_amount ?? 0) < (int)($sale->total_amount ?? 0))
+                                title="Jumlah dibayar harus ≥ total">
+                                <span wire:loading wire:target="markAsPaid" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Tandai Lunas
+                            </button>
+                        </form>
                     @endif
                 @endif
 
@@ -186,7 +204,7 @@
 
                                     <td class="align-middle text-center">{{ format_currency($cart_item->subtotal) }}</td>
                                     <td class="align-middle text-center">
-                                        <a href="#" wire:click.prevent="removeItem('{{ $cart_item->rowId }}')">
+                                        <a href="#" wire:click.prevent="removeItem('{{ $cart_item->rowId }}')" aria-label="Hapus item">
                                             <i class="bi bi-x-circle text-danger"></i>
                                         </a>
                                     </td>
@@ -204,7 +222,7 @@
 
                 {{-- Total ringkas (tanpa form pembayaran) --}}
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="table table-striped mb-3">
                         <tr>
                             <th>Subtotal</th>
                             <td>{{ format_currency(Cart::instance($cart_instance)->subtotal()) }}</td>

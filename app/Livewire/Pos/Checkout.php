@@ -12,7 +12,6 @@ use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
 
-
 class Checkout extends Component
 {
     // ========= Properti keranjang & data pendukung =========
@@ -58,6 +57,20 @@ class Checkout extends Component
         if (is_numeric($value)) return (int) $value;
         $clean = preg_replace('/[^\d]/', '', (string) $value);
         return (int) ($clean ?: 0);
+    }
+
+    // --- [BARU] Normalisasi metode bayar UI -> bentuk kanonik ---
+    private function normalizePaymentMethod(?string $raw): array
+    {
+        $r = trim((string) $raw);
+        switch (mb_strtolower($r)) {
+            case 'tunai':     return ['method' => 'cash',     'label' => 'Tunai'];
+            case 'transfer':  return ['method' => 'transfer', 'label' => 'Transfer'];
+            case 'kredit':    return ['method' => 'debit',    'label' => 'Kredit']; // istilah UI kamu
+            // kalau nanti tambah QRIS:
+            // case 'qris':      return ['method' => 'qris',     'label' => 'QRIS'];
+            default:          return ['method' => 'cash',     'label' => 'Tunai'];
+        }
     }
 
     // total angka murni (tanpa pemisah)
@@ -152,7 +165,7 @@ class Checkout extends Component
                 'stock'        => (int) ($product['product_quantity'] ?? $product['stock'] ?? 999),
                 'unit_price'   => (int) ($calculated['unit_price'] ?? $product['product_price'] ?? 0),
                 'hpp'          => (int) ($product['product_cost'] ?? 0),
-                'tax'          => (int) ($calculated['tax'] ?? $product['product_order_tax'] ?? 0),
+                'tax'          => (int) ($calculated['product_tax'] ?? $product['product_order_tax'] ?? 0),
                 'tax_type'     => $product['product_tax_type'] ?? null,
                 'discount'     => (int) ($calculated['discount'] ?? 0),
             ],
@@ -305,8 +318,10 @@ class Checkout extends Component
                 $cartItems   = $this->cart()->content();
                 $totalAmount = $this->total_amount ?? $this->cartTotalInt();
 
-                $paymentMethod = $this->payment_method ?: 'Tunai';
-                $bankName      = $this->payment_method !== 'Tunai' ? ($this->bank_name ?: null) : null;
+                // normalisasi metode bayar (UI -> kanonik + label)
+                $norm          = $this->normalizePaymentMethod($this->payment_method);
+                $paymentMethod = $norm['label']; // simpan label UI agar kompatibel dengan data lama
+                $bankName      = $norm['method'] === 'transfer' ? ($this->bank_name ?: null) : null;
 
                 $sale = Sale::create([
                     'date'                => now()->toDateString(),
@@ -354,20 +369,20 @@ class Checkout extends Component
                     $subTotal  = $qty * $unitPrice;
 
                     SaleDetails::create([
-                        'sale_id'               => $sale->id,
-                        'product_id'            => $src === 'new' ? $originalId : null,
-                        'productable_type'      => $src === 'second' ? ProductSecond::class : null,
-                        'productable_id'        => $src === 'second' ? $originalId : null,
-                        'source_type'           => $src,
-                        'item_name'             => $item->name,
-                        'product_name'          => $item->name,
-                        'product_code'          => $code,
-                        'quantity'              => $qty,
-                        'price'                 => $unitPrice,
-                        'unit_price'            => $unitPrice,
-                        'sub_total'             => $subTotal,
-                        'hpp'                   => $hpp,
-                        'subtotal_profit'       => max(0, ($unitPrice - $hpp) * $qty),
+                        'sale_id'                 => $sale->id,
+                        'product_id'              => $src === 'new' ? $originalId : null,
+                        'productable_type'        => $src === 'second' ? ProductSecond::class : null,
+                        'productable_id'          => $src === 'second' ? $originalId : null,
+                        'source_type'             => $src,
+                        'item_name'               => $item->name,
+                        'product_name'            => $item->name,
+                        'product_code'            => $code,
+                        'quantity'                => $qty,
+                        'price'                   => $unitPrice,
+                        'unit_price'              => $unitPrice,
+                        'sub_total'               => $subTotal,
+                        'hpp'                     => $hpp,
+                        'subtotal_profit'         => max(0, ($unitPrice - $hpp) * $qty),
                         'product_discount_amount' => (int) data_get($item->options, 'discount', 0),
                         'product_discount_type'   => data_get($item->options, 'discount_type', 'fixed'),
                         'product_tax_amount'      => (int) data_get($item->options, 'tax', 0),
@@ -392,7 +407,7 @@ class Checkout extends Component
 
             // Default paid_amount = total invoice (mempermudah "Tandai Lunas")
             $this->paid_amount   = (int) $sale->total_amount;
-            $this->show_payment  = false; // [E] invoice dulu, bayar belakangan
+            $this->show_payment  = false; // invoice dulu, bayar belakangan
             $this->calculateChange();
 
             $this->dispatch('paid-input-ready');
@@ -450,77 +465,115 @@ class Checkout extends Component
 
         try {
             DB::transaction(function () use ($total) {
-                // LOCK baris sale
+                // LOCK baris sale + ambil detail
                 $sale = Sale::lockForUpdate()->with('saleDetails')->find($this->sale->id);
+                if (!$sale) {
+                    throw new \RuntimeException('Invoice tidak ditemukan/terkunci.');
+                }
 
-                // Catat payment (sebesar total)
-                SalePayment::create([
-                    'date'           => now()->toDateString(),
-                    'reference'      => 'INV/' . $sale->reference,
-                    'amount'         => (int) min($total, max(0, (int)$this->sanitizeMoney($this->paid_amount))),
-                    'sale_id'        => $sale->id,
-                    'payment_method' => $this->payment_method ?: 'Tunai',
-                    'note'           => $this->payment_method !== 'Tunai' ? (string) $this->bank_name : null,
-                ]);
+                // Normalisasi metode bayar
+                $norm    = $this->normalizePaymentMethod($this->payment_method);
+                $pmLabel = $norm['label'];   // "Tunai"/"Transfer"/"Kredit"
+                $pmMethod= $norm['method'];  // "cash"/"transfer"/"debit"
 
-                // Kurangi stok saat status naik ke Completed (jika belum)
+                // Hitung jumlah bayar yang dipakai
+                $payAmount = (int) min($total, max(0, (int)$this->sanitizeMoney($this->paid_amount)));
+
+                // === [1] Mutasi stok dengan LOCK & GUARD ===
+                // Hanya jika status belum Completed (hindari double-decrement)
                 if ($sale->status !== 'Completed') {
                     foreach ($sale->saleDetails as $d) {
                         if ($d->source_type === 'new' && $d->product_id) {
-                            if ($p = Product::find($d->product_id)) {
-                                $p->decrement('product_quantity', $d->quantity);
+                            // Kunci baris produk
+                            $p = Product::whereKey($d->product_id)->lockForUpdate()->first();
+                            if (!$p) {
+                                throw new \RuntimeException("Produk ID {$d->product_id} tidak ditemukan.");
                             }
-                        } elseif ($d->source_type === 'second' && $d->productable_id) {
-                            if ($s = ProductSecond::find($d->productable_id)) {
-                                $s->update(['status' => 'sold']);
+                            if ((int)$p->product_quantity < (int)$d->quantity) {
+                                throw new \RuntimeException("Stok {$p->product_name} tidak mencukupi.");
                             }
+
+                            // GUARD: hanya kurangi jika stok cukup (hindari race)
+                            $affected = Product::whereKey($p->id)
+                                ->where('product_quantity', '>=', (int)$d->quantity)
+                                ->update([
+                                    'product_quantity' => DB::raw('product_quantity - ' . (int)$d->quantity)
+                                ]);
+
+                            if ($affected < 1) {
+                                throw new \RuntimeException("Gagal mengurangi stok {$p->product_name} (race condition).");
+                            }
+
+                            // Catat movement (keluar)
+                            DB::table('stock_movements')->insert([
+                                'productable_type' => Product::class,
+                                'productable_id'   => $p->id,
+                                'type'             => 'out',
+                                'quantity'         => (int) $d->quantity,
+                                'description'      => 'Sale #' . ($sale->reference ?? $sale->id),
+                                'user_id'          => auth()->id(),
+                                'created_at'       => now(),
+                                'updated_at'       => now(),
+                            ]);
                         }
+                        elseif ($d->source_type === 'second' && $d->productable_id) {
+                            // Kunci baris second item
+                            $ps = ProductSecond::whereKey($d->productable_id)->lockForUpdate()->first();
+                            if (!$ps) {
+                                throw new \RuntimeException("Item second ID {$d->productable_id} tidak ditemukan.");
+                            }
+                            if ($ps->status !== 'available') {
+                                throw new \RuntimeException("Item second {$ps->unique_code} sudah terjual / tidak tersedia.");
+                            }
+
+                            $ps->status = 'sold';
+                            $ps->save();
+
+                            // Catat movement second
+                            DB::table('stock_movements')->insert([
+                                'productable_type' => ProductSecond::class,
+                                'productable_id'   => $ps->id,
+                                'type'             => 'out',
+                                'quantity'         => 1,
+                                'description'      => 'Sale (second) #' . ($sale->reference ?? $sale->id),
+                                'user_id'          => auth()->id(),
+                                'created_at'       => now(),
+                                'updated_at'       => now(),
+                            ]);
+                        }
+                        // manual/jasa: tidak mengubah stok fisik
                     }
                 }
 
-                // Catat stock movements (out)
-                foreach ($sale->saleDetails as $d) {
-                    if ($d->source_type === 'new' && $d->product_id) {
-                        \DB::table('stock_movements')->insert([
-                            'productable_type' => Product::class,
-                            'productable_id'   => $d->product_id,
-                            'type'             => 'out',
-                            'quantity'         => (int) $d->quantity,
-                            'description'      => 'Sale #' . $sale->reference,
-                            'user_id'          => auth()->id(),
-                            'created_at'       => now(),
-                            'updated_at'       => now(),
-                        ]);
-                    } elseif ($d->source_type === 'second' && $d->productable_id) {
-                        \DB::table('stock_movements')->insert([
-                            'productable_type' => ProductSecond::class,
-                            'productable_id'   => $d->productable_id,
-                            'type'             => 'out',
-                            'quantity'         => 1,
-                            'description'      => 'Sale (second) #' . $sale->reference,
-                            'user_id'          => auth()->id(),
-                            'created_at'       => now(),
-                            'updated_at'       => now(),
-                        ]);
-                    }
-                }
-
-                $sale->update([
-                    'paid_amount'    => (int) $total,
-                    'due_amount'     => 0,
-                    'status'         => 'Completed',
-                    'payment_status' => 'Paid',
-                    'payment_method' => $this->payment_method ?: 'Tunai',
-                    'bank_name'      => $this->payment_method !== 'Tunai' ? $this->bank_name : null,
+                // === [2] Catat pembayaran ===
+                SalePayment::create([
+                    'date'           => now()->toDateString(),
+                    'reference'      => 'INV/' . ($sale->reference ?? $sale->id),
+                    'amount'         => (int) $payAmount,
+                    'sale_id'        => $sale->id,
+                    'payment_method' => $pmLabel, // simpan label (kompatibel dengan data lama)
+                    // NOTE: saat ini kamu menaruh nama bank di kolom 'note'.
+                    // Jika sudah ada kolom bank_name di sale_payments, tambahkan di sini.
+                    'note'           => $pmMethod === 'transfer' ? (string) ($this->bank_name ?? '') : null,
                 ]);
 
-                // sinkronkan properti
+                // === [3] Update status sale ===
+                $sale->update([
+                    'paid_amount'    => (int) $payAmount,
+                    'due_amount'     => max(0, (int)$sale->total_amount - (int)$payAmount),
+                    'status'         => 'Completed',
+                    'payment_status' => ((int)$sale->total_amount - (int)$payAmount) > 0 ? 'Partial' : 'Paid',
+                    'payment_method' => $pmLabel,
+                    'bank_name'      => $pmMethod === 'transfer' ? ($this->bank_name ?? null) : null,
+                ]);
+
+                // sinkronkan instance di komponen
                 $this->sale = $sale;
             });
 
             // kembalian dihitung client-side (this->change sudah di-set saat updatedPaidAmount/hydrate)
             $this->sale->refresh();
-            $this->show_payment = false; // [G] sembunyikan form setelah lunas
+            $this->show_payment = false; // sembunyikan form setelah lunas
             $this->dispatch('swal-success', 'Pembayaran diterima. Transaksi telah dilunasi.');
         } catch (\Throwable $e) {
             report($e);
@@ -538,7 +591,7 @@ class Checkout extends Component
         $this->note           = null;
         $this->change         = 0;
         $this->payment_method = 'Tunai';
-        $this->show_payment   = false; // [D]
+        $this->show_payment   = false;
 
         $this->refreshCart();
         $this->dispatch('paid-input-ready');

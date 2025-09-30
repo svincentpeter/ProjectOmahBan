@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit User')
+@section('title', 'Edit Pengguna')
 
 @section('third_party_stylesheets')
     <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet"/>
@@ -11,7 +11,7 @@
 @section('breadcrumb')
     <ol class="breadcrumb border-0 m-0">
         <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Users</a></li>
+        <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Pengguna</a></li>
         <li class="breadcrumb-item active">Edit</li>
     </ol>
 @endsection
@@ -25,7 +25,7 @@
                 <div class="col-lg-12">
                     @include('utils.alerts')
                     <div class="form-group">
-                        <button class="btn btn-primary">Update User <i class="bi bi-check"></i></button>
+                        <button class="btn btn-primary">Perbarui Pengguna <i class="bi bi-check"></i></button>
                     </div>
                 </div>
                 <div class="col-md-8">
@@ -34,7 +34,7 @@
                             <div class="form-row">
                                 <div class="col-lg-6">
                                     <div class="form-group">
-                                        <label for="name">Name <span class="text-danger">*</span></label>
+                                        <label for="name">Nama <span class="text-danger">*</span></label>
                                         <input class="form-control" type="text" name="name" required value="{{ $user->name }}">
                                     </div>
                                 </div>
@@ -47,30 +47,28 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="role">Role <span class="text-danger">*</span></label>
+                                <label for="role">Peran <span class="text-danger">*</span></label>
                                 <select class="form-control" name="role" id="role" required>
-                                    @foreach(\Spatie\Permission\Models\Role::where('name', '!=', 'Super Admin')->get() as $role)
-                                        <option {{ $user->hasRole($role->name) ? 'selected' : '' }} value="{{ $role->name }}">{{ $role->name }}</option>
+                                    @foreach(\Spatie\Permission\Models\Role::all() as $role)
+                                        <option value="{{ $role->name }}" {{ $user->hasRole($role->name) ? 'selected' : '' }}>{{ $role->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-
-                            <div class="form-group">
+                             <div class="form-group">
                                 <label for="is_active">Status <span class="text-danger">*</span></label>
                                 <select class="form-control" name="is_active" id="is_active" required>
-                                    <option value="1" {{ $user->is_active == 1 ? 'selected' : ''}}>Active</option>
-                                    <option value="2" {{ $user->is_active == 2 ? 'selected' : ''}}>Deactive</option>
+                                    <option value="1" {{ $user->is_active == 1 ? 'selected' : ''}}>Aktif</option>
+                                    <option value="0" {{ $user->is_active == 0 ? 'selected' : ''}}>Nonaktif</option>
                                 </select>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-4">
+                <div class="col-md-4">
                     <div class="card">
                         <div class="card-body">
                             <div class="form-group">
-                                <label for="image">Profile Image <span class="text-danger">*</span></label>
-                                <img style="width: 100px;height: 100px;" class="d-block mx-auto img-thumbnail img-fluid rounded-circle mb-2" src="{{ $user->getFirstMediaUrl('avatars') }}" alt="Profile Image">
+                                <label for="image">Foto Profil</label>
                                 <input id="image" type="file" name="image" data-max-file-size="500KB">
                             </div>
                         </div>
@@ -111,5 +109,3 @@
         });
     </script>
 @endpush
-
-
