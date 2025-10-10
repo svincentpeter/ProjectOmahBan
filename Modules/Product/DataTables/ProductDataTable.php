@@ -15,7 +15,7 @@ class ProductDataTable extends DataTable
         ->eloquent($query)
         ->addColumn('action', function ($data) {
             // tombol edit/hapus dsb (HTML)
-            return view('product::partials.actions', compact('data'))->render();
+            return view('product::products.partials.actions', compact('data'))->render();
         })
         ->addColumn('product_price', fn($d) => format_currency($d->product_price))
         ->addColumn('product_cost',  fn($d) => format_currency($d->product_cost))
