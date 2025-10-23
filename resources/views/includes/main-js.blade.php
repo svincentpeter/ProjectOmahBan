@@ -32,5 +32,3 @@
 </script>
 
 @yield('third_party_scripts')
-
-@livewireScripts

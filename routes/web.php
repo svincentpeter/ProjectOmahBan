@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\MidtransCallbackController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,3 +29,5 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('payment-flow.chart');
 });
 
+// Route untuk callback Midtrans (HARUS di-exclude dari CSRF)
+Route::post('/api/midtrans/callback', [MidtransCallbackController::class, 'receive'])->name('midtrans.callback');

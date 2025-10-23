@@ -1,125 +1,292 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Sale Details</title>
-    <link rel="stylesheet" href="{{ public_path('b3/bootstrap.min.css') }}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Invoice #{{ $sale->reference }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: #000;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #000;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 24pt;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 10pt;
+            margin: 2px 0;
+        }
+
+        .invoice-info {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .invoice-info div {
+            width: 48%;
+        }
+
+        .invoice-info table {
+            width: 100%;
+            font-size: 11pt;
+        }
+
+        .invoice-info td {
+            padding: 3px 0;
+        }
+
+        .invoice-info td:first-child {
+            width: 40%;
+            font-weight: bold;
+        }
+
+        /* 👇 HAPUS WATERMARK STYLE */
+        /* TIDAK ADA LAGI .watermark CSS */
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .items-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .items-table td.center {
+            text-align: center;
+        }
+
+        .items-table td.right {
+            text-align: right;
+        }
+
+        .total-section {
+            width: 50%;
+            margin-left: auto;
+            margin-top: 10px;
+        }
+
+        .total-section table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .total-section td {
+            padding: 5px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .total-section .grand-total {
+            font-weight: bold;
+            font-size: 14pt;
+            border-top: 2px solid #000;
+        }
+
+        .signature-section {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-box {
+            width: 45%;
+            text-align: center;
+        }
+
+        .signature-box p {
+            margin-bottom: 60px;
+        }
+
+        .signature-box .line {
+            border-top: 1px solid #000;
+            margin: 0 auto;
+            width: 80%;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 10pt;
+            color: #666;
+        }
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-xs-12">
-            <div style="text-align: center;margin-bottom: 25px;">
-                <img width="180" src="{{ public_path('images/logo-dark.png') }}" alt="Logo">
-                <h4 style="margin-bottom: 20px;">
-                    <span>Reference::</span> <strong>{{ $sale->reference }}</strong>
-                </h4>
+    <div class="container">
+        {{-- Header --}}
+        <div class="header">
+            <h1>{{ settings()->company_name ?? 'OMAH BAN' }}</h1>
+            <p>{{ settings()->company_address ?? 'Jl. Contoh No. 123, Kota' }}</p>
+            <p>Telp: {{ settings()->company_phone ?? '0812-3456-7890' }} | Email: {{ settings()->company_email ?? 'info@omahban.com' }}</p>
+        </div>
+
+        {{-- Invoice Info --}}
+        <div class="invoice-info">
+            <div>
+                <table>
+                    <tr>
+                        <td>Invoice No</td>
+                        <td>: <strong>{{ $sale->reference }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Tanggal</td>
+                        <td>: {{ \Carbon\Carbon::parse($sale->date)->format('d F Y, H:i') }}</td>
+                    </tr>
+                    <tr>
+                        <td>Kasir</td>
+                        <td>: {{ data_get($sale, 'user.name') ?? 'Admin' }}</td>
+                    </tr>
+                </table>
             </div>
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-xs-4 mb-3 mb-md-0">
-                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Company Info:</h4>
-                            <div><strong>{{ settings()->company_name }}</strong></div>
-                            <div>{{ settings()->company_address }}</div>
-                            <div>Email: {{ settings()->company_email }}</div>
-                            <div>Phone: {{ settings()->company_phone }}</div>
-                        </div>
-
-                        <div class="col-xs-4 mb-3 mb-md-0">
-                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Invoice Info:</h4>
-                            <div>Invoice: <strong>INV/{{ $sale->reference }}</strong></div>
-                            <div>Date: {{ \Carbon\Carbon::parse($sale->date)->format('d M, Y') }}</div>
-                            <div>
-                                Status: <strong>{{ $sale->status }}</strong>
-                            </div>
-                            <div>
-                                Payment Status: <strong>{{ $sale->payment_status }}</strong>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="table-responsive-sm" style="margin-top: 30px;">
-                        <table class="table table-striped">
-                            <thead>
-                            <tr>
-                                <th class="align-middle">Product</th>
-                                <th class="align-middle">Net Unit Price</th>
-                                <th class="align-middle">Quantity</th>
-                                <th class="align-middle">Discount</th>
-                                <th class="align-middle">Tax</th>
-                                <th class="align-middle">Sub Total</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @foreach($sale->saleDetails as $item)
-                                <tr>
-                                    <td class="align-middle">
-                                        {{ $item->product_name }} <br>
-                                        <span class="badge badge-success">
-                                                {{ $item->product_code }}
-                                            </span>
-                                    </td>
-
-                                    <td class="align-middle">{{ format_currency($item->unit_price) }}</td>
-
-                                    <td class="align-middle">
-                                        {{ $item->quantity }}
-                                    </td>
-
-                                    <td class="align-middle">
-                                        {{ format_currency($item->product_discount_amount) }}
-                                    </td>
-
-                                    <td class="align-middle">
-                                        {{ format_currency($item->product_tax_amount) }}
-                                    </td>
-
-                                    <td class="align-middle">
-                                        {{ format_currency($item->sub_total) }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="row">
-                        <div class="col-xs-4 col-xs-offset-8">
-                            <table class="table">
-                                <tbody>
-                                <tr>
-                                    <td class="left"><strong>Discount ({{ $sale->discount_percentage }}%)</strong></td>
-                                    <td class="right">{{ format_currency($sale->discount_amount) }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="left"><strong>Tax ({{ $sale->tax_percentage }}%)</strong></td>
-                                    <td class="right">{{ format_currency($sale->tax_amount) }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="left"><strong>Shipping</strong></td>
-                                    <td class="right">{{ format_currency($sale->shipping_amount) }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="left"><strong>Grand Total</strong></td>
-                                    <td class="right"><strong>{{ format_currency($sale->total_amount) }}</strong></td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top: 25px;">
-                        <div class="col-xs-12">
-                            <p style="font-style: italic;text-align: center">{{ settings()->company_name }} &copy; {{ date('Y') }}.</p>
-                        </div>
-                    </div>
-                </div>
+            <div>
+                <table>
+                    {{-- 👇 TAMBAHAN: Tampilkan Customer Name (jika ada) --}}
+                    @if(!empty($sale->customer_name))
+                    <tr>
+                        <td>Customer</td>
+                        <td>: <strong>{{ $sale->customer_name }}</strong></td>
+                    </tr>
+                    @endif
+                    {{-- 👆 SAMPAI SINI --}}
+                    <tr>
+                        <td>Metode Bayar</td>
+                        <td>: {{ $sale->payment_method ?? 'Tunai' }}</td>
+                    </tr>
+                    @if(!empty($sale->bank_name))
+                    <tr>
+                        <td>Bank</td>
+                        <td>: {{ $sale->bank_name }}</td>
+                    </tr>
+                    @endif
+                </table>
             </div>
         </div>
+
+        {{-- 👇 HAPUS WATERMARK (tidak ada kondisi @if payment_status) --}}
+        {{-- TIDAK ADA LAGI <div class="watermark">DRAFT</div> --}}
+
+        {{-- Items Table --}}
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 40%;">Product</th>
+                    <th style="width: 15%;">Net Unit Price</th>
+                    <th style="width: 10%;">Quantity</th>
+                    <th style="width: 10%;">Discount</th>
+                    <th style="width: 10%;">Tax</th>
+                    <th style="width: 15%;">Sub Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($sale->saleDetails as $key => $item)
+                    <tr>
+                        <td class="center">{{ $key + 1 }}</td>
+                        <td>
+                            {{ $item->product_name }}
+                            @if(!empty($item->product_code))
+                                <br><small style="color: #666;">{{ $item->product_code }}</small>
+                            @endif
+                        </td>
+                        <td class="right">{{ format_currency($item->unit_price) }}</td>
+                        <td class="center">{{ $item->quantity }}</td>
+                        <td class="right">{{ format_currency($item->product_discount_amount) }}</td>
+                        <td class="right">{{ format_currency($item->product_tax_amount) }}</td>
+                        <td class="right">{{ format_currency($item->sub_total) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        {{-- Total Section --}}
+        <div class="total-section">
+            <table>
+                @if((int)($sale->discount_amount ?? 0) > 0)
+                <tr>
+                    <td>Discount ({{ $sale->discount_percentage }}%)</td>
+                    <td class="right">{{ format_currency($sale->discount_amount) }}</td>
+                </tr>
+                @endif
+                @if((int)($sale->tax_amount ?? 0) > 0)
+                <tr>
+                    <td>Tax ({{ $sale->tax_percentage }}%)</td>
+                    <td class="right">{{ format_currency($sale->tax_amount) }}</td>
+                </tr>
+                @endif
+                @if((int)($sale->shipping_amount ?? 0) > 0)
+                <tr>
+                    <td>Shipping</td>
+                    <td class="right">{{ format_currency($sale->shipping_amount) }}</td>
+                </tr>
+                @endif
+                <tr class="grand-total">
+                    <td>Grand Total</td>
+                    <td class="right">{{ format_currency($sale->total_amount) }}</td>
+                </tr>
+            </table>
+        </div>
+
+        {{-- Signature Section --}}
+        <div class="signature-section">
+            <div class="signature-box">
+                <p>Penjual,</p>
+                <div class="line"></div>
+                <p style="margin-top: 10px;">(............................)</p>
+            </div>
+            <div class="signature-box">
+                <p>Pembeli,</p>
+                <div class="line"></div>
+                <p style="margin-top: 10px;">(............................)</p>
+            </div>
+        </div>
+
+        {{-- Footer --}}
+        <div class="footer">
+            <p>{{ settings()->company_name ?? 'Omah Ban' }} © {{ date('Y') }}.</p>
+            <p>Terima kasih atas kepercayaan Anda!</p>
+        </div>
     </div>
-</div>
 </body>
 </html>
