@@ -63,7 +63,7 @@
         table.total-box .label { font-weight:700; }
         table.total-box .amount { min-width:28mm; text-align:right; }
 
-        /* Tanda tangan model “foto 1” */
+        /* Tanda tangan model "foto 1" */
         .sign { clear:both; margin-top: 9mm; width: 70%; } /* agak ke kiri, tidak mentok kanan */
         .sign .area { width: 46%; display:inline-block; vertical-align:top; text-align:center; }
         .sign .label { font-size:10px; margin-bottom: 8mm; }
@@ -72,13 +72,8 @@
             border-top: 1px solid #000;                /* garis lurus, bukan titik-titik */
         }
 
-        /* Watermark (opsional) */
-        .watermark{
-            position:fixed; left:0; right:0; top:0; bottom:0;
-            text-align:center; padding-top:25mm;
-            font-size:42mm; font-weight:700; color:rgba(0,0,0,.08);
-            transform:rotate(-20deg); pointer-events:none;
-        }
+        /* 👇 HAPUS CSS WATERMARK (tidak dipakai lagi) */
+        /* .watermark { ... } */
     </style>
 </head>
 <body>
@@ -112,7 +107,8 @@
                     <tr>
                         <td class="label">Kepada Yth.</td>
                         <td class="colon">:</td>
-                        <td><span class="dotsline">{{ data_get($sale,'customer.name') ?? data_get($sale,'customer_name') ?? '' }}</span></td>
+                        {{-- 👇 PERBAIKAN: Prioritaskan $sale->customer_name --}}
+                        <td><span class="dotsline">{{ $sale->customer_name ?? data_get($sale,'customer.name') ?? '' }}</span></td>
                     </tr>
                     <tr>
                         <td class="label">Jalan</td>
@@ -129,10 +125,8 @@
         </div>
     </div>
 
-    {{-- WATERMARK opsional --}}
-    @if(($sale->payment_status ?? 'Unpaid') !== 'Paid')
-        <div class="watermark">DRAFT</div>
-    @endif
+    {{-- 👇 HAPUS WATERMARK (tidak ada kondisi @if payment_status) --}}
+    {{-- TIDAK ADA LAGI <div class="watermark">DRAFT</div> --}}
 
     {{-- TABEL ITEM --}}
     <table class="items">

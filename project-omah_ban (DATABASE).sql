@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 30, 2025 at 03:04 PM
+-- Generation Time: Oct 23, 2025 at 07:38 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.12
 
@@ -257,6 +257,13 @@ CREATE TABLE `media` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `media`
+--
+
+INSERT INTO `media` (`id`, `model_type`, `model_id`, `uuid`, `collection_name`, `name`, `file_name`, `mime_type`, `disk`, `conversions_disk`, `size`, `manipulations`, `custom_properties`, `generated_conversions`, `responsive_images`, `order_column`, `created_at`, `updated_at`) VALUES
+(2, 'Modules\\Product\\Entities\\Product', 1, '791d4a95-3ae0-464d-842f-74de66b65fc7', 'images', '1760068245', '1760068245.png', 'image/png', 'public', 'public', 75646, '[]', '[]', '{\"thumb\": true}', '[]', 1, '2025-10-10 02:50:49', '2025-10-10 02:50:53');
+
 -- --------------------------------------------------------
 
 --
@@ -329,7 +336,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (54, '2025_08_19_150401_add_bank_name_to_sale_payments_table', 19),
 (55, '2025_08_23_115755_add_operational_fields_to_expenses_table', 20),
 (56, '2025_09_08_133151_normalize_money_to_idr', 21),
-(57, '2025_09_08_150741_align_settings_currency_to_idr', 22);
+(57, '2025_09_08_150741_align_settings_currency_to_idr', 22),
+(58, '2025_10_21_134216_add_midtrans_columns_to_sales_table', 23);
 
 -- --------------------------------------------------------
 
@@ -501,7 +509,7 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `category_id`, `product_name`, `product_code`, `product_quantity`, `stok_awal`, `product_cost`, `product_price`, `product_unit`, `product_stock_alert`, `product_order_tax`, `product_tax_type`, `product_note`, `created_at`, `updated_at`, `brand_id`, `product_size`, `ring`, `product_year`) VALUES
-(1, 2, 'Ban GT Savero', 'GT_Savero', 11, 5, 1280760, 1425000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-08-23 15:12:37', 1, '31x10,5', '15', NULL),
+(1, 2, 'Ban GT Savero', 'GT_Savero', 11, 5, 1280760, 1425000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-10-10 02:50:49', 1, '31x10,5', '15', NULL),
 (2, 2, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 20, 20, 725000, 925000, 'PC', 4, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 2, '185/65', '15', 2024),
 (3, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 12, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 3, '205/65', '16', 2024),
 (4, 2, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 16, 16, 640000, 835000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 1, '195/65', '15', 2024),
@@ -847,6 +855,7 @@ CREATE TABLE `sales` (
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
+  `customer_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `tax_percentage` int NOT NULL DEFAULT '0',
   `tax_amount` bigint NOT NULL DEFAULT '0',
   `discount_percentage` int NOT NULL DEFAULT '0',
@@ -859,7 +868,11 @@ CREATE TABLE `sales` (
   `due_amount` bigint NOT NULL DEFAULT '0',
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `paid_at` timestamp NULL DEFAULT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `snap_token` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `midtrans_transaction_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `midtrans_payment_type` enum('gopay','shopeepay','qris','bank_transfer','credit_card','other') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -871,50 +884,61 @@ CREATE TABLE `sales` (
 -- Dumping data for table `sales`
 --
 
-INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `tax_percentage`, `tax_amount`, `discount_percentage`, `discount_amount`, `shipping_amount`, `total_amount`, `total_hpp`, `total_profit`, `paid_amount`, `due_amount`, `status`, `payment_status`, `payment_method`, `bank_name`, `note`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(4, '2025-08-08', 'SL-00001', NULL, 0, 0, 0, 0, 0, 1425000, 0, 1425000, 0, 1425000, 'Completed', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-08 08:15:20', '2025-08-08 08:15:20', NULL),
-(19, '2025-08-09', 'SL-00005', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 13:38:27', '2025-08-09 13:38:27', NULL),
-(20, '2025-08-09', 'SL-00020', NULL, 0, 0, 0, 0, 0, 1575000, 1280760, 294240, 0, 1575000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 13:56:29', '2025-08-09 13:56:29', NULL),
-(21, '2025-08-09', 'SL-00021', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:02:55', '2025-08-09 14:02:55', NULL),
-(22, '2025-08-09', 'SL-00022', NULL, 0, 0, 0, 0, 0, 18200000, 5123040, 13076960, 0, 18200000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:37:09', '2025-08-09 14:37:09', NULL),
-(23, '2025-08-09', 'SL-00023', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-09 14:43:36', '2025-08-09 14:43:46', NULL),
-(24, '2025-08-09', 'SL-00024', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:44:29', '2025-08-09 14:44:29', NULL),
-(25, '2025-08-09', 'SL-00025', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:52:26', '2025-08-09 14:52:26', NULL),
-(26, '2025-08-09', 'SL-00026', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:52:54', '2025-08-09 14:52:54', NULL),
-(27, '2025-08-09', 'SL-00027', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:55:16', '2025-08-09 14:55:16', NULL),
-(28, '2025-08-09', 'SL-00028', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:55:44', '2025-08-09 14:55:44', NULL),
-(29, '2025-08-09', 'SL-00029', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 14:56:11', '2025-08-09 14:56:11', NULL),
-(30, '2025-08-09', 'SL-00030', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:04:34', '2025-08-09 15:04:34', NULL),
-(31, '2025-08-09', 'SL-00031', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:17:00', '2025-08-09 15:17:00', NULL),
-(32, '2025-08-09', 'SL-00032', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:17:49', '2025-08-09 15:17:49', NULL),
-(33, '2025-08-09', 'SL-00033', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-09 15:18:22', '2025-08-09 15:18:22', NULL),
-(34, '2025-08-10', 'SL-00034', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 03:42:31', '2025-08-10 03:42:31', NULL),
-(35, '2025-08-10', 'SL-00035', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:02:39', '2025-08-10 04:02:39', NULL),
-(36, '2025-08-10', 'SL-00036', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:13:37', '2025-08-10 04:13:37', NULL),
-(37, '2025-08-10', 'SL-00037', NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 04:33:26', '2025-08-20 11:32:45', NULL),
-(38, '2025-08-10', 'SL-00038', NULL, 0, 0, 0, 0, 0, 12500000, 0, 12500000, 0, 12500000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:58:25', '2025-08-10 04:58:25', NULL),
-(39, '2025-08-10', 'SL-00039', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:59:06', '2025-08-10 04:59:06', NULL),
-(40, '2025-08-10', 'SL-00040', NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 04:59:58', '2025-08-10 04:59:58', NULL),
-(44, '2025-08-10', 'SL-00041', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', 'Tunai', NULL, NULL, '2025-08-10 06:08:39', '2025-08-10 06:08:39', NULL),
-(45, '2025-08-10', 'SL-00045', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:11:54', '2025-08-10 06:11:56', NULL),
-(46, '2025-08-10', 'SL-00046', 1, 0, 0, 0, 0, 0, 150000, 0, 150000, 150000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:12:16', '2025-08-20 11:32:59', NULL),
-(47, '2025-08-10', 'SL-00047', 1, 0, 0, 0, 0, 0, 200000, 0, 200000, 200000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:19:30', '2025-08-18 16:18:52', NULL),
-(48, '2025-08-10', 'SL-00048', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:20:10', '2025-08-20 12:18:55', NULL),
-(49, '2025-08-10', 'SL-00049', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:20:39', '2025-08-20 12:27:33', NULL),
-(50, '2025-08-10', 'SL-00050', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:28:26', '2025-08-20 12:27:59', NULL),
-(51, '2025-08-10', 'SL-00051', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:29:20', '2025-08-21 04:20:36', NULL),
-(52, '2025-08-10', 'SL-00052', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-10 06:33:33', '2025-08-10 06:34:17', NULL),
-(53, '2025-08-12', 'SL-00053', 1, 0, 0, 0, 0, 0, 0, 0, 0, 100000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:14:18', '2025-08-18 15:52:12', NULL),
-(54, '2025-08-12', 'SL-00054', 1, 0, 0, 0, 0, 0, 1425000, 0, 0, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-12 04:16:16', '2025-08-20 11:32:24', NULL),
-(55, '2025-08-17', 'SL-00055', 1, 0, 0, 0, 0, 0, 2400000, 0, 2400000, 2400000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-17 05:24:44', '2025-08-18 13:41:51', NULL),
-(56, '2025-08-19', 'SL-00056', 1, 0, 0, 0, 0, 0, 1450000, 1280760, 169240, 1450000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 04:58:30', '2025-08-19 06:49:21', NULL),
-(57, '2025-08-19', 'SL-00057', 1, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 05:23:41', '2025-08-20 10:07:07', NULL),
-(58, '2025-08-19', 'SL-00058', 1, 0, 0, 0, 0, 0, 125000, 0, 125000, 125000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-19 06:17:01', '2025-08-19 06:17:47', NULL),
-(59, '2025-08-20', 'SL-20250820-202448-68a5dab0793ff', NULL, 0, 0, 0, 0, 0, 650000, 0, 0, 650000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-20 13:24:48', '2025-08-20 13:25:00', NULL),
-(60, '2025-08-21', 'OB2-00060', NULL, 0, 0, 0, 0, 0, 850000, 0, 0, 850000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-21 02:08:07', '2025-08-21 02:08:13', NULL),
-(61, '2025-08-23', 'OB2-00061', 1, 0, 0, 0, 0, 0, 1550000, 0, 0, 1550000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-23 15:12:31', '2025-08-23 15:12:37', NULL),
-(62, '2025-08-23', 'OB2-00062', 1, 0, 0, 0, 0, 0, 150000, 0, 0, 150000, 0, 'Completed', 'Paid', 'Tunai', NULL, NULL, '2025-08-23 15:12:56', '2025-08-23 15:12:59', NULL),
-(63, '2025-08-23', 'OB2-00063', 1, 0, 0, 0, 0, 0, 50000, 0, 0, 50000, 0, 'Completed', 'Paid', 'Transfer', 'BCA', NULL, '2025-08-23 15:13:36', '2025-08-23 15:13:49', NULL);
+INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `customer_name`, `tax_percentage`, `tax_amount`, `discount_percentage`, `discount_amount`, `shipping_amount`, `total_amount`, `total_hpp`, `total_profit`, `paid_amount`, `due_amount`, `status`, `payment_status`, `paid_at`, `payment_method`, `snap_token`, `midtrans_transaction_id`, `midtrans_payment_type`, `bank_name`, `note`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(4, '2025-08-08', 'SL-00001', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 0, 1425000, 0, 1425000, 'Completed', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-08 08:15:20', '2025-08-08 08:15:20', NULL),
+(19, '2025-08-09', 'SL-00005', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 13:38:27', '2025-08-09 13:38:27', NULL),
+(20, '2025-08-09', 'SL-00020', NULL, NULL, 0, 0, 0, 0, 0, 1575000, 1280760, 294240, 0, 1575000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 13:56:29', '2025-08-09 13:56:29', NULL),
+(21, '2025-08-09', 'SL-00021', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:02:55', '2025-08-09 14:02:55', NULL),
+(22, '2025-08-09', 'SL-00022', NULL, NULL, 0, 0, 0, 0, 0, 18200000, 5123040, 13076960, 0, 18200000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:37:09', '2025-08-09 14:37:09', NULL),
+(23, '2025-08-09', 'SL-00023', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:43:36', '2025-08-09 14:43:46', NULL),
+(24, '2025-08-09', 'SL-00024', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:44:29', '2025-08-09 14:44:29', NULL),
+(25, '2025-08-09', 'SL-00025', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:52:26', '2025-08-09 14:52:26', NULL),
+(26, '2025-08-09', 'SL-00026', NULL, NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:52:54', '2025-08-09 14:52:54', NULL),
+(27, '2025-08-09', 'SL-00027', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:55:16', '2025-08-09 14:55:16', NULL),
+(28, '2025-08-09', 'SL-00028', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:55:44', '2025-08-09 14:55:44', NULL),
+(29, '2025-08-09', 'SL-00029', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 14:56:11', '2025-08-09 14:56:11', NULL),
+(30, '2025-08-09', 'SL-00030', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 15:04:34', '2025-08-09 15:04:34', NULL),
+(31, '2025-08-09', 'SL-00031', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 15:17:00', '2025-08-09 15:17:00', NULL),
+(32, '2025-08-09', 'SL-00032', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 15:17:49', '2025-08-09 15:17:49', NULL),
+(33, '2025-08-09', 'SL-00033', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-09 15:18:22', '2025-08-09 15:18:22', NULL),
+(34, '2025-08-10', 'SL-00034', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 03:42:31', '2025-08-10 03:42:31', NULL),
+(35, '2025-08-10', 'SL-00035', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 04:02:39', '2025-08-10 04:02:39', NULL),
+(36, '2025-08-10', 'SL-00036', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 04:13:37', '2025-08-10 04:13:37', NULL),
+(37, '2025-08-10', 'SL-00037', NULL, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 04:33:26', '2025-08-20 11:32:45', NULL),
+(38, '2025-08-10', 'SL-00038', NULL, NULL, 0, 0, 0, 0, 0, 12500000, 0, 12500000, 0, 12500000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 04:58:25', '2025-08-10 04:58:25', NULL),
+(39, '2025-08-10', 'SL-00039', NULL, NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 04:59:06', '2025-08-10 04:59:06', NULL),
+(40, '2025-08-10', 'SL-00040', NULL, NULL, 0, 0, 0, 0, 0, 15000000, 0, 15000000, 0, 15000000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 04:59:58', '2025-08-10 04:59:58', NULL),
+(44, '2025-08-10', 'SL-00041', 1, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:08:39', '2025-08-10 06:08:39', NULL),
+(45, '2025-08-10', 'SL-00045', 1, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:11:54', '2025-08-10 06:11:56', NULL),
+(46, '2025-08-10', 'SL-00046', 1, NULL, 0, 0, 0, 0, 0, 150000, 0, 150000, 150000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:12:16', '2025-08-20 11:32:59', NULL),
+(47, '2025-08-10', 'SL-00047', 1, NULL, 0, 0, 0, 0, 0, 200000, 0, 200000, 200000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:19:30', '2025-08-18 16:18:52', NULL),
+(48, '2025-08-10', 'SL-00048', 1, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:20:10', '2025-08-20 12:18:55', NULL),
+(49, '2025-08-10', 'SL-00049', 1, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:20:39', '2025-08-20 12:27:33', NULL),
+(50, '2025-08-10', 'SL-00050', 1, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:28:26', '2025-08-20 12:27:59', NULL),
+(51, '2025-08-10', 'SL-00051', 1, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:29:20', '2025-08-21 04:20:36', NULL),
+(52, '2025-08-10', 'SL-00052', 1, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-10 06:33:33', '2025-08-10 06:34:17', NULL),
+(53, '2025-08-12', 'SL-00053', 1, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 100000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-12 04:14:18', '2025-08-18 15:52:12', NULL),
+(54, '2025-08-12', 'SL-00054', 1, NULL, 0, 0, 0, 0, 0, 1425000, 0, 0, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-12 04:16:16', '2025-08-20 11:32:24', NULL),
+(55, '2025-08-17', 'SL-00055', 1, NULL, 0, 0, 0, 0, 0, 2400000, 0, 2400000, 2400000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-17 05:24:44', '2025-08-18 13:41:51', NULL),
+(56, '2025-08-19', 'SL-00056', 1, NULL, 0, 0, 0, 0, 0, 1450000, 1280760, 169240, 1450000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-19 04:58:30', '2025-08-19 06:49:21', NULL),
+(57, '2025-08-19', 'SL-00057', 1, NULL, 0, 0, 0, 0, 0, 1425000, 1280760, 144240, 1425000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-19 05:23:41', '2025-08-20 10:07:07', NULL),
+(58, '2025-08-19', 'SL-00058', 1, NULL, 0, 0, 0, 0, 0, 125000, 0, 125000, 125000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-19 06:17:01', '2025-08-19 06:17:47', NULL),
+(59, '2025-08-20', 'SL-20250820-202448-68a5dab0793ff', NULL, NULL, 0, 0, 0, 0, 0, 650000, 0, 0, 650000, 0, 'Completed', 'Paid', NULL, 'Transfer', NULL, NULL, NULL, 'BCA', NULL, '2025-08-20 13:24:48', '2025-08-20 13:25:00', NULL),
+(60, '2025-08-21', 'OB2-00060', NULL, NULL, 0, 0, 0, 0, 0, 850000, 0, 0, 850000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-21 02:08:07', '2025-08-21 02:08:13', NULL),
+(61, '2025-08-23', 'OB2-00061', 1, NULL, 0, 0, 0, 0, 0, 1550000, 0, 0, 1550000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-23 15:12:31', '2025-08-23 15:12:37', NULL),
+(62, '2025-08-23', 'OB2-00062', 1, NULL, 0, 0, 0, 0, 0, 150000, 0, 0, 150000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-08-23 15:12:56', '2025-08-23 15:12:59', NULL),
+(63, '2025-08-23', 'OB2-00063', 1, NULL, 0, 0, 0, 0, 0, 50000, 0, 0, 50000, 0, 'Completed', 'Paid', NULL, 'Transfer', NULL, NULL, NULL, 'BCA', NULL, '2025-08-23 15:13:36', '2025-08-23 15:13:49', NULL),
+(64, '2025-10-14', 'OB2-00064', 1, NULL, 0, 0, 0, 0, 0, 14250, 0, 0, 0, 14250, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-14 08:02:39', '2025-10-14 08:02:39', NULL),
+(65, '2025-10-14', 'OB2-00065', 1, NULL, 0, 0, 0, 0, 0, 8350, 0, 0, 0, 8350, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-14 08:21:22', '2025-10-14 08:21:22', NULL),
+(66, '2025-10-14', 'OB2-00066', 1, 'PT. OMAH BAN JAYA', 0, 0, 0, 0, 0, 9250, 7250, 2000, 0, 9250, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-14 08:32:14', '2025-10-14 08:32:14', NULL),
+(67, '2025-10-21', 'OB2-00067', 2, NULL, 0, 0, 0, 0, 0, 835000, 640000, 195000, 0, 835000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-21 14:24:18', '2025-10-21 14:24:18', NULL),
+(68, '2025-10-21', 'OB2-00068', 2, 'Peter', 0, 0, 0, 0, 0, 835000, 640000, 195000, 0, 835000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-21 15:41:04', '2025-10-21 15:41:04', NULL),
+(69, '2025-10-21', 'OB2-00069', 2, 'PT. OMAH BAN JAYA', 0, 0, 0, 0, 0, 1425000, 12807600, 0, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-21 15:45:35', '2025-10-21 15:45:35', NULL),
+(70, '2025-10-21', 'OB2-00070', 2, 'PT. OMAH BAN JAYA', 0, 0, 0, 0, 0, 925000, 725000, 200000, 0, 925000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-21 15:46:06', '2025-10-21 15:46:06', NULL),
+(71, '2025-10-21', 'OB2-00071', 2, 'Peter', 0, 0, 0, 0, 0, 925000, 725000, 200000, 0, 925000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-21 15:46:39', '2025-10-21 15:46:39', NULL),
+(72, '2025-10-21', 'OB2-00072', 2, 'Peter', 0, 0, 0, 0, 0, 835000, 640000, 195000, 0, 835000, 'Draft', 'Unpaid', NULL, 'Tunai', '45c7b31a-45c7-4f37-a128-fa01f14bdfe3', NULL, NULL, NULL, NULL, '2025-10-21 15:47:40', '2025-10-21 16:20:47', NULL),
+(73, '2025-10-21', 'OB2-00073', 2, 'PT. OMAH BAN JAYA', 0, 0, 0, 0, 0, 835000, 640000, 195000, 0, 835000, 'Draft', 'Unpaid', NULL, 'Tunai', 'af0daa05-799f-432e-bb60-31a9781edfcd', NULL, NULL, NULL, NULL, '2025-10-21 16:20:55', '2025-10-21 16:21:51', NULL),
+(74, '2025-10-22', 'OB2-00074', 2, 'Peter', 0, 0, 0, 0, 0, 1090000, 890000, 200000, 0, 1090000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-10-22 14:51:59', '2025-10-22 14:51:59', NULL);
 
 -- --------------------------------------------------------
 
@@ -930,11 +954,13 @@ CREATE TABLE `sale_details` (
   `productable_id` bigint UNSIGNED DEFAULT NULL,
   `productable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `source_type` enum('new','second','manual') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',
+  `manual_kind` enum('service','goods') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
   `price` bigint NOT NULL,
   `hpp` bigint NOT NULL DEFAULT '0',
+  `manual_hpp` bigint DEFAULT NULL,
   `unit_price` bigint NOT NULL,
   `sub_total` bigint NOT NULL,
   `subtotal_profit` bigint NOT NULL DEFAULT '0',
@@ -949,70 +975,84 @@ CREATE TABLE `sale_details` (
 -- Dumping data for table `sale_details`
 --
 
-INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `productable_id`, `productable_type`, `source_type`, `product_name`, `product_code`, `quantity`, `price`, `hpp`, `unit_price`, `sub_total`, `subtotal_profit`, `product_discount_amount`, `product_discount_type`, `product_tax_amount`, `created_at`, `updated_at`) VALUES
-(2, 4, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 0, 1425000, 1425000, 1425000, 0, 'fixed', 0, '2025-08-08 08:15:20', '2025-08-08 08:15:20'),
-(3, 19, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 13:38:27', '2025-08-09 13:38:27'),
-(4, 20, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
-(5, 20, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', 'SRV-1754751385', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
-(6, 21, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:02:56', '2025-08-09 14:02:56'),
-(7, 22, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 4, 1425000, 1280760, 1425000, 5700000, 576960, 0, 'fixed', 0, '2025-08-09 14:37:09', '2025-08-09 14:37:09'),
-(8, 22, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 12500000, 0, 12500000, 12500000, 12500000, 0, 'fixed', 0, '2025-08-09 14:37:09', '2025-08-09 14:37:09'),
-(9, 23, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:43:36', '2025-08-09 14:43:36'),
-(10, 24, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:44:29', '2025-08-09 14:44:29'),
-(11, 25, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:52:26', '2025-08-09 14:52:26'),
-(12, 26, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 15000000, 0, 15000000, 15000000, 15000000, 0, 'fixed', 0, '2025-08-09 14:52:54', '2025-08-09 14:52:54'),
-(13, 27, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:55:16', '2025-08-09 14:55:16'),
-(14, 28, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:55:44', '2025-08-09 14:55:44'),
-(15, 29, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:56:11', '2025-08-09 14:56:11'),
-(16, 30, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 15:04:34', '2025-08-09 15:04:34'),
-(17, 31, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 15:17:00', '2025-08-09 15:17:00'),
-(18, 32, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 15:17:49', '2025-08-09 15:17:49'),
-(19, 33, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 15:18:22', '2025-08-09 15:18:22'),
-(20, 34, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 03:42:31', '2025-08-10 03:42:31'),
-(21, 35, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 04:02:39', '2025-08-10 04:02:39'),
-(22, 36, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 04:13:37', '2025-08-10 04:13:37'),
-(23, 37, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 04:33:26', '2025-08-10 04:33:26'),
-(24, 38, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 12500000, 0, 12500000, 12500000, 12500000, 0, 'fixed', 0, '2025-08-10 04:58:25', '2025-08-10 04:58:25'),
-(25, 39, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 15000000, 0, 15000000, 15000000, 15000000, 0, 'fixed', 0, '2025-08-10 04:59:06', '2025-08-10 04:59:06'),
-(26, 40, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 15000000, 0, 15000000, 15000000, 15000000, 0, 'fixed', 0, '2025-08-10 04:59:58', '2025-08-10 04:59:58'),
-(27, 44, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:08:39', '2025-08-10 06:08:39'),
-(28, 45, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:11:54', '2025-08-10 06:11:54'),
-(29, 46, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-10 06:12:16', '2025-08-10 06:12:16'),
-(31, 48, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:20:10', '2025-08-10 06:20:10'),
-(32, 49, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:20:39', '2025-08-10 06:20:39'),
-(33, 50, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:28:26', '2025-08-10 06:28:26'),
-(34, 51, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:29:20', '2025-08-10 06:29:20'),
-(35, 52, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:33:33', '2025-08-10 06:33:33'),
-(37, 54, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 0, 0, 'fixed', 0, '2025-08-12 04:16:16', '2025-08-12 04:16:16'),
-(43, 55, 'Velg Bekas HSR Ring 16 Black Polish', NULL, 3, 'Modules\\Product\\Entities\\ProductSecond', 'second', 'Velg Bekas HSR Ring 16 Black Polish', 'SEC-HSR-R16-BP-001', 1, 2250000, 0, 2250000, 2250000, 2250000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
-(44, 55, 'Balancing', NULL, NULL, NULL, 'manual', 'Balancing', '-', 1, 25000, 0, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
-(45, 55, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 125000, 0, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
-(49, 47, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
-(50, 47, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 2, 25000, 0, 25000, 50000, 50000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
-(53, 57, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-19 05:23:41', '2025-08-19 05:23:41'),
-(54, 58, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 125000, 0, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-19 06:17:01', '2025-08-19 06:17:01'),
-(55, 56, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
-(56, 56, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 1, 25000, 0, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
-(57, 59, 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', NULL, 2, 'Modules\\Product\\Entities\\ProductSecond', 'second', 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', 'SEC-GT-23570R16-001', 1, 650000, 400000, 650000, 650000, 250000, 0, 'fixed', 0, '2025-08-20 13:24:48', '2025-08-20 13:24:48'),
-(58, 60, 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', NULL, 1, 'Modules\\Product\\Entities\\ProductSecond', 'second', 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', 'SEC-DN-26565R17-001', 1, 850000, 600000, 850000, 850000, 250000, 0, 'fixed', 0, '2025-08-21 02:08:07', '2025-08-21 02:08:07'),
-(59, 61, 'Ban GT Savero', 1, NULL, NULL, 'new', 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-23 15:12:31', '2025-08-23 15:12:31'),
-(60, 61, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 125000, 0, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-23 15:12:31', '2025-08-23 15:12:31'),
-(61, 62, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'Spooring Ban', '-', 1, 150000, 0, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-23 15:12:56', '2025-08-23 15:12:56'),
-(62, 63, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'Balancing Ban', '-', 1, 50000, 0, 50000, 50000, 50000, 0, 'fixed', 0, '2025-08-23 15:13:36', '2025-08-23 15:13:36');
+INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `productable_id`, `productable_type`, `source_type`, `manual_kind`, `product_name`, `product_code`, `quantity`, `price`, `hpp`, `manual_hpp`, `unit_price`, `sub_total`, `subtotal_profit`, `product_discount_amount`, `product_discount_type`, `product_tax_amount`, `created_at`, `updated_at`) VALUES
+(2, 4, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 0, NULL, 1425000, 1425000, 1425000, 0, 'fixed', 0, '2025-08-08 08:15:20', '2025-08-08 08:15:20'),
+(3, 19, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 13:38:27', '2025-08-09 13:38:27'),
+(4, 20, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
+(5, 20, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', 'SRV-1754751385', 1, 150000, 0, NULL, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-09 13:56:29', '2025-08-09 13:56:29'),
+(6, 21, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:02:56', '2025-08-09 14:02:56'),
+(7, 22, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 4, 1425000, 1280760, NULL, 1425000, 5700000, 576960, 0, 'fixed', 0, '2025-08-09 14:37:09', '2025-08-09 14:37:09'),
+(8, 22, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 12500000, 0, NULL, 12500000, 12500000, 12500000, 0, 'fixed', 0, '2025-08-09 14:37:09', '2025-08-09 14:37:09'),
+(9, 23, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:43:36', '2025-08-09 14:43:36'),
+(10, 24, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:44:29', '2025-08-09 14:44:29'),
+(11, 25, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:52:26', '2025-08-09 14:52:26'),
+(12, 26, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 15000000, 0, NULL, 15000000, 15000000, 15000000, 0, 'fixed', 0, '2025-08-09 14:52:54', '2025-08-09 14:52:54'),
+(13, 27, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:55:16', '2025-08-09 14:55:16'),
+(14, 28, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:55:44', '2025-08-09 14:55:44'),
+(15, 29, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 14:56:11', '2025-08-09 14:56:11'),
+(16, 30, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 15:04:34', '2025-08-09 15:04:34'),
+(17, 31, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 15:17:00', '2025-08-09 15:17:00'),
+(18, 32, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 15:17:49', '2025-08-09 15:17:49'),
+(19, 33, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-09 15:18:22', '2025-08-09 15:18:22'),
+(20, 34, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 03:42:31', '2025-08-10 03:42:31'),
+(21, 35, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 04:02:39', '2025-08-10 04:02:39'),
+(22, 36, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 04:13:37', '2025-08-10 04:13:37'),
+(23, 37, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 04:33:26', '2025-08-10 04:33:26'),
+(24, 38, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 12500000, 0, NULL, 12500000, 12500000, 12500000, 0, 'fixed', 0, '2025-08-10 04:58:25', '2025-08-10 04:58:25'),
+(25, 39, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 15000000, 0, NULL, 15000000, 15000000, 15000000, 0, 'fixed', 0, '2025-08-10 04:59:06', '2025-08-10 04:59:06'),
+(26, 40, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 15000000, 0, NULL, 15000000, 15000000, 15000000, 0, 'fixed', 0, '2025-08-10 04:59:58', '2025-08-10 04:59:58'),
+(27, 44, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:08:39', '2025-08-10 06:08:39'),
+(28, 45, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:11:54', '2025-08-10 06:11:54'),
+(29, 46, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 150000, 0, NULL, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-10 06:12:16', '2025-08-10 06:12:16'),
+(31, 48, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:20:10', '2025-08-10 06:20:10'),
+(32, 49, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:20:39', '2025-08-10 06:20:39'),
+(33, 50, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:28:26', '2025-08-10 06:28:26'),
+(34, 51, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:29:20', '2025-08-10 06:29:20'),
+(35, 52, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-10 06:33:33', '2025-08-10 06:33:33'),
+(37, 54, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 0, 0, 'fixed', 0, '2025-08-12 04:16:16', '2025-08-12 04:16:16'),
+(43, 55, 'Velg Bekas HSR Ring 16 Black Polish', NULL, 3, 'Modules\\Product\\Entities\\ProductSecond', 'second', NULL, 'Velg Bekas HSR Ring 16 Black Polish', 'SEC-HSR-R16-BP-001', 1, 2250000, 0, NULL, 2250000, 2250000, 2250000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
+(44, 55, 'Balancing', NULL, NULL, NULL, 'manual', 'service', 'Balancing', '-', 1, 25000, 0, NULL, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
+(45, 55, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 125000, 0, NULL, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-18 13:41:51', '2025-08-18 13:41:51'),
+(49, 47, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 150000, 0, NULL, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
+(50, 47, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'service', 'Balancing Ban', '-', 2, 25000, 0, NULL, 25000, 50000, 50000, 0, 'fixed', 0, '2025-08-18 16:18:52', '2025-08-18 16:18:52'),
+(53, 57, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-19 05:23:41', '2025-08-19 05:23:41'),
+(54, 58, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 125000, 0, NULL, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-19 06:17:01', '2025-08-19 06:17:01'),
+(55, 56, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
+(56, 56, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'service', 'Balancing Ban', '-', 1, 25000, 0, NULL, 25000, 25000, 25000, 0, 'fixed', 0, '2025-08-19 06:49:21', '2025-08-19 06:49:21'),
+(57, 59, 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', NULL, 2, 'Modules\\Product\\Entities\\ProductSecond', 'second', NULL, 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', 'SEC-GT-23570R16-001', 1, 650000, 400000, NULL, 650000, 650000, 250000, 0, 'fixed', 0, '2025-08-20 13:24:48', '2025-08-20 13:24:48'),
+(58, 60, 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', NULL, 1, 'Modules\\Product\\Entities\\ProductSecond', 'second', NULL, 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', 'SEC-DN-26565R17-001', 1, 850000, 600000, NULL, 850000, 850000, 250000, 0, 'fixed', 0, '2025-08-21 02:08:07', '2025-08-21 02:08:07'),
+(59, 61, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-08-23 15:12:31', '2025-08-23 15:12:31'),
+(60, 61, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 125000, 0, NULL, 125000, 125000, 125000, 0, 'fixed', 0, '2025-08-23 15:12:31', '2025-08-23 15:12:31'),
+(61, 62, 'Spooring Ban', NULL, NULL, NULL, 'manual', 'service', 'Spooring Ban', '-', 1, 150000, 0, NULL, 150000, 150000, 150000, 0, 'fixed', 0, '2025-08-23 15:12:56', '2025-08-23 15:12:56'),
+(62, 63, 'Balancing Ban', NULL, NULL, NULL, 'manual', 'service', 'Balancing Ban', '-', 1, 50000, 0, NULL, 50000, 50000, 50000, 0, 'fixed', 0, '2025-08-23 15:13:36', '2025-08-23 15:13:36'),
+(63, 64, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 14250, 128076, NULL, 14250, 14250, 0, 0, 'fixed', 0, '2025-10-14 08:02:39', '2025-10-14 08:02:39'),
+(64, 65, 'Ban GT Radial Champiro Eco 195/65 R15', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 8350, 6400, NULL, 8350, 8350, 1950, 0, 'fixed', 0, '2025-10-14 08:21:22', '2025-10-14 08:21:22'),
+(65, 66, 'Ban Bridgestone Ecopia EP150 185/65 R15', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 1, 9250, 7250, NULL, 9250, 9250, 2000, 0, 'fixed', 0, '2025-10-14 08:32:14', '2025-10-14 08:32:14'),
+(66, 67, 'Ban GT Radial Champiro Eco 195/65 R15', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 640000, NULL, 835000, 835000, 195000, 0, 'fixed', 0, '2025-10-21 14:24:18', '2025-10-21 14:24:18'),
+(67, 68, 'Ban GT Radial Champiro Eco 195/65 R15', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 640000, NULL, 835000, 835000, 195000, 0, 'fixed', 0, '2025-10-21 15:41:04', '2025-10-21 15:41:04'),
+(68, 69, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 12807600, NULL, 1425000, 1425000, 0, 0, 'fixed', 0, '2025-10-21 15:45:35', '2025-10-21 15:45:35'),
+(69, 70, 'Ban Bridgestone Ecopia EP150 185/65 R15', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 1, 925000, 725000, NULL, 925000, 925000, 200000, 0, 'fixed', 0, '2025-10-21 15:46:06', '2025-10-21 15:46:06'),
+(70, 71, 'Ban Bridgestone Ecopia EP150 185/65 R15', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 1, 925000, 725000, NULL, 925000, 925000, 200000, 0, 'fixed', 0, '2025-10-21 15:46:39', '2025-10-21 15:46:39'),
+(71, 72, 'Ban GT Radial Champiro Eco 195/65 R15', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 640000, NULL, 835000, 835000, 195000, 0, 'fixed', 0, '2025-10-21 15:47:40', '2025-10-21 15:47:40'),
+(72, 73, 'Ban GT Radial Champiro Eco 195/65 R15', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 640000, NULL, 835000, 835000, 195000, 0, 'fixed', 0, '2025-10-21 16:20:55', '2025-10-21 16:20:55'),
+(73, 74, 'Ban Dunlop SP Touring R1 205/65 R16', 3, NULL, NULL, 'new', NULL, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 1, 1090000, 890000, NULL, 1090000, 1090000, 200000, 0, 'fixed', 0, '2025-10-22 14:51:59', '2025-10-22 14:51:59');
 
 --
 -- Triggers `sale_details`
 --
 DELIMITER $$
 CREATE TRIGGER `trg_sale_details_chk_bi` BEFORE INSERT ON `sale_details` FOR EACH ROW BEGIN
+  -- source_type valid
   IF NEW.source_type NOT IN ('new','second','manual') THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details: source_type harus new|second|manual';
   END IF;
 
+  -- quantity > 0
   IF NEW.quantity IS NULL OR NEW.quantity <= 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details: quantity harus > 0';
   END IF;
 
+  -- branch rules
   IF NEW.source_type = 'new' THEN
     IF NEW.product_id IS NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='source_type=new -> product_id NOT NULL, productable_* NULL';
@@ -1027,20 +1067,35 @@ CREATE TRIGGER `trg_sale_details_chk_bi` BEFORE INSERT ON `sale_details` FOR EAC
     IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='source_type=manual -> product_id & productable_* harus NULL';
     END IF;
+    -- manual_kind wajib service|goods
+    IF NEW.manual_kind NOT IN ('service','goods') THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='source_type=manual -> manual_kind harus service|goods';
+    END IF;
+    -- contoh aturan opsional: larang manual_hpp untuk jasa (aktifkan jika perlu)
+    -- IF NEW.manual_kind='service' AND NEW.manual_hpp IS NOT NULL THEN
+    --   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='manual_kind=service -> manual_hpp harus NULL';
+    -- END IF;
+    -- contoh aturan opsional: manual_hpp tidak boleh negatif
+    IF NEW.manual_hpp IS NOT NULL AND NEW.manual_hpp < 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='manual_hpp tidak boleh negatif';
+    END IF;
   END IF;
 END
 $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `trg_sale_details_chk_bu` BEFORE UPDATE ON `sale_details` FOR EACH ROW BEGIN
+  -- source_type valid
   IF NEW.source_type NOT IN ('new','second','manual') THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details (update): source_type harus new|second|manual';
   END IF;
 
+  -- quantity > 0
   IF NEW.quantity IS NULL OR NEW.quantity <= 0 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details (update): quantity harus > 0';
   END IF;
 
+  -- branch rules
   IF NEW.source_type = 'new' THEN
     IF NEW.product_id IS NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) source_type=new -> product_id NOT NULL, productable_* NULL';
@@ -1054,6 +1109,17 @@ CREATE TRIGGER `trg_sale_details_chk_bu` BEFORE UPDATE ON `sale_details` FOR EAC
   ELSEIF NEW.source_type = 'manual' THEN
     IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
       SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) source_type=manual -> product_id & productable_* harus NULL';
+    END IF;
+    -- manual_kind wajib service|goods
+    IF NEW.manual_kind NOT IN ('service','goods') THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) source_type=manual -> manual_kind harus service|goods';
+    END IF;
+    -- opsi: larang manual_hpp untuk jasa
+    -- IF NEW.manual_kind='service' AND NEW.manual_hpp IS NOT NULL THEN
+    --   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) manual_kind=service -> manual_hpp harus NULL';
+    -- END IF;
+    IF NEW.manual_hpp IS NOT NULL AND NEW.manual_hpp < 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) manual_hpp tidak boleh negatif';
     END IF;
   END IF;
 END
@@ -1325,8 +1391,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is_active`, `remember_token`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Administrator', 'super.admin@test.com', NULL, '$2y$10$SefjCt2y1ea0RvhAa7Y15etzlm/0AbhzYWguTxRnAx3Gzu7/DnqqG', 1, NULL, '2025-08-05 14:46:12', '2025-08-05 14:46:12', NULL),
-(2, 'Vincent Peter', 'peter@gmail.com', NULL, '$2y$10$I.vdDrP.XxjClFo3975c0e/BwmBASgAFGebwpp/66G5FWfYec543C', 1, NULL, '2025-09-30 13:32:44', '2025-09-30 13:32:44', NULL);
+(1, 'Administrator', 'super.admin@test.com', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, NULL, '2025-08-05 14:46:12', '2025-08-05 14:46:12', NULL),
+(2, 'Vincent Peter', 'peter@gmail.com', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, NULL, '2025-09-30 13:32:44', '2025-09-30 13:32:44', NULL);
 
 --
 -- Indexes for dumped tables
@@ -1558,7 +1624,9 @@ ALTER TABLE `sale_details`
   ADD KEY `sale_details_product_id_foreign` (`product_id`),
   ADD KEY `idx_sale_details_sale_created` (`sale_id`,`created_at`),
   ADD KEY `idx_sale_details_productable` (`productable_type`,`productable_id`),
-  ADD KEY `sale_details_sale_product_index` (`sale_id`,`product_id`);
+  ADD KEY `sale_details_sale_product_index` (`sale_id`,`product_id`),
+  ADD KEY `idx_sd_source_type` (`source_type`),
+  ADD KEY `idx_sd_manual_kind` (`manual_kind`);
 
 --
 -- Indexes for table `sale_payments`
@@ -1699,13 +1767,13 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `media`
 --
 ALTER TABLE `media`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT for table `permissions`

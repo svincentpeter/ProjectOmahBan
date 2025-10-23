@@ -27,7 +27,6 @@ class ProductSecond extends Model implements HasMedia
         'ring',
         'product_year',
         'condition_notes',
-        // 'photo_path' dihapus dari sini
         'purchase_price',
         'selling_price',
         'status',

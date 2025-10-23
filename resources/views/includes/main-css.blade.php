@@ -9,7 +9,6 @@
 
 @stack('page_css')
 
-@livewireStyles
 
 <style>
     div.dataTables_wrapper div.dataTables_length select {

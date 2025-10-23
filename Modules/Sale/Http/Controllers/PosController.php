@@ -30,9 +30,9 @@ class PosController extends Controller
         }
 
         return view('sale::pos.index', [
-    'categories' => $categories,
-    'product_categories' => $categories, // alias agar view lama tetap hidup
-]);
+            'categories' => $categories,
+            'product_categories' => $categories, // alias agar view lama tetap hidup
+        ]);
     }
 
     /**
@@ -100,6 +100,7 @@ class PosController extends Controller
                 'date'                => now()->toDateString(),
                 'reference'           => $reference,
                 'user_id'             => auth()->id(),
+                'customer_name'       => $request->input('customer_name') ?: null, // 👈 TAMBAHAN: Simpan customer name
                 'tax_percentage'      => $taxPercent,
                 'discount_percentage' => $discountPercent,
                 'shipping_amount'     => $shippingAmount,
@@ -267,23 +268,28 @@ class PosController extends Controller
         return $digits === '' ? 0 : (int) $digits;
     }
 
+    /**
+     * 👇 PERBAIKAN: Cetak PDF Invoice POS dengan customer_name
+     */
     public function printPos(Sale $sale)
-{
-    // PERBAIKAN: Memuat semua relasi yang dibutuhkan untuk nota
-    $sale->load([
-        'user',
-        'saleDetails.product.brand',     // Untuk produk baru
-        'saleDetails.productable.brand'  // Untuk produk bekas
-    ]);
+    {
+        // Memuat semua relasi yang dibutuhkan untuk nota
+        $sale->load([
+            'user',
+            'saleDetails.product.brand',     // Untuk produk baru
+            'saleDetails.productable.brand'  // Untuk produk bekas
+        ]);
 
-    $pdf = \PDF::loadView('sale::print-pos', ['sale' => $sale])
-        ->setPaper('a6', 'landscape')
-        ->setOption('margin-top', 5)
-        ->setOption('margin-bottom', 5)
-        ->setOption('margin-left', 5)
-        ->setOption('margin-right', 5);
+        // 👇 DEBUG: Uncomment untuk cek apakah customer_name ada
+        // dd($sale->customer_name);
 
-    return $pdf->stream('nota-' . $sale->reference . '.pdf');
-}
+        $pdf = \PDF::loadView('sale::print-pos', ['sale' => $sale])
+            ->setPaper('a6', 'landscape')
+            ->setOption('margin-top', 5)
+            ->setOption('margin-bottom', 5)
+            ->setOption('margin-left', 5)
+            ->setOption('margin-right', 5);
 
+        return $pdf->stream('nota-' . $sale->reference . '.pdf');
+    }
 }

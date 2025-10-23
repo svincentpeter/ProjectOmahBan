@@ -124,12 +124,6 @@
   <script>
     const loginForm = document.getElementById('login');
     const submitBtn = document.getElementById('submit');
-    const spinner   = document.getElementById('spinner');
-
-    loginForm.addEventListener('submit', () => {
-      submitBtn.disabled = true;
-      spinner.style.display = 'inline-block';
-    });
   </script>
 </body>
 </html>
