@@ -5,6 +5,7 @@ namespace App\Livewire\Pos;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Modules\Product\Entities\Product;
+use Modules\Product\Entities\Brand; // Tambahkan import ini
 
 class ProductList extends Component
 {
@@ -14,25 +15,33 @@ class ProductList extends Component
 
     protected $listeners = [
         'selectedCategory' => 'categoryChanged',
-        'showCount'        => 'showCountChanged'
+        'selectedBrand' => 'brandChanged', // Tambahkan listener brand
+        'showCount' => 'showCountChanged'
     ];
 
     public $categories;
+    public $brands; // Tambahkan property brands
     public $category_id;
+    public $brand_id; // Tambahkan property brand_id
     public $limit = 9;
 
     public function mount($categories)
     {
         $this->categories = $categories;
+        $this->brands = Brand::orderBy('name', 'asc')->get(); // Load brands di sini
         $this->category_id = '';
+        $this->brand_id = ''; // Inisialisasi brand_id
     }
 
     public function render()
     {
         return view('livewire.pos.product-list', [
             'products' => Product::when($this->category_id, function ($query) {
-                return $query->where('category_id', $this->category_id);
-            })
+                    return $query->where('category_id', $this->category_id);
+                })
+                ->when($this->brand_id, function ($query) { // Tambahkan filter brand
+                    return $query->where('brand_id', $this->brand_id);
+                })
                 ->paginate($this->limit)
         ]);
     }
@@ -40,6 +49,12 @@ class ProductList extends Component
     public function categoryChanged($category_id)
     {
         $this->category_id = $category_id;
+        $this->resetPage();
+    }
+
+    public function brandChanged($brand_id) // Method baru untuk brand
+    {
+        $this->brand_id = $brand_id;
         $this->resetPage();
     }
 
@@ -52,31 +67,24 @@ class ProductList extends Component
     public function selectProduct(int $id): void
     {
         $p = Product::findOrFail($id);
-
         $payload = [
-            'id'               => $p->id,
-            'product_name'     => (string) $p->product_name,
-            'product_code'     => (string) $p->product_code,
-            'product_price'    => (int) $p->product_price,         // harga jual
-            'product_cost'     => (int) ($p->product_cost ?? 0),    // HPP
+            'id' => $p->id,
+            'product_name' => (string) $p->product_name,
+            'product_code' => (string) $p->product_code,
+            'product_price' => (int) $p->product_price,
+            'product_cost' => (int) ($p->product_cost ?? 0),
             'product_order_tax' => (int) ($p->product_order_tax ?? 0),
-            'product_tax_type' => $p->product_tax_type ?? null,     // 'inclusive' / 'exclusive' / null
+            'product_tax_type' => $p->product_tax_type ?? null,
             'product_quantity' => (int) ($p->product_quantity ?? 0),
-            'source_type'      => 'new',
+            'source_type' => 'new',
         ];
 
-        // HANYA dispatch event ke Checkout.
-        // Notifikasi sukses/duplikat akan ditangani eksklusif oleh Checkout::productSelected()
         $this->dispatch('productSelected', $payload)
-     ->to(\App\Livewire\Pos\Checkout::class);
+            ->to(\App\Livewire\Pos\Checkout::class);
     }
 
-
-
-    // === Tambahkan/replace method di bawah ini! ===
     public function addToCart($productId): void
     {
-        // Hindari duplikasi logic: cukup arahkan ke selectProduct()
         $this->selectProduct((int) $productId);
     }
 }

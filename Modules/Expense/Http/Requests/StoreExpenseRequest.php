@@ -16,7 +16,7 @@ class StoreExpenseRequest extends FormRequest
             'details'        => ['required','string','max:255'],
             'amount'         => ['required','integer','min:0'],
             'payment_method' => ['required','in:Tunai,Transfer'],
-            'bank_name'      => ['nullable','string','max:100'],
+            'bank_name' => 'required_if:payment_method,Transfer|nullable|string|max:100',
             'attachment'     => ['nullable','file','mimes:jpg,jpeg,png,pdf','max:2048'],
         ];
     }

@@ -19,20 +19,61 @@ class ExpenseController extends Controller
      */
     public function index(Request $request)
     {
-        abort_if(Gate::denies('access_expenses'), 403);
+        $query = Expense::with('category');
 
-        $q = Expense::with(['category', 'user'])
-            ->when($request->filled('from'), fn ($qq) => $qq->whereDate('date', '>=', $request->from))
-            ->when($request->filled('to'),   fn ($qq) => $qq->whereDate('date', '<=', $request->to))
-            ->when($request->filled('category_id'), fn ($qq) => $qq->where('category_id', $request->category_id))
-            ->latest('date');
+        // ========== Handle Quick Filters ==========
+        $from = null;
+        $to = null;
 
-        // Ambil data untuk tabel (pagination) + total ringkasan
-        $expenses   = $q->paginate(15)->withQueryString();
+        switch ($request->get('quick_filter')) {
+            case 'yesterday':
+                $from = $to = now()->subDay()->toDateString();
+                break;
+            case 'this_week':
+                $from = now()->startOfWeek()->toDateString();
+                $to = now()->toDateString();
+                break;
+            case 'this_month':
+                $from = now()->startOfMonth()->toDateString();
+                $to = now()->toDateString();
+                break;
+            case 'last_month':
+                $from = now()->subMonth()->startOfMonth()->toDateString();
+                $to = now()->subMonth()->endOfMonth()->toDateString();
+                break;
+            case 'all':
+                // No date filter
+                break;
+            default:
+                // Default: Hari ini (atau custom range dari request)
+                $from = $request->filled('from') ? $request->from : now()->toDateString();
+                $to = $request->filled('to') ? $request->to : now()->toDateString();
+        }
+
+        // Apply filters
+        if ($from && $request->get('quick_filter') !== 'all') {
+            $query->whereDate('date', '>=', $from);
+        }
+
+        if ($to && $request->get('quick_filter') !== 'all') {
+            $query->whereDate('date', '<=', $to);
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Sort & paginate
+        $query->latest('date')->latest('id');
+        $expenses = $query->paginate(20)->withQueryString();
+
+        // Calculate total
+        $total = (clone $query)->sum('amount');
+
+        // Categories
         $categories = ExpenseCategory::orderBy('category_name')->get();
-        $total      = (clone $q)->sum('amount');
 
-        return view('expense::expenses.index', compact('expenses', 'categories', 'total'));
+        return view('expense::expenses.index', compact('expenses', 'categories', 'total', 'from', 'to'));
     }
 
     /**
@@ -60,14 +101,14 @@ class ExpenseController extends Controller
         $date = Carbon::parse($request->date);
 
         $expense = Expense::create([
-            'category_id'    => $request->category_id,
-            'date'           => $date,
-            'reference'      => Expense::nextReference($date),
-            'details'        => $request->details,
-            'amount'         => (int) $request->amount,
-            'user_id'        => auth()->id(),
+            'category_id' => $request->category_id,
+            'date' => $date,
+            'reference' => Expense::nextReference($date),
+            'details' => $request->details,
+            'amount' => (int) $request->amount,
+            'user_id' => auth()->id(),
             'payment_method' => $request->payment_method, // contoh: 'Tunai' | 'Transfer'
-            'bank_name'      => $request->payment_method === 'Transfer' ? $request->bank_name : null,
+            'bank_name' => $request->payment_method === 'Transfer' ? $request->bank_name : null,
         ]);
 
         if ($request->hasFile('attachment')) {
@@ -106,12 +147,12 @@ class ExpenseController extends Controller
         $date = Carbon::parse($request->date);
 
         $expense->update([
-            'category_id'    => $request->category_id,
-            'date'           => $date,
-            'details'        => $request->details,
-            'amount'         => (int) $request->amount,
+            'category_id' => $request->category_id,
+            'date' => $date,
+            'details' => $request->details,
+            'amount' => (int) $request->amount,
             'payment_method' => $request->payment_method,
-            'bank_name'      => $request->payment_method === 'Transfer' ? $request->bank_name : null,
+            'bank_name' => $request->payment_method === 'Transfer' ? $request->bank_name : null,
         ]);
 
         if ($request->hasFile('attachment')) {

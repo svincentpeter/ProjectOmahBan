@@ -22,6 +22,7 @@
                     <button class="btn btn-primary">Update Produk <i class="bi bi-check"></i></button>
                 </div>
             </div>
+            
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
@@ -29,13 +30,13 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="product_name">Nama Barang <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="product_name" required value="{{ $product->product_name }}">
+                                    <input type="text" class="form-control" name="product_name" required value="{{ old('product_name', $product->product_name) }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="product_code">Kode Barang <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="product_code" required value="{{ $product->product_code }}">
+                                    <input type="text" class="form-control" name="product_code" required value="{{ old('product_code', $product->product_code) }}">
                                 </div>
                             </div>
                         </div>
@@ -46,7 +47,9 @@
                                     <label for="category_id">Kategori <span class="text-danger">*</span></label>
                                     <select class="form-control" name="category_id" id="category_id" required>
                                         @foreach($categories as $category)
-                                            <option value="{{ $category->id }}" {{ $product->category_id == $category->id ? 'selected' : '' }}>{{ $category->category_name }}</option>
+                                            <option value="{{ $category->id }}" {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
+                                                {{ $category->category_name }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -57,7 +60,7 @@
                                     <select class="form-control" name="brand_id" id="brand_id">
                                         <option value="">Tanpa Merek</option>
                                         @foreach($brands as $brand)
-                                            <option value="{{ $brand->id }}" {{ $product->brand_id == $brand->id ? 'selected' : '' }}>
+                                            <option value="{{ $brand->id }}" {{ old('brand_id', $product->brand_id) == $brand->id ? 'selected' : '' }}>
                                                 {{ $brand->name }}
                                             </option>
                                         @endforeach
@@ -70,19 +73,19 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="product_size">Ukuran</label>
-                                    <input type="text" class="form-control" name="product_size" placeholder="Contoh: 235/75 R15" value="{{ $product->product_size }}">
+                                    <input type="text" class="form-control" name="product_size" placeholder="Contoh: 235/75 R15" value="{{ old('product_size', $product->product_size) }}">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="ring">Ring</label>
-                                    <input type="text" class="form-control" name="ring" placeholder="Contoh: 15" value="{{ $product->ring }}">
+                                    <input type="text" class="form-control" name="ring" placeholder="Contoh: 15" value="{{ old('ring', $product->ring) }}">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="product_year">Tahun Produksi</label>
-                                    <input type="number" class="form-control" name="product_year" placeholder="Contoh: 2023" value="{{ $product->product_year }}">
+                                    <input type="number" class="form-control" name="product_year" placeholder="Contoh: {{ date('Y') }}" value="{{ old('product_year', $product->product_year) }}">
                                 </div>
                             </div>
                         </div>
@@ -91,13 +94,13 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="product_cost">Modal <span class="text-danger">*</span></label>
-                                    <input id="product_cost" type="text" class="form-control" name="product_cost" required value="{{ $product->product_cost }}">
+                                    <input id="product_cost" type="text" class="form-control" name="product_cost" required value="{{ old('product_cost', $product->product_cost) }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="product_price">Harga Jual <span class="text-danger">*</span></label>
-                                    <input id="product_price" type="text" class="form-control" name="product_price" required value="{{ $product->product_price }}">
+                                    <input id="product_price" type="text" class="form-control" name="product_price" required value="{{ old('product_price', $product->product_price) }}">
                                 </div>
                             </div>
                         </div>
@@ -106,7 +109,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="stok_awal">Stok Awal <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" name="stok_awal" required value="{{ $product->stok_awal ?? 0 }}" min="0">
+                                    <input type="number" class="form-control" name="stok_awal" required value="{{ old('stok_awal', $product->stok_awal ?? 0) }}" min="0">
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -118,7 +121,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="product_stock_alert">Stok Minimum <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" name="product_stock_alert" required value="{{ $product->product_stock_alert }}" min="0">
+                                    <input type="number" class="form-control" name="product_stock_alert" required value="{{ old('product_stock_alert', $product->product_stock_alert) }}" min="0">
                                 </div>
                             </div>
                         </div>
@@ -129,37 +132,31 @@
                                     <label for="product_unit">Unit Satuan <span class="text-danger">*</span></label>
                                     <select class="form-control" name="product_unit" id="product_unit" required>
                                         @foreach(\Modules\Setting\Entities\Unit::all() as $unit)
-                                        <option {{ $product->product_unit == $unit->short_name ? 'selected' : '' }} value="{{ $unit->short_name }}">{{ $unit->name . ' | ' . $unit->short_name }}</option>
+                                        <option {{ old('product_unit', $product->product_unit) == $unit->short_name ? 'selected' : '' }} value="{{ $unit->short_name }}">
+                                            {{ $unit->name }} | {{ $unit->short_name }}
+                                        </option>
                                         @endforeach
                                     </select>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="product_note">Catatan</label>
-                            <textarea name="product_note" id="product_note" rows="4" class="form-control">{{ $product->product_note }}</textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label for="image">Gambar Produk <i class="bi bi-question-circle-fill text-info"
-                                data-toggle="tooltip" data-placement="top"
-                                title="Maks. 3 file, ukuran maks. 1MB, format: .jpg, .jpeg, .png"></i></label>
-                            <div class="dropzone d-flex flex-wrap align-items-center justify-content-center" id="document-dropzone">
-                                <div class="dz-message" data-dz-message>
-                                    <i class="bi bi-cloud-arrow-up"></i>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="product_note">Catatan</label>
+                                    <textarea name="product_note" id="product_note" rows="2" class="form-control">{{ old('product_note', $product->product_note) }}</textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {{-- IMAGE UPLOAD COMPONENT WITH EXISTING PRODUCT - SUPER SIMPLE! --}}
+            <x-image-upload 
+                :model="$product" 
+                max-files="3" 
+                label="Gambar Produk" 
+                max-size="2"
+            />
         </div>
     </form>
 </div>
@@ -170,70 +167,26 @@
 @endsection
 
 @push('page_scripts')
-<script>
-    var uploadedDocumentMap = {}
-    Dropzone.options.documentDropzone = {
-        url: '{{ route('dropzone.upload') }}',
-        maxFilesize: 1,
-        acceptedFiles: '.jpg, .jpeg, .png',
-        maxFiles: 3,
-        addRemoveLinks: true,
-        dictRemoveFile: "<i class='bi bi-x-circle text-danger'></i> hapus",
-        headers: {
-            'X-CSRF-TOKEN': "{{ csrf_token() }}"
-        },
-        success: function(file, response) {
-            $('form').append('<input type="hidden" name="document[]" value="' + response.name + '">');
-            uploadedDocumentMap[file.name] = response.name;
-        },
-        removedfile: function(file) {
-            file.previewElement.remove();
-            var name = '';
-            if (typeof file.file_name !== 'undefined') {
-                name = file.file_name;
-            } else {
-                name = uploadedDocumentMap[file.name];
-            }
-            $('form').find('input[name="document[]"][value="' + name + '"]').remove();
-        },
-        init: function() {
-            @if(isset($product) && $product->getMedia('images'))
-            var files = {!! json_encode($product->getMedia('images')) !!};
-            for (var i in files) {
-                var file = files[i];
-                this.options.addedfile.call(this, file);
-                this.options.thumbnail.call(this, file, file.original_url);
-                file.previewElement.classList.add('dz-complete');
-                $('form').append('<input type="hidden" name="document[]" value="' + file.file_name + '">');
-            }
-            @endif
-        }
-    }
-</script>
-
 <script src="{{ asset('js/jquery-mask-money.js') }}"></script>
 <script>
-     $(document).ready(function() {
-        $('#product_cost').maskMoney({
-            prefix: '{{ settings()->currency->symbol }}',
-            thousands: '{{ settings()->currency->thousand_separator }}',
-            decimal: '{{ settings()->currency->decimal_separator }}',
-        });
-        $('#product_price').maskMoney({
+    $(document).ready(function() {
+        // Mask money
+        $('#product_cost, #product_price').maskMoney({
             prefix: '{{ settings()->currency->symbol }}',
             thousands: '{{ settings()->currency->thousand_separator }}',
             decimal: '{{ settings()->currency->decimal_separator }}',
         });
 
-        $('#product_cost').maskMoney('mask');
-        $('#product_price').maskMoney('mask');
+        $('#product_cost, #product_price').maskMoney('mask');
 
+        // Unmask before submit
         $('#product-form').submit(function() {
-            var product_cost = $('#product_cost').maskMoney('unmasked')[0];
-            var product_price = $('#product_price').maskMoney('unmasked')[0];
-            $('#product_cost').val(product_cost);
-            $('#product_price').val(product_price);
+            $('#product_cost').val($('#product_cost').maskMoney('unmasked')[0]);
+            $('#product_price').val($('#product_price').maskMoney('unmasked')[0]);
         });
+        
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
     });
 </script>
 @endpush

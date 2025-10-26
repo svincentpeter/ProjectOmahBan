@@ -1,195 +1,505 @@
 @extends('layouts.app')
 
-@section('title', 'Report Ringkas (Per Kasir)')
+@section('title', 'Laporan Kinerja Kasir')
+
+@section('breadcrumb')
+    <ol class="breadcrumb border-0 m-0">
+        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+        <li class="breadcrumb-item active">Laporan Tiap Kasir</li>
+    </ol>
+@endsection
 
 @section('content')
-@php
-  // fallback aman
-  $from     = $from     ?? request('from', now()->startOfMonth()->toDateString());
-  $to       = $to       ?? request('to', now()->toDateString());
-  $userId   = $userId   ?? request('user_id');
-  $onlyPaid = isset($onlyPaid) ? $onlyPaid : (bool) request('only_paid', 1);
-  /** @var \Illuminate\Support\Collection $rows */
-  $rows     = $rows     ?? collect();
-  $cashiers = $cashiers ?? collect();
+    @php
+        // Fallback aman
+        $from = $from ?? request('from', now()->startOfMonth()->toDateString());
+        $to = $to ?? request('to', now()->toDateString());
+        $userId = $userId ?? request('user_id');
+        $onlyPaid = isset($onlyPaid) ? $onlyPaid : (bool) request('only_paid', 1);
+        $rows = $rows ?? collect();
+        $cashiers = $cashiers ?? collect();
 
-  // agregat
-  $totTrx    = (int) $rows->sum('trx_count');
-  $totOmset  = (int) $rows->sum('omset');
-  $totHpp    = (int) $rows->sum('total_hpp');
-  $totProfit = (int) $rows->sum('total_profit');
-  $npMargin  = $totOmset > 0 ? round($totProfit / max($totOmset,1) * 100, 1) : 0;
-@endphp
+        // Agregat
+        $totTrx = (int) $rows->sum('trx_count');
+        $totOmset = (int) $rows->sum('omset');
+        $totHpp = (int) $rows->sum('total_hpp');
+        $totProfit = (int) $rows->sum('total_profit');
+        $npMargin = $totOmset > 0 ? round(($totProfit / max($totOmset, 1)) * 100, 1) : 0;
+    @endphp
 
-{{-- ===== Filter ===== --}}
-<div class="card border-0 shadow-sm mb-3">
-  <div class="card-body">
-    <form method="GET" action="{{ route('ringkas-report.cashier') }}" class="row g-2 align-items-end">
-      <div class="col-12 col-md-auto">
-        <label class="form-label mb-1">Tanggal Awal</label>
-        <input type="date" name="from" value="{{ $from }}" class="form-control">
-      </div>
-      <div class="col-12 col-md-auto">
-        <label class="form-label mb-1">Tanggal Akhir</label>
-        <input type="date" name="to" value="{{ $to }}" class="form-control">
-      </div>
-        
-         <div class="col-auto">
-            <label class="form-label mb-1">Kasir</label>
-                <select name="user_id" class="form-control">
-                    <option value="">— Semua Kasir —</option>
-                    @foreach(($cashiers ?? collect()) as $c)
-  <option value="{{ $c->id }}" {{ (string)$c->id === (string)($userId ?? '') ? 'selected' : '' }}>
-    {{ $c->name }}
-  </option>
-@endforeach
-                </select>
+    <div class="container-fluid">
+        <div class="animated fadeIn">
+            {{-- Filter Card --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1 font-weight-bold">
+                                <i class="cil-filter mr-2 text-primary"></i>
+                                Filter Laporan
+                            </h5>
+                            <small class="text-muted">Pilih periode dan kasir untuk analisis kinerja</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <form method="GET" action="{{ route('ringkas-report.cashier') }}" class="row align-items-end">
+                        <div class="col-lg-2 col-md-6 mb-3">
+                            <label for="from" class="form-label font-weight-semibold">
+                                <i class="cil-calendar mr-1 text-muted"></i> Dari Tanggal
+                            </label>
+                            <input type="date" name="from" id="from" value="{{ $from }}"
+                                class="form-control">
+                        </div>
+
+                        <div class="col-lg-2 col-md-6 mb-3">
+                            <label for="to" class="form-label font-weight-semibold">
+                                <i class="cil-calendar mr-1 text-muted"></i> Sampai Tanggal
+                            </label>
+                            <input type="date" name="to" id="to" value="{{ $to }}"
+                                class="form-control">
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <label for="user_id" class="form-label font-weight-semibold">
+                                <i class="cil-user mr-1 text-muted"></i> Pilih Kasir
+                            </label>
+                            <select name="user_id" id="user_id" class="form-control">
+                                <option value="">— Semua Kasir —</option>
+                                @foreach ($cashiers as $c)
+                                    <option value="{{ $c->id }}"
+                                        {{ (string) $c->id === (string) $userId ? 'selected' : '' }}>
+                                        {{ $c->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2 col-md-6 mb-3">
+                            <label class="form-label font-weight-semibold d-block">
+                                <i class="cil-options mr-1 text-muted"></i> Filter Status
+                            </label>
+                            <div class="custom-control custom-checkbox mt-2">
+                                <input class="custom-control-input" type="checkbox" name="only_paid" id="only_paid"
+                                    value="1" {{ $onlyPaid ? 'checked' : '' }}>
+                                <label class="custom-control-label" for="only_paid">
+                                    Hanya Lunas
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-12 mb-3">
+                            <div class="btn-group w-100" role="group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="cil-filter mr-1"></i> Terapkan
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
+                                    <i class="cil-print mr-1"></i> Cetak
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-      <div class="col-12 col-md-auto">
-        <div class="form-check mt-4">
-          <input class="form-check-input" type="checkbox" name="only_paid" id="only_paid" value="1"
-                 {{ $onlyPaid ? 'checked' : '' }}>
-          <label class="form-check-label" for="only_paid">Hanya Lunas</label>
+
+            {{-- Report Header --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1 font-weight-bold">Laporan Kinerja Kasir</h4>
+                            <p class="text-muted mb-0">
+                                <i class="cil-calendar mr-1"></i>
+                                Periode: {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }}
+                                – {{ \Carbon\Carbon::parse($to)->translatedFormat('d M Y') }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <small class="text-muted d-block">Generated at</small>
+                            <strong>{{ now()->translatedFormat('d M Y, H:i') }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- KPI Cards --}}
+            <div class="row mb-4">
+                {{-- Total Transaksi --}}
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card stats-card-blue">
+                        <div class="stats-icon">
+                            <i class="cil-user"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-label">Total Transaksi</div>
+                            <div class="stats-value">{{ number_format($totTrx, 0, ',', '.') }}</div>
+                            <div class="stats-sub">Semua kasir</div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Total Omset --}}
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card stats-card-indigo">
+                        <div class="stats-icon">
+                            <i class="cil-wallet"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-label">Total Omset</div>
+                            <div class="stats-value">{{ format_currency($totOmset) }}</div>
+                            <div class="stats-sub">Akumulasi penjualan</div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Total HPP --}}
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card stats-card-warning">
+                        <div class="stats-icon">
+                            <i class="cil-basket"></i>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-label">Total HPP</div>
+                            <div class="stats-value text-warning">({{ format_currency($totHpp) }})</div>
+                            <div class="stats-sub">Harga pokok terjual</div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Total Profit --}}
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stats-card stats-card-success">
+                        <div class="stats-icon">
+                            <i class="cil-thumb-up"></i>
+                        </div>
+                        <div class="stats-content w-100">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                                <div class="stats-label mb-0">Total Profit</div>
+                                <span class="badge badge-light">Net Margin: {{ $npMargin }}%</span>
+                            </div>
+                            <div class="stats-value {{ $totProfit >= 0 ? 'text-success' : 'text-danger' }} mb-2">
+                                {{ format_currency($totProfit) }}
+                            </div>
+
+                            {{-- Progress Bar --}}
+                            <div class="progress" style="height: 8px; border-radius: 6px;">
+                                <div class="progress-bar {{ $totProfit >= 0 ? 'bg-success' : 'bg-danger' }}"
+                                    role="progressbar" style="width: {{ min(max(abs($npMargin), 0), 100) }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Performance Table --}}
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 font-weight-bold">
+                        <i class="cil-people mr-2 text-primary"></i>
+                        Kinerja Individual Kasir
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background-color: #f8f9fa;">
+                                <tr>
+                                    <th class="border-0" width="30%">Nama Kasir</th>
+                                    <th class="border-0 text-center" width="12%">Transaksi</th>
+                                    <th class="border-0 text-right" width="18%">Omset</th>
+                                    <th class="border-0 text-right" width="18%">HPP</th>
+                                    <th class="border-0 text-right" width="22%">Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($rows as $r)
+                                    @php
+                                        $p = (int) ($r->total_profit ?? 0);
+                                        $m = ($r->omset ?? 0) > 0 ? round(($p / max($r->omset, 1)) * 100, 1) : 0;
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="cashier-avatar mr-2">
+                                                    <i class="cil-user"></i>
+                                                </div>
+                                                <strong>{{ optional($r->user)->name ?? 'Unknown' }}</strong>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span
+                                                class="badge badge-light">{{ number_format($r->trx_count, 0, ',', '.') }}</span>
+                                        </td>
+                                        <td class="text-right font-weight-semibold">{{ format_currency($r->omset) }}</td>
+                                        <td class="text-right text-muted">{{ format_currency($r->total_hpp) }}</td>
+                                        <td class="text-right">
+                                            <div class="d-flex justify-content-end align-items-center">
+                                                <span
+                                                    class="font-weight-bold {{ $p >= 0 ? 'text-success' : 'text-danger' }} mr-2">
+                                                    {{ format_currency($p) }}
+                                                </span>
+                                                <span class="badge badge-light">{{ $m }}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5">
+                                            <div class="text-muted">
+                                                <i class="cil-inbox" style="font-size: 3rem; opacity: 0.2;"></i>
+                                                <p class="mb-0 mt-3">Tidak ada data transaksi</p>
+                                                <small>Coba ubah filter periode atau kasir</small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            @if (count($rows) > 0)
+                                <tfoot style="background-color: #f8f9fa;">
+                                    <tr>
+                                        <th>TOTAL</th>
+                                        <th class="text-center">{{ number_format($totTrx, 0, ',', '.') }}</th>
+                                        <th class="text-right">{{ format_currency($totOmset) }}</th>
+                                        <th class="text-right">{{ format_currency($totHpp) }}</th>
+                                        <th
+                                            class="text-right font-weight-bold {{ $totProfit >= 0 ? 'text-success' : 'text-danger' }}">
+                                            {{ format_currency($totProfit) }}
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col-12 col-md-auto ms-auto d-flex gap-2">
-        <button class="btn btn-primary">
-          <i class="bi bi-funnel"></i> Terapkan
-        </button>
-        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
-          <i class="bi bi-printer"></i> Cetak
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
-{{-- ===== KPI ===== --}}
-<div class="row g-3 align-items-stretch mb-3">
-  <div class="col-12 col-lg-3">
-    <div class="kpi-card h-100 kpi-blue">
-      <div class="kpi-icon"><i class="bi bi-people"></i></div>
-      <div class="kpi-body">
-        <div class="kpi-title">Total Transaksi</div>
-        <div class="kpi-value">{{ number_format($totTrx, 0, ',', '.') }}</div>
-        <div class="kpi-sub">Periode: {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }} - {{ \Carbon\Carbon::parse($to)->translatedFormat('d M Y') }}</div>
-      </div>
     </div>
-  </div>
-  <div class="col-12 col-lg-3">
-    <div class="kpi-card h-100 kpi-indigo">
-      <div class="kpi-icon"><i class="bi bi-cash-stack"></i></div>
-      <div class="kpi-body">
-        <div class="kpi-title">Total Omset</div>
-        <div class="kpi-value">{{ format_currency($totOmset) }}</div>
-        <div class="kpi-sub">Akumulasi semua kasir</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-lg-3">
-    <div class="kpi-card h-100 kpi-amber">
-      <div class="kpi-icon"><i class="bi bi-basket3"></i></div>
-      <div class="kpi-body">
-        <div class="kpi-title">Total HPP</div>
-        <div class="kpi-value">({{ format_currency($totHpp) }})</div>
-        <div class="kpi-sub">Harga pokok terjual</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-lg-3">
-    <div class="kpi-card h-100 kpi-green">
-      <div class="kpi-icon"><i class="bi bi-coin"></i></div>
-      <div class="kpi-body w-100">
-        <div class="d-flex justify-content-between flex-wrap">
-          <div class="kpi-title">Total Profit</div>
-          <span class="badge bg-light text-dark">Net Margin: {{ $npMargin }}%</span>
-        </div>
-        <div class="kpi-value {{ $totProfit >= 0 ? 'text-success' : 'text-danger' }}">
-          {{ format_currency($totProfit) }}
-        </div>
-        <div class="progress mt-2 kpi-progress">
-          <div class="progress-bar {{ $totProfit >= 0 ? 'bg-success' : 'bg-danger' }}"
-               style="width: {{ min(max(abs($npMargin),0),100) }}%"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-{{-- ===== Tabel ===== --}}
-<div class="card border-0 shadow-sm">
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-sm align-middle mb-0">
-        <thead class="table-light sticky-top">
-          <tr>
-            <th style="width:35%">Kasir</th>
-            <th class="text-end" style="width:10%">Transaksi</th>
-            <th class="text-end" style="width:18%">Omset</th>
-            <th class="text-end" style="width:18%">HPP</th>
-            <th class="text-end" style="width:19%">Profit</th>
-          </tr>
-        </thead>
-        <tbody>
-        @forelse($rows as $r)
-          @php
-            $p = (int) ($r->total_profit ?? 0);
-            $m = ($r->omset ?? 0) > 0 ? round($p / max($r->omset,1) * 100, 1) : 0;
-          @endphp
-          <tr>
-            <td>{{ optional($r->user)->name ?? '—' }}</td>
-            <td class="text-end">{{ number_format($r->trx_count,0,',','.') }}</td>
-            <td class="text-end">{{ format_currency($r->omset) }}</td>
-            <td class="text-end">{{ format_currency($r->total_hpp) }}</td>
-            <td class="text-end">
-              <span class="fw-semibold {{ $p >= 0 ? 'text-success' : 'text-danger' }}">
-                {{ format_currency($p) }}
-              </span>
-              <span class="ms-1 badge bg-light text-dark">{{ $m }}%</span>
-            </td>
-          </tr>
-        @empty
-          <tr><td colspan="5" class="text-center text-muted py-3">Tidak ada data.</td></tr>
-        @endforelse
-        </tbody>
-        <tfoot>
-          <tr class="table-light">
-            <th class="text-end">TOTAL</th>
-            <th class="text-end">{{ number_format($totTrx,0,',','.') }}</th>
-            <th class="text-end">{{ format_currency($totOmset) }}</th>
-            <th class="text-end">{{ format_currency($totHpp) }}</th>
-            <th class="text-end fw-bold {{ $totProfit >= 0 ? 'text-success' : 'text-danger' }}">{{ format_currency($totProfit) }}</th>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  </div>
-</div>
-
-{{-- ===== Styles kecil ===== --}}
-<style>
-  .kpi-card{display:flex;gap:.9rem;padding:1rem 1.1rem;border-radius:14px;border:1px solid rgba(0,0,0,.05);
-    background:linear-gradient(180deg,#fff,#fbfbfc);box-shadow:0 6px 16px rgba(0,0,0,.06);min-height:120px}
-  .kpi-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:12px;background:rgba(0,0,0,.06);
-    color:#374151;font-size:1.25rem;flex:0 0 48px}
-  .kpi-body .kpi-title{font-size:.9rem;color:#6b7280;margin-bottom:.2rem}
-  .kpi-body .kpi-value{font-size:1.35rem;font-weight:800;letter-spacing:.2px;line-height:1.15}
-  .kpi-body .kpi-sub{font-size:.8rem;color:#6b7280}
-  .kpi-progress{height:7px;border-radius:6px;overflow:hidden}
-
-  .kpi-blue   .kpi-icon{background:rgba(59,130,246,.14);  color:#2563eb}
-  .kpi-indigo .kpi-icon{background:rgba(99,102,241,.15);  color:#4f46e5}
-  .kpi-amber  .kpi-icon{background:rgba(251,191,36,.22); color:#b45309}
-  .kpi-green  .kpi-icon{background:rgba(34,197,94,.14);  color:#16a34a}
-
-  .table{font-size:.92rem}
-  .table td,.table th{padding-top:.5rem;padding-bottom:.5rem}
-  .sticky-top{top:0}
-  @media print{
-    .card,.kpi-card{box-shadow:none !important}
-    .btn, form, nav, .breadcrumb{display:none !important}
-    body, .table{font-size:11px}
-    @page{margin:10mm}
-  }
-</style>
 @endsection
+
+@push('page_styles')
+    <style>
+        /* ========== Animations ========== */
+        .animated.fadeIn {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== Card Shadow ========== */
+        .shadow-sm {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        /* ========== Stats Cards ========== */
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            height: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .stats-card-blue {
+            border-left-color: #3b82f6;
+        }
+
+        .stats-card-indigo {
+            border-left-color: #6366f1;
+        }
+
+        .stats-card-warning {
+            border-left-color: #f59e0b;
+        }
+
+        .stats-card-success {
+            border-left-color: #22c55e;
+        }
+
+        .stats-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .stats-card-blue .stats-icon {
+            background: rgba(59, 130, 246, 0.14);
+            color: #3b82f6;
+        }
+
+        .stats-card-indigo .stats-icon {
+            background: rgba(99, 102, 241, 0.15);
+            color: #6366f1;
+        }
+
+        .stats-card-warning .stats-icon {
+            background: rgba(245, 158, 11, 0.22);
+            color: #f59e0b;
+        }
+
+        .stats-card-success .stats-icon {
+            background: rgba(34, 197, 94, 0.14);
+            color: #22c55e;
+        }
+
+        .stats-content {
+            flex: 1;
+        }
+
+        .stats-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .stats-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1f2937;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .stats-sub {
+            font-size: 0.8125rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* ========== Cashier Avatar ========== */
+        .cashier-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            box-shadow: 0 2px 6px rgba(72, 52, 223, 0.2);
+            flex-shrink: 0;
+        }
+
+        /* ========== Table Styling ========== */
+        .table thead th {
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: #4f5d73;
+            padding: 14px 12px;
+        }
+
+        .table tbody td,
+        .table tbody th {
+            padding: 12px;
+            vertical-align: middle;
+            font-size: 0.875rem;
+        }
+
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(72, 52, 223, 0.03) !important;
+        }
+
+        /* ========== Badge Styling ========== */
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            font-weight: 600;
+        }
+
+        /* ========== Custom Checkbox ========== */
+        .custom-control-label {
+            font-weight: 500;
+        }
+
+        /* ========== Responsive ========== */
+        @media (max-width: 992px) {
+            .stats-value {
+                font-size: 1.25rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .table thead th,
+            .table tbody td {
+                padding: 10px 8px;
+                font-size: 0.8125rem;
+            }
+
+            .cashier-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* ========== Print Styles ========== */
+        @media print {
+
+            .card,
+            .card-body,
+            .stats-card {
+                box-shadow: none !important;
+                page-break-inside: avoid;
+            }
+
+            .btn,
+            form,
+            nav,
+            .breadcrumb,
+            .btn-group {
+                display: none !important;
+            }
+
+            body,
+            .table {
+                font-size: 11pt;
+            }
+
+            @page {
+                margin: 15mm;
+            }
+
+            .stats-card {
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+@endpush

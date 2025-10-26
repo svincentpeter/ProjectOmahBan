@@ -86,77 +86,109 @@
                     <strong>Gambar Produk</strong>
                 </div>
                 <div class="card-body text-center">
-                    @if($product->hasMedia('images'))
+                    @php
+                        $media = $product->getMedia('images');
+                        $hasImage = $media->count() > 0;
+                    @endphp
+                    
+                    @if($hasImage)
+                        @php
+                            $firstMedia = $media->first();
+                            $imageUrl = $firstMedia->getFullUrl();
+                        @endphp
+                        
+                        {{-- Tampilkan gambar --}}
                         <img
-                            src="{{ $product->getFirstMediaUrl('images', 'thumb') }}"
-                            alt="Gambar Produk"
-                            class="img-fluid img-thumbnail"
+                            src="{{ $imageUrl }}"
+                            alt="Gambar {{ $product->product_name }}"
+                            class="img-fluid img-thumbnail mb-2"
+                            style="max-height: 300px; object-fit: contain;"
+                            onerror="this.src='{{ asset('images/fallback_product_image.png') }}'; this.onerror=null;"
                         >
+                        
+                        {{-- Info gambar --}}
+                        <div class="mt-2">
+                            <small class="text-muted d-block">
+                                <i class="bi bi-info-circle"></i> {{ $firstMedia->file_name }}
+                            </small>
+                            <small class="text-muted d-block">
+                                {{ number_format($firstMedia->size / 1024, 2) }} KB
+                            </small>
+                        </div>
+                        
+                        @if($media->count() > 1)
+                            <div class="mt-2">
+                                <span class="badge badge-info">{{ $media->count() }} Gambar</span>
+                            </div>
+                        @endif
                     @else
+                        {{-- Fallback image --}}
                         <img
                             src="{{ asset('images/fallback_product_image.png') }}"
-                            alt="Fallback Gambar Produk"
+                            alt="Tidak ada gambar"
                             class="img-fluid img-thumbnail"
+                            style="max-height: 300px; object-fit: contain; opacity: 0.5;"
                         >
+                        <p class="text-muted mt-2">
+                            <small>Belum ada gambar untuk produk ini</small>
+                        </p>
                     @endif
                 </div>
             </div>
         </div>
-    </div> {{-- end row --}}
+    </div>
 
     {{-- Riwayat Penyesuaian Stok --}}
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <strong>Riwayat Penyesuaian Stok</strong>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <strong>Riwayat Penyesuaian Stok</strong>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Referensi</th>
+                                <th class="text-center">Jumlah</th>
+                                <th class="text-center">Tipe</th>
+                                <th>Catatan Penyesuaian</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @forelse($product->adjustedProducts as $adjusted)
                                 <tr>
-                                    <th>Tanggal</th>
-                                    <th>Referensi</th>
-                                    <th class="text-center">Jumlah</th>
-                                    <th class="text-center">Tipe</th>
-                                    <th>Catatan Penyesuaian</th>
+                                    <td>{{ \Carbon\Carbon::parse($adjusted->adjustment->date)->format('d M Y') }}</td>
+                                    <td>
+                                        <a href="{{ route('adjustments.show', $adjusted->adjustment->id) }}">
+                                            {{ $adjusted->adjustment->reference }}
+                                        </a>
+                                    </td>
+                                    <td class="text-center">{{ $adjusted->quantity }}</td>
+                                    <td class="text-center">
+                                        @if(strtolower($adjusted->type) == 'add')
+                                            <span class="badge badge-success">Penambahan</span>
+                                        @else
+                                            <span class="badge badge-danger">Pengurangan</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $adjusted->adjustment->note ?? '-' }}</td>
                                 </tr>
-                                </thead>
-                                <tbody>
-                                @forelse($product->adjustedProducts as $adjusted)
-                                    <tr>
-                                        <td>{{ \Carbon\Carbon::parse($adjusted->adjustment->date)->format('d M Y') }}</td>
-                                        <td>
-                                            <a href="{{ route('adjustments.show', $adjusted->adjustment->id) }}">
-                                                {{ $adjusted->adjustment->reference }}
-                                            </a>
-                                        </td>
-                                        <td class="text-center">{{ $adjusted->quantity }}</td>
-                                        <td class="text-center">
-                                            {{-- ===== KODE PERBAIKAN DIMULAI DI SINI ===== --}}
-                                            @if(strtolower($adjusted->type) == 'add')
-    <span class="badge badge-success">Penambahan</span>
-@else
-    <span class="badge badge-danger">Pengurangan</span>
-@endif
-                                            {{-- ===== KODE PERBAIKAN SELESAI DI SINI ===== --}}
-                                        </td>
-                                        <td>{{ $adjusted->adjustment->note ?? '-' }}</td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">
-                                            Belum ada riwayat penyesuaian stok untuk produk ini.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                                </tbody>
-                            </table>
-                        </div>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        Belum ada riwayat penyesuaian stok untuk produk ini.
+                                    </td>
+                                </tr>
+                            @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 @endsection

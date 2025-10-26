@@ -3,27 +3,28 @@
 namespace Modules\Product\Http\Controllers;
 
 use Modules\Product\DataTables\ProductDataTable;
+use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Modules\Product\Entities\Product;
 use Modules\Product\Entities\Category;
-use Modules\Product\Entities\Brand;
-// Hapus 'ProductCategory' karena duplikat dengan 'Category'
+use Modules\Product\Entities\Product;
 use Modules\Product\Http\Requests\StoreProductRequest;
 use Modules\Product\Http\Requests\UpdateProductRequest;
-use Modules\Upload\Entities\Upload;
+use Modules\Product\Entities\Brand;
 
 class ProductController extends Controller
 {
-    public function index(ProductDataTable $dataTable) {
+    public function index(ProductDataTable $dataTable)
+    {
         abort_if(Gate::denies('access_products'), 403);
 
         return $dataTable->render('product::products.index');
     }
 
-    public function create() {
+    public function create()
+    {
         abort_if(Gate::denies('create_products'), 403);
 
         $categories = Category::all();
@@ -37,25 +38,41 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
-        // Perintah $request->validated() secara otomatis menjalankan semua aturan
-        // di file `StoreProductRequest.php`. Jika valid, ia akan mengembalikan
-        // array berisi semua data yang sudah bersih dan aman.
-        // Anda tidak perlu lagi menulis validasi manual di sini.
         $validatedData = $request->validated();
 
-        // Logika bisnis: Saat produk baru dibuat, Stok Sisa (product_quantity)
-        // nilainya sama dengan Stok Awal yang diinput.
+        // Logika bisnis: Stok Sisa = Stok Awal saat produk baru dibuat
         $validatedData['product_quantity'] = $validatedData['stok_awal'];
 
-        // Karena semua nama kolom di form sudah sesuai dengan nama kolom di database,
-        // dan sudah kita daftarkan di $fillable pada model Product,
-        // kita bisa langsung memasukkan semua data tervalidasi sekaligus.
-        // Ini lebih singkat, aman, dan mudah dirawat.
         $product = Product::create($validatedData);
 
-        if ($request->has('document') && count($request->document) > 0) {
-            foreach ($request->document as $file) {
-                $product->addMedia(Storage::path('temp/dropzone/' . $file))->toMediaCollection('images');
+        // ===== PERBAIKAN UPLOAD GAMBAR =====
+        if ($request->has('document') && is_array($request->document) && count($request->document) > 0) {
+            foreach ($request->document as $filename) {
+                $filePath = storage_path('app/temp/dropzone/' . $filename);
+
+                // Cek apakah file benar-benar ada
+                if (file_exists($filePath)) {
+                    try {
+                        // addMedia dengan COPY bukan MOVE (preserveOriginal)
+                        $product
+                            ->addMedia($filePath)
+                            ->preservingOriginal() // Jangan move file, copy saja
+                            ->toMediaCollection('images');
+
+                        \Log::info('✅ Image uploaded: ' . $filename);
+
+                        // Hapus file temp SETELAH berhasil copy
+                        if (file_exists($filePath)) {
+                            @unlink($filePath);
+                            \Log::info('🗑️ Temp file deleted: ' . $filename);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('❌ Error uploading image: ' . $e->getMessage());
+                        \Log::error('File path: ' . $filePath);
+                    }
+                } else {
+                    \Log::warning('⚠️ File not found: ' . $filePath);
+                }
             }
         }
 
@@ -63,17 +80,15 @@ class ProductController extends Controller
         return redirect()->route('products.index');
     }
 
-     public function show(Product $product) {
+    public function show(Product $product)
+    {
         abort_if(Gate::denies('show_products'), 403);
-
-        // Eager load relasi: Ambil semua data 'adjustedProducts'
-        // dan untuk setiap item, ambil juga data 'adjustment' induknya (yang berisi note).
-        $product->load('adjustedProducts.adjustment');
 
         return view('product::products.show', compact('product'));
     }
 
-    public function edit(Product $product) {
+    public function edit(Product $product)
+    {
         abort_if(Gate::denies('edit_products'), 403);
 
         $categories = Category::all();
@@ -83,32 +98,48 @@ class ProductController extends Controller
     }
 
     /**
-     * Memperbarui data produk yang sudah ada.
+     * Update produk existing di database.
      */
     public function update(UpdateProductRequest $request, Product $product)
     {
-        // Sama seperti store(), method ini mengambil semua data yang sudah lolos
-        // validasi dari file `UpdateProductRequest.php`.
         $validatedData = $request->validated();
 
-        // Logika cerdas untuk update stok sisa:
-        // Jika admin mengubah nilai "Stok Awal", maka "Stok Sisa" harus ikut disesuaikan.
+        // Logika penyesuaian stok otomatis
         if (isset($validatedData['stok_awal'])) {
-            // 1. Hitung selisih antara stok awal yang baru dengan yang lama.
             $selisihStokAwal = $validatedData['stok_awal'] - $product->stok_awal;
-            
-            // 2. Tambahkan selisih tersebut ke stok sisa saat ini.
-            // Ini membuat stok tetap akurat meskipun stok awal diubah.
             $validatedData['product_quantity'] = $product->product_quantity + $selisihStokAwal;
         }
 
-        // Langsung update semua data yang tervalidasi.
         $product->update($validatedData);
 
-        if ($request->has('document') && count($request->document) > 0) {
+        // ===== PERBAIKAN UPLOAD GAMBAR =====
+        if ($request->has('document') && is_array($request->document) && count($request->document) > 0) {
+            // Hapus gambar lama terlebih dahulu
             $product->clearMediaCollection('images');
-            foreach ($request->document as $file) {
-                $product->addMedia(Storage::path('temp/dropzone/' . $file))->toMediaCollection('images');
+
+            foreach ($request->document as $filename) {
+                $filePath = storage_path('app/temp/dropzone/' . $filename);
+
+                // Cek apakah file ada
+                if (file_exists($filePath)) {
+                    try {
+                        // Upload dengan preservingOriginal untuk avoid move issues
+                        $product->addMedia($filePath)->preservingOriginal()->toMediaCollection('images');
+
+                        \Log::info('✅ Image uploaded: ' . $filename);
+
+                        // Hapus temp file setelah berhasil
+                        if (file_exists($filePath)) {
+                            @unlink($filePath);
+                            \Log::info('🗑️ Temp file deleted: ' . $filename);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('❌ Error uploading image: ' . $e->getMessage());
+                        \Log::error('File path: ' . $filePath);
+                    }
+                } else {
+                    \Log::warning('⚠️ File not found: ' . $filePath);
+                }
             }
         }
 
@@ -116,30 +147,70 @@ class ProductController extends Controller
         return redirect()->route('products.index');
     }
 
-    public function destroy(Product $product) {
+    public function destroy(Product $product)
+    {
         abort_if(Gate::denies('delete_products'), 403);
 
         $product->delete();
 
-        toast('Product Deleted!', 'warning');
+        toast('Produk Berhasil Dihapus!', 'warning');
+
         return redirect()->route('products.index');
     }
 
+    /**
+     * Upload image via Dropzone
+     */
     public function uploadImage(Request $request)
     {
         $request->validate([
-            'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            
-            $path = $file->storeAs('uploads/products', $filename, 'public');
 
-            return response()->json(['name' => $filename, 'path' => $path]);
+            // Generate unique filename
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+            // Path ke temp folder
+            $tempPath = storage_path('app/temp/dropzone');
+
+            // Buat folder jika belum ada
+            if (!file_exists($tempPath)) {
+                mkdir($tempPath, 0755, true);
+            }
+
+            // Move file ke temp folder
+            $file->move($tempPath, $filename);
+
+            \Log::info('📤 File uploaded to temp: ' . $filename);
+
+            return response()->json([
+                'name' => $filename,
+                'path' => 'temp/dropzone/' . $filename,
+                'size' => filesize($tempPath . '/' . $filename),
+            ]);
         }
 
         return response()->json(['error' => 'Upload failed.'], 400);
+    }
+
+    /**
+     * Delete image from temp folder
+     */
+    public function deleteImage(Request $request)
+    {
+        $filename = $request->input('filename');
+        $filePath = storage_path('app/temp/dropzone/' . $filename);
+
+        if (file_exists($filePath)) {
+            @unlink($filePath);
+            \Log::info('🗑️ Temp file deleted via AJAX: ' . $filename);
+            return response()->json(['success' => true, 'message' => 'File deleted']);
+        }
+
+        \Log::warning('⚠️ File not found for deletion: ' . $filePath);
+        return response()->json(['error' => 'File not found'], 404);
     }
 }

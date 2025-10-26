@@ -7,22 +7,34 @@ use Livewire\Component;
 class Filter extends Component
 {
     public $categories;
-    public $category;
-    public $showCount;
+    public $brands; // Tambahkan ini
+    public $category = '';
+    public $brand = ''; // Tambahkan ini
+    public $showCount = 9;
 
-    public function mount($categories) {
+    public function mount($categories, $brands) // Tambahkan parameter brands
+    {
         $this->categories = $categories;
+        $this->brands = $brands; // Inisialisasi brands
     }
 
-    public function render() {
+    public function render() 
+    {
         return view('livewire.pos.filter');
     }
 
-    public function updatedCategory() {
+    public function updatedCategory() 
+    {
         $this->dispatch('selectedCategory', $this->category);
     }
 
-    public function updatedShowCount() {
+    public function updatedBrand() // Method baru untuk brand
+    {
+        $this->dispatch('selectedBrand', $this->brand);
+    }
+
+    public function updatedShowCount() 
+    {
         $this->dispatch('showCount', $this->showCount);
     }
 }
