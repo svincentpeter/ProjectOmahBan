@@ -10,7 +10,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Product
     Route::resource('products', 'ProductController');
     Route::post('/products/upload', 'ProductController@uploadImage')->name('dropzone.upload');
-    
+
     // Product Category
     Route::resource('product-categories', 'CategoriesController')->except('create', 'show');
 
@@ -20,16 +20,19 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Rute CRUD untuk Produk Bekas
     Route::resource('products-second', 'ProductSecondController')->names([
-        'index'   => 'products_second.index',
-        'create'  => 'products_second.create',
-        'store'   => 'products_second.store',
-        'show'    => 'products_second.show',
-        'edit'    => 'products_second.edit',
-        'update'  => 'products_second.update',
+        'index' => 'products_second.index',
+        'create' => 'products_second.create',
+        'store' => 'products_second.store',
+        'show' => 'products_second.show',
+        'edit' => 'products_second.edit',
+        'update' => 'products_second.update',
         'destroy' => 'products_second.destroy',
     ]);
-    
+
     // Rute CRUD untuk Merek (dipisahkan menjadi pendaftaran sendiri)
     Route::resource('brands', 'BrandController');
 
+    Route::post('/products/upload', 'ProductController@uploadImage')->name('dropzone.upload');
+    Route::post('/products/delete-image', 'ProductController@deleteImage')->name('dropzone.delete');
+    
 });

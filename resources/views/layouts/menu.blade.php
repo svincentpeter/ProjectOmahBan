@@ -296,31 +296,7 @@
                 <i class="c-sidebar-nav-icon bi bi-cash-coin" style="line-height:1;"></i> Laporan Laba/Rugi
             </a>
         </li>
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ $isActive(['reports.payments.*','payments-report.*']) ? 'c-active' : '' }}" href="{{ $link(['reports.payments.index','payments-report.index']) }}">
-                <i class="c-sidebar-nav-icon bi bi-credit-card" style="line-height:1;"></i> Laporan Pembayaran
-            </a>
-        </li>
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ $isActive(['reports.sales.*','sales-report.*']) ? 'c-active' : '' }}" href="{{ $link(['reports.sales.index','sales-report.index']) }}">
-                <i class="c-sidebar-nav-icon bi bi-receipt" style="line-height:1;"></i> Laporan Penjualan
-            </a>
-        </li>
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ $isActive(['reports.purchases.*','purchases-report.*']) ? 'c-active' : '' }}" href="{{ $link(['reports.purchases.index','purchases-report.index']) }}">
-                <i class="c-sidebar-nav-icon bi bi-bag-check" style="line-height:1;"></i> Laporan Pembelian
-            </a>
-        </li>
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ $isActive(['reports.sales_return.*','sales-return-report.*']) ? 'c-active' : '' }}" href="{{ $link(['reports.sales_return.index','sales-return-report.index']) }}">
-                <i class="c-sidebar-nav-icon bi bi-arrow-90deg-left" style="line-height:1;"></i> Laporan Retur Penjualan
-            </a>
-        </li>
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ $isActive(['reports.purchases_return.*','purchases-return-report.*']) ? 'c-active' : '' }}" href="{{ $link(['reports.purchases_return.index','purchases-return-report.index']) }}">
-                <i class="c-sidebar-nav-icon bi bi-arrow-90deg-right" style="line-height:1;"></i> Laporan Retur Pembelian
-            </a>
-        </li>
+        
     </ul>
 </li>
 @endcan

@@ -5,69 +5,176 @@ namespace Modules\Adjustment\DataTables;
 use Modules\Adjustment\Entities\Adjustment;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
-use Yajra\DataTables\Html\Editor\Editor;
-use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
 
 class AdjustmentsDataTable extends DataTable
 {
-
-    public function dataTable($query) {
+    public function dataTable($query)
+    {
         return datatables()
             ->eloquent($query)
-            ->addColumn('action', function ($data) {
-                return view('adjustment::partials.actions', compact('data'));
-            });
+            ->addColumn('action', function ($adjustment) {
+                return view('adjustment::partials.actions', compact('adjustment'));
+            })
+            ->editColumn('date', function ($adjustment) {
+                return '<div class="text-center">'
+                    . '<span class="badge badge-light">' 
+                    . '<i class="bi bi-calendar3"></i> ' 
+                    . \Carbon\Carbon::parse($adjustment->date)->format('d M Y') 
+                    . '</span>'
+                    . '</div>';
+            })
+            ->editColumn('reference', function ($adjustment) {
+                return '<div class="text-center">'
+                    . '<strong class="text-primary">' . e($adjustment->reference) . '</strong>'
+                    . '</div>';
+            })
+            ->addColumn('products_count', function ($adjustment) {
+                $count = $adjustment->adjusted_products_count ?? 0;
+                $badgeClass = $count > 5 ? 'success' : ($count > 2 ? 'info' : 'secondary');
+                
+                return '<div class="text-center">'
+                    . '<span class="badge badge-' . $badgeClass . ' badge-pill">' 
+                    . '<i class="bi bi-box-seam"></i> ' . $count . ' Produk' 
+                    . '</span>'
+                    . '</div>';
+            })
+            ->addColumn('types_summary', function ($adjustment) {
+                $adjustedProducts = $adjustment->adjustedProducts;
+                $addCount = $adjustedProducts->where('type', 'add')->count();
+                $subCount = $adjustedProducts->where('type', 'sub')->count();
+                
+                $html = '<div class="text-center">';
+                
+                if ($addCount > 0) {
+                    $html .= '<span class="badge badge-success mr-1">';
+                    $html .= '<i class="bi bi-plus-circle"></i> ' . $addCount . ' Tambah';
+                    $html .= '</span>';
+                }
+                
+                if ($subCount > 0) {
+                    $html .= '<span class="badge badge-danger">';
+                    $html .= '<i class="bi bi-dash-circle"></i> ' . $subCount . ' Kurang';
+                    $html .= '</span>';
+                }
+                
+                $html .= '</div>';
+                
+                return $html ?: '<div class="text-center"><span class="text-muted font-italic">-</span></div>';
+            })
+            ->editColumn('note', function ($adjustment) {
+                if (empty($adjustment->note)) {
+                    return '<small class="text-muted font-italic">Tidak ada catatan</small>';
+                }
+                
+                $note = \Illuminate\Support\Str::limit($adjustment->note, 50);
+                return '<small class="text-dark">' . e($note) . '</small>';
+            })
+            ->rawColumns(['action', 'date', 'reference', 'products_count', 'types_summary', 'note']);
     }
 
-    public function query(Adjustment $model) {
-        return $model->newQuery()->withCount('adjustedProducts');
+    public function query(Adjustment $model)
+    {
+        return $model->newQuery()
+            ->withCount('adjustedProducts')
+            ->with(['adjustedProducts'])
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc');
     }
 
-    public function html() {
+    public function html()
+    {
         return $this->builder()
             ->setTableId('adjustments-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
-                                        'tr' .
-                                        <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->orderBy(4)
+            ->dom("<'row'<'col-sm-12 col-md-3'l><'col-sm-12 col-md-5'B><'col-sm-12 col-md-4'f>>" .
+                 "<'row'<'col-sm-12'tr>>" .
+                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>")
+            ->orderBy(0, 'desc')
+            ->parameters([
+                'responsive' => true,
+                'autoWidth' => false,
+                'processing' => true,
+                'language' => [
+                    'processing' => '<div class="spinner-border text-primary" role="status"><span class="sr-only">Memuat...</span></div>',
+                    'search' => '',
+                    'searchPlaceholder' => 'Cari referensi, catatan...',
+                    'lengthMenu' => 'Tampilkan _MENU_ data',
+                    'info' => 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                    'infoEmpty' => 'Tidak ada data',
+                    'infoFiltered' => '(disaring dari _MAX_ total data)',
+                    'zeroRecords' => 'Data tidak ditemukan',
+                    'emptyTable' => 'Belum ada data penyesuaian stok',
+                    'paginate' => [
+                        'first' => 'Pertama',
+                        'last' => 'Terakhir',
+                        'next' => 'Selanjutnya',
+                        'previous' => 'Sebelumnya'
+                    ]
+                ]
+            ])
             ->buttons(
                 Button::make('excel')
-                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
+                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel')
+                    ->className('btn btn-success btn-sm'),
                 Button::make('print')
-                    ->text('<i class="bi bi-printer-fill"></i> Print'),
+                    ->text('<i class="bi bi-printer-fill"></i> Print')
+                    ->className('btn btn-info btn-sm'),
                 Button::make('reset')
-                    ->text('<i class="bi bi-x-circle"></i> Reset'),
+                    ->text('<i class="bi bi-x-circle"></i> Reset')
+                    ->className('btn btn-secondary btn-sm'),
                 Button::make('reload')
-                    ->text('<i class="bi bi-arrow-repeat"></i> Reload')
+                    ->text('<i class="bi bi-arrow-repeat"></i> Muat Ulang')
+                    ->className('btn btn-warning btn-sm')
             );
     }
 
-    protected function getColumns() {
+    protected function getColumns()
+    {
         return [
             Column::make('date')
-                ->className('text-center align-middle'),
+                ->title('Tanggal')
+                ->width('15%')
+                ->className('align-middle'),
 
             Column::make('reference')
-                ->className('text-center align-middle'),
+                ->title('Referensi')
+                ->width('15%')
+                ->className('align-middle'),
 
-            Column::make('adjusted_products_count')
-                ->title('Products')
-                ->className('text-center align-middle'),
+            Column::computed('products_count')
+                ->title('Jumlah Produk')
+                ->width('15%')
+                ->searchable(false)
+                ->orderable(false)
+                ->className('align-middle'),
+
+            Column::computed('types_summary')
+                ->title('Tipe Penyesuaian')
+                ->width('20%')
+                ->searchable(false)
+                ->orderable(false)
+                ->className('align-middle'),
+
+            Column::make('note')
+                ->title('Catatan')
+                ->width('20%')
+                ->className('align-middle'),
 
             Column::computed('action')
+                ->title('Aksi')
                 ->exportable(false)
                 ->printable(false)
-                ->className('text-center align-middle'),
-
-            Column::make('created_at')
-                ->visible(false)
+                ->width('15%')
+                ->className('text-center align-middle')
+                ->orderable(false)
+                ->searchable(false)
         ];
     }
 
-    protected function filename(): string {
-        return 'Adjustments_' . date('YmdHis');
+    protected function filename(): string
+    {
+        return 'Penyesuaian_Stok_' . date('d-m-Y_His');
     }
 }

@@ -142,6 +142,8 @@
                 <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">
                     <i class="bi bi-info-circle"></i> Wajib diisi untuk item bekas (boleh 0)
                 </small>
+  
+  
                 @error('cost_price')
                     <small class="text-danger d-block mt-1">{{ $message }}</small>
                 @enderror

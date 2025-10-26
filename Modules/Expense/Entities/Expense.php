@@ -55,11 +55,10 @@ class Expense extends Model
 
         static::creating(function ($model) {
             $number = Expense::max('id') + 1;
-            $model->reference = make_reference_id('EXP', $number);
         });
     }
 
-    public function getDateAttribute($value)
+    public function getFormattedDateAttribute($value)
     {
         return Carbon::parse($value)->format('d M, Y');
     }
