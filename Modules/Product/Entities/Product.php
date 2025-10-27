@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Modules\Product\Entities\Category;
 use Modules\Product\Entities\Brand;
-use Modules\Product\Entities\AdjustedProduct;
+use Modules\Adjustment\Entities\AdjustedProduct;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
