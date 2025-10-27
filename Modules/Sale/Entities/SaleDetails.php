@@ -3,6 +3,7 @@
 namespace Modules\Sale\Entities;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class SaleDetails extends Model
@@ -21,10 +22,10 @@ class SaleDetails extends Model
     protected $fillable = [
         'sale_id',
         'item_name',
-        'product_id',            // untuk produk baru
-        'productable_id',        // untuk produk second
-        'productable_type',      // 'Modules\Product\Entities\ProductSecond'
-        'source_type',           // new|second|manual
+        'product_id', // untuk produk baru
+        'productable_id', // untuk produk second
+        'productable_type', // 'Modules\Product\Entities\ProductSecond'
+        'source_type', // new|second|manual
         'product_name',
         'product_code',
         'quantity',
@@ -42,14 +43,14 @@ class SaleDetails extends Model
      * Casting numerik ke integer agar perhitungan konsisten.
      */
     protected $casts = [
-        'quantity'                => 'integer',
-        'price'                   => 'integer',
-        'hpp'                     => 'integer',
-        'unit_price'              => 'integer',
-        'sub_total'               => 'integer',
-        'subtotal_profit'         => 'integer',
+        'quantity' => 'integer',
+        'price' => 'integer',
+        'hpp' => 'integer',
+        'unit_price' => 'integer',
+        'sub_total' => 'integer',
+        'subtotal_profit' => 'integer',
         'product_discount_amount' => 'integer',
-        'product_tax_amount'      => 'integer',
+        'product_tax_amount' => 'integer',
     ];
 
     /**
@@ -66,19 +67,19 @@ class SaleDetails extends Model
     {
         static::creating(function (SaleDetails $d) {
             // default name/code
-            $d->item_name    = $d->item_name ?: ($d->product_name ?: '-');
+            $d->item_name = $d->item_name ?: ($d->product_name ?: '-');
             $d->product_code = $d->product_code ?: '-';
 
             // sanitasi source_type
             $st = strtolower((string) $d->source_type);
-            if (! in_array($st, ['new','second','manual'], true)) {
+            if (!in_array($st, ['new', 'second', 'manual'], true)) {
                 $st = 'new';
             }
             $d->source_type = $st;
 
             // default discount type
             $dt = strtolower((string) $d->product_discount_type);
-            if (! in_array($dt, ['fixed','percent'], true)) {
+            if (!in_array($dt, ['fixed', 'percent'], true)) {
                 $dt = 'fixed';
             }
             $d->product_discount_type = $dt;
@@ -87,13 +88,13 @@ class SaleDetails extends Model
         static::updating(function (SaleDetails $d) {
             // Jaga konsistensi saat update
             $st = strtolower((string) $d->source_type);
-            if (! in_array($st, ['new','second','manual'], true)) {
+            if (!in_array($st, ['new', 'second', 'manual'], true)) {
                 $st = 'new';
             }
             $d->source_type = $st;
 
             $dt = strtolower((string) $d->product_discount_type);
-            if (! in_array($dt, ['fixed','percent'], true)) {
+            if (!in_array($dt, ['fixed', 'percent'], true)) {
                 $dt = 'fixed';
             }
             $d->product_discount_type = $dt;
@@ -140,5 +141,10 @@ class SaleDetails extends Model
     public function isManual(): bool
     {
         return $this->source_type === 'manual';
+    }
+
+    public function adjuster(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'adjusted_by');
     }
 }

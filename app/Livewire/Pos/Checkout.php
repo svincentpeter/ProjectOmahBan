@@ -39,6 +39,16 @@ class Checkout extends Component
     public $sale = null;
     public $sale_details = null;
 
+    // ========= PROPERTIES BARU: Edit Harga =========
+    public $showEditPriceModal = false;
+    public $editingRowId = null;
+    public $editingProductId = null;
+    public $editingProductName = '';
+    public $editingSourceType = '';
+    public $editingOriginalPrice = 0;
+    public $newPrice = 0;
+    public $priceNote = '';
+
     // UI flag: form pembayaran muncul setelah "Lanjut ke Pembayaran"
     public bool $show_payment = false;
 
@@ -174,14 +184,17 @@ class Checkout extends Component
                 'code' => $product['product_code'] ?? '-',
                 'stock' => (int) ($product['product_quantity'] ?? ($product['stock'] ?? 999)),
                 'unit_price' => (int) ($calculated['unit_price'] ?? ($product['product_price'] ?? 0)),
-
-                // ✅ FIXED: Gunakan 'cost_price' (konsisten dengan komponen lain)
-                'cost_price' => (int) ($product['product_cost'] ?? 0), // ← GANTI dari 'hpp'
-
+                'cost_price' => (int) ($product['product_cost'] ?? 0),
                 'tax' => (int) ($calculated['product_tax'] ?? ($product['product_order_tax'] ?? 0)),
                 'tax_type' => $product['product_tax_type'] ?? null,
                 'discount' => (int) ($calculated['discount'] ?? 0),
                 'discount_type' => 'fixed',
+
+                // ✅ TAMBAHAN BARU: Tracking original price
+                'original_price' => (int) ($product['product_price'] ?? 0), // ← PENTING!
+                'is_price_adjusted' => false,
+                'price_adjustment_amount' => 0,
+                'price_adjustment_note' => null,
             ],
         ]);
 
@@ -314,10 +327,150 @@ class Checkout extends Component
         $discount_amount = ($this->discount_type[$productId] ?? 'fixed') === 'fixed' ? (int) ($this->item_discount[$productId] ?? 0) : (int) round($item->price * (($this->item_discount[$productId] ?? 0) / 100));
 
         $newPrice = max(0, (int) $item->price - $discount_amount);
-        $cart->update($rowId, ['price' => $newPrice]);
+
+        $original = (int) data_get($item->options, 'original_price', (int) $item->price);
+        $isAdjusted = $newPrice != $original;
+        $adjustAmt = $original - $newPrice;
+
+        $cart->update($rowId, [
+            'price' => $newPrice,
+            'options' => array_merge($item->options->toArray(), [
+                // tandai sebagai penyesuaian harga agar tervalidasi di createInvoice
+                'original_price' => $original,
+                'is_price_adjusted' => $isAdjusted,
+                'price_adjustment_amount' => $adjustAmt,
+                // note dibiarkan null bila belum diisi; akan ditolak di validasi final
+            ]),
+        ]);
 
         session()->flash('discount_message_' . $productId, 'Diskon diterapkan!');
         $this->dispatch('cartUpdated');
+    }
+
+    // ========= EDIT HARGA PER ITEM =========
+
+    /**
+     * Buka modal untuk edit harga item di cart
+     */
+    public function openEditPriceModal($rowId)
+    {
+        // Validasi item ada di cart
+        if (!$this->cart()->content()->has($rowId)) {
+            $this->dispatch('swal-warning', 'Item tidak ditemukan di keranjang.');
+            return;
+        }
+
+        $item = $this->cart()->get($rowId);
+        $sourceType = $item->options->source_type ?? 'new';
+
+        // ⚠️ Hanya boleh edit produk "new" dan "second", tidak boleh "manual"
+        if ($sourceType === 'manual') {
+            $this->dispatch('swal-warning', 'Harga item manual tidak bisa diedit di keranjang.');
+            return;
+        }
+
+        // Set data untuk modal
+        $this->editingRowId = $rowId;
+        $this->editingProductId = $item->id;
+        $this->editingProductName = $item->name;
+        $this->editingSourceType = $sourceType;
+
+        // Original price: ambil dari options (sudah disimpan saat add to cart)
+        // Jika belum ada (backward compat), gunakan harga current
+        $this->editingOriginalPrice = $item->options->original_price ?? $item->price;
+
+        // Harga baru default = harga saat ini
+        $this->newPrice = $item->price;
+
+        // Note: ambil existing note (jika sudah pernah diedit)
+        $this->priceNote = $item->options->price_adjustment_note ?? '';
+
+        $this->showEditPriceModal = true;
+    }
+
+    /**
+     * Simpan perubahan harga
+     */
+    public function saveEditedPrice()
+    {
+        // Validasi basic
+        $this->validate(
+            [
+                'newPrice' => 'required|numeric|min:1',
+            ],
+            [
+                'newPrice.required' => 'Harga baru wajib diisi',
+                'newPrice.numeric' => 'Harga harus berupa angka',
+                'newPrice.min' => 'Harga minimal Rp 1',
+            ],
+        );
+
+        $item = $this->cart()->get($this->editingRowId);
+        $originalPrice = (int) $this->editingOriginalPrice;
+        $newPrice = (int) $this->sanitizeMoney($this->newPrice);
+
+        // ✅ VALIDASI WAJIB: Jika harga TURUN, catatan WAJIB
+        if ($newPrice < $originalPrice) {
+            $noteClean = trim($this->priceNote);
+            if (empty($noteClean)) {
+                $this->addError('priceNote', 'Catatan wajib diisi jika harga dikurangi dari harga asli.');
+                return;
+            }
+
+            // Validasi minimal panjang catatan (opsional, sesuaikan kebutuhan)
+            if (mb_strlen($noteClean) < 10) {
+                $this->addError('priceNote', 'Catatan terlalu singkat. Minimal 10 karakter untuk alasan diskon.');
+                return;
+            }
+        }
+
+        // Hitung selisih
+        $adjustmentAmount = $originalPrice - $newPrice;
+        $isPriceAdjusted = $newPrice != $originalPrice;
+
+        // Update cart item dengan harga baru + tracking data
+        $this->cart()->update($this->editingRowId, [
+            'price' => $newPrice, // ← Harga final yang akan ditagih
+            'options' => [
+                // Pertahankan options existing
+                'source_type' => $item->options->source_type,
+                'code' => $item->options->code ?? '-',
+                'stock' => $item->options->stock ?? 999,
+                'unit_price' => $item->options->unit_price ?? $newPrice,
+                'cost_price' => $item->options->cost_price ?? 0,
+                'tax' => $item->options->tax ?? 0,
+                'tax_type' => $item->options->tax_type ?? null,
+                'discount' => $item->options->discount ?? 0,
+                'discount_type' => $item->options->discount_type ?? 'fixed',
+                'productable_id' => $item->options->productable_id ?? null,
+                'productable_type' => $item->options->productable_type ?? null,
+                'manual_kind' => $item->options->manual_kind ?? null,
+
+                // ✅ TAMBAHAN BARU: Tracking perubahan harga
+                'original_price' => $originalPrice, // Tetap simpan harga asli
+                'is_price_adjusted' => $isPriceAdjusted,
+                'price_adjustment_amount' => $adjustmentAmount,
+                'price_adjustment_note' => $isPriceAdjusted ? trim($this->priceNote) : null,
+            ],
+        ]);
+
+        // Close modal & reset state
+        $this->showEditPriceModal = false;
+        $this->reset(['editingRowId', 'editingProductId', 'editingProductName', 'editingSourceType', 'editingOriginalPrice', 'newPrice', 'priceNote']);
+
+        // Refresh cart total
+        $this->dispatch('cartUpdated');
+        $this->dispatch('swal-success', 'Harga berhasil diubah!');
+    }
+
+    /**
+     * Tutup modal tanpa simpan
+     */
+    public function closeEditPriceModal()
+    {
+        $this->showEditPriceModal = false;
+        $this->reset(['editingRowId', 'editingProductId', 'editingProductName', 'editingSourceType', 'editingOriginalPrice', 'newPrice', 'priceNote']);
+        $this->resetErrorBag();
     }
 
     // ========= CREATE INVOICE =========
@@ -330,6 +483,41 @@ class Checkout extends Component
 
         if ($this->cart()->count() === 0) {
             $this->dispatch('swal-error', 'Keranjang masih kosong.');
+            return;
+        }
+
+        // VALIDASI FINAL: sebelum DB::transaction
+        $cartItems = $this->cart()->content();
+
+        // Backfill original_price jika kosong (fallback aman)
+        foreach ($cartItems as $ci) {
+            $orig = (int) data_get($ci->options, 'original_price', 0);
+            if ($orig <= 0) {
+                // Fallback: set original dari price saat ini agar tidak NULL
+                // Catatan: untuk second sebaiknya ambil dari master, lihat blok tambahan di bawah.
+                $this->cart()->update($ci->rowId, [
+                    'options' => array_merge($ci->options->toArray(), [
+                        'original_price' => (int) $ci->price,
+                    ]),
+                ]);
+            }
+        }
+
+        // Re-load setelah backfill
+        $cartItems = $this->cart()->content();
+
+        // Larang checkout jika ada item turun harga tanpa note
+        $violations = [];
+        foreach ($cartItems as $ci) {
+            $orig = (int) data_get($ci->options, 'original_price', (int) $ci->price);
+            $cur = (int) $ci->price;
+            $note = trim((string) data_get($ci->options, 'price_adjustment_note', ''));
+            if ($cur < $orig && $note === '') {
+                $violations[] = $ci->name;
+            }
+        }
+        if (!empty($violations)) {
+            $this->dispatch('swal-error', 'Tidak bisa checkout. Catatan wajib untuk harga yang diturunkan: ' . implode(', ', $violations));
             return;
         }
 
@@ -422,48 +610,62 @@ class Checkout extends Component
                     $totalHppItem = $hpp + ($manualHpp ?? 0);
                     $subtotalProfit = $subTotal - $totalHppItem * $qty;
 
-                    // ✅ FIXED: Insert dengan field lengkap
+                    // ✅ TAMBAHAN: Ambil data adjustment dari cart options
+                    $originalPrice = (int) data_get($item->options, 'original_price', $item->price);
+
+                    // Untuk second, upayakan original dari master jika tersedia
+                    if ($src === 'second' && $productableId) {
+                        if ($s = \Modules\Product\Entities\ProductSecond::find($productableId)) {
+                            $originalPrice = (int) ($s->sale_price ?? $originalPrice);
+                        }
+                    }
+                    $isPriceAdjusted = (bool) data_get($item->options, 'is_price_adjusted', false);
+                    $priceAdjustmentAmount = (int) data_get($item->options, 'price_adjustment_amount', 0);
+                    $priceAdjustmentNote = data_get($item->options, 'price_adjustment_note');
+
                     SaleDetails::create([
                         'sale_id' => $sale->id,
-
-                        // Polymorphic (hanya untuk source_type='second' dari DB)
                         'product_id' => $src === 'new' ? (int) $item->id : null,
-                        'productable_type' => $productableType, // ✅ dari cart options
-                        'productable_id' => $productableId, // ✅ dari cart options
-
-                        // Source type dan manual_kind
+                        'productable_type' => $productableType,
+                        'productable_id' => $productableId,
                         'source_type' => $src,
-                        'manual_kind' => $manualKind, // ✅ TAMBAHKAN (service/goods/null)
-
-                        // Product info
+                        'manual_kind' => $manualKind,
                         'item_name' => $item->name,
                         'product_name' => $item->name,
                         'product_code' => $code,
-
-                        // Pricing
                         'quantity' => $qty,
-                        'price' => $unitPrice,
+                        'price' => $unitPrice, // ← Harga final (setelah edit jika ada)
                         'unit_price' => $unitPrice,
                         'sub_total' => $subTotal,
-
-                        // HPP & Profit
                         'hpp' => (int) $hpp,
-                        'manual_hpp' => $manualHpp, // ✅ TAMBAHKAN (untuk manual goods)
+                        'manual_hpp' => $manualHpp,
                         'subtotal_profit' => (int) $subtotalProfit,
-
-                        // Discount & Tax
                         'product_discount_amount' => (int) data_get($item->options, 'discount', 0),
                         'product_discount_type' => data_get($item->options, 'discount_type', 'fixed'),
                         'product_tax_amount' => (int) data_get($item->options, 'tax', 0),
+
+                        // ✅ KOLOM BARU: Tracking perubahan harga
+                        'original_price' => $originalPrice,
+                        'is_price_adjusted' => $isPriceAdjusted ? 1 : 0,
+                        'price_adjustment_amount' => $priceAdjustmentAmount,
+                        'price_adjustment_note' => $priceAdjustmentNote,
+                        'adjusted_by' => $isPriceAdjusted ? auth()->id() : null,
+                        'adjusted_at' => $isPriceAdjusted ? now() : null,
                     ]);
 
                     $totalHpp += $totalHppItem * $qty;
                     $totalProfit += (int) $subtotalProfit;
                 }
 
+                $hasPriceAdjustment = $cartItems->contains(function ($item) {
+                    return (bool) data_get($item->options, 'is_price_adjusted', false);
+                });
+
+                // Update flag di tabel sales
                 $sale->update([
                     'total_hpp' => $totalHpp,
                     'total_profit' => $totalProfit,
+                    'has_price_adjustment' => $hasPriceAdjustment ? 1 : 0, // ← SET FLAG
                 ]);
 
                 return $sale;
