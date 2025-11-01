@@ -1,15 +1,14 @@
 <?php
 
-// ✅ FILE: Modules/Adjustment/Entities/AdjustedProduct.php
+// ✅ FILE: Modules/Adjustment/Entities/AdjustmentFile.php
 
 namespace Modules\Adjustment\Entities;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Product\Entities\Product;
 
-class AdjustedProduct extends Model
+class AdjustmentFile extends Model
 {
-    protected $table = 'adjusted_products';
+    protected $table = 'adjustment_files';
     protected $guarded = [];
     public $timestamps = true;
 
@@ -19,9 +18,9 @@ class AdjustedProduct extends Model
         return $this->belongsTo(Adjustment::class, 'adjustment_id');
     }
 
-    // ✅ RELASI: Info produk
-    public function product()
+    // ✅ Mutator: Akses file url
+    public function getFileUrlAttribute()
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return asset('storage/' . $this->file_path);
     }
 }
