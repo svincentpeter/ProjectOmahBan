@@ -381,6 +381,7 @@
         }
 
         
+
     </style>
 @endpush
 
@@ -401,7 +402,7 @@
         $('#sales-table').on('preXhr.dt', function(e, settings, data) {
             console.log('DataTable AJAX Request Data:', data);
         });
-
+'
         function clearAll() {
             document.getElementById('filter_preset').value = '';
             ['filter_bulan', 'filter_dari', 'filter_sampai'].forEach(id => {

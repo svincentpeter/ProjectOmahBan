@@ -92,53 +92,53 @@
                         </div>
                     </div>
 
-                    {{-- Sale Returns --}}
-                    <div class="col-md-6 col-lg-3 mb-4">
-                        <div class="card stat-card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div class="stat-icon bg-warning-light text-warning">
-                                        <i class="cil-arrow-circle-left"></i>
-                                    </div>
-                                    <span class="badge badge-warning badge-sm">
-                                        <i class="cil-warning mr-1"></i>Retur
-                                    </span>
-                                </div>
-                                <h6 class="text-muted mb-2 font-weight-normal">
-                                    <i class="cil-loop-circular mr-1"></i> Retur Penjualan
-                                </h6>
-                                <h3 class="mb-0 font-weight-bold text-warning">
-                                    {{ format_currency($sale_returns) }}
-                                </h3>
-                                <small class="text-muted">
-                                    <i class="cil-info mr-1"></i>
-                                    Barang dikembalikan customer
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Purchase Returns --}}
+                    {{-- Produk Aktif --}}
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card stat-card border-0 shadow-sm h-100">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <div class="stat-icon bg-info-light text-info">
-                                        <i class="cil-arrow-circle-right"></i>
+                                        <i class="cil-list-rich"></i>
                                     </div>
                                     <span class="badge badge-info badge-sm">
-                                        <i class="cil-reload mr-1"></i>Retur
+                                        <i class="cil-check mr-1"></i>Aktif
                                     </span>
                                 </div>
                                 <h6 class="text-muted mb-2 font-weight-normal">
-                                    <i class="cil-loop-circular mr-1"></i> Retur Pembelian
+                                    <i class="cil-loop-circular mr-1"></i> Produk Tersimpan
                                 </h6>
                                 <h3 class="mb-0 font-weight-bold text-info">
-                                    {{ format_currency($purchase_returns) }}
+                                    {{ $products }}
                                 </h3>
                                 <small class="text-muted">
                                     <i class="cil-info mr-1"></i>
-                                    Barang dikembalikan ke supplier
+                                    Total produk di database
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Kategori Produk --}}
+                    <div class="col-md-6 col-lg-3 mb-4">
+                        <div class="card stat-card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="stat-icon bg-warning-light text-warning">
+                                        <i class="cil-tags"></i>
+                                    </div>
+                                    <span class="badge badge-warning badge-sm">
+                                        <i class="cil-grid mr-1"></i>Kategori
+                                    </span>
+                                </div>
+                                <h6 class="text-muted mb-2 font-weight-normal">
+                                    <i class="cil-folder mr-1"></i> Total Kategori
+                                </h6>
+                                <h3 class="mb-0 font-weight-bold text-warning">
+                                    {{ $categories }}
+                                </h3>
+                                <small class="text-muted">
+                                    <i class="cil-info mr-1"></i>
+                                    Kategori produk/layanan
                                 </small>
                             </div>
                         </div>
@@ -146,10 +146,9 @@
                 </div>
             @endcan
 
-            {{-- Charts Section --}}
+            {{-- Chart Section --}}
             @can('show_weekly_sales_purchases|show_month_overview')
                 <div class="row mb-4">
-                    {{-- Sales & Purchases Chart --}}
                     @can('show_weekly_sales_purchases')
                         <div class="col-lg-8 mb-4">
                             <div class="card border-0 shadow-sm h-100">
@@ -185,7 +184,6 @@
                         </div>
                     @endcan
 
-                    {{-- Monthly Overview Pie Chart --}}
                     @can('show_month_overview')
                         <div class="col-lg-4 mb-4">
                             <div class="card border-0 shadow-sm h-100">
@@ -212,8 +210,8 @@
                                                 <span class="legend-dot bg-danger mr-2"></span>
                                                 <small class="font-weight-semibold">Pembelian</small>
                                             </div>
-                                            <small
-                                                class="font-weight-bold text-danger">{{ format_currency($purchase_returns) }}</small>
+                                            <small class="font-weight-bold text-danger">{{ format_currency($profit) }}</small>
+                                            {{-- Gunakan profit untuk saldo --}}
                                         </div>
                                     </div>
                                 </div>
@@ -260,7 +258,7 @@
                                         <small class="text-muted d-block mb-1">Total Pengeluaran</small>
                                         <h6 class="mb-0 font-weight-bold text-danger">
                                             <i class="cil-arrow-top mr-1"></i>
-                                            {{ format_currency($sale_returns + $purchase_returns) }}
+                                            {{ format_currency($profit) }} {{-- Gunakan profit jika ingin saldo keluar --}}
                                         </h6>
                                     </div>
                                     <div class="col-md-4">

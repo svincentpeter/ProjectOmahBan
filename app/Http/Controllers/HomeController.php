@@ -2,99 +2,110 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon; // REVISI: Tetap untuk date handling di chart
+
+use Gloudemans\Shoppingcart\Facades\Cart;
+
+// Imports untuk index() saja (REVISI: Hanya yang dipakai di modules Anda: Product, Sale)
+use Modules\Sale\Entities\Sale;
+use Modules\Product\Entities\Product;
+use Modules\Product\Entities\Category;
+use Modules\Product\Entities\ProductSecond;
+
+// Imports untuk chart methods (REVISI: Hanya modules ada: Sale, Purchase, Expense; HAPUS PurchasesReturn/SalesReturn)
 use Modules\Expense\Entities\Expense;
 use Modules\Purchase\Entities\Purchase;
-use Modules\Purchase\Entities\PurchasePayment;
-use Modules\PurchasesReturn\Entities\PurchaseReturn;
-use Modules\PurchasesReturn\Entities\PurchaseReturnPayment;
-use Modules\Sale\Entities\Sale;
-use Modules\Sale\Entities\SalePayment;
-use Modules\SalesReturn\Entities\SaleReturn;
-use Modules\SalesReturn\Entities\SaleReturnPayment;
+// HAPUS: use Modules\PurchasesReturn\Entities\PurchaseReturn;  // Gak ada module
+// HAPUS: use Modules\PurchasesReturn\Entities\PurchaseReturnPayment;  // Gak ada
+// HAPUS: use Modules\SalesReturn\Entities\SaleReturn;  // Gak ada
+// HAPUS: use Modules\SalesReturn\Entities\SaleReturnPayment;  // Gak ada
+// Asumsi: SalePayment dan PurchasePayment ada di Sale/Purchase modules (jika gak, hapus di paymentChart)
 
 class HomeController extends Controller
 {
-
     public function index()
     {
-        // =========================
-        // 1) Ganti ::completed() -> where('status','Completed')
-        // =========================
-        $sales = Sale::query()
-            ->where('status', 'Completed')
-            ->sum('total_amount');
+        $products = Product::with('category', 'unit')->count();
+        $categories = Category::count();
 
-        $sale_returns = SaleReturn::query()
-            ->where('status', 'Completed')
-            ->sum('total_amount');
+        // REVISI: Tetap, ?? 0 untuk safety jika no sales
+        $sales = DB::table('sales')->select(DB::raw('SUM(total_amount) as total_amount'))->where('status', 'Completed')->first();
+        $revenue = $sales ? $sales->total_amount : 0;
 
-        $purchase_returns = PurchaseReturn::query()
-            ->where('status', 'Completed')
-            ->sum('total_amount');
+        // ✅ Permission check untuk data sensitive (REVISI: Tetap, pakai Sale/Product modules)
+        if (auth()->user()->can('report.view_profit')) {
+            // Owner & Supervisor bisa lihat profit
+            $profit = DB::table('sale_details')->join('sales', 'sales.id', '=', 'sale_details.sale_id')->select(DB::raw('SUM((sale_details.price - COALESCE(products.product_cost, 0)) * sale_details.quantity) as total_profit'))->leftJoin('products', 'products.id', '=', 'sale_details.product_id')->where('sales.status', 'Completed')->value('total_profit') ?? 0;
+        } else {
+            $profit = 0; // Kasir tidak bisa lihat profit
+        }
 
-        // =========================
-        // 2) Hitung product_costs lebih efisien:
-        //    gunakan kolom hpp di sale_details * quantity
-        //    hanya untuk penjualan Completed
-        // =========================
-        $product_costs = (int) DB::table('sale_details as sd')
-            ->join('sales as s', 's.id', '=', 'sd.sale_id')
-            ->where('s.status', 'Completed')
-            ->sum(DB::raw('sd.hpp * sd.quantity'));
+        $cart_instance = Cart::instance('sale');
+        $cart_data = $cart_instance->content();
+        $cart_count = $cart_instance->count();
+        $cart_total = $cart_instance->total();
 
-        // =========================
-        // 3) Revenue & profit
-        //    (ikutan logika lama: rupiah/100 bila memang datanya cent—tapi di DB kamu bigints rupiah murni.
-        //    Dari dump SQL kamu, angka sudah rupiah penuh, jadi TIDAK dibagi 100.)
-        // =========================
-        $revenue = ($sales - $sale_returns); // rupiah
-        $profit  = $revenue - $product_costs;
+        // REVISI: Tetap Eloquent dari Sale module
+        $recent_sales = Sale::latest('created_at')->take(5)->get();
 
-        // TODO: kembalikan ke view sesuai file kamu
-        return view('home', compact(
-            'sales',
-            'sale_returns',
-            'purchase_returns',
-            'revenue',
-            'profit',
-            'product_costs'
-        ));
-    }
+        $productsecond = ProductSecond::count();
 
+        // ✅ Low stock alert (hanya untuk Owner & Supervisor) - pakai Product module
+        if (auth()->user()->can('inventory.view_products')) {
+            $lowStockProducts = Product::with('unit')->whereColumn('product_quantity', '<=', 'product_stock_alert')->orderBy('product_quantity', 'ASC')->take(5)->get();
+        } else {
+            $lowStockProducts = collect(); // Empty collection untuk Kasir
+        }
 
-    public function currentMonthChart() {
-        abort_if(!request()->ajax(), 404);
-
-        $currentMonthSales = Sale::where('status', 'Completed')->whereMonth('date', date('m'))
-                ->whereYear('date', date('Y'))
-                ->sum('total_amount');
-        $currentMonthPurchases = Purchase::where('status', 'Completed')->whereMonth('date', date('m'))
-                ->whereYear('date', date('Y'))
-                ->sum('total_amount');
-        $currentMonthExpenses = Expense::whereMonth('date', date('m'))
-                ->whereYear('date', date('Y'))
-                ->sum('amount');
-
-        return response()->json([
-            'sales'     => $currentMonthSales,
-            'purchases' => $currentMonthPurchases,
-            'expenses'  => $currentMonthExpenses
+        return view('home', [
+            'products' => $products,
+            'categories' => $categories,
+            'revenue' => $revenue,
+            'profit' => $profit,
+            'cart_count' => $cart_count,
+            'cart_data' => $cart_data,
+            'cart_total' => $cart_total,
+            'recent_sales' => $recent_sales,
+            'productsecond' => $productsecond,
+            'lowStockProducts' => $lowStockProducts,
         ]);
     }
 
-
-    public function salesPurchasesChart() {
+    public function currentMonthChart()
+    {
         abort_if(!request()->ajax(), 404);
 
-        $sales = $this->salesChartData();
-        $purchases = $this->purchasesChartData();
+        // REVISI: Pakai modules ada: Sale, Purchase, Expense
+        $currentMonthSales = Sale::where('status', 'Completed')->whereMonth('date', date('m'))->whereYear('date', date('Y'))->sum('total_amount');
+        $currentMonthPurchases = Purchase::where('status', 'Completed')->whereMonth('date', date('m'))->whereYear('date', date('Y'))->sum('total_amount');
+        $currentMonthExpenses = Expense::whereMonth('date', date('m'))->whereYear('date', date('Y'))->sum('amount');
 
-        return response()->json(['sales' => $sales, 'purchases' => $purchases]);
+        return response()->json([
+            'sales' => $currentMonthSales,
+            'purchases' => $currentMonthPurchases,
+            'expenses' => $currentMonthExpenses,
+        ]);
     }
 
+    public function salesPurchasesChart()
+    {
+        abort_if(!request()->ajax(), 404);
 
-    public function paymentChart() {
+        // REVISI: Pakai modules Sale/Purchase
+        $salesData = $this->salesChartDataArray();
+        $purchasesData = $this->purchasesChartDataArray();
+
+        return response()->json([
+            'sales' => $salesData['data'],
+            'purchases' => $purchasesData['data'],
+            'days' => $salesData['days'],
+        ]);
+    }
+
+    public function paymentChart()
+    {
         abort_if(!request()->ajax(), 404);
 
         $dates = collect();
@@ -103,66 +114,46 @@ class HomeController extends Controller
             $dates->put($date, 0);
         }
 
-        $date_range = Carbon::today()->subYear()->format('Y-m-d');
+        $date_range = Carbon::now()->subYear()->format('Y-m-d');
 
-        $sale_payments = SalePayment::where('date', '>=', $date_range)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
+        // REVISI: HAPUS SaleReturnPayment & PurchaseReturnPayment (gak ada modules); Asumsi SalePayment & PurchasePayment ada di Sale/Purchase
+        $sale_payments = DB::table('sale_payments') // Ganti ke DB::table jika model gak ada
+            ->where('date', '>=', $date_range)
+            ->select([DB::raw("DATE_FORMAT(date, '%m-%Y') as month"), DB::raw('SUM(amount) as amount')])
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->pluck('amount', 'month');
 
-        $sale_return_payments = SaleReturnPayment::where('date', '>=', $date_range)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
+        // HAPUS: $sale_return_payments = ...  // Gak ada SalesReturn module
 
-        $purchase_payments = PurchasePayment::where('date', '>=', $date_range)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
+        $purchase_payments = DB::table('purchase_payments') // Ganti ke DB::table jika model gak ada
+            ->where('date', '>=', $date_range)
+            ->select([DB::raw("DATE_FORMAT(date, '%m-%Y') as month"), DB::raw('SUM(amount) as amount')])
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->pluck('amount', 'month');
 
-        $purchase_return_payments = PurchaseReturnPayment::where('date', '>=', $date_range)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
+        // HAPUS: $purchase_return_payments = ...  // Gak ada PurchasesReturn module
 
         $expenses = Expense::where('date', '>=', $date_range)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
+            ->select([DB::raw("DATE_FORMAT(date, '%m-%Y') as month"), DB::raw('SUM(amount) as amount')])
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->pluck('amount', 'month');
 
-        $payment_received = array_merge_numeric_values($sale_payments, $purchase_return_payments);
-        $payment_sent = array_merge_numeric_values($purchase_payments, $sale_return_payments, $expenses);
+        // REVISI: Adjust merge (tanpa return payments)
+        $payment_received = $sale_payments; // Cuma sales
+        $payment_sent = $purchase_payments->merge($expenses); // Purchases + expenses
 
         $dates_received = $dates->merge($payment_received);
         $dates_sent = $dates->merge($payment_sent);
 
-        $received_payments = [];
-        $sent_payments = [];
-        $months = [];
-
-        foreach ($dates_received as $key => $value) {
-            $received_payments[] = $value;
-            $months[] = $key;
-        }
-
-        foreach ($dates_sent as $key => $value) {
-            $sent_payments[] = $value;
-        }
+        $received_payments = $dates_received->values()->toArray(); // REVISI: Sederhana ke array
+        $sent_payments = $dates_sent->values()->toArray();
+        $months = $dates_received->keys()->values()->toArray();
 
         return response()->json([
             'payment_sent' => $sent_payments,
@@ -171,10 +162,12 @@ class HomeController extends Controller
         ]);
     }
 
-    public function salesChartData() {
+    // REVISI: Private array untuk Sale module
+    private function salesChartDataArray()
+    {
         $dates = collect();
         foreach (range(-6, 0) as $i) {
-            $date = Carbon::now()->addDays($i)->format('d-m-y');
+            $date = Carbon::now()->addDays($i)->format('d-m-Y');
             $dates->put($date, 0);
         }
 
@@ -182,31 +175,25 @@ class HomeController extends Controller
 
         $sales = Sale::where('status', 'Completed')
             ->where('date', '>=', $date_range)
-            ->groupBy(DB::raw("DATE_FORMAT(date,'%d-%m-%y')"))
+            ->groupBy(DB::raw("DATE_FORMAT(date,'%d-%m-%Y')"))
             ->orderBy('date')
-            ->get([
-                DB::raw(DB::raw("DATE_FORMAT(date,'%d-%m-%y') as date")),
-                DB::raw('SUM(total_amount) AS count'),
-            ])
+            ->get([DB::raw("DATE_FORMAT(date,'%d-%m-%Y') as date"), DB::raw('SUM(total_amount) AS count')])
             ->pluck('count', 'date');
 
         $dates = $dates->merge($sales);
 
-        $data = [];
-        $days = [];
-        foreach ($dates as $key => $value) {
-            $data[] = $value;
-            $days[] = $key;
-        }
-
-        return response()->json(['data' => $data, 'days' => $days]);
+        return [
+            'data' => $dates->values()->toArray(),
+            'days' => $dates->keys()->values()->toArray(),
+        ];
     }
 
-
-    public function purchasesChartData() {
+    // REVISI: Private array untuk Purchase module
+    private function purchasesChartDataArray()
+    {
         $dates = collect();
         foreach (range(-6, 0) as $i) {
-            $date = Carbon::now()->addDays($i)->format('d-m-y');
+            $date = Carbon::now()->addDays($i)->format('d-m-Y');
             $dates->put($date, 0);
         }
 
@@ -214,24 +201,16 @@ class HomeController extends Controller
 
         $purchases = Purchase::where('status', 'Completed')
             ->where('date', '>=', $date_range)
-            ->groupBy(DB::raw("DATE_FORMAT(date,'%d-%m-%y')"))
+            ->groupBy(DB::raw("DATE_FORMAT(date,'%d-%m-%Y')"))
             ->orderBy('date')
-            ->get([
-                DB::raw(DB::raw("DATE_FORMAT(date,'%d-%m-%y') as date")),
-                DB::raw('SUM(total_amount) AS count'),
-            ])
+            ->get([DB::raw("DATE_FORMAT(date,'%d-%m-%Y') as date"), DB::raw('SUM(total_amount) AS count')])
             ->pluck('count', 'date');
 
         $dates = $dates->merge($purchases);
 
-        $data = [];
-        $days = [];
-        foreach ($dates as $key => $value) {
-            $data[] = $value;
-            $days[] = $key;
-        }
-
-        return response()->json(['data' => $data, 'days' => $days]);
-
+        return [
+            'data' => $dates->values()->toArray(),
+            'days' => $dates->keys()->values()->toArray(),
+        ];
     }
 }

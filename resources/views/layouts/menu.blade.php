@@ -59,9 +59,7 @@
     </li>
 @endcan
 
-{{-- =======================
-     STOK & PENAWARAN
-======================= --}}
+{{-- ======================= STOK & PENAWARAN ======================= --}}
 <li class="c-sidebar-nav-title">Stok & Penawaran</li>
 
 @can('access_adjustments')
@@ -70,6 +68,7 @@
             <i class="c-sidebar-nav-icon bi bi-clipboard-check" style="line-height: 1;"></i> Penyesuaian Stok
         </a>
         <ul class="c-sidebar-nav-dropdown-items">
+            {{-- Buat Penyesuaian (hanya Kasir yang bisa buat) --}}
             @can('create_adjustments')
                 <li class="c-sidebar-nav-item">
                     <a class="c-sidebar-nav-link {{ request()->routeIs('adjustments.create') ? 'c-active' : '' }}"
@@ -78,39 +77,42 @@
                     </a>
                 </li>
             @endcan
+
+            {{-- Daftar Semua Penyesuaian (semua yang punya akses) --}}
             <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('adjustments.index') ? 'c-active' : '' }}"
                     href="{{ route('adjustments.index') }}">
                     <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Semua Penyesuaian
                 </a>
             </li>
+
+            {{-- HANYA APPROVAL (Supervisor/Admin) --}}
+            @can('approve_adjustments')
+                <li class="c-sidebar-nav-item">
+                    <a class="c-sidebar-nav-link {{ request()->routeIs('adjustments.approvals') ? 'c-active' : '' }}"
+                        href="{{ route('adjustments.approvals') }}">
+                        <i class="c-sidebar-nav-icon bi bi-check-circle" style="line-height: 1;"></i>
+                        Approval Penyesuaian
+
+                        {{-- Badge: Jumlah pending --}}
+                        @php
+                            $pendingCount = \Modules\Adjustment\Entities\Adjustment::where(
+                                'status',
+                                'pending',
+                            )->count();
+                        @endphp
+                        @if ($pendingCount > 0)
+                            <span class="badge badge-danger ml-2">{{ $pendingCount }}</span>
+                        @endif
+                    </a>
+                </li>
+            @endcan
         </ul>
     </li>
 @endcan
 
-@can('access_quotations')
-    <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('quotations.*') ? 'c-show' : '' }}">
-        <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-            <i class="c-sidebar-nav-icon bi bi-cart-check" style="line-height: 1;"></i> Penawaran Harga
-        </a>
-        <ul class="c-sidebar-nav-dropdown-items">
-            @can('create_quotations')
-                <li class="c-sidebar-nav-item">
-                    <a class="c-sidebar-nav-link {{ request()->routeIs('quotations.create') ? 'c-active' : '' }}"
-                        href="{{ route('quotations.create') }}">
-                        <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Buat Penawaran
-                    </a>
-                </li>
-            @endcan
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('quotations.index') ? 'c-active' : '' }}"
-                    href="{{ route('quotations.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Semua Penawaran
-                </a>
-            </li>
-        </ul>
-    </li>
-@endcan
+
+
 
 {{-- =======================
      PEMBELIAN
@@ -179,31 +181,6 @@
                 <a class="c-sidebar-nav-link {{ request()->routeIs('sales.index') ? 'c-active' : '' }}"
                     href="{{ route('sales.index') }}">
                     <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Semua Penjualan
-                </a>
-            </li>
-        </ul>
-    </li>
-@endcan
-
-@can('access_sale_returns')
-    <li
-        class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['sale-returns.*', 'sale-return-payments.*']) ? 'c-show' : '' }}">
-        <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-            <i class="c-sidebar-nav-icon bi bi-arrow-return-left" style="line-height: 1;"></i> Retur Penjualan
-        </a>
-        <ul class="c-sidebar-nav-dropdown-items">
-            @can('create_sale_returns')
-                <li class="c-sidebar-nav-item">
-                    <a class="c-sidebar-nav-link {{ request()->routeIs('sale-returns.create') ? 'c-active' : '' }}"
-                        href="{{ route('sale-returns.create') }}">
-                        <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Buat Retur
-                    </a>
-                </li>
-            @endcan
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('sale-returns.index') ? 'c-active' : '' }}"
-                    href="{{ route('sale-returns.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Semua Retur
                 </a>
             </li>
         </ul>
