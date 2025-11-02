@@ -14,6 +14,8 @@
                     </h4>
                     <small class="text-muted">Kelola approval adjustment stok produk</small>
                 </div>
+
+                {{-- Stats badges --}}
                 <div class="d-flex flex-wrap gap-2">
                     <span class="badge badge-soft-warning">
                         <i class="bi bi-hourglass-split mr-1"></i>{{ $pendingCount }} Pending
@@ -23,6 +25,9 @@
                     </span>
                     <span class="badge badge-soft-danger">
                         <i class="bi bi-x-circle mr-1"></i>{{ $rejectedCount }} Rejected
+                    </span>
+                    <span class="badge badge-soft-urgent" title="Pending > 7 hari">
+                        <i class="bi bi-exclamation-octagon mr-1"></i>{{ $urgentCount ?? 0 }} Urgent
                     </span>
                 </div>
             </div>
@@ -59,7 +64,7 @@
         </div>
     </div>
 
-    {{-- Modal Detail --}}
+    {{-- Modal Detail (re-usable) --}}
     <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content border-0 shadow-lg rounded-lg">
@@ -110,6 +115,12 @@
             background: #fee2e2;
             border: 1px solid #fca5a5;
             color: #991b1b
+        }
+
+        .badge-soft-urgent {
+            background: #fff1f2;
+            border: 1px solid #fda4af;
+            color: #be123c
         }
 
         /* ===== Table ===== */
@@ -270,51 +281,83 @@
             // Detail
             $(document).on('click', '.btn-detail', function() {
                 const id = $(this).data('id');
-                $.get(`/adjustments/${id}`, function(html) {
-                    $('#detailContent').html(html);
-                    $('#detailModal').modal('show');
-                }).fail(() => {
-                    Swal.fire('Gagal', 'Tidak dapat memuat detail.', 'error');
-                });
+                window.location.href = `/adjustments/${id}`;
             });
 
-            // Approve / Reject
+
+            /**
+             * Preview → Confirm flow (tanpa bulk)
+             * 1) Ambil ringkas data dari baris DataTable
+             * 2) Tampilkan preview di Swal (ada tombol "Lanjut")
+             * 3) Lanjut ke form catatan + kirim
+             */
             $(document).on('click', '.btn-approve-action', function() {
                 const id = $(this).data('id');
                 const action = $(this).data('action'); // approve | reject
                 const approve = action === 'approve';
 
+                // Ambil data baris untuk preview ringkas
+                const rowData = dt.row($(this).closest('tr')).data() || {};
+                const previewHTML = `
+            <div class="text-left" style="line-height:1.4">
+                <div><small class="text-muted">Kode Ref</small><div><code>${rowData.reference || '-'}</code></div></div>
+                <div class="mt-2"><small class="text-muted">Dibuat Oleh</small><div>${rowData.requester_name || '-'}</div></div>
+                <div class="mt-2"><small class="text-muted">Alasan</small><div>${rowData.reason || '-'}</div></div>
+                <div class="mt-2"><small class="text-muted">Produk</small><div>${rowData.product_count || '-'}</div></div>
+                <div class="mt-2"><small class="text-muted">Tanggal</small><div>${rowData.created_at_formatted || '-'}</div></div>
+                <hr class="my-3">
+                <div class="small text-muted">Disarankan cek “Detail” untuk memastikan isinya sudah tepat.</div>
+            </div>
+        `;
+
+                // Step 1: preview ringkas
                 Swal.fire({
-                    title: approve ? 'Setujui Adjustment?' : 'Tolak Adjustment?',
-                    html: '<textarea id="approvalNotes" class="form-control" rows="4" placeholder="Catatan (opsional)"></textarea>',
+                    title: approve ? 'Preview – Setujui Penyesuaian?' :
+                        'Preview – Tolak Penyesuaian?',
+                    html: previewHTML,
                     icon: approve ? 'question' : 'warning',
                     showCancelButton: true,
-                    confirmButtonText: approve ? '✓ Setujui' : '✗ Tolak',
-                    confirmButtonColor: approve ? '#10b981' : '#ef4444',
-                    cancelButtonText: 'Batal',
-                    didOpen: () => $('#approvalNotes').trigger('focus')
+                    confirmButtonText: 'Lanjut',
+                    cancelButtonText: 'Batal'
                 }).then(res => {
                     if (!res.isConfirmed) return;
-                    $.ajax({
-                        url: `/adjustments/${id}/approve`,
-                        method: 'POST',
-                        data: {
-                            _token: $('meta[name="csrf-token"]').attr('content'),
-                            action: action,
-                            approval_notes: $('#approvalNotes').val()
-                        },
-                        beforeSend: () => Swal.showLoading(),
-                        success: (r) => {
-                            Swal.close();
-                            Swal.fire('Berhasil', r.message || 'Tersimpan.', 'success');
-                            dt.ajax.reload(null, false);
-                        },
-                        error: (xhr) => {
-                            Swal.close();
-                            const msg = xhr?.responseJSON?.message ||
-                                'Terjadi kesalahan.';
-                            Swal.fire('Error', msg, 'error');
-                        }
+
+                    // Step 2: catatan + submit
+                    Swal.fire({
+                        title: approve ? 'Setujui Adjustment?' : 'Tolak Adjustment?',
+                        html: '<textarea id="approvalNotes" class="form-control" rows="4" placeholder="Catatan (opsional)"></textarea>',
+                        icon: approve ? 'success' : 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: approve ? '✓ Setujui' : '✗ Tolak',
+                        confirmButtonColor: approve ? '#10b981' : '#ef4444',
+                        cancelButtonText: 'Batal',
+                        didOpen: () => $('#approvalNotes').trigger('focus')
+                    }).then(next => {
+                        if (!next.isConfirmed) return;
+
+                        $.ajax({
+                            url: `/adjustments/${id}/approve`,
+                            method: 'POST',
+                            data: {
+                                _token: $('meta[name="csrf-token"]').attr(
+                                    'content'),
+                                action: action,
+                                approval_notes: $('#approvalNotes').val() || ''
+                            },
+                            beforeSend: () => Swal.showLoading(),
+                            success: (r) => {
+                                Swal.close();
+                                Swal.fire('Berhasil', r.message || 'Tersimpan.',
+                                    'success');
+                                dt.ajax.reload(null, false);
+                            },
+                            error: (xhr) => {
+                                Swal.close();
+                                const msg = xhr?.responseJSON?.message ||
+                                    'Terjadi kesalahan.';
+                                Swal.fire('Error', msg, 'error');
+                            }
+                        });
                     });
                 });
             });

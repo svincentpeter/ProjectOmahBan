@@ -27,14 +27,29 @@
                         <a href="{{ route('adjustments.index') }}" class="btn btn-outline-secondary">
                             <i class="cil-arrow-left mr-1"></i> Kembali
                         </a>
+
                         @if ($adjustment->status === 'pending')
                             <a href="{{ route('adjustments.edit', $adjustment->id) }}" class="btn btn-warning">
                                 <i class="cil-pencil mr-1"></i> Edit
                             </a>
                         @endif
-                        <a href="{{ route('adjustments.pdf', $adjustment->id) }}" target="_blank" class="btn btn-info">
+
+                        {{-- Print (inline / preview di tab baru) --}}
+                        <a href="{{ route('adjustments.pdf', $adjustment->id) }}?inline=1" target="_blank" rel="noopener"
+                            class="btn btn-info">
                             <i class="cil-print mr-1"></i> Print PDF
                         </a>
+
+                        {{-- Download (paksa unduh) --}}
+                        <a href="{{ route('adjustments.pdf', $adjustment->id) }}?download=1" class="btn btn-outline-info">
+                            <i class="cil-cloud-download mr-1"></i> Download PDF
+                        </a>
+
+                        {{-- Copy reference --}}
+                        <button type="button" class="btn btn-light border js-copy-ref"
+                            data-ref="{{ $adjustment->reference }}" title="Copy Reference">
+                            <i class="cil-copy mr-1"></i> Copy Ref
+                        </button>
                     </div>
                 </div>
             </div>
@@ -70,7 +85,6 @@
                                                 </td>
                                                 <td>
                                                     <div class="d-flex flex-column">
-                                                        {{-- ✅ FIX: Ganti product_name ke field yang benar --}}
                                                         <span class="font-weight-semibold">
                                                             {{ $item->product?->product_name ?? ($item->product?->name ?? '-') }}
                                                         </span>
@@ -82,14 +96,13 @@
                                                             @if ($item->product?->category)
                                                                 <small class="text-muted">
                                                                     <i class="cil-tag mr-1"></i>
-                                                                    {{ $item->product->category->category_name }}
+                                                                    {{ $item->product->category->category_name ?? $item->product->category->name }}
                                                                 </small>
                                                             @endif
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td class="text-center align-middle">
-                                                    {{-- ✅ FIX: Tampilkan simbol +/- saja (tanpa 'add'/'sub') --}}
                                                     <span
                                                         class="badge-contrast {{ $item->type == 'add' ? 'success' : 'danger' }}">
                                                         {{ $item->type == 'add' ? '+' : '-' }}{{ $item->quantity }}
@@ -103,9 +116,9 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-right align-middle">
-                                                    {{-- ✅ Ganti current_stock ke product_quantity --}}
                                                     <span class="badge-contrast info">
                                                         {{ $item->product?->product_quantity ?? 0 }}
+                                                        {{ $item->product?->product_unit ?? 'PC' }}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -126,7 +139,7 @@
                         </div>
                     </div>
 
-                    {{-- Foto Bukti Card (NEW) --}}
+                    {{-- Foto Bukti Card --}}
                     @if ($adjustment->adjustmentFiles->count() > 0)
                         <div class="card shadow-sm mb-4">
                             <div class="card-header bg-white py-3 border-bottom">
@@ -137,41 +150,65 @@
                             </div>
                             <div class="card-body">
                                 <div class="row g-3">
-                                    @foreach ($adjustment->adjustmentFiles as $file)
+                                    @foreach ($adjustment->adjustmentFiles as $idx => $file)
                                         <div class="col-md-4 col-sm-6">
                                             <div class="position-relative border rounded overflow-hidden"
-                                                style="aspect-ratio: 1;">
-                                                <img src="{{ asset('storage/' . $file->file_path) }}" alt="Bukti"
-                                                    class="img-fluid w-100 h-100 object-fit-cover" data-toggle="modal"
-                                                    data-target="#imageModal{{ $file->id }}"
-                                                    style="cursor: pointer; object-fit: cover;">
+                                                style="aspect-ratio:1;">
+                                                <a href="{{ $file->file_url }}" class="js-lightbox d-block w-100 h-100"
+                                                    data-index="{{ $idx }}" data-src="{{ $file->file_url }}"
+                                                    data-name="{{ $file->file_name }}"
+                                                    data-download="{{ $file->file_url }}" title="Klik untuk perbesar">
+                                                    <img src="{{ $file->file_url }}" alt="{{ $file->file_name }}"
+                                                        class="img-fluid w-100 h-100" style="object-fit:cover;"
+                                                        onerror="this.src='data:image/svg+xml;utf8,&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 300 200&quot;&gt;&lt;rect width=&quot;100%&quot; height=&quot;100%&quot; fill=&quot;%23f1f5f9&quot;/&gt;&lt;text x=&quot;50%&quot; y=&quot;50%&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; fill=&quot;%2394a3b8&quot; font-family=&quot;Arial&quot; font-size=&quot;14&quot;&gt;Preview tidak tersedia&lt;/text&gt;&lt;/svg&gt;'">
+                                                </a>
                                             </div>
-                                        </div>
-
-                                        {{-- Modal Foto Besar --}}
-                                        <div class="modal fade" id="imageModal{{ $file->id }}" tabindex="-1">
-                                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">{{ $file->file_name }}</h5>
-                                                        <button type="button" class="close" data-dismiss="modal">
-                                                            <span>&times;</span>
-                                                        </button>
-                                                    </div>
-                                                    <div class="modal-body text-center">
-                                                        <img src="{{ asset('storage/' . $file->file_path) }}"
-                                                            alt="Bukti" class="img-fluid">
-                                                    </div>
-                                                </div>
+                                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                                <small class="text-truncate"
+                                                    style="max-width:70%">{{ $file->file_name }}</small>
+                                                <a class="btn btn-sm btn-outline-secondary" href="{{ $file->file_url }}"
+                                                    download>
+                                                    <i class="cil-cloud-download"></i> Download
+                                                </a>
                                             </div>
                                         </div>
                                     @endforeach
+                                </div>
+
+                                {{-- Reusable Lightbox Modal --}}
+                                <div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h6 class="modal-title" id="lightboxTitle">Preview</h6>
+                                                <div class="ml-auto d-flex align-items-center">
+                                                    <a id="lightboxDownload" href="#"
+                                                        class="btn btn-sm btn-outline-secondary mr-2" download>
+                                                        <i class="cil-cloud-download mr-1"></i> Download
+                                                    </a>
+                                                    <button type="button" class="close"
+                                                        data-dismiss="modal"><span>&times;</span></button>
+                                                </div>
+                                            </div>
+                                            <div class="modal-body p-0 bg-dark position-relative">
+                                                <img id="lightboxImg" src="" alt=""
+                                                    class="img-fluid w-100">
+                                                <div class="position-absolute w-100 d-flex justify-content-between"
+                                                    style="top:50%;transform:translateY(-50%);pointer-events:none;">
+                                                    <button type="button" class="btn btn-light shadow js-prev"
+                                                        style="pointer-events:auto;margin-left:.5rem;">‹</button>
+                                                    <button type="button" class="btn btn-light shadow js-next"
+                                                        style="pointer-events:auto;margin-right:.5rem;">›</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     @endif
 
-                    {{-- Notes Card (if exists) --}}
+                    {{-- Notes Card --}}
                     @if ($adjustment->note || $adjustment->description)
                         <div class="card shadow-sm">
                             <div class="card-header bg-white py-3 border-bottom">
@@ -213,16 +250,19 @@
                     {{-- Status Badge --}}
                     <div class="card shadow-sm mb-4">
                         <div class="card-body p-4 text-center">
-                            <span
-                                class="status-badge
-  {{ $adjustment->status === 'approved'
-      ? 'status-approved'
-      : ($adjustment->status === 'rejected'
-          ? 'status-rejected'
-          : 'status-pending') }}">
-                                {{ strtoupper($adjustment->status) }}
-                            </span>
-
+                            @if (isset($adjustment->status_badge))
+                                {!! $adjustment->status_badge !!}
+                            @else
+                                <span
+                                    class="status-badge
+                                    {{ $adjustment->status === 'approved'
+                                        ? 'status-approved'
+                                        : ($adjustment->status === 'rejected'
+                                            ? 'status-rejected'
+                                            : 'status-pending') }}">
+                                    {{ strtoupper($adjustment->status) }}
+                                </span>
+                            @endif
                         </div>
                     </div>
 
@@ -253,8 +293,9 @@
                                     <span class="text-muted small">Referensi</span>
                                 </div>
                                 <h6 class="mb-0 ml-4">
-                                    <code class="bg-light px-2 py-1"
-                                        style="font-size: 1rem;">{{ $adjustment->reference }}</code>
+                                    <code class="bg-light px-2 py-1" style="font-size: 1rem;">
+                                        {{ $adjustment->reference }}
+                                    </code>
                                 </h6>
                             </div>
 
@@ -266,14 +307,14 @@
                                     <i class="cil-layers text-primary mr-2" style="font-size: 1.25rem;"></i>
                                     <span class="text-muted small">Total Produk</span>
                                 </div>
-                                <h6 class="mb-0 ml-4">{{ $adjustment->adjustedProducts->count() }} Produk</h6>
+                                <h6 class="mb-0 ml-4">
+                                    {{ $adjustment->total_products ?? $adjustment->adjustedProducts->count() }} Produk</h6>
                             </div>
                         </div>
                     </div>
 
                     {{-- Statistics Cards --}}
                     @if ($adjustment->adjustedProducts->count() > 0)
-                        {{-- Addition Stats --}}
                         <div class="card shadow-sm mb-3">
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-center">
@@ -290,7 +331,6 @@
                             </div>
                         </div>
 
-                        {{-- Subtraction Stats --}}
                         <div class="card shadow-sm mb-4">
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-center">
@@ -308,40 +348,42 @@
                         </div>
                     @endif
 
-                    {{-- Approval Section (NEW) --}}
-                    @if ($adjustment->status === 'pending' && Auth::user()->can('approve_adjustments'))
-                        <div class="card shadow-sm border-warning">
-                            <div class="card-header bg-warning text-white py-3">
-                                <h6 class="mb-0 font-weight-bold">
-                                    <i class="cil-check-circle mr-2"></i>
-                                    Approval Penyesuaian
-                                </h6>
-                            </div>
-                            <div class="card-body p-4">
-                                <form id="approvalForm" method="POST"
-                                    action="{{ route('adjustments.approve', $adjustment->id) }}">
-                                    @csrf
-                                    {{-- hidden agar bisa diisi JS --}}
-                                    <input type="hidden" name="action" value="approve">
+                    {{-- Approval Section --}}
+                    @can('approve_adjustments')
+                        @if ($adjustment->status === 'pending')
+                            <div class="card shadow-sm border-warning">
+                                <div class="card-header bg-warning text-white py-3">
+                                    <h6 class="mb-0 font-weight-bold">
+                                        <i class="cil-check-circle mr-2"></i>
+                                        Approval Penyesuaian
+                                    </h6>
+                                </div>
+                                <div class="card-body p-4">
+                                    <form id="approvalForm" method="POST"
+                                        action="{{ route('adjustments.approve', $adjustment->id) }}">
+                                        @csrf
+                                        <input type="hidden" name="action" value="approve">
 
-                                    <div class="form-group mb-3">
-                                        <label class="form-label">Catatan Approval</label>
-                                        <textarea class="form-control" name="approval_notes" rows="3" placeholder="Masukkan catatan (opsional)"></textarea>
-                                    </div>
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Catatan Approval</label>
+                                            <textarea class="form-control" name="approval_notes" rows="3" placeholder="Masukkan catatan (opsional)"></textarea>
+                                        </div>
 
-                                    <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-success flex-fill js-approve">
-                                            <i class="cil-check-circle mr-1"></i> Setujui
-                                        </button>
-                                        <button type="button" class="btn btn-danger flex-fill js-reject">
-                                            <i class="cil-x-circle mr-1"></i> Tolak
-                                        </button>
-                                    </div>
-                                </form>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-success flex-fill js-approve">
+                                                <i class="cil-check-circle mr-1"></i> Setujui
+                                            </button>
+                                            <button type="button" class="btn btn-danger flex-fill js-reject">
+                                                <i class="cil-x-circle mr-1"></i> Tolak
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                        </div>
-                    @elseif($adjustment->status !== 'pending')
-                        {{-- Show Approval Info --}}
+                        @endif
+                    @endcan
+
+                    @if ($adjustment->status !== 'pending')
                         <div class="card shadow-sm">
                             <div class="card-header bg-white py-3 border-bottom">
                                 <h6 class="mb-0 font-weight-bold">
@@ -388,10 +430,18 @@
                             @forelse($adjustment->logs as $log)
                                 <div class="px-4 py-3 border-bottom">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
+                                        @php
+                                            $map = [
+                                                'created' => 'primary',
+                                                'updated' => 'info',
+                                                'approved' => 'success',
+                                                'rejected' => 'danger',
+                                                'deleted' => 'dark',
+                                            ];
+                                            $variant = $map[$log->action] ?? 'secondary';
+                                        @endphp
                                         <span
-                                            class="badge badge-{{ $log->action === 'create' ? 'primary' : ($log->action === 'update' ? 'info' : ($log->action === 'approved' ? 'success' : 'danger')) }}">
-                                            {{ strtoupper($log->action) }}
-                                        </span>
+                                            class="badge badge-{{ $variant }}">{{ strtoupper($log->action) }}</span>
                                         <small class="text-muted">{{ $log->created_at->diffForHumans() }}</small>
                                     </div>
                                     <p class="mb-1 small"><strong>{{ $log->user->name ?? 'System' }}</strong></p>
@@ -410,97 +460,138 @@
             </div>
         </div>
     </div>
+
 @endsection
+
 @push('page_scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('approvalForm');
-            if (!form) return;
-
-            const actionInput = form.querySelector('input[name="action"]');
-            const notesInput = form.querySelector('textarea[name="approval_notes"]');
-            const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            const runApproval = async (actionValue) => {
-                const label = actionValue === 'approve' ? 'Setujui' : 'Tolak';
-                const icon = actionValue === 'approve' ? 'question' : 'warning';
-                const text = actionValue === 'approve' ?
-                    'Anda yakin ingin MENYETUJUI penyesuaian ini?' :
-                    'Anda yakin ingin MENOLAK penyesuaian ini?';
-
-                const {
-                    isConfirmed
-                } = await Swal.fire({
-                    icon,
-                    title: label + ' Penyesuaian?',
-                    text,
-                    showCancelButton: true,
-                    confirmButtonText: label,
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true
-                });
-
-                if (!isConfirmed) return;
-
-                // ✅ FIX: Set value dulu SEBELUM kirim
-                actionInput.value = actionValue;
-
-                // ✅ Kirim via fetch JSON
-                const payload = {
-                    action: actionValue, // ✅ Kirim string value, bukan element
-                    approval_notes: notesInput.value || ''
-                };
-
-                try {
-                    const resp = await fetch(form.getAttribute('action'), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrf,
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify(payload) // ✅ Kirim JSON langsung
-                    });
-
-                    const data = await resp.json();
-
-                    if (resp.ok && data?.success) {
-                        await Swal.fire({
+        document.addEventListener('DOMContentLoaded', function() {
+            // ===== Copy Reference =====
+            function copyText(text) {
+                if (!text) return;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        Swal.fire({
                             icon: 'success',
-                            title: 'Berhasil',
-                            text: data.message || 'Approval berhasil diproses',
-                            timer: 1500,
+                            title: 'Disalin',
+                            text: 'Reference berhasil disalin',
+                            timer: 1200,
                             showConfirmButton: false
                         });
-                        window.location.href = data.redirect ||
-                            '{{ route('adjustments.show', $adjustment->id) }}';
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal',
-                            text: data?.message || 'Terjadi kesalahan saat memproses approval'
-                        });
+                    }).catch(fallbackCopy);
+                } else {
+                    fallbackCopy();
+                }
+
+                function fallbackCopy() {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try {
+                        document.execCommand('copy');
+                    } finally {
+                        document.body.removeChild(ta);
                     }
-                } catch (error) {
-                    console.error('Error:', error);
                     Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Tidak dapat terhubung ke server'
+                        icon: 'success',
+                        title: 'Disalin',
+                        timer: 1200,
+                        showConfirmButton: false
                     });
                 }
-            };
+            }
+            document.querySelectorAll('.js-copy-ref').forEach(btn => {
+                btn.addEventListener('click', () => copyText(btn.getAttribute('data-ref')));
+            });
 
-            // ✅ Bind tombol
-            form.querySelector('.js-approve')?.addEventListener('click', () => runApproval('approve'));
-            form.querySelector('.js-reject')?.addEventListener('click', () => runApproval('reject'));
+            // ===== Lightbox dengan navigasi =====
+            const lightboxModal = $('#lightboxModal');
+            const imgEl = document.getElementById('lightboxImg');
+            const titleEl = document.getElementById('lightboxTitle');
+            const downloadEl = document.getElementById('lightboxDownload');
+
+            let gallery = [];
+            let currentIndex = 0;
+
+            function openLightbox(idx) {
+                currentIndex = idx;
+                const item = gallery[currentIndex];
+                if (!item) return;
+                imgEl.src = item.src;
+                titleEl.textContent = item.name || 'Preview';
+                downloadEl.href = item.download || item.src;
+                downloadEl.setAttribute('download', item.name || 'file');
+                lightboxModal.modal('show');
+            }
+
+            $(document).on('click', 'a.js-lightbox', function(e) {
+                e.preventDefault();
+                if (gallery.length === 0) {
+                    $('a.js-lightbox').each(function() {
+                        gallery.push({
+                            src: this.getAttribute('data-src') || this.href,
+                            name: this.getAttribute('data-name') || '',
+                            download: this.getAttribute('data-download') || this.href
+                        });
+                    });
+                }
+                const idx = parseInt(this.getAttribute('data-index') || '0');
+                openLightbox(idx);
+            });
+
+            $(document).on('click', '.js-prev', function() {
+                if (!gallery.length) return;
+                openLightbox((currentIndex - 1 + gallery.length) % gallery.length);
+            });
+            $(document).on('click', '.js-next', function() {
+                if (!gallery.length) return;
+                openLightbox((currentIndex + 1) % gallery.length);
+            });
+
+            document.addEventListener('keydown', (ev) => {
+                if (!$('#lightboxModal').hasClass('show')) return;
+                if (ev.key === 'ArrowLeft') $('.js-prev').click();
+                if (ev.key === 'ArrowRight') $('.js-next').click();
+                if (ev.key === 'Escape') lightboxModal.modal('hide');
+            });
+
+            // ===== Approval buttons (optional handlers) =====
+            const $approvalForm = $('#approvalForm');
+            $(document).on('click', '.js-approve', function() {
+                if (!$approvalForm.length) return;
+                $approvalForm.find('input[name="action"]').val('approve');
+                $approvalForm.trigger('submit');
+            });
+            $(document).on('click', '.js-reject', function() {
+                if (!$approvalForm.length) return;
+                Swal.fire({
+                    title: 'Tolak pengajuan ini?',
+                    icon: 'warning',
+                    input: 'textarea',
+                    inputLabel: 'Catatan (opsional)',
+                    inputPlaceholder: 'Alasan penolakan…',
+                    inputAttributes: {
+                        'aria-label': 'Alasan penolakan'
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Tolak',
+                    confirmButtonColor: '#dc3545'
+                }).then(res => {
+                    if (res.isConfirmed) {
+                        $approvalForm.find('input[name="action"]').val('reject');
+                        if (res.value) $approvalForm.find('textarea[name="approval_notes"]').val(res
+                            .value);
+                        $approvalForm.trigger('submit');
+                    }
+                });
+            });
         });
     </script>
 @endpush
+
 @push('page_styles')
     <style>
-        /* ====== Palet kuat & variabel ====== */
         :root {
             --slate-900: #0f172a;
             --slate-800: #1e293b;
@@ -521,7 +612,6 @@
             --table-head: #f1f5f9;
         }
 
-        /* ====== Umum ====== */
         .animated.fadeIn {
             animation: fadeIn .3s ease-in
         }
@@ -554,7 +644,6 @@
             overflow: hidden
         }
 
-        /* ====== Tabel ====== */
         .table {
             margin-bottom: 0
         }
@@ -578,7 +667,6 @@
             background: var(--violet-50)
         }
 
-        /* ====== Teks & ikon ====== */
         .text-muted {
             color: var(--muted) !important
         }
@@ -587,7 +675,6 @@
             opacity: .9
         }
 
-        /* ====== Badge indeks (angka # kolom) ====== */
         .badge-index {
             display: inline-block;
             padding: .35rem .55rem;
@@ -597,7 +684,6 @@
             font-weight: 700
         }
 
-        /* ====== Badge kuantitas/type dengan kontras tinggi ====== */
         .badge-contrast {
             padding: .4rem .65rem;
             border-radius: .5rem;
@@ -621,7 +707,6 @@
             background: var(--amber-700)
         }
 
-        /* Tanda kecil pada kolom Tipe */
         .chip {
             display: inline-flex;
             align-items: center;
@@ -643,7 +728,6 @@
             border: 1px solid rgba(185, 28, 28, .25)
         }
 
-        /* ====== Badge Status besar ====== */
         .status-badge {
             font-size: 1rem;
             padding: .75rem 1.25rem;
@@ -664,7 +748,6 @@
             background: var(--rose-700)
         }
 
-        /* ====== Empty state ====== */
         .empty-state {
             padding: 2rem 0;
             color: var(--muted)
@@ -674,7 +757,6 @@
             color: var(--muted-weak)
         }
 
-        /* ====== Form focus ====== */
         .form-control {
             border-radius: 6px;
             border: 1px solid var(--border)
@@ -685,7 +767,6 @@
             box-shadow: 0 0 0 .2rem rgba(3, 105, 161, .25)
         }
 
-        /* ====== Responsif ====== */
         @media (max-width:992px) {
             .action-bar .d-flex {
                 flex-direction: column;
