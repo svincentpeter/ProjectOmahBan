@@ -2,43 +2,111 @@
 
 namespace Modules\Adjustment\Http\Controllers;
 
-use Illuminate\Http\Request;
+// ===== BASE CLASSES =====
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
+// ===== MODELS & ENTITIES =====
 use Modules\Adjustment\Entities\Adjustment;
 use Modules\Adjustment\Entities\AdjustedProduct;
-use Modules\Adjustment\Entities\AdjustmentLog;
 use Modules\Adjustment\Entities\AdjustmentFile;
+use Modules\Adjustment\Entities\AdjustmentLog;
+use Modules\Adjustment\Entities\StockMovement;
 use Modules\Product\Entities\Product;
-use App\Models\User;
+
+// ===== REQUESTS =====
 use Modules\Adjustment\Http\Requests\StoreAdjustmentRequest;
+
+// ===== FACADES =====
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+
+// ===== DATA TABLES =====
+use Yajra\DataTables\DataTables;
 use Modules\Adjustment\DataTables\AdjustmentsDataTable;
-use Yajra\DataTables\Facades\DataTables;
+
+// ===== PDF =====
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdjustmentController extends Controller
 {
     /**
-     * ✅ INDEX: Tampilkan semua adjustment (Kasir lihat miliknya, Admin lihat semua)
-     * 📝 Fitur: DataTable dengan filter status & requester
-     * 🔐 Permission: access_adjustments
+     * INDEX
      */
     public function index(AdjustmentsDataTable $dataTable)
     {
-        // Cek permission
         abort_if(Gate::denies('access_adjustments'), 403);
 
-        return $dataTable->render('adjustment::index');
+        // Basis query: hormati soft delete + visibilitas user
+        $base = Adjustment::query()->whereNull('deleted_at');
+
+        // Jika user TIDAK punya izin melihat semua, batasi ke dirinya saja
+        if (!Auth::user()->can('approve_adjustments') && !Auth::user()->can('view_all_adjustments')) {
+            $base->where('requester_id', Auth::id());
+        }
+
+        // Hitung kartu dari scope yang sama
+        $stats = [
+            'total' => (clone $base)->count(),
+            'pending' => (clone $base)->where('status', 'pending')->count(),
+            'approved' => (clone $base)->where('status', 'approved')->count(),
+            'rejected' => (clone $base)->where('status', 'rejected')->count(),
+        ];
+
+        // Kirim $stats ke Blade
+        return $dataTable->render('adjustment::index', compact('stats'));
     }
 
     /**
-     * ✅ CREATE: Form buat adjustment baru
-     * 📝 Fitur: Load daftar produk aktif dengan kategorinya
-     * 🔐 Permission: create_adjustments
+     * LEGACY: DataTables AJAX endpoint (gunakan AdjustmentsDataTable jika memungkinkan)
+     */
+    public function getDataTable(Request $request)
+    {
+        abort_if(Gate::denies('access_adjustments'), 403);
+
+        $query = Adjustment::with(['requester', 'adjustedProducts'])
+            ->whereNull('deleted_at')
+            ->latest('created_at');
+
+        // Batasi visibilitas bila perlu
+        if (!Auth::user()->can('approve_adjustments') && !Auth::user()->can('view_all_adjustments')) {
+            $query->where('requester_id', Auth::id());
+        }
+
+        // === Filter dari DataTables (sesuai JS preXhr) ===
+        $status = $request->input('status'); // '', 'pending', 'approved', 'rejected'
+        $type = $request->input('type'); // '', 'add', 'sub' (ada di adjusted_products)
+        $requesterId = $request->input('requester_id'); // '', <id>
+        $from = $request->input('date_from'); // yyyy-mm-dd
+        $to = $request->input('date_to'); // yyyy-mm-dd
+
+        $query->when($status, fn($q) => $q->where('status', $status));
+        $query->when($requesterId, fn($q) => $q->where('requester_id', $requesterId));
+
+        // Filter tipe via relasi detail (header tidak punya kolom `type`)
+        $query->when($type, function ($q) use ($type) {
+            $q->whereHas('adjustedProducts', fn($w) => $w->where('type', $type));
+        });
+
+        // Filter tanggal hanya jika ada input (hindari default menyempit)
+        $query->when($from, fn($q) => $q->whereDate('created_at', '>=', $from))->when($to, fn($q) => $q->whereDate('created_at', '<=', $to));
+
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('requester_name', fn($a) => $a->requester->name ?? '-')
+            ->addColumn('product_count', fn($a) => $a->adjustedProducts->count() . ' produk')
+            ->addColumn('status', fn($a) => $a->status)
+            ->addColumn('actions', fn($a) => view('adjustment::partials.actions', compact('a'))->render())
+            ->rawColumns(['actions'])
+            ->make(true);
+    }
+
+    /**
+     * CREATE
      */
     public function create()
     {
@@ -48,9 +116,9 @@ class AdjustmentController extends Controller
             ->select([
                 'id',
                 'product_name',
-                'product_code', // <-- WAJIB, biar tidak [N/A]
-                'product_unit', // <-- WAJIB, biar tidak "undefined"
-                'product_quantity', // stok saat ini
+                'product_code',
+                'product_unit',
+                'product_quantity', // stok kolom yang benar
                 'category_id',
             ])
             ->with(['category:id,category_name'])
@@ -63,13 +131,7 @@ class AdjustmentController extends Controller
     }
 
     /**
-     * ✅ STORE: Simpan adjustment baru ke database
-     * 📝 Fitur:
-     *    - Upload multiple foto bukti
-     *    - Validasi stok jika tipe 'sub' (pengurangan)
-     *    - Generate reference number otomatis
-     *    - Atomic transaction (semua atau gagal)
-     * 🔐 Permission: create_adjustments
+     * STORE
      */
     public function store(StoreAdjustmentRequest $request)
     {
@@ -77,29 +139,24 @@ class AdjustmentController extends Controller
 
         try {
             DB::transaction(function () use ($request) {
-                // Generate reference number: ADJ-YYYYMMDD-XXXXX
-                $dateCode = date('Ymd');
-                $lastAdjustment = Adjustment::whereDate('created_at', today())->latest('id')->first();
-                $sequence = ($lastAdjustment ? intval(substr($lastAdjustment->reference, -5)) : 0) + 1;
-                $reference = 'ADJ-' . $dateCode . '-' . str_pad($sequence, 5, '0', STR_PAD_LEFT);
+                // Generate reference yang aman dari race condition
+                $reference = $this->generateReference();
 
-                // Buat adjustment record
+                // Buat adjustment
                 $adjustment = Adjustment::create([
                     'date' => $request->date ?? now()->toDateString(),
-                    'reference' => $reference, // ✅ Reference auto-generated
+                    'reference' => $reference,
                     'note' => $request->note,
                     'reason' => $request->reason,
                     'description' => $request->description,
-                    'requester_id' => Auth::id(), // ✅ Set requester otomatis
-                    'status' => 'pending', // Status awal selalu pending
+                    'requester_id' => Auth::id(),
+                    'status' => 'pending',
                 ]);
 
-                // Upload foto bukti (NEW FEATURE)
+                // Upload file bukti (UI limit 3; back-end tetap aman)
                 if ($request->hasFile('files')) {
                     foreach ($request->file('files') as $file) {
-                        // Store ke storage/public/adjustment_files/
                         $path = $file->store('adjustment_files', 'public');
-
                         AdjustmentFile::create([
                             'adjustment_id' => $adjustment->id,
                             'file_path' => $path,
@@ -110,18 +167,17 @@ class AdjustmentController extends Controller
                     }
                 }
 
-                // Loop produk yang akan disesuaikan
-                foreach ($request->product_ids as $key => $productId) {
+                // Detail produk
+                foreach ($request->product_ids as $i => $productId) {
                     $product = Product::findOrFail($productId);
-                    $quantity = (int) $request->quantities[$key];
-                    $type = $request->types[$key]; // 'add' atau 'sub'
+                    $quantity = (int) $request->quantities[$i];
+                    $type = $request->types[$i]; // 'add' | 'sub'
 
-                    // ✅ Validasi: Jika pengurangan, pastikan stok cukup
-                    if ($type === 'sub' && $product->current_stock < $quantity) {
-                        throw new \Exception("Stok produk '{$product->product_name}' tidak cukup. " . "Sisa stok: {$product->current_stock}, Kurangi: {$quantity}");
+                    // Validasi stok pakai product_quantity
+                    if ($type === 'sub' && $product->product_quantity < $quantity) {
+                        throw new \Exception("Stok produk '{$product->product_name}' tidak cukup. Sisa: {$product->product_quantity}, Kurangi: {$quantity}");
                     }
 
-                    // Buat record adjusted_product
                     AdjustedProduct::create([
                         'adjustment_id' => $adjustment->id,
                         'product_id' => $productId,
@@ -130,57 +186,41 @@ class AdjustmentController extends Controller
                     ]);
                 }
 
-                // ✅ Create audit log: Pengajuan baru
+                // Audit log: CREATED
                 AdjustmentLog::create([
                     'adjustment_id' => $adjustment->id,
                     'user_id' => Auth::id(),
-                    'action' => $validated['action'] === 'approve' ? 'approved' : 'rejected',
-                    'old_status' => 'pending',
-                    'new_status' => $validated['action'] === 'approve' ? 'approved' : 'rejected',
-                    'notes' => $validated['approval_notes'] ?? 'Tanpa catatan',
+                    'action' => 'created',
+                    'old_status' => null,
+                    'new_status' => 'pending',
+                    'notes' => $request->note ?? 'Pengajuan baru',
                     'locked' => 1,
-                    // ✅ Jangan include created_at
                 ]);
             });
 
-            // Success toast
-            toast('✅ Pengajuan penyesuaian berhasil! Menunggu persetujuan admin.', 'info');
+            toast('✅ Pengajuan penyesuaian berhasil! Menunggu persetujuan.', 'info');
             return redirect()->route('adjustments.index');
-        } catch (\Exception $e) {
-            // Error toast
+        } catch (\Throwable $e) {
+            Log::error('Adjustment Store Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             toast('❌ Error: ' . $e->getMessage(), 'error');
             return back()->withInput();
         }
     }
 
     /**
-     * ✅ SHOW: Tampilkan detail adjustment
-     * 📝 Fitur:
-     *    - Tampilkan produk detail
-     *    - Tampilkan foto bukti
-     *    - Tampilkan riwayat approval
-     * 🔐 Permission: show_adjustments
+     * SHOW
      */
     public function show(Adjustment $adjustment)
     {
         abort_if(Gate::denies('show_adjustments'), 403);
 
-        // Load relasi yang diperlukan
-        $adjustment->load([
-            'adjustedProducts.product.category', // Produk + kategori
-            'adjustmentFiles', // Foto bukti
-            'logs.user', // Riwayat dengan nama user
-            'requester', // Nama pengaju
-            'approver', // Nama penyetuju
-        ]);
+        $adjustment->load(['adjustedProducts.product.category', 'adjustmentFiles', 'logs.user', 'requester', 'approver']);
 
         return view('adjustment::show', compact('adjustment'));
     }
 
     /**
-     * ✅ EDIT: Form edit adjustment (hanya jika pending)
-     * 📝 Fitur: Hanya bisa edit jika status masih pending
-     * 🔐 Permission: edit_adjustments
+     * EDIT
      */
     public function edit(Adjustment $adjustment)
     {
@@ -192,14 +232,7 @@ class AdjustmentController extends Controller
         }
 
         $products = Product::query()
-            ->select([
-                'id',
-                'product_name',
-                'product_code', // <-- penting
-                'product_unit', // <-- penting
-                'product_quantity', // JANGAN pakai 'current_stock' (itu bukan kolom DB)
-                'category_id',
-            ])
+            ->select(['id', 'product_name', 'product_code', 'product_unit', 'product_quantity', 'category_id'])
             ->with(['category:id,category_name'])
             ->where('is_active', true)
             ->whereNull('deleted_at')
@@ -212,18 +245,12 @@ class AdjustmentController extends Controller
     }
 
     /**
-     * ✅ UPDATE: Update adjustment (hanya jika pending)
-     * 📝 Fitur:
-     *    - Update produk
-     *    - Add foto bukti tambahan
-     *    - Log perubahan
-     * 🔐 Permission: edit_adjustments
+     * UPDATE
      */
     public function update(StoreAdjustmentRequest $request, Adjustment $adjustment)
     {
         abort_if(Gate::denies('edit_adjustments'), 403);
 
-        // Validasi status
         if ($adjustment->status !== 'pending') {
             toast('❌ Hanya pengajuan PENDING yang bisa diupdate!', 'error');
             return back();
@@ -231,7 +258,6 @@ class AdjustmentController extends Controller
 
         try {
             DB::transaction(function () use ($request, $adjustment) {
-                // Update info dasar
                 $adjustment->update([
                     'date' => $request->date,
                     'note' => $request->note,
@@ -239,7 +265,7 @@ class AdjustmentController extends Controller
                     'description' => $request->description ?? $adjustment->description,
                 ]);
 
-                // Upload foto tambahan
+                // Upload tambahan
                 if ($request->hasFile('files')) {
                     foreach ($request->file('files') as $file) {
                         $path = $file->store('adjustment_files', 'public');
@@ -253,17 +279,15 @@ class AdjustmentController extends Controller
                     }
                 }
 
-                // Hapus produk lama
+                // Reset detail lalu isi ulang
                 $adjustment->adjustedProducts()->delete();
 
-                // Insert produk baru
-                foreach ($request->product_ids as $key => $productId) {
+                foreach ($request->product_ids as $i => $productId) {
                     $product = Product::findOrFail($productId);
-                    $quantity = (int) $request->quantities[$key];
-                    $type = $request->types[$key];
+                    $quantity = (int) $request->quantities[$i];
+                    $type = $request->types[$i];
 
-                    // Validasi stok
-                    if ($type === 'sub' && $product->current_stock < $quantity) {
+                    if ($type === 'sub' && $product->product_quantity < $quantity) {
                         throw new \Exception("Stok '{$product->product_name}' tidak cukup!");
                     }
 
@@ -275,36 +299,34 @@ class AdjustmentController extends Controller
                     ]);
                 }
 
-                // Log update
+                // Log update (tetap pending)
                 AdjustmentLog::create([
                     'adjustment_id' => $adjustment->id,
                     'user_id' => Auth::id(),
-                    'action' => 'submitted',
-                    'old_status' => null,
+                    'action' => 'updated',
+                    'old_status' => 'pending',
                     'new_status' => 'pending',
-                    'notes' => $request->note ?? 'Pengajuan dibuat',
+                    'notes' => $request->note ?? 'Perubahan pengajuan',
                     'locked' => 1,
                 ]);
             });
 
             toast('✅ Pengajuan berhasil diperbarui!', 'info');
             return redirect()->route('adjustments.index');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Adjustment Update Error: ' . $e->getMessage());
             toast('❌ Error: ' . $e->getMessage(), 'error');
             return back()->withInput();
         }
     }
 
     /**
-     * ✅ DESTROY: Hapus adjustment (hanya jika pending)
-     * 📝 Fitur: Soft validation, cek stok reversal
-     * 🔐 Permission: delete_adjustments
+     * DESTROY
      */
     public function destroy(Adjustment $adjustment)
     {
         abort_if(Gate::denies('delete_adjustments'), 403);
 
-        // Validasi: hanya pending yang bisa dihapus
         if ($adjustment->status !== 'pending') {
             toast('❌ Hanya pengajuan PENDING yang bisa dihapus!', 'error');
             return back();
@@ -312,79 +334,69 @@ class AdjustmentController extends Controller
 
         try {
             DB::transaction(function () use ($adjustment) {
-                // Soft check: jika dihapus, apakah stok akan negatif?
-                foreach ($adjustment->adjustedProducts as $adjustedProduct) {
-                    $product = Product::findOrFail($adjustedProduct->product_id);
-                    $reverseQty = $adjustedProduct->type === 'add' ? -$adjustedProduct->quantity : $adjustedProduct->quantity;
+                // Tidak perlu cek stok karena PENDING belum memengaruhi stok
 
-                    if ($product->current_stock + $reverseQty < 0) {
-                        throw new \Exception("Tidak dapat menghapus. Stok '{$product->product_name}' akan negatif!");
+                // Hapus file fisik (opsional)
+                foreach ($adjustment->adjustmentFiles as $f) {
+                    try {
+                        Storage::disk('public')->delete($f->file_path);
+                    } catch (\Throwable $th) {
+                        // abaikan
                     }
                 }
 
-                // Hapus associated data
+                // Hapus relasi
                 $adjustment->adjustedProducts()->delete();
-                $adjustment->adjustmentFiles()->delete(); // ✅ Hapus file references
+                $adjustment->adjustmentFiles()->delete();
                 $adjustment->logs()->delete();
 
                 // Hapus adjustment
                 $adjustment->delete();
-
-                // Log penghapusan
-                AdjustmentLog::create([
-                    'adjustment_id' => $adjustment->id,
-                    'user_id' => Auth::id(),
-                    'action' => 'delete',
-                    'notes' => 'Penghapusan pengajuan penyesuaian',
-                    'locked' => true,
-                ]);
             });
 
             toast('✅ Pengajuan berhasil dihapus!', 'warning');
             return redirect()->route('adjustments.index');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Adjustment Destroy Error: ' . $e->getMessage());
             toast('❌ Error: ' . $e->getMessage(), 'error');
             return back();
         }
     }
 
     /**
-     * ✅ APPROVALS: Halaman list approval (untuk Admin/Supervisor)
-     * 📝 Fitur: Tampilkan summary pending/approved/rejected
-     * 🔐 Permission: approve_adjustments
+     * APPROVALS (halaman)
      */
     public function approvals()
     {
         abort_if(Gate::denies('approve_adjustments'), 403);
 
-        // Summary counts
         $pendingCount = Adjustment::where('status', 'pending')->count();
         $approvedCount = Adjustment::where('status', 'approved')->count();
         $rejectedCount = Adjustment::where('status', 'rejected')->count();
+        $urgentCount = Adjustment::where('status', 'pending')
+            ->where('created_at', '<', now()->subDays(7))
+            ->count();
 
-        return view('adjustment::approvals', compact('pendingCount', 'approvedCount', 'rejectedCount'));
+        return view('adjustment::approvals', compact('pendingCount', 'approvedCount', 'rejectedCount', 'urgentCount'));
     }
 
     /**
-     * ✅ GET PENDING ADJUSTMENTS: DataTable endpoint untuk approval list
-     * 📝 Format: JSON response untuk Yajra DataTables
-     * 🔐 Permission: approve_adjustments
+     * DataTables source untuk approvals.blade
+     * Route name: adjustments.getPendingAdjustments
      */
-    public function getPendingAdjustments()
+    public function pendingDatatable(Request $request)
     {
         abort_if(Gate::denies('approve_adjustments'), 403);
 
-        $adjustments = Adjustment::query()
+        $query = Adjustment::with(['requester', 'adjustedProducts'])
             ->where('status', 'pending')
-            ->with(['requester', 'adjustedProducts.product'])
-            ->latest('id')
-            ->get();
+            ->latest('created_at');
 
-        return DataTables::of($adjustments)
+        return DataTables::of($query)
             ->addIndexColumn()
-            ->addColumn('requester_name', fn($row) => $row->requester?->name ?? 'System')
-            ->addColumn('product_count', fn($row) => $row->adjustedProducts->count() . ' produk')
-            ->addColumn('created_at_formatted', fn($row) => $row->created_at->format('d/m/Y H:i'))
+            ->addColumn('requester_name', fn($a) => $a->requester->name ?? '-')
+            ->addColumn('product_count', fn($a) => $a->adjustedProducts->count())
+            ->addColumn('created_at_formatted', fn($a) => optional($a->created_at)->format('d/m/Y H:i'))
             ->addColumn('actions', function ($row) {
                 return view('adjustment::partials.actions-approval', compact('row'))->render();
             })
@@ -393,109 +405,223 @@ class AdjustmentController extends Controller
     }
 
     /**
-     * ✅ APPROVE/REJECT: Handle approval decision
-     * 📝 Fitur:
-     *    - Validate action (approve/reject)
-     *    - Update status & approver_id
-     *    - Log perubahan status
-     *    - Return JSON response
-     * 🔐 Permission: approve_adjustments
-     * 📌 Method: POST /adjustments/{adjustment}/approve?action=approve|reject
+     * APPROVE / REJECT
+     * Route: POST /adjustments/{adjustment}/approve
      */
     public function approve(Request $request, Adjustment $adjustment)
     {
         abort_if(Gate::denies('approve_adjustments'), 403);
 
         if ($adjustment->status !== 'pending') {
-            $payload = [
-                'success' => false,
-                'message' => '❌ Status adjustment sudah ' . strtoupper($adjustment->status),
-            ];
-            // HTML form -> redirect back with flash
-            if (!$request->expectsJson() && !$request->ajax()) {
-                toast($payload['message'], 'error');
-                return back();
-            }
-            return response()->json($payload, 422);
+            toast('❌ Hanya pengajuan PENDING yang bisa diproses!', 'error');
+            return back();
         }
 
         $validated = $request->validate([
-            'action' => 'required|in:approve,reject',
-            'approval_notes' => 'nullable|string|max:500',
+            'action' => ['required', Rule::in(['approve', 'reject'])],
+            'approval_notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        try {
-            $newStatus = $validated['action'] === 'approve' ? 'approved' : 'rejected';
+        $action = $validated['action'];
+        $newStatus = $action === 'approve' ? 'approved' : 'rejected';
 
-            DB::transaction(function () use ($adjustment, $validated, $newStatus) {
+        try {
+            DB::transaction(function () use ($adjustment, $newStatus, $request) {
+                // Pastikan relasi siap
+                $adjustment->loadMissing('adjustedProducts');
+
+                // Update header
                 $adjustment->update([
                     'status' => $newStatus,
                     'approver_id' => Auth::id(),
-                    'approval_notes' => $validated['approval_notes'] ?? '',
                     'approval_date' => now(),
+                    'approval_notes' => $request->approval_notes,
                 ]);
 
+                // Jika approved: update stok & catat pergerakan
+                if ($newStatus === 'approved') {
+                    foreach ($adjustment->adjustedProducts as $item) {
+                        $product = Product::whereKey($item->product_id)->lockForUpdate()->firstOrFail();
+
+                        $delta = $item->type === 'add' ? $item->quantity : -$item->quantity;
+                        $after = $product->product_quantity + $delta;
+
+                        if ($after < 0) {
+                            throw new \Exception("Stok '{$product->product_name}' akan negatif! Sisa: {$product->product_quantity}, Perubahan: {$delta}");
+                        }
+
+                        $product->update(['product_quantity' => $after]);
+
+                        // === A) Rekomendasi: gunakan polymorphic ref_type/ref_id ===
+                        // StockMovement::record([
+                        //     'product_id'  => $product->id,
+                        //     'type'        => $item->type === 'add' ? 'in' : 'out',
+                        //     'quantity'    => $item->quantity,
+                        //     'description' => "Adjustment {$adjustment->reference} - {$item->type}",
+                        //     'user_id'     => Auth::id(),
+                        //     'ref'         => $adjustment, // biar helper set ref_type/ref_id
+                        // ]);
+
+                        // === B) Fallback: jika masih memakai kolom adjustment_id ===
+                        StockMovement::record([
+                            'product_id' => $product->id,
+                            'type' => $item->type === 'add' ? 'in' : 'out',
+                            'quantity' => $item->quantity,
+                            'description' => "Adjustment {$adjustment->reference} - {$item->type}",
+                            'user_id' => Auth::id(),
+                            'adjustment_id' => $adjustment->id,
+                        ]);
+                    }
+                }
+
+                // Audit log
                 AdjustmentLog::create([
                     'adjustment_id' => $adjustment->id,
                     'user_id' => Auth::id(),
-                    'action' => $newStatus,
+                    'action' => $newStatus, // 'approved' / 'rejected'
                     'old_status' => 'pending',
                     'new_status' => $newStatus,
-                    'notes' => $validated['approval_notes'] ?? 'Tanpa catatan',
-                    'locked' => true,
+                    'notes' => $request->approval_notes ?? ucfirst($newStatus),
+                    'locked' => 1,
                 ]);
             });
 
-            $message = $validated['action'] === 'approve' ? '✅ Penyesuaian berhasil DISETUJUI!' : '❌ Penyesuaian berhasil DITOLAK';
-
-            // ====== HTML form (non-AJAX) -> redirect normal ======
-            if (!$request->expectsJson() && !$request->ajax()) {
-                toast($message, $newStatus === 'approved' ? 'success' : 'warning');
-                // Balik ke detail atau ke daftar approvals – pilih salah satu:
-                return redirect()->route('adjustments.show', $adjustment->id);
-                // return redirect()->route('adjustments.approvals');
+            if ($newStatus === 'approved') {
+                toast('✅ Pengajuan DISETUJUI dan stok telah diperbarui!', 'success');
+            } else {
+                toast('❌ Pengajuan DITOLAK!', 'warning');
             }
 
-            // ====== AJAX -> JSON response ======
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'status' => $newStatus,
-                'redirect' => route('adjustments.approvals'),
-            ]);
-        } catch (\Exception $e) {
-            if (!$request->expectsJson() && !$request->ajax()) {
-                toast('⚠️ Error: ' . $e->getMessage(), 'error');
-                return back();
-            }
-            return response()->json(['success' => false, 'message' => '⚠️ Error: ' . $e->getMessage()], 500);
+            return redirect()->route('adjustments.approvals');
+        } catch (\Throwable $e) {
+            Log::error('Adjustment Approve Error: ' . $e->getMessage());
+            toast('❌ Error: ' . $e->getMessage(), 'error');
+            return back();
         }
     }
 
     /**
-     * ✅ PDF: Generate laporan PDF adjustment
-     * 📝 Fitur: Export ke PDF dengan detail lengkap
-     * 🔐 Permission: show_adjustments
+     * PDF
      */
     public function pdf(Adjustment $adjustment)
     {
         abort_if(Gate::denies('show_adjustments'), 403);
 
-        // Load data
-        $adjustment->load(['adjustedProducts.product.category', 'adjustmentFiles', 'requester', 'approver']);
+        $adjustment->load(['adjustedProducts.product.category', 'adjustmentFiles', 'requester', 'approver', 'logs.user']);
 
-        // Generate PDF
-        $pdf = Pdf::loadView('adjustment::print', compact('adjustment'))
-            ->setPaper('a4')
-            ->setOrientation('portrait')
-            ->setOptions([
-                'margin-top' => 10,
-                'margin-right' => 10,
-                'margin-bottom' => 10,
-                'margin-left' => 10,
-                'enable-local-file-access' => true,
-            ]);
+        try {
+            $pdf = Pdf::loadView('adjustment::pdf', compact('adjustment'))
+                ->setPaper('a4', 'portrait')
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true, // izinkan asset eksternal (logo, css cdn)
+                ]);
 
-        return $pdf->inline('Penyesuaian_Stok_' . $adjustment->reference . '.pdf');
+            return $pdf->download("Adjustment_{$adjustment->reference}.pdf");
+        } catch (\Throwable $e) {
+            Log::warning("PDF generation failed: {$e->getMessage()}");
+            return view('adjustment::pdf', compact('adjustment'));
+        }
+    }
+
+    /**
+     * EXPORT (CSV)
+     * Route: GET /adjustments/export?status=&requester_id=&start_date=&end_date=&q=
+     */
+    public function export(Request $request)
+    {
+        abort_if(Gate::denies('access_adjustments'), 403);
+
+        try {
+            // DUKUNG KEDUA NAMA PARAM (kompatibel dgn JS sekarang)
+            $startDate = $request->input('start_date') ?? ($request->input('date_from') ?? now()->subDays(30)->toDateString());
+            $endDate = $request->input('end_date') ?? ($request->input('date_to') ?? now()->toDateString());
+
+            $status = $request->input('status'); // optional
+            $requesterId = $request->input('requester_id'); // optional
+            $q = $request->input('q'); // optional
+
+            $query = Adjustment::with(['requester', 'adjustedProducts.product', 'approver'])
+                ->whereBetween('date', [$startDate, $endDate]) // tetap pakai kolom 'date' untuk export
+                ->latest('date');
+
+            if ($status) {
+                $query->where('status', $status);
+            }
+            if ($requesterId) {
+                $query->where('requester_id', $requesterId);
+            }
+            if ($q) {
+                $query->where(function ($w) use ($q) {
+                    $w->where('reference', 'like', "%{$q}%")
+                        ->orWhere('reason', 'like', "%{$q}%")
+                        ->orWhere('description', 'like', "%{$q}%");
+                });
+            }
+
+            $adjustments = $query->get();
+            $filename = 'adjustments_' . now()->format('Ymd_His') . '.csv';
+
+            return response()->streamDownload(
+                function () use ($adjustments) {
+                    $out = fopen('php://output', 'w');
+                    fputcsv($out, ['Tanggal', 'Reference', 'Requester', 'Produk', 'Alasan', 'Status', 'Approver', 'Tgl Approval']);
+                    foreach ($adjustments as $adj) {
+                        $products = $adj->adjustedProducts->map(fn($i) => ($i->product->product_name ?? '-') . ' (' . $i->formatted_quantity . ')')->implode(', ');
+                        $safe = function ($v) {
+                            $v = (string) ($v ?? '-');
+                            return preg_match('/^[=+\-@]/', $v) ? "'" . $v : $v;
+                        };
+                        fputcsv($out, [$adj->date ? $adj->date->format('d/m/Y') : '-', $safe($adj->reference), $safe($adj->requester->name ?? '-'), $safe($products), $safe($adj->reason ?? '-'), strtoupper($adj->status), $safe($adj->approver->name ?? '-'), $adj->approval_date ? $adj->approval_date->format('d/m/Y H:i') : '-']);
+                    }
+                    fclose($out);
+                },
+                $filename,
+                ['Content-Type' => 'text/csv; charset=UTF-8'],
+            );
+        } catch (\Throwable $e) {
+            Log::error('Adjustment Export Error: ' . $e->getMessage());
+            toast('❌ Error export: ' . $e->getMessage(), 'error');
+            return back();
+        }
+    }
+
+    // ==========================================================
+    // Helpers
+    // ==========================================================
+
+    /**
+     * Generate reference ADJ-YYYYMMDD-##### dengan mitigasi race condition.
+     * Saran: tambahkan unique index di kolom `reference`.
+     */
+    private function generateReference(int $maxRetries = 5): string
+    {
+        $dateCode = now()->format('Ymd');
+
+        for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+            // Kunci baris "hari ini" untuk menghindari duplikasi urutan
+            $lastToday = Adjustment::whereDate('created_at', today())->lockForUpdate()->latest('id')->first();
+
+            $lastSeq = 0;
+            if ($lastToday && !empty($lastToday->reference)) {
+                $tail = substr($lastToday->reference, -5);
+                if (ctype_digit($tail)) {
+                    $lastSeq = (int) $tail;
+                }
+            }
+
+            $reference = 'ADJ-' . $dateCode . '-' . str_pad($lastSeq + 1, 5, '0', STR_PAD_LEFT);
+
+            // Jika pakai unique index, kita cek cepat agar early-exit
+            $exists = Adjustment::where('reference', $reference)->exists();
+            if (!$exists) {
+                return $reference;
+            }
+
+            // jika tabrakan, coba lagi
+        }
+
+        // Fallback ekstrem (timestamp)
+        return 'ADJ-' . $dateCode . '-' . substr((string) now()->timestamp, -5);
     }
 }

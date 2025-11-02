@@ -1,7 +1,5 @@
 <?php
 
-// ✅ FILE: Modules/Adjustment/Entities/Adjustment.php
-
 namespace Modules\Adjustment\Entities;
 
 use Illuminate\Database\Eloquent\Model;
@@ -9,10 +7,11 @@ use App\Models\User;
 
 class Adjustment extends Model
 {
-    // ❌ HAPUS: use SoftDeletes; - Column tidak ada di DB!
-
     protected $table = 'adjustments';
-    protected $guarded = [];
+
+    // Lebih eksplisit daripada guarded=[]
+    protected $fillable = ['date', 'reference', 'note', 'reason', 'description', 'status', 'requester_id', 'approver_id', 'approval_notes', 'approval_date', 'created_at', 'updated_at'];
+
     protected $casts = [
         'date' => 'date',
         'approval_date' => 'datetime',
@@ -20,51 +19,74 @@ class Adjustment extends Model
         'updated_at' => 'datetime',
     ];
 
-    // ✅ RELASI: Produk yang disesuaikan
+    /** -------------------- RELATIONS -------------------- */
     public function adjustedProducts()
     {
         return $this->hasMany(AdjustedProduct::class, 'adjustment_id');
     }
 
-    // ✅ RELASI: File/Foto bukti
     public function adjustmentFiles()
     {
         return $this->hasMany(AdjustmentFile::class, 'adjustment_id');
     }
 
-    // ✅ RELASI: Riwayat perubahan
     public function logs()
     {
         return $this->hasMany(AdjustmentLog::class, 'adjustment_id');
     }
 
-    // ✅ RELASI: User yang membuat (Kasir/Requester)
     public function requester()
     {
         return $this->belongsTo(User::class, 'requester_id');
     }
 
-    // ✅ RELASI: User yang approve (Admin/Supervisor)
     public function approver()
     {
         return $this->belongsTo(User::class, 'approver_id');
     }
 
-    // ✅ SCOPE: Filter pending adjustments
-    public function scopePending($query)
+    /** -------------------- SCOPES -------------------- */
+    public function scopePending($q)
     {
-        return $query->where('status', 'pending');
+        return $q->where('status', 'pending');
+    }
+    public function scopeApproved($q)
+    {
+        return $q->where('status', 'approved');
+    }
+    public function scopeRejected($q)
+    {
+        return $q->where('status', 'rejected');
     }
 
-    // ✅ SCOPE: Filter approved adjustments
-    public function scopeApproved($query)
+    // NEW: filter berdasarkan requester (default: user saat ini)
+    public function scopeByRequester($q, ?int $userId = null)
     {
-        return $query->where('status', 'approved');
+        $userId = $userId ?: auth()->id();
+        return $q->where('requester_id', $userId);
     }
 
-    // ✅ SCOPE: Filter rejected adjustments
-    public function scopeRejected($query)
+    /** -------------------- ACCESSORS -------------------- */
+
+    // NEW: badge HTML untuk status (dipakai di table/list)
+    public function getStatusBadgeAttribute(): string
     {
-        return $query->where('status', 'rejected');
+        $map = [
+            'pending' => ['text' => 'Pending', 'class' => 'badge badge-warning'],
+            'approved' => ['text' => 'Approved', 'class' => 'badge badge-success'],
+            'rejected' => ['text' => 'Rejected', 'class' => 'badge badge-danger'],
+        ];
+        $conf = $map[$this->status] ?? ['text' => ucfirst($this->status ?? 'Unknown'), 'class' => 'badge badge-secondary'];
+        return sprintf('<span class="%s">%s</span>', $conf['class'], e($conf['text']));
     }
+
+    // NEW: total item/baris produk pada adjustment
+    public function getTotalProductsAttribute(): int
+    {
+        // aman: kalau relasi belum dimuat, hitung cepat via count()
+        return $this->relationLoaded('adjustedProducts') ? $this->adjustedProducts->count() : $this->adjustedProducts()->count();
+    }
+
+    // Opsional: jika mau otomatis ikut diserialisasi
+    protected $appends = ['status_badge', 'total_products'];
 }

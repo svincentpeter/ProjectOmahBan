@@ -1,7 +1,7 @@
 {{-- File: Modules/Adjustment/Resources/views/partials/actions.blade.php --}}
 
 <div class="btn-group" role="group">
-    {{-- Show Button - Selalu tampil untuk semua role yang punya permission --}}
+    {{-- Show --}}
     @can('show_adjustments')
         <a href="{{ route('adjustments.show', $adjustment->id) }}" class="btn btn-info btn-sm" data-toggle="tooltip"
             title="Lihat Detail">
@@ -9,7 +9,7 @@
         </a>
     @endcan
 
-    {{-- Edit Button - Hanya untuk status pending --}}
+    {{-- Edit (hanya pending) --}}
     @if ($adjustment->status === 'pending')
         @can('edit_adjustments')
             <a href="{{ route('adjustments.edit', $adjustment->id) }}" class="btn btn-warning btn-sm" data-toggle="tooltip"
@@ -19,7 +19,7 @@
         @endcan
     @endif
 
-    {{-- Approve Button - Khusus Owner untuk status pending --}}
+    {{-- Approve / Reject (hanya pending + role berwenang) --}}
     @if ($adjustment->status === 'pending')
         @can('approve_adjustments')
             <button type="button" class="btn btn-success btn-sm approve-adjustment" data-id="{{ $adjustment->id }}"
@@ -27,7 +27,6 @@
                 <i class="bi bi-check-circle"></i>
             </button>
 
-            {{-- Reject Button - Khusus Owner --}}
             <button type="button" class="btn btn-danger btn-sm reject-adjustment" data-id="{{ $adjustment->id }}"
                 data-reference="{{ $adjustment->reference }}" data-toggle="tooltip" title="Reject Pengajuan">
                 <i class="bi bi-x-circle"></i>
@@ -43,13 +42,13 @@
         @endcan
     @endif
 
-    {{-- Print PDF Button - Tersedia untuk semua status --}}
+    {{-- Print PDF --}}
     <a href="{{ route('adjustments.pdf', $adjustment->id) }}" target="_blank" class="btn btn-secondary btn-sm"
         data-toggle="tooltip" title="Print PDF">
         <i class="bi bi-printer"></i>
     </a>
 
-    {{-- Delete Button - Hanya untuk status pending --}}
+    {{-- Delete (hanya pending) --}}
     @if ($adjustment->status === 'pending')
         @can('delete_adjustments')
             <button type="button" class="btn btn-dark btn-sm delete-adjustment" data-id="{{ $adjustment->id }}"
@@ -57,7 +56,6 @@
                 <i class="bi bi-trash"></i>
             </button>
 
-            {{-- Hidden Delete Form --}}
             <form id="delete-form-{{ $adjustment->id }}" action="{{ route('adjustments.destroy', $adjustment->id) }}"
                 method="POST" class="d-none">
                 @csrf
@@ -69,9 +67,9 @@
 
 @push('page_scripts')
     <script>
-        $(document).ready(function() {
-            // Approve Adjustment
-            $('.approve-adjustment').click(function(e) {
+        $(function() {
+            // Approve
+            $('.approve-adjustment').on('click', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
                 const reference = $(this).data('reference');
@@ -82,122 +80,87 @@
                     icon: 'question',
                     input: 'textarea',
                     inputLabel: 'Catatan Approval (opsional)',
-                    inputPlaceholder: 'Tambahkan catatan jika perlu...',
                     showCancelButton: true,
                     confirmButtonColor: '#28a745',
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: '<i class="bi bi-check-circle"></i> Ya, Approve!',
-                    cancelButtonText: '<i class="bi bi-x-circle"></i> Batal',
+                    cancelButtonText: 'Batal',
                     reverseButtons: true,
-                    preConfirm: (notes) => {
-                        return notes || ''; // Return notes or empty string
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Set form values
+                }).then((r) => {
+                    if (r.isConfirmed) {
                         $(`#action-${id}`).val('approve');
-                        $(`#notes-${id}`).val(result.value);
-
-                        // Show loading
+                        $(`#notes-${id}`).val(r.value || '');
                         Swal.fire({
-                            title: 'Memproses Approval...',
-                            text: 'Mohon tunggu',
+                            title: 'Memproses...',
                             allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
+                            didOpen: () => Swal.showLoading()
                         });
-
-                        // Submit form
                         document.getElementById(`approve-form-${id}`).submit();
                     }
                 });
             });
 
-            // Reject Adjustment
-            $('.reject-adjustment').click(function(e) {
+            // Reject
+            $('.reject-adjustment').on('click', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
                 const reference = $(this).data('reference');
 
                 Swal.fire({
                     title: 'Reject Pengajuan?',
-                    html: `Apakah Anda yakin ingin <strong class="text-danger">menolak</strong> pengajuan <strong>${reference}</strong>?<br><small class="text-muted">Pengajuan akan dibatalkan dan stok tidak berubah.</small>`,
+                    html: `Apakah Anda yakin ingin <strong class="text-danger">menolak</strong> pengajuan <strong>${reference}</strong>?`,
                     icon: 'warning',
                     input: 'textarea',
                     inputLabel: 'Alasan Penolakan (wajib)',
-                    inputPlaceholder: 'Jelaskan alasan penolakan...',
-                    inputValidator: (value) => {
-                        if (!value) {
-                            return 'Alasan penolakan harus diisi!'
-                        }
-                    },
+                    inputValidator: (v) => !v && 'Alasan penolakan harus diisi!',
                     showCancelButton: true,
                     confirmButtonColor: '#dc3545',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="bi bi-x-circle"></i> Ya, Reject!',
-                    cancelButtonText: '<i class="bi bi-arrow-left"></i> Batal',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Set form values
+                    confirmButtonText: 'Ya, Reject!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                }).then((r) => {
+                    if (r.isConfirmed) {
                         $(`#action-${id}`).val('reject');
-                        $(`#notes-${id}`).val(result.value);
-
-                        // Show loading
+                        $(`#notes-${id}`).val(r.value);
                         Swal.fire({
-                            title: 'Memproses Penolakan...',
-                            text: 'Mohon tunggu',
+                            title: 'Memproses...',
                             allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
+                            didOpen: () => Swal.showLoading()
                         });
-
-                        // Submit form
                         document.getElementById(`approve-form-${id}`).submit();
                     }
                 });
             });
 
-            // Delete Adjustment
-            $('.delete-adjustment').click(function(e) {
+            // Delete
+            $('.delete-adjustment').on('click', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
                 const reference = $(this).data('reference');
 
                 Swal.fire({
                     title: 'Hapus Pengajuan?',
-                    html: `Apakah Anda yakin ingin menghapus pengajuan <strong>${reference}</strong>?<br><small class="text-danger">Perhatian: Aksi ini tidak dapat dibatalkan!</small><br><small class="text-muted">Stok produk akan dikembalikan ke kondisi sebelum pengajuan.</small>`,
+                    html: `Yakin menghapus <strong>${reference}</strong>?<br><small class="text-danger">Aksi tidak dapat dibatalkan.</small>`,
                     icon: 'error',
                     showCancelButton: true,
                     confirmButtonColor: '#dc3545',
                     cancelButtonColor: '#6c757d',
-                    confirmButtonText: '<i class="bi bi-trash"></i> Ya, Hapus!',
-                    cancelButtonText: '<i class="bi bi-x-circle"></i> Batal',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Show loading
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                }).then((r) => {
+                    if (r.isConfirmed) {
                         Swal.fire({
-                            title: 'Menghapus Pengajuan...',
-                            text: 'Mohon tunggu',
+                            title: 'Menghapus...',
                             allowOutsideClick: false,
-                            allowEscapeKey: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
+                            didOpen: () => Swal.showLoading()
                         });
-
-                        // Submit form
                         document.getElementById(`delete-form-${id}`).submit();
                     }
                 });
             });
 
-            // Initialize tooltips
             $('[data-toggle="tooltip"]').tooltip();
         });
     </script>

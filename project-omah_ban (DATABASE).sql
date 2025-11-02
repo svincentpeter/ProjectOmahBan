@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Oct 27, 2025 at 04:18 PM
+-- Generation Time: Nov 02, 2025 at 11:18 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.12
 
@@ -34,15 +34,59 @@ CREATE TABLE `adjusted_products` (
   `quantity` int NOT NULL,
   `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ;
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `adjusted_products`
 --
 
-INSERT INTO `adjusted_products` (`id`, `adjustment_id`, `product_id`, `quantity`, `type`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 5, 'add', '2025-08-07 12:42:27', '2025-08-07 12:42:27');
+INSERT INTO `adjusted_products` (`id`, `adjustment_id`, `product_id`, `quantity`, `type`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 5, 2, 3, 'sub', '2025-11-02 10:17:49', '2025-11-02 10:17:49', NULL);
+
+--
+-- Triggers `adjusted_products`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_adjusted_products_after_change` AFTER INSERT ON `adjusted_products` FOR EACH ROW BEGIN
+  UPDATE adjustments a
+  SET a.total_value = (
+    SELECT IFNULL(SUM(p.product_cost * ap.quantity), 0)
+    FROM adjusted_products ap
+    JOIN products p ON p.id = ap.product_id
+    WHERE ap.adjustment_id = NEW.adjustment_id
+  )
+  WHERE a.id = NEW.adjustment_id;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_adjusted_products_after_delete` AFTER DELETE ON `adjusted_products` FOR EACH ROW BEGIN
+  UPDATE adjustments a
+  SET a.total_value = (
+    SELECT IFNULL(SUM(p.product_cost * ap.quantity), 0)
+    FROM adjusted_products ap
+    JOIN products p ON p.id = ap.product_id
+    WHERE ap.adjustment_id = OLD.adjustment_id
+  )
+  WHERE a.id = OLD.adjustment_id;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_adjusted_products_after_update` AFTER UPDATE ON `adjusted_products` FOR EACH ROW BEGIN
+  UPDATE adjustments a
+  SET a.total_value = (
+    SELECT IFNULL(SUM(p.product_cost * ap.quantity), 0)
+    FROM adjusted_products ap
+    JOIN products p ON p.id = ap.product_id
+    WHERE ap.adjustment_id = NEW.adjustment_id
+  )
+  WHERE a.id = NEW.adjustment_id;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -55,16 +99,78 @@ CREATE TABLE `adjustments` (
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `requester_id` bigint UNSIGNED DEFAULT NULL,
+  `approver_id` bigint UNSIGNED DEFAULT NULL,
+  `reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `approval_notes` text COLLATE utf8mb4_unicode_ci,
+  `approval_date` timestamp NULL DEFAULT NULL,
+  `total_value` decimal(10,2) DEFAULT '0.00',
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `adjustments`
 --
 
-INSERT INTO `adjustments` (`id`, `date`, `reference`, `note`, `created_at`, `updated_at`) VALUES
-(1, '2025-08-07', 'ADJ-00001', 'Ambil Dari SH', '2025-08-07 12:42:27', '2025-08-07 12:42:27');
+INSERT INTO `adjustments` (`id`, `date`, `reference`, `note`, `status`, `requester_id`, `approver_id`, `reason`, `description`, `approval_notes`, `approval_date`, `total_value`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(5, '2025-11-02', 'ADJ-20251102-00001', 'Testing', 'approved', 2, 2, 'Rusak', 'TESTER', 'Lanjutkan', '2025-11-02 10:18:26', 2175000.00, '2025-11-02 10:17:49', '2025-11-02 10:18:26', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `adjustment_files`
+--
+
+CREATE TABLE `adjustment_files` (
+  `id` bigint UNSIGNED NOT NULL,
+  `adjustment_id` bigint UNSIGNED NOT NULL,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` bigint UNSIGNED DEFAULT NULL,
+  `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `adjustment_files`
+--
+
+INSERT INTO `adjustment_files` (`id`, `adjustment_id`, `file_path`, `file_name`, `file_size`, `mime_type`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 5, 'adjustment_files/n8EhBuhi3oxNUZ55w6TWGz1Fig3DtwqQr713WqwI.png', 'MM5ZoC53d3tIdCInJcYeDzIIDQOFYB7DjGNUm9GV.png', 1779177, 'image/png', '2025-11-02 10:17:49', '2025-11-02 10:17:49', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `adjustment_logs`
+--
+
+CREATE TABLE `adjustment_logs` (
+  `id` bigint UNSIGNED NOT NULL,
+  `adjustment_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL,
+  `action` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `old_status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `new_status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` longtext COLLATE utf8mb4_unicode_ci,
+  `locked` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `adjustment_logs`
+--
+
+INSERT INTO `adjustment_logs` (`id`, `adjustment_id`, `user_id`, `action`, `old_status`, `new_status`, `notes`, `locked`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 5, 2, 'created', NULL, 'pending', 'Testing', 1, '2025-11-02 10:17:49', '2025-11-02 11:17:49', NULL),
+(2, 5, 2, 'approved', 'pending', 'approved', 'Lanjutkan', 1, '2025-11-02 10:18:26', '2025-11-02 11:18:26', NULL);
 
 -- --------------------------------------------------------
 
@@ -367,8 +473,12 @@ CREATE TABLE `model_has_roles` (
 --
 
 INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
-(2, 'App\\Models\\User', 1),
-(1, 'App\\Models\\User', 2);
+(3, 'App\\Models\\User', 1),
+(4, 'App\\Models\\User', 2),
+(3, 'App\\Models\\User', 3),
+(4, 'App\\Models\\User', 4),
+(5, 'App\\Models\\User', 5),
+(5, 'App\\Models\\User', 6);
 
 -- --------------------------------------------------------
 
@@ -473,7 +583,18 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 (143, 'edit_currencies', 'web', '2025-08-15 14:36:27', '2025-08-15 14:36:27'),
 (144, 'delete_currencies', 'web', '2025-08-15 14:36:27', '2025-08-15 14:36:27'),
 (145, 'access_settings', 'web', '2025-08-15 14:36:27', '2025-08-15 14:36:27'),
-(146, 'access_units', 'web', '2025-08-15 14:36:27', '2025-08-15 14:36:27');
+(146, 'access_units', 'web', '2025-08-15 14:36:27', '2025-08-15 14:36:27'),
+(147, 'pos.override_price_limit', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(148, 'pos.approve_discount', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(149, 'pos.view_cost_price', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(150, 'inventory.edit_hpp', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(151, 'inventory.approve_hpp_override', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(152, 'report.view_deviation', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(153, 'report.view_activity_log', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(154, 'report.export_sensitive', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(155, 'settings.manage_service_standards', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(156, 'settings.view_system_log', 'web', '2025-10-29 14:39:20', '2025-10-29 14:39:20'),
+(157, 'approve_adjustments', 'web', '2025-11-01 04:20:39', '2025-11-01 04:20:39');
 
 -- --------------------------------------------------------
 
@@ -483,6 +604,7 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 
 CREATE TABLE `products` (
   `id` bigint UNSIGNED NOT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
   `category_id` bigint UNSIGNED NOT NULL,
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -497,6 +619,7 @@ CREATE TABLE `products` (
   `product_note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   `brand_id` bigint UNSIGNED DEFAULT NULL,
   `product_size` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ring` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -507,13 +630,13 @@ CREATE TABLE `products` (
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `category_id`, `product_name`, `product_code`, `product_quantity`, `stok_awal`, `product_cost`, `product_price`, `product_unit`, `product_stock_alert`, `product_order_tax`, `product_tax_type`, `product_note`, `created_at`, `updated_at`, `brand_id`, `product_size`, `ring`, `product_year`) VALUES
-(1, 2, 'Ban GT Savero', 'GT_Savero', 11, 5, 1280760, 1425000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-10-10 02:50:49', 1, '31x10,5', '15', NULL),
-(2, 2, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 20, 20, 725000, 925000, 'PC', 4, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 2, '185/65', '15', 2024),
-(3, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 12, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 3, '205/65', '16', 2024),
-(4, 2, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 16, 16, 640000, 835000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', 1, '195/65', '15', 2024),
-(5, 3, 'Velg HSR Samurai Ring 17 5x114.3', 'HSR-SAM-R17-51143', 8, 8, 2450000, 3050000, 'PC', 2, NULL, NULL, 'Finish Black Polish', '2025-08-17 05:04:07', '2025-08-17 05:04:07', 4, NULL, '17', 2024),
-(6, 3, 'Velg OEM Toyota Innova Ring 16', 'OEM-INV-R16', 6, 6, 1200000, 1600000, 'PC', 2, NULL, NULL, 'Kondisi Baru OEM', '2025-08-17 05:04:07', '2025-08-17 05:04:07', 5, NULL, '16', 2023);
+INSERT INTO `products` (`id`, `is_active`, `category_id`, `product_name`, `product_code`, `product_quantity`, `stok_awal`, `product_cost`, `product_price`, `product_unit`, `product_stock_alert`, `product_order_tax`, `product_tax_type`, `product_note`, `created_at`, `updated_at`, `deleted_at`, `brand_id`, `product_size`, `ring`, `product_year`) VALUES
+(1, 1, 2, 'Ban GT Savero', 'GT_Savero', 15, 5, 1280760, 1425000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-10-10 02:50:49', NULL, 1, '31x10,5', '15', NULL),
+(2, 1, 2, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 18, 20, 725000, 925000, 'PC', 4, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 2, '185/65', '15', 2024),
+(3, 1, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 22, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 3, '205/65', '16', 2024),
+(4, 1, 2, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 16, 16, 640000, 835000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 1, '195/65', '15', 2024),
+(5, 1, 3, 'Velg HSR Samurai Ring 17 5x114.3', 'HSR-SAM-R17-51143', 8, 8, 2450000, 3050000, 'PC', 2, NULL, NULL, 'Finish Black Polish', '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 4, NULL, '17', 2024),
+(6, 1, 3, 'Velg OEM Toyota Innova Ring 16', 'OEM-INV-R16', 6, 6, 1200000, 1600000, 'PC', 2, NULL, NULL, 'Kondisi Baru OEM', '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 5, NULL, '16', 2023);
 
 -- --------------------------------------------------------
 
@@ -754,7 +877,10 @@ CREATE TABLE `roles` (
 
 INSERT INTO `roles` (`id`, `name`, `guard_name`, `created_at`, `updated_at`) VALUES
 (1, 'Admin', 'web', '2025-08-05 14:46:11', '2025-08-05 14:46:11'),
-(2, 'Super Admin', 'web', '2025-08-05 14:46:12', '2025-08-05 14:46:12');
+(2, 'Super Admin', 'web', '2025-08-05 14:46:12', '2025-08-05 14:46:12'),
+(3, 'Owner', 'web', '2025-10-29 14:39:12', '2025-10-29 14:39:12'),
+(4, 'Supervisor', 'web', '2025-10-29 14:39:12', '2025-10-29 14:39:12'),
+(5, 'Kasir', 'web', '2025-10-29 14:39:12', '2025-10-29 14:39:12');
 
 -- --------------------------------------------------------
 
@@ -841,7 +967,178 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 (140, 1),
 (141, 1),
 (145, 1),
-(146, 1);
+(146, 1),
+(157, 1),
+(157, 2),
+(74, 3),
+(75, 3),
+(76, 3),
+(77, 3),
+(78, 3),
+(79, 3),
+(80, 3),
+(81, 3),
+(82, 3),
+(83, 3),
+(84, 3),
+(85, 3),
+(86, 3),
+(87, 3),
+(88, 3),
+(89, 3),
+(90, 3),
+(91, 3),
+(92, 3),
+(93, 3),
+(94, 3),
+(95, 3),
+(96, 3),
+(97, 3),
+(98, 3),
+(99, 3),
+(100, 3),
+(101, 3),
+(102, 3),
+(103, 3),
+(104, 3),
+(105, 3),
+(106, 3),
+(107, 3),
+(108, 3),
+(109, 3),
+(110, 3),
+(111, 3),
+(112, 3),
+(113, 3),
+(114, 3),
+(115, 3),
+(116, 3),
+(117, 3),
+(118, 3),
+(119, 3),
+(120, 3),
+(121, 3),
+(122, 3),
+(123, 3),
+(124, 3),
+(125, 3),
+(126, 3),
+(127, 3),
+(128, 3),
+(129, 3),
+(130, 3),
+(131, 3),
+(132, 3),
+(133, 3),
+(134, 3),
+(135, 3),
+(136, 3),
+(137, 3),
+(138, 3),
+(139, 3),
+(140, 3),
+(141, 3),
+(142, 3),
+(143, 3),
+(144, 3),
+(145, 3),
+(146, 3),
+(147, 3),
+(148, 3),
+(149, 3),
+(150, 3),
+(151, 3),
+(152, 3),
+(153, 3),
+(154, 3),
+(155, 3),
+(156, 3),
+(157, 3),
+(74, 4),
+(76, 4),
+(77, 4),
+(78, 4),
+(79, 4),
+(80, 4),
+(81, 4),
+(82, 4),
+(83, 4),
+(84, 4),
+(85, 4),
+(86, 4),
+(87, 4),
+(88, 4),
+(89, 4),
+(90, 4),
+(91, 4),
+(92, 4),
+(93, 4),
+(94, 4),
+(95, 4),
+(96, 4),
+(97, 4),
+(98, 4),
+(99, 4),
+(100, 4),
+(101, 4),
+(102, 4),
+(103, 4),
+(104, 4),
+(105, 4),
+(106, 4),
+(107, 4),
+(108, 4),
+(109, 4),
+(110, 4),
+(111, 4),
+(112, 4),
+(113, 4),
+(114, 4),
+(115, 4),
+(116, 4),
+(117, 4),
+(118, 4),
+(119, 4),
+(120, 4),
+(121, 4),
+(122, 4),
+(123, 4),
+(124, 4),
+(125, 4),
+(126, 4),
+(127, 4),
+(128, 4),
+(129, 4),
+(130, 4),
+(131, 4),
+(132, 4),
+(133, 4),
+(134, 4),
+(135, 4),
+(136, 4),
+(137, 4),
+(138, 4),
+(139, 4),
+(140, 4),
+(141, 4),
+(142, 4),
+(143, 4),
+(144, 4),
+(145, 4),
+(146, 4),
+(147, 4),
+(148, 4),
+(149, 4),
+(150, 4),
+(151, 4),
+(152, 4),
+(153, 4),
+(154, 4),
+(155, 4),
+(156, 4),
+(157, 4),
+(88, 5),
+(89, 5);
 
 -- --------------------------------------------------------
 
@@ -1068,42 +1365,47 @@ INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `product
 --
 DELIMITER $$
 CREATE TRIGGER `trg_sale_details_chk_bi` BEFORE INSERT ON `sale_details` FOR EACH ROW BEGIN
-  -- source_type valid
+  SET NEW.source_type = LOWER(NEW.source_type);
+
   IF NEW.source_type NOT IN ('new','second','manual') THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details: source_type harus new|second|manual';
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'source_type invalid';
   END IF;
 
-  -- quantity > 0
-  IF NEW.quantity IS NULL OR NEW.quantity <= 0 THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details: quantity harus > 0';
+  IF NEW.price IS NULL OR NEW.price < 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'price wajib diisi dan >= 0';
   END IF;
 
-  -- branch rules
   IF NEW.source_type = 'new' THEN
-    IF NEW.product_id IS NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='source_type=new -> product_id NOT NULL, productable_* NULL';
+    IF NEW.product_id IS NULL OR NEW.product_id = 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Produk Baru: product_id wajib';
     END IF;
+    IF NEW.quantity IS NULL OR NEW.quantity < 1 THEN
+      SET NEW.quantity = 1;
+    END IF;
+    SET NEW.productable_id = NULL;
+    SET NEW.manual_kind = NULL;
+
   ELSEIF NEW.source_type = 'second' THEN
-    IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NULL
-       OR NEW.productable_type <> 'Modules\Product\Entities\ProductSecond' THEN
-      SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT='source_type=second -> product_id NULL, productable_id NOT NULL, productable_type=Modules\Product\Entities\ProductSecond';
+    SET NEW.quantity = 1;
+    IF NEW.productable_id IS NULL OR NEW.productable_id = 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Produk Second: productable_id wajib';
     END IF;
-  ELSEIF NEW.source_type = 'manual' THEN
-    IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='source_type=manual -> product_id & productable_* harus NULL';
+    IF NOT EXISTS(
+      SELECT 1 FROM product_seconds ps
+      WHERE ps.id = NEW.productable_id AND ps.status = 'available'
+    ) THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Produk Second: unit tidak available';
     END IF;
-    -- manual_kind wajib service|goods
-    IF NEW.manual_kind NOT IN ('service','goods') THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='source_type=manual -> manual_kind harus service|goods';
-    END IF;
-    -- contoh aturan opsional: larang manual_hpp untuk jasa (aktifkan jika perlu)
-    -- IF NEW.manual_kind='service' AND NEW.manual_hpp IS NOT NULL THEN
-    --   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='manual_kind=service -> manual_hpp harus NULL';
-    -- END IF;
-    -- contoh aturan opsional: manual_hpp tidak boleh negatif
-    IF NEW.manual_hpp IS NOT NULL AND NEW.manual_hpp < 0 THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='manual_hpp tidak boleh negatif';
+    SET NEW.product_id = NULL;
+    SET NEW.manual_kind = NULL;
+
+  ELSE -- manual
+    SET NEW.quantity = 1;
+    SET NEW.product_id = NULL;
+    SET NEW.productable_id = NULL;
+
+    IF NEW.manual_kind IS NULL OR NEW.manual_kind NOT IN ('service','goods') THEN
+      SET NEW.manual_kind = 'goods';
     END IF;
   END IF;
 END
@@ -1111,41 +1413,209 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `trg_sale_details_chk_bu` BEFORE UPDATE ON `sale_details` FOR EACH ROW BEGIN
-  -- source_type valid
+  SET NEW.source_type = LOWER(NEW.source_type);
+
   IF NEW.source_type NOT IN ('new','second','manual') THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details (update): source_type harus new|second|manual';
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'source_type invalid (UPDATE)';
   END IF;
 
-  -- quantity > 0
-  IF NEW.quantity IS NULL OR NEW.quantity <= 0 THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Invalid sale_details (update): quantity harus > 0';
+  IF NEW.price IS NULL OR NEW.price < 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'price wajib diisi dan >= 0 (UPDATE)';
   END IF;
 
-  -- branch rules
   IF NEW.source_type = 'new' THEN
-    IF NEW.product_id IS NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) source_type=new -> product_id NOT NULL, productable_* NULL';
+    IF NEW.product_id IS NULL OR NEW.product_id = 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Produk Baru: product_id wajib (UPDATE)';
     END IF;
+    IF NEW.quantity IS NULL OR NEW.quantity < 1 THEN
+      SET NEW.quantity = 1;
+    END IF;
+    SET NEW.productable_id = NULL;
+    SET NEW.manual_kind = NULL;
+
   ELSEIF NEW.source_type = 'second' THEN
-    IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NULL
-       OR NEW.productable_type <> 'Modules\Product\Entities\ProductSecond' THEN
-      SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT='(update) source_type=second -> product_id NULL, productable_id NOT NULL, productable_type=Modules\Product\Entities\ProductSecond';
+    SET NEW.quantity = 1;
+    IF NEW.productable_id IS NULL OR NEW.productable_id = 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Produk Second: productable_id wajib (UPDATE)';
     END IF;
-  ELSEIF NEW.source_type = 'manual' THEN
-    IF NEW.product_id IS NOT NULL OR NEW.productable_id IS NOT NULL OR NEW.productable_type IS NOT NULL THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) source_type=manual -> product_id & productable_* harus NULL';
+    IF NEW.productable_id <> OLD.productable_id THEN
+      IF NOT EXISTS(
+        SELECT 1 FROM product_seconds ps
+        WHERE ps.id = NEW.productable_id AND ps.status = 'available'
+      ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Produk Second: unit baru tidak available (UPDATE)';
+      END IF;
     END IF;
-    -- manual_kind wajib service|goods
-    IF NEW.manual_kind NOT IN ('service','goods') THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) source_type=manual -> manual_kind harus service|goods';
+    SET NEW.product_id = NULL;
+    SET NEW.manual_kind = NULL;
+
+  ELSE -- manual
+    SET NEW.quantity = 1;
+    SET NEW.product_id = NULL;
+    SET NEW.productable_id = NULL;
+
+    IF NEW.manual_kind IS NULL OR NEW.manual_kind NOT IN ('service','goods') THEN
+      SET NEW.manual_kind = 'goods';
     END IF;
-    -- opsi: larang manual_hpp untuk jasa
-    -- IF NEW.manual_kind='service' AND NEW.manual_hpp IS NOT NULL THEN
-    --   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) manual_kind=service -> manual_hpp harus NULL';
-    -- END IF;
-    IF NEW.manual_hpp IS NOT NULL AND NEW.manual_hpp < 0 THEN
-      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='(update) manual_hpp tidak boleh negatif';
+  END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_sd_inv_ad` AFTER DELETE ON `sale_details` FOR EACH ROW BEGIN
+  DECLARE v_user_id BIGINT UNSIGNED;
+  DECLARE v_ref VARCHAR(191);
+
+  SELECT s.user_id, s.reference INTO v_user_id, v_ref
+  FROM sales s WHERE s.id = OLD.sale_id;
+
+  IF OLD.source_type = 'new' THEN
+    UPDATE products
+      SET product_quantity = product_quantity + OLD.quantity
+    WHERE id = OLD.product_id;
+
+    INSERT INTO stock_movements
+      (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
+    VALUES
+      ('Modules\Product\Entities\Product', OLD.product_id, 'in', OLD.quantity,
+       CONCAT('Revert sale ', IFNULL(v_ref, OLD.sale_id)), v_user_id, NOW(), NOW());
+
+  ELSEIF OLD.source_type = 'second' THEN
+    UPDATE product_seconds
+      SET status = 'available'
+    WHERE id = OLD.productable_id AND status = 'sold';
+
+    INSERT INTO stock_movements
+      (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
+    VALUES
+      ('Modules\Product\Entities\ProductSecond', OLD.productable_id, 'in', 1,
+       CONCAT('Revert sale ', IFNULL(v_ref, OLD.sale_id)), v_user_id, NOW(), NOW());
+  END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_sd_inv_ai` AFTER INSERT ON `sale_details` FOR EACH ROW BEGIN
+  DECLARE v_user_id BIGINT UNSIGNED;
+  DECLARE v_ref VARCHAR(191);
+  DECLARE v_qty INT;
+
+  SELECT s.user_id, s.reference INTO v_user_id, v_ref
+  FROM sales s WHERE s.id = NEW.sale_id;
+
+  IF NEW.source_type = 'new' THEN
+    UPDATE products
+      SET product_quantity = product_quantity - NEW.quantity
+    WHERE id = NEW.product_id;
+
+    SELECT product_quantity INTO v_qty FROM products WHERE id = NEW.product_id;
+    IF v_qty < 0 THEN
+      UPDATE products
+        SET product_quantity = product_quantity + NEW.quantity
+      WHERE id = NEW.product_id;
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Stok produk tidak mencukupi';
+    END IF;
+
+    INSERT INTO stock_movements
+      (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
+    VALUES
+      ('Modules\Product\Entities\Product', NEW.product_id, 'out', NEW.quantity,
+       CONCAT('Sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
+
+  ELSEIF NEW.source_type = 'second' THEN
+    UPDATE product_seconds
+      SET status = 'sold'
+    WHERE id = NEW.productable_id AND status = 'available';
+
+    IF ROW_COUNT() = 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Unit second tidak available saat insert';
+    END IF;
+
+    INSERT INTO stock_movements
+      (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
+    VALUES
+      ('Modules\Product\Entities\ProductSecond', NEW.productable_id, 'out', 1,
+       CONCAT('Sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
+  END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `trg_sd_inv_au` AFTER UPDATE ON `sale_details` FOR EACH ROW BEGIN
+  DECLARE v_user_id BIGINT UNSIGNED;
+  DECLARE v_ref VARCHAR(191);
+  DECLARE v_qty INT;
+  DECLARE v_change BOOL DEFAULT FALSE;
+
+  IF (OLD.source_type <> NEW.source_type)
+     OR (IFNULL(OLD.product_id,0) <> IFNULL(NEW.product_id,0))
+     OR (IFNULL(OLD.productable_id,0) <> IFNULL(NEW.productable_id,0))
+     OR (OLD.quantity <> NEW.quantity) THEN
+    SET v_change = TRUE;
+  END IF;
+
+  IF v_change THEN
+    SELECT s.user_id, s.reference INTO v_user_id, v_ref
+    FROM sales s WHERE s.id = NEW.sale_id;
+
+    -- Revert OLD
+    IF OLD.source_type = 'new' THEN
+      UPDATE products
+        SET product_quantity = product_quantity + OLD.quantity
+      WHERE id = OLD.product_id;
+
+      INSERT INTO stock_movements
+        (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
+      VALUES
+        ('Modules\Product\Entities\Product', OLD.product_id, 'in', OLD.quantity,
+         CONCAT('Adjust (revert) sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
+
+    ELSEIF OLD.source_type = 'second' THEN
+      UPDATE product_seconds
+        SET status = 'available'
+      WHERE id = OLD.productable_id AND status = 'sold';
+
+      INSERT INTO stock_movements
+        (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
+      VALUES
+        ('Modules\Product\Entities\ProductSecond', OLD.productable_id, 'in', 1,
+         CONCAT('Adjust (revert) sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
+    END IF;
+
+    -- Apply NEW
+    IF NEW.source_type = 'new' THEN
+      UPDATE products
+        SET product_quantity = product_quantity - NEW.quantity
+      WHERE id = NEW.product_id;
+
+      SELECT product_quantity INTO v_qty FROM products WHERE id = NEW.product_id;
+      IF v_qty < 0 THEN
+        UPDATE products
+          SET product_quantity = product_quantity + NEW.quantity
+        WHERE id = NEW.product_id;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Stok tidak cukup setelah UPDATE';
+      END IF;
+
+      INSERT INTO stock_movements
+        (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
+      VALUES
+        ('Modules\Product\Entities\Product', NEW.product_id, 'out', NEW.quantity,
+         CONCAT('Adjust sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
+
+    ELSEIF NEW.source_type = 'second' THEN
+      UPDATE product_seconds
+        SET status = 'sold'
+      WHERE id = NEW.productable_id AND status = 'available';
+
+      IF ROW_COUNT() = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Unit second tidak available saat UPDATE';
+      END IF;
+
+      INSERT INTO stock_movements
+        (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
+      VALUES
+        ('Modules\Product\Entities\ProductSecond', NEW.productable_id, 'out', 1,
+         CONCAT('Adjust sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
     END IF;
   END IF;
 END
@@ -1309,14 +1779,18 @@ INSERT INTO `settings` (`id`, `company_name`, `company_email`, `company_phone`, 
 
 CREATE TABLE `stock_movements` (
   `id` bigint UNSIGNED NOT NULL,
-  `productable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `productable_id` bigint UNSIGNED NOT NULL,
+  `productable_type` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `productable_id` bigint UNSIGNED DEFAULT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `ref_id` bigint UNSIGNED DEFAULT NULL,
+  `ref_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'adjustment',
   `type` enum('in','out') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
   `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   `out_key` varchar(255) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when (`type` = _utf8mb4'out') then concat(`productable_type`,_utf8mb4'#',`productable_id`) else NULL end)) STORED,
   `second_out_key` varchar(255) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when ((`type` = _utf8mb4'out') and (`productable_type` = _utf8mb4'Modules\\Product\\Entities\\ProductSecond')) then concat(`productable_type`,_utf8mb4'#',`productable_id`) else NULL end)) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1325,11 +1799,8 @@ CREATE TABLE `stock_movements` (
 -- Dumping data for table `stock_movements`
 --
 
-INSERT INTO `stock_movements` (`id`, `productable_type`, `productable_id`, `type`, `quantity`, `description`, `user_id`, `created_at`, `updated_at`) VALUES
-(1, 'Modules\\Product\\Entities\\ProductSecond', 3, 'out', 1, 'Sale (second) #SL-00055', 1, '2025-08-17 05:24:47', '2025-08-17 05:24:47'),
-(2, 'Modules\\Product\\Entities\\ProductSecond', 2, 'out', 1, 'Sale (second) #SL-20250820-202448-68a5dab0793ff', 1, '2025-08-20 13:25:00', '2025-08-20 13:25:00'),
-(3, 'Modules\\Product\\Entities\\ProductSecond', 1, 'out', 1, 'Sale (second) #OB2-00060', 1, '2025-08-21 02:08:13', '2025-08-21 02:08:13'),
-(4, 'Modules\\Product\\Entities\\Product', 1, 'out', 1, 'Sale #OB2-00061', 1, '2025-08-23 15:12:37', '2025-08-23 15:12:37');
+INSERT INTO `stock_movements` (`id`, `productable_type`, `productable_id`, `product_id`, `ref_id`, `ref_type`, `type`, `quantity`, `description`, `user_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(11, NULL, NULL, 2, 5, 'adjustment', 'out', 3, 'Adjustment ADJ-20251102-00001 - sub', 2, '2025-11-02 10:18:26', '2025-11-02 10:18:26', NULL);
 
 -- --------------------------------------------------------
 
@@ -1405,6 +1876,10 @@ CREATE TABLE `users` (
   `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `supervisor_pin` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'PIN 6 digit encrypted',
+  `phone_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `last_login_at` timestamp NULL DEFAULT NULL,
+  `login_ip` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL,
   `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -1416,9 +1891,50 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is_active`, `remember_token`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Administrator', 'super.admin@test.com', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, NULL, '2025-08-05 14:46:12', '2025-08-05 14:46:12', NULL),
-(2, 'Vincent Peter', 'peter@gmail.com', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 'hA4JXmF2S9GiDX692DSnoHbo1OezGA8gJvgV7e5RBNaM38dNGN8dGjBXtCEk', '2025-09-30 13:32:44', '2025-09-30 13:32:44', NULL);
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `supervisor_pin`, `phone_number`, `last_login_at`, `login_ip`, `is_active`, `remember_token`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Administrator', 'super.admin@test.com', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, NULL, NULL, NULL, 1, NULL, '2025-08-05 14:46:12', '2025-08-05 14:46:12', NULL),
+(2, 'Vincent Peter', 'peter@gmail.com', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWWG/igi', NULL, NULL, NULL, 1, '5hZ3CWkyl8cCit1tNc7qtR0WHhW2RiXxgg7HiCAYa3BaDy5mOTE0VmQZ00AY', '2025-09-30 13:32:44', '2025-09-30 13:32:44', NULL),
+(3, 'Budi (Owner)', 'budi.owner@omahban.test', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, '08123456789', NULL, NULL, 1, NULL, '2025-11-01 04:20:39', '2025-11-01 04:20:39', NULL),
+(4, 'Siti (Supervisor)', 'siti.sup@omahban.test', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, '08198765432', NULL, NULL, 1, NULL, '2025-11-01 04:20:39', '2025-11-01 04:20:39', NULL),
+(5, 'Ani (Kasir 1)', 'ani.kasir@omahban.test', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, '08112233445', NULL, NULL, 1, NULL, '2025-11-01 04:20:39', '2025-11-01 04:20:39', NULL),
+(6, 'Rina (Kasir 2)', 'rina.kasir@omahban.test', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NULL, '08556677889', NULL, NULL, 1, NULL, '2025-11-01 04:20:39', '2025-11-01 04:20:39', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_activity_logs`
+--
+
+CREATE TABLE `user_activity_logs` (
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'create_invoice, void_sale, override_price, dll',
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `data` json DEFAULT NULL COMMENT 'data detail aktivitas',
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `v_adjustment_summary`
+-- (See below for the actual view)
+--
+CREATE TABLE `v_adjustment_summary` (
+`adjustment_id` bigint unsigned
+,`approver_name` varchar(255)
+,`date` date
+,`last_activity` timestamp
+,`reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya')
+,`reference` varchar(255)
+,`requester_name` varchar(255)
+,`status` enum('pending','approved','rejected')
+,`total_items` decimal(32,0)
+,`total_products` bigint
+,`total_value` decimal(10,2)
+);
 
 --
 -- Indexes for dumped tables
@@ -1430,13 +1946,37 @@ INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is
 ALTER TABLE `adjusted_products`
   ADD PRIMARY KEY (`id`),
   ADD KEY `adjusted_products_adjustment_id_foreign` (`adjustment_id`),
-  ADD KEY `adjusted_products_product_id_foreign` (`product_id`);
+  ADD KEY `adjusted_products_product_id_foreign` (`product_id`),
+  ADD KEY `idx_adjustment_product` (`adjustment_id`,`product_id`),
+  ADD KEY `deleted_at` (`deleted_at`);
 
 --
 -- Indexes for table `adjustments`
 --
 ALTER TABLE `adjustments`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `approver_id` (`approver_id`),
+  ADD KEY `idx_adjustments_status` (`status`),
+  ADD KEY `idx_adjustments_user` (`requester_id`,`created_at`),
+  ADD KEY `idx_status_requester` (`status`,`requester_id`),
+  ADD KEY `idx_adjustments_date_status` (`date`,`status`),
+  ADD KEY `deleted_at` (`deleted_at`);
+
+--
+-- Indexes for table `adjustment_files`
+--
+ALTER TABLE `adjustment_files`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `adjustment_id` (`adjustment_id`);
+
+--
+-- Indexes for table `adjustment_logs`
+--
+ALTER TABLE `adjustment_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_adj_id` (`adjustment_id`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `deleted_at` (`deleted_at`);
 
 --
 -- Indexes for table `brands`
@@ -1655,7 +2195,8 @@ ALTER TABLE `sale_details`
   ADD KEY `idx_sd_source_type` (`source_type`),
   ADD KEY `idx_sd_manual_kind` (`manual_kind`),
   ADD KEY `idx_sale_details_adjusted` (`is_price_adjusted`,`sale_id`),
-  ADD KEY `idx_sale_details_adjuster` (`adjusted_by`);
+  ADD KEY `idx_sale_details_adjuster` (`adjusted_by`),
+  ADD KEY `idx_sale_details_source` (`source_type`,`product_id`,`productable_id`);
 
 --
 -- Indexes for table `sale_payments`
@@ -1707,7 +2248,11 @@ ALTER TABLE `stock_movements`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_stock_movements_second_out_once` (`second_out_key`),
   ADD KEY `stock_movements_productable_type_productable_id_index` (`productable_type`,`productable_id`),
-  ADD KEY `stock_movements_user_id_foreign` (`user_id`);
+  ADD KEY `stock_movements_user_id_foreign` (`user_id`),
+  ADD KEY `idx_ref_type` (`ref_type`,`ref_id`),
+  ADD KEY `idx_ref_type_id` (`ref_type`,`ref_id`),
+  ADD KEY `idx_product_id` (`product_id`),
+  ADD KEY `deleted_at` (`deleted_at`);
 
 --
 -- Indexes for table `suppliers`
@@ -1735,6 +2280,14 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `users_email_unique` (`email`);
 
 --
+-- Indexes for table `user_activity_logs`
+--
+ALTER TABLE `user_activity_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_date` (`user_id`,`created_at`),
+  ADD KEY `idx_action` (`action`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -1742,13 +2295,25 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `adjusted_products`
 --
 ALTER TABLE `adjusted_products`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `adjustments`
 --
 ALTER TABLE `adjustments`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `adjustment_files`
+--
+ALTER TABLE `adjustment_files`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `adjustment_logs`
+--
+ALTER TABLE `adjustment_logs`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `brands`
@@ -1808,7 +2373,7 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=147;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=158;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -1874,7 +2439,7 @@ ALTER TABLE `quotation_details`
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `sales`
@@ -1922,7 +2487,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `stock_movements`
 --
 ALTER TABLE `stock_movements`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
@@ -1946,7 +2511,13 @@ ALTER TABLE `uploads`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `user_activity_logs`
+--
+ALTER TABLE `user_activity_logs`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 -- --------------------------------------------------------
 
@@ -1956,6 +2527,15 @@ ALTER TABLE `users`
 DROP TABLE IF EXISTS `categories_view`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY INVOKER VIEW `categories_view`  AS SELECT `categories`.`id` AS `id`, `categories`.`category_code` AS `category_code`, `categories`.`category_name` AS `name`, `categories`.`created_at` AS `created_at`, `categories`.`updated_at` AS `updated_at` FROM `categories` ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `v_adjustment_summary`
+--
+DROP TABLE IF EXISTS `v_adjustment_summary`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_adjustment_summary`  AS SELECT `a`.`id` AS `adjustment_id`, `a`.`reference` AS `reference`, `a`.`date` AS `date`, `a`.`status` AS `status`, `a`.`reason` AS `reason`, `a`.`total_value` AS `total_value`, `u1`.`name` AS `requester_name`, `u2`.`name` AS `approver_name`, count(`ap`.`id`) AS `total_products`, sum(`ap`.`quantity`) AS `total_items`, max(`al`.`created_at`) AS `last_activity` FROM ((((`adjustments` `a` left join `adjusted_products` `ap` on((`a`.`id` = `ap`.`adjustment_id`))) left join `adjustment_logs` `al` on((`a`.`id` = `al`.`adjustment_id`))) left join `users` `u1` on((`a`.`requester_id` = `u1`.`id`))) left join `users` `u2` on((`a`.`approver_id` = `u2`.`id`))) GROUP BY `a`.`id`, `a`.`reference`, `a`.`date`, `a`.`status`, `a`.`reason`, `a`.`total_value`, `u1`.`name`, `u2`.`name` ;
 
 --
 -- Constraints for dumped tables
@@ -1967,6 +2547,26 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY INVOKER VIEW 
 ALTER TABLE `adjusted_products`
   ADD CONSTRAINT `adjusted_products_adjustment_id_foreign` FOREIGN KEY (`adjustment_id`) REFERENCES `adjustments` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `adjusted_products_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT;
+
+--
+-- Constraints for table `adjustments`
+--
+ALTER TABLE `adjustments`
+  ADD CONSTRAINT `adjustments_ibfk_1` FOREIGN KEY (`requester_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `adjustments_ibfk_2` FOREIGN KEY (`approver_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `adjustment_files`
+--
+ALTER TABLE `adjustment_files`
+  ADD CONSTRAINT `adjustment_files_ibfk_1` FOREIGN KEY (`adjustment_id`) REFERENCES `adjustments` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `adjustment_logs`
+--
+ALTER TABLE `adjustment_logs`
+  ADD CONSTRAINT `fk_al_adj` FOREIGN KEY (`adjustment_id`) REFERENCES `adjustments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_al_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `expenses`
@@ -2069,6 +2669,8 @@ ALTER TABLE `sales`
 -- Constraints for table `sale_details`
 --
 ALTER TABLE `sale_details`
+  ADD CONSTRAINT `fk_sd_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT,
+  ADD CONSTRAINT `fk_sd_sale` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `sale_details_adjusted_by_foreign` FOREIGN KEY (`adjusted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `sale_details_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `sale_details_sale_id_foreign` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
@@ -2077,6 +2679,7 @@ ALTER TABLE `sale_details`
 -- Constraints for table `sale_payments`
 --
 ALTER TABLE `sale_payments`
+  ADD CONSTRAINT `fk_sp_sale` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `sale_payments_sale_id_foreign` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
 
 --
@@ -2108,7 +2711,14 @@ ALTER TABLE `settings`
 -- Constraints for table `stock_movements`
 --
 ALTER TABLE `stock_movements`
+  ADD CONSTRAINT `stock_movements_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `stock_movements_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `user_activity_logs`
+--
+ALTER TABLE `user_activity_logs`
+  ADD CONSTRAINT `fk_user_activity_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
