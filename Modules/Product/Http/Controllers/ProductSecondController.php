@@ -81,7 +81,7 @@ class ProductSecondController extends Controller
         }
 
         toast('Produk Bekas berhasil ditambahkan!', 'success');
-        return redirect()->route('productssecond.index');
+        return redirect()->route('products_second.index');
     }
 
     public function edit($id)
@@ -129,7 +129,7 @@ class ProductSecondController extends Controller
         }
 
         toast('Produk Bekas berhasil diperbarui!', 'info');
-        return redirect()->route('productssecond.index');
+        return redirect()->route('products_second.index');
     }
 
     public function destroy($id)
@@ -138,6 +138,6 @@ class ProductSecondController extends Controller
         $product = Product::second()->findOrFail($id);
         $product->delete();
         toast('Produk Bekas berhasil dihapus!', 'warning');
-        return redirect()->route('productssecond.index');
+        return redirect()->route('products_second.index');
     }
 }

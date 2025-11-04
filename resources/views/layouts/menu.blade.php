@@ -55,6 +55,12 @@
                     <i class="c-sidebar-nav-icon bi bi-recycle" style="line-height: 1;"></i> Daftar Produk Bekas
                 </a>
             </li>
+            <li class="c-sidebar-nav-item">
+                <a class="c-sidebar-nav-link {{ request()->routeIs('service-masters.index') ? 'c-active' : '' }}"
+                    href="{{ route('service-masters.index') }}">
+                    <i class="c-sidebar-nav-icon bi bi-recycle" style="line-height: 1;"></i> Daftar Jasa
+                </a>
+            </li>
         </ul>
     </li>
 @endcan

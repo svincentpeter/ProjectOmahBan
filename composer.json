@@ -42,7 +42,8 @@
             "Modules\\": "Modules/"
         },
         "files": [
-            "app/Helpers/helpers.php"
+            "app/Helpers/helpers.php",
+            "app/Helpers/PriceValidationHelper.php"
         ]
     },
     "autoload-dev": {
