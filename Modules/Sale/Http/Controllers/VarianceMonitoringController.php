@@ -1,0 +1,139 @@
+<?php
+
+namespace Modules\Sale\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Modules\Sale\Entities\PriceVarianceLog;
+use DataTables;
+use Carbon\Carbon;
+
+class VarianceMonitoringController extends Controller
+{
+    /**
+     * Dashboard - ringkasan deviasi
+     */
+    public function index()
+    {
+        // Top 10 deviasi terbesar
+        $top_deviations = PriceVarianceLog::where('variance_level', '!=', 'minor')->orderByDesc('variance_percent')->limit(10)->get();
+
+        // Summary stats
+        $summary = [
+            'critical_count' => PriceVarianceLog::where('variance_level', 'critical')->where('approval_status', 'pending')->count(),
+            'warning_count' => PriceVarianceLog::where('variance_level', 'warning')->where('approval_status', 'pending')->count(),
+            'total_variance_value' => PriceVarianceLog::where('approval_status', 'pending')->sum('variance_amount'),
+        ];
+
+        return view('sale::variance-monitoring.index', compact('top_deviations', 'summary'));
+    }
+
+    /**
+     * API DataTable untuk detail deviasi
+     */
+    public function dataTable(Request $request)
+    {
+        $query = PriceVarianceLog::with(['cashier', 'sale'])->orderByDesc('created_at');
+
+        // Filter kasir
+        if ($request->has('cashier_id') && $request->cashier_id) {
+            $query->where('cashier_id', $request->cashier_id);
+        }
+
+        // Filter tanggal
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Filter level deviasi
+        if ($request->has('level') && $request->level) {
+            $query->where('variance_level', $request->level);
+        }
+
+        // Filter status
+        if ($request->has('approval_status') && $request->approval_status) {
+            $query->where('approval_status', $request->approval_status);
+        }
+
+        return DataTables::eloquent($query)->addColumn('kasir_name', fn($d) => $d->cashier->name ?? '-')->addColumn('service_name', fn($d) => $d->item_name)->addColumn('sale_date', fn($d) => $d->sale?->date?->format('d M Y') ?? '-')->addColumn('master_price_fmt', fn($d) => format_currency($d->master_price))->addColumn('input_price_fmt', fn($d) => format_currency($d->input_price))->addColumn('variance_display', fn($d) => $this->formatVariance($d))->addColumn('reason_display', fn($d) => $d->reason_provided ? "<small class='text-muted'>{$d->reason_provided}</small>" : '<span class="text-danger">-</span>')->addColumn('level_badge', fn($d) => $this->getLevelBadge($d->variance_level))->make(true);
+    }
+
+    /**
+     * Format display variance (untuk HTML)
+     */
+    private function formatVariance($data)
+    {
+        $sign = $data->variance_amount >= 0 ? '+' : '';
+        $color = $data->variance_percent > 0 ? 'danger' : 'success';
+
+        return "<span class='text-$color fw-bold'>" . "$sign" . format_currency($data->variance_amount) . " ({$data->variance_percent}%)" . '</span>';
+    }
+
+    /**
+     * Get badge HTML untuk level deviasi
+     */
+    private function getLevelBadge($level)
+    {
+        return match ($level) {
+            'critical' => '<span class="badge bg-danger">CRITICAL</span>',
+            'warning' => '<span class="badge bg-warning text-dark">WARNING</span>',
+            default => '<span class="badge bg-info">Minor</span>',
+        };
+    }
+
+    /**
+     * Export data deviasi ke Excel
+     */
+    public function export(Request $request)
+    {
+        $logs = PriceVarianceLog::with('cashier', 'sale')->orderByDesc('created_at')->get();
+
+        // Return JSON untuk data preparation
+        return response()->json($logs);
+    }
+
+    /**
+     * Detail view satu deviasi
+     */
+    public function show($id)
+    {
+        $varianceLog = PriceVarianceLog::findOrFail($id);
+        $varianceLog->load(['cashier', 'sale', 'saleDetail', 'approver']);
+
+        return view('sale::variance-monitoring.detail', compact('varianceLog'));
+    }
+
+    /**
+     * Approve deviasi
+     */
+    public function approve($id, Request $request)
+    {
+        $varianceLog = PriceVarianceLog::findOrFail($id);
+        $varianceLog->update([
+            'approval_status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Deviasi harga disetujui.');
+    }
+
+    /**
+     * Reject deviasi
+     */
+    public function reject($id, Request $request)
+    {
+        $varianceLog = PriceVarianceLog::findOrFail($id);
+        $varianceLog->update([
+            'approval_status' => 'rejected',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Deviasi harga ditolak.', 'warning');
+    }
+}
