@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Api\MidtransCallbackController;
+use App\Http\Controllers\Api\FonteeWebhookController;
+use App\Http\Controllers\Owner\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -11,18 +13,67 @@ use App\Http\Controllers\Api\MidtransCallbackController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return view('auth.login');
-})->middleware('guest');
+Route::get('/', fn() => view('auth.login'))->middleware('guest');
 
 Auth::routes(['register' => false]);
 
-Route::group(['middleware' => 'auth'], function () {
+// ======================================================================
+// DASHBOARD (auth)
+// ======================================================================
+Route::middleware('auth')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
     Route::get('/sales-purchases/chart-data', [HomeController::class, 'salesPurchasesChart'])->name('sales-purchases.chart');
     Route::get('/current-month/chart-data', [HomeController::class, 'currentMonthChart'])->name('current-month.chart');
     Route::get('/payment-flow/chart-data', [HomeController::class, 'paymentChart'])->name('payment-flow.chart');
 });
 
-// Route untuk callback Midtrans (HARUS di-exclude dari CSRF)
+// ======================================================================
+// WEBHOOKS (PUBLIC, CSRF-EXEMPT) → tempatkan DI LUAR middleware auth
+// ======================================================================
 Route::post('/api/midtrans/callback', [MidtransCallbackController::class, 'receive'])->name('midtrans.callback');
+
+Route::post('/api/webhooks/fontee', [FonteeWebhookController::class, 'handle'])->name('webhooks.fontee');
+
+// ======================================================================
+// OWNER NOTIFICATION CENTER (auth)
+// ======================================================================
+Route::prefix('notifications')
+    ->name('notifications.')
+    ->middleware('auth')
+    ->group(function () {
+        // ===== API/AJAX (letakkan di atas) =====
+        Route::match(['get', 'post'], 'data', [NotificationController::class, 'data'])->name('data');
+        Route::get('unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
+        Route::get('latest', [NotificationController::class, 'getLatest'])->name('latest');
+        Route::get('summary', [NotificationController::class, 'summary'])->name('summary');
+
+        Route::post('destroy-bulk', [NotificationController::class, 'destroyBulk'])->name('destroy-bulk');
+
+        // Mark all read (versi form & versi API)
+        Route::post('mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::post('mark-all-read-api', [NotificationController::class, 'markAllAsReadApi'])->name('mark-all-read-api');
+
+        // ===== WEB PAGES =====
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+
+        // ===== DINAMIS (letakkan terakhir) =====
+        Route::post('{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])
+            ->whereNumber('notification')
+            ->name('mark-as-read');
+
+        Route::post('{notification}/mark-as-reviewed', [NotificationController::class, 'markAsReviewed'])
+            ->whereNumber('notification')
+            ->name('mark-as-reviewed'); // konsisten kebab-case
+
+        Route::get('{notification}', [NotificationController::class, 'show'])
+            ->whereNumber('notification')
+            ->name('show');
+
+        Route::delete('{notification}', [NotificationController::class, 'destroy'])
+            ->whereNumber('notification')
+            ->name('destroy');
+
+        Route::delete('{notification}/api', [NotificationController::class, 'destroyApi'])
+            ->whereNumber('notification')
+            ->name('destroy.api');
+    });

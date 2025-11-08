@@ -16,6 +16,8 @@ use Modules\Sale\Entities\SalePayment;
 use Modules\Sale\Http\Requests\StoreSaleRequest;
 use Illuminate\Support\Str;
 use Modules\Sale\Http\Requests\UpdateSaleRequest;
+use Illuminate\Support\Carbon;
+use Modules\Product\Entities\ServiceMaster;
 
 class SaleController extends Controller
 {
@@ -154,6 +156,7 @@ class SaleController extends Controller
                 ]);
             }
 
+            $sale->refreshHeaderFlags();
             $cart->destroy();
             DB::commit();
 
@@ -335,6 +338,11 @@ class SaleController extends Controller
 
                     $sub = max(0, $price * $qty - $disc + $tax);
 
+                    // hitung original price & adjustment
+                    $origPrice = $this->resolveOriginalPrice($src, data_get($i->options, 'product_id'), data_get($i->options, 'productable_type'), data_get($i->options, 'productable_id'), $price);
+                    $isAdj = (int) ($price !== $origPrice);
+                    $adjAmt = (int) ($origPrice - $price);
+
                     SaleDetails::create([
                         'sale_id' => $sale->id,
                         'item_name' => $i->name, // <- kolom wajib
@@ -342,6 +350,7 @@ class SaleController extends Controller
                         'productable_type' => data_get($i->options, 'productable_type'),
                         'productable_id' => data_get($i->options, 'productable_id'),
                         'source_type' => $src, // new | second | manual
+                        'manual_kind' => ($src === 'manual' && str_starts_with(strtolower($i->name), 'balancing')) || str_contains(strtolower($i->name), 'spoor') ? 'service' : null,
                         'product_name' => $i->name,
                         'product_code' => $code,
                         'quantity' => $qty,
@@ -353,6 +362,12 @@ class SaleController extends Controller
                         'product_discount_amount' => $disc,
                         'product_discount_type' => 'fixed',
                         'product_tax_amount' => $tax,
+                        'original_price' => $origPrice,
+                        'is_price_adjusted' => $isAdj,
+                        'price_adjustment_amount' => $adjAmt,
+                        'price_adjustment_note' => data_get($i->options, 'price_adjustment_note'),
+                        'adjusted_by' => $isAdj ? optional(auth()->user())->id : null,
+                        'adjusted_at' => $isAdj ? now() : null,
                     ]);
 
                     $totalHpp += $hpp * $qty;
@@ -386,6 +401,8 @@ class SaleController extends Controller
                     $sale->payment_status = $sale->paid_amount >= $sale->total_amount ? 'Paid' : ($sale->paid_amount > 0 ? 'Partial' : 'Unpaid');
                     $sale->save();
                 }
+                // 7) Sinkronkan flag header setelah rewrite detail
+                $sale->refreshHeaderFlags();
             });
         } catch (\Throwable $e) {
             // Rollback sudah otomatis; tampilkan pesan ramah
@@ -663,6 +680,11 @@ class SaleController extends Controller
             }
         } // manual: tidak ada mutasi stok
 
+        // nilai original price & adjustment
+        $origPrice = $this->resolveOriginalPrice($src, $productId ?: (int) $item->id, $productableType, $productableId, $unitPrice);
+        $isAdj = (int) ($unitPrice !== $origPrice);
+        $adjAmt = (int) ($origPrice - $unitPrice);
+
         SaleDetails::create([
             'sale_id' => $sale->id,
             'item_name' => $name,
@@ -670,6 +692,7 @@ class SaleController extends Controller
             'productable_type' => $productableType,
             'productable_id' => $productableId,
             'source_type' => $src,
+            'manual_kind' => $src === 'manual' && (str_contains(strtolower($name), 'balancing') || str_contains(strtolower($name), 'spoor')) ? 'service' : null,
             'product_name' => $name,
             'product_code' => $code,
             'quantity' => $qty,
@@ -681,6 +704,127 @@ class SaleController extends Controller
             'product_discount_amount' => $disc,
             'product_discount_type' => data_get($item->options, 'discount_type', 'fixed'),
             'product_tax_amount' => $tax,
+            'original_price' => $origPrice,
+            'is_price_adjusted' => $isAdj,
+            'price_adjustment_amount' => $adjAmt,
+            'price_adjustment_note' => data_get($item->options, 'price_adjustment_note'),
+            'adjusted_by' => $isAdj ? optional(auth()->user())->id : null,
+            'adjusted_at' => $isAdj ? now() : null,
         ]);
+    }
+
+    public function summary(Request $request)
+    {
+        // Ambil filter nested (filter[...]) dan juga support top-level
+        $f = $request->input('filter', []);
+
+        $get = function ($key, $default = null) use ($f, $request) {
+            return $f[$key] ?? $request->input($key, $default);
+        };
+
+        $preset = $get('preset');
+        $bulan = $get('bulan') ?? $get('month');
+        $dari = $get('dari') ?? $get('from');
+        $sampai = $get('sampai') ?? $get('to');
+        $hasAdjustment = $get('has_adjustment');
+        $hasManual = $get('has_manual');
+
+        $q = Sale::query();
+
+        // ====== FILTER FLAG (sama dengan SalesDataTable::filter) ======
+        if ((int) $hasAdjustment === 1) {
+            $q->where('has_price_adjustment', 1);
+        }
+
+        if ((int) $hasManual === 1) {
+            $q->where('has_manual_input', 1);
+        }
+
+        // ====== FILTER TANGGAL (URUTAN PRIORITAS SAMA) ======
+        // 1. Range tanggal manual: dari–sampai
+        if (!empty($dari) && !empty($sampai)) {
+            // di DataTable kamu pakai whereBetween('date', [$dari, $sampai]),
+            // jadi di sini disamain biar hasilnya identik
+            $q->whereBetween('date', [$dari, $sampai]);
+
+            // 2. Preset cepat
+        } elseif (!empty($preset)) {
+            $now = Carbon::now();
+
+            switch ($preset) {
+                case 'today':
+                    $q->whereDate('date', $now->toDateString());
+                    break;
+
+                case 'this_week':
+                    $q->whereBetween('date', [$now->copy()->startOfWeek()->toDateString(), $now->copy()->endOfWeek()->toDateString()]);
+                    break;
+
+                case 'this_month':
+                    $q->whereMonth('date', $now->month)->whereYear('date', $now->year);
+                    break;
+
+                case 'last_month':
+                    $prev = $now->copy()->subMonth();
+                    $q->whereMonth('date', $prev->month)->whereYear('date', $prev->year);
+                    break;
+
+                case 'this_year':
+                    $q->whereYear('date', $now->year);
+                    break;
+            }
+
+            // 3. Filter bulan spesifik (YYYY-MM)
+        } elseif (!empty($bulan) && strpos($bulan, '-') !== false) {
+            [$y, $m] = explode('-', $bulan);
+            $q->whereYear('date', (int) $y)->whereMonth('date', (int) $m);
+        }
+
+        // ====== HITUNG SUMMARY ======
+        $stats = $q
+            ->selectRaw(
+                '
+            COALESCE(SUM(total_amount), 0)  as total_penjualan,
+            COALESCE(SUM(total_profit), 0)  as total_profit,
+            COUNT(id)                       as total_transaksi
+        ',
+            )
+            ->first();
+
+        return response()->json([
+            'total_penjualan' => (int) $stats->total_penjualan,
+            'total_profit' => (int) $stats->total_profit,
+            'total_transaksi' => (int) $stats->total_transaksi,
+        ]);
+    }
+
+    /**
+     * Ambil harga asli (original) dari master yang relevan, fallback ke harga saat ini.
+     */
+    protected function resolveOriginalPrice(string $src, $productId, $productableType, $productableId, int $currentPrice): int
+    {
+        try {
+            if ($src === 'new' && $productId) {
+                $p = Product::find($productId);
+                if ($p) {
+                    return (int) ($p->product_price ?? ($p->sell_price ?? ($p->price ?? $currentPrice)));
+                }
+            }
+            if ($src === 'second' && $productableId) {
+                $s = ProductSecond::find($productableId);
+                if ($s) {
+                    return (int) ($s->sell_price ?? ($s->price ?? $currentPrice));
+                }
+            }
+            if ($src === 'manual' && $productableType === ServiceMaster::class && $productableId) {
+                $sv = ServiceMaster::find($productableId);
+                if ($sv) {
+                    return (int) ($sv->standard_price ?? $currentPrice);
+                }
+            }
+        } catch (\Throwable $e) {
+            // swallow & fallback
+        }
+        return (int) $currentPrice;
     }
 }

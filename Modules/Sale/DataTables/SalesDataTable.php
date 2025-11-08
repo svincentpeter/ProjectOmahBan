@@ -1,10 +1,9 @@
 <?php
 
-namespace Modules\Sale\DataTables; // atau Modules\Sale\DataTables
+namespace Modules\Sale\DataTables;
 
 use Carbon\Carbon;
 use Modules\Sale\Entities\Sale;
-use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
 use Yajra\DataTables\Services\DataTable;
 
@@ -15,21 +14,26 @@ class SalesDataTable extends DataTable
         return datatables()
             ->eloquent($query)
 
-            // Tombol expand
+            // Tombol expand (row detail)
             ->addColumn('row_detail', function ($s) {
                 $id = (int) $s->id;
                 $url = route('sales.items', ['sale' => $id]);
-                return '<button type="button" class="btn btn-sm btn-primary btn-expand" data-url="' . $url . '">' . '<i class="bi bi-chevron-down"></i>' . '</button>';
+                return '<button type="button" class="btn btn-sm btn-primary btn-expand" data-url="' . $url . '"><i class="bi bi-chevron-down"></i></button>';
             })
 
+            // Tanggal
             ->editColumn('date', fn($s) => Carbon::parse($s->date)->locale('id')->translatedFormat('d M Y'))
+
+            // Status & Payment status pakai partials
             ->addColumn('status', fn($s) => view('sale::partials.status', ['data' => $s]))
             ->addColumn('payment_status', fn($s) => view('sale::partials.payment-status', ['data' => $s]))
+
+            // Uang
             ->addColumn('total_amount', fn($s) => format_currency((int) $s->total_amount))
             ->addColumn('paid_amount', fn($s) => format_currency((int) $s->paid_amount))
             ->addColumn('due_amount', fn($s) => format_currency((int) $s->due_amount))
 
-            // Profit
+            // Profit (pakai subtotal_profit jika ada, fallback hitung dari HPP)
             ->addColumn('total_profit', function ($s) {
                 $profit = $s->saleDetails->sum(function ($d) {
                     if (isset($d->subtotal_profit)) {
@@ -43,58 +47,77 @@ class SalesDataTable extends DataTable
                 return format_currency((int) $profit);
             })
 
-            // Pembayaran terakhir
+            // Kasir
+            ->addColumn('kasir', fn($s) => $s->user->name ?? '—')
+
+            // Metode bayar terakhir (null-safe)
             ->addColumn('payment_method', function ($s) {
-                $last = $s->salePayments->first();
-                $method = $last->payment_method ?? ($s->payment_method ?? '-');
-                $bank = $last->bank_name ?? $s->bank_name;
+                $last = $s->salePayments->first(); // sudah diurut desc di with()
+                $method = $last?->payment_method ?? ($s->payment_method ?? '-');
+                $bank = $last?->bank_name ?? $s->bank_name;
                 return $bank ? "{$method} ({$bank})" : $method;
             })
 
-            // ✅ KOLOM DISKON
+            // Indikator Input Manual
+            ->addColumn('input_manual', function ($s) {
+                if ((int) $s->has_manual_input === 1) {
+                    $cnt = (int) ($s->manual_input_count ?? 0);
+                    return '<span class="badge badge-warning">' . $cnt . ' item manual</span>';
+                }
+                return '<span class="text-muted">—</span>';
+            })
+
+            // Ringkasan Diskon / Edit Harga
             ->addColumn('price_adjustment', function ($s) {
-                if (!$s->has_price_adjustment) {
+                if ((int) $s->has_price_adjustment !== 1) {
                     return '<span class="badge badge-secondary badge-sm">-</span>';
                 }
 
                 $totalAdjustment = $s->saleDetails->where('is_price_adjusted', 1)->sum('price_adjustment_amount');
 
-                $itemCount = $s->saleDetails->where('is_price_adjusted', 1)->count();
+                $itemCount = $s->adjusted_items_count ?? $s->saleDetails->where('is_price_adjusted', 1)->count();
 
                 if ($totalAdjustment > 0) {
-                    return '<span class="badge badge-warning badge-sm" title="' . $itemCount . ' item dengan diskon">' . '<i class="bi bi-tag-fill"></i> Rp ' . number_format($totalAdjustment, 0, ',', '.') . '</span>';
+                    return '<span class="badge badge-warning badge-sm" title="' . $itemCount . ' item dengan diskon"><i class="bi bi-tag-fill"></i> Rp ' . number_format($totalAdjustment, 0, ',', '.') . '</span>';
                 } elseif ($totalAdjustment < 0) {
-                    return '<span class="badge badge-success badge-sm" title="' . $itemCount . ' item dengan kenaikan harga">' . '<i class="bi bi-arrow-up-circle"></i> +Rp ' . number_format(abs($totalAdjustment), 0, ',', '.') . '</span>';
+                    return '<span class="badge badge-success badge-sm" title="' . $itemCount . ' item dengan kenaikan harga"><i class="bi bi-arrow-up-circle"></i> +Rp ' . number_format(abs($totalAdjustment), 0, ',', '.') . '</span>';
                 }
-
                 return '<span class="badge badge-secondary badge-sm">-</span>';
             })
 
+            // Aksi
             ->addColumn('action', fn($s) => view('sale::partials.actions', ['data' => $s]))
-            ->rawColumns(['row_detail', 'status', 'payment_status', 'price_adjustment', 'action'])
 
-            // ✅ FILTER - HAPUS use ($request)
+            ->rawColumns(['row_detail', 'status', 'payment_status', 'input_manual', 'price_adjustment', 'action'])
+
+            // FILTER robust: dukung top-level & nested d.filter.*
             ->filter(function ($q) {
-                // ← FIX: Hapus use ($request)
-                // Get filter params
-                $preset = request('preset');
-                $bulan = request('bulan');
-                $dari = request('dari');
-                $sampai = request('sampai');
-                $hasAdjustment = request('has_adjustment');
+                $f = request('filter', []);
+                $get = function ($key, $default = null) use ($f) {
+                    return $f[$key] ?? request($key, $default);
+                };
 
-                // Filter adjustment
-                if ($hasAdjustment === '1') {
+                $preset = $get('preset');
+                $bulan = $get('bulan') ?? $get('month');
+                $dari = $get('dari') ?? $get('from');
+                $sampai = $get('sampai') ?? $get('to');
+                $hasAdjustment = $get('has_adjustment');
+                $hasManual = $get('has_manual');
+
+                if ((int) $hasAdjustment === 1) {
                     $q->where('has_price_adjustment', 1);
                 }
+                if ((int) $hasManual === 1) {
+                    $q->where('has_manual_input', 1);
+                }
 
-                // Filter range tanggal (prioritas tertinggi)
+                // Range tanggal prioritas tertinggi
                 if (!empty($dari) && !empty($sampai)) {
                     $q->whereBetween('date', [$dari, $sampai]);
                     return;
                 }
 
-                // Filter preset
+                // Preset
                 if (!empty($preset)) {
                     $now = Carbon::now();
                     switch ($preset) {
@@ -117,8 +140,8 @@ class SalesDataTable extends DataTable
                     }
                 }
 
-                // Filter bulan spesifik
-                if (!empty($bulan)) {
+                // Bulan spesifik (YYYY-MM)
+                if (!empty($bulan) && strpos($bulan, '-') !== false) {
                     [$y, $m] = explode('-', $bulan);
                     $q->whereYear('date', (int) $y)->whereMonth('date', (int) $m);
                 }
@@ -127,54 +150,47 @@ class SalesDataTable extends DataTable
 
     public function query(Sale $model)
     {
-        $q = $model->newQuery()->with([
-            // ✅ TAMBAH kolom tracking harga di saleDetails
-            'saleDetails:id,sale_id,product_name,product_code,quantity,price,sub_total,subtotal_profit,is_price_adjusted,price_adjustment_amount,price_adjustment_note',
-            // Pembayaran diurutkan terbaru dulu
-            'salePayments' => function ($q) {
-                $q->select('id', 'sale_id', 'payment_method', 'bank_name', 'date')->orderByDesc('date')->orderByDesc('id');
-            },
-        ]);
+        $q = $model
+            ->newQuery()
+            ->with([
+                'user:id,name',
 
-        // Kompatibel dengan preXhr
-        $preset = request('preset');
-        $month = request('month');
-        $from = request('from');
-        $to = request('to');
+                // ✅ BENAR: atur kolom di relasi anak via closure
+                'saleDetails' => function ($q) {
+                    $q->select([
+                        'id',
+                        'sale_id', // wajib untuk menghubungkan ke Sale
+                        'product_name',
+                        'product_code',
+                        'quantity',
+                        'price',
+                        'sub_total',
+                        'subtotal_profit',
+                        'hpp', // disiapkan untuk fallback hitung profit
+                        'is_price_adjusted',
+                        'price_adjustment_amount',
+                        'price_adjustment_note',
+                        'adjusted_by', // ✅ WAJIB agar relasi adjuster bisa resolve
+                        'adjusted_at',
+                    ]);
+                },
 
-        if ($from && $to) {
-            $q->whereBetween('date', [$from, $to]);
-        } elseif ($month) {
-            [$y, $m] = explode('-', $month);
-            $q->whereYear('date', (int) $y)->whereMonth('date', (int) $m);
-        } elseif ($preset) {
-            if ($preset === 'today') {
-                $q->whereDate('date', now()->toDateString());
-            } elseif ($preset === 'this_week') {
-                $q->whereBetween('date', [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()]);
-            } elseif ($preset === 'this_month') {
-                $q->whereYear('date', now()->year)->whereMonth('date', now()->month);
-            } elseif ($preset === 'last_month') {
-                $q->whereYear('date', now()->subMonth()->year)->whereMonth('date', now()->subMonth()->month);
-            } elseif ($preset === 'this_year') {
-                $q->whereYear('date', now()->year);
-            }
-        }
+                // ✅ BENAR: nested eager load kolom relasi bersarang
+                'saleDetails.adjuster:id,name',
 
-        return $q->select(
-            'id',
-            'reference',
-            'date',
-            'status',
-            'total_amount',
-            'paid_amount',
-            'due_amount',
-            'payment_status',
-            'payment_method',
-            'bank_name',
-            'user_id',
-            'has_price_adjustment', // ✅ TAMBAH KOLOM INI
-        );
+                'salePayments' => function ($q) {
+                    $q->select('id', 'sale_id', 'payment_method', 'bank_name', 'date')->orderByDesc('date')->orderByDesc('id');
+                },
+            ])
+
+            // ✅ Konsisten dengan nama relasi yang dipakai di atas (saleDetails)
+            ->withCount([
+                'saleDetails as adjusted_items_count' => function ($d) {
+                    $d->where('is_price_adjusted', 1);
+                },
+            ]);
+
+        return $q->select('id', 'reference', 'date', 'status', 'total_amount', 'paid_amount', 'due_amount', 'payment_status', 'payment_method', 'bank_name', 'user_id', 'has_price_adjustment', 'has_manual_input', 'manual_input_count');
     }
 
     public function html()
@@ -182,17 +198,19 @@ class SalesDataTable extends DataTable
         return $this->builder()
             ->setTableId('sales-table')
             ->columns($this->getColumns())
-            ->ajax([
-                'type' => 'GET',
-                'data' => 'function(d){
-                    d.filter = {
-                        preset: $("#filter_preset").val(),
-                        bulan: $("#filter_bulan").val(),
-                        tahun: $("#filter_tahun").val(),
-                        dari: $("#filter_dari").val(),
-                        sampai: $("#filter_sampai").val(),
-                        has_adjustment: $("#filter_has_adjustment").val() // ✅ TAMBAH INI
+
+            // SAFE: kembalikan object; d.filter diisi dari UI
+            ->minifiedAjax('', null, [
+                'data' => /** @lang JavaScript */ 'function (d) {
+                    var f = {
+                        preset: $("#filter_preset").val() || "",
+                        bulan:  $("#filter_bulan").val()   || "",
+                        dari:   $("#filter_dari").val()    || "",
+                        sampai: $("#filter_sampai").val()  || "",
+                        has_adjustment: $("#filter_has_adjustment").length && $("#filter_has_adjustment").is(":checked") ? 1 : "",
+                        has_manual:     $("#filter_has_manual").length     && $("#filter_has_manual").is(":checked")     ? 1 : ""
                     };
+                    return $.extend({}, d || {}, { filter: f });
                 }',
             ])
             ->parameters([
@@ -201,10 +219,8 @@ class SalesDataTable extends DataTable
                 'serverSide' => true,
                 'responsive' => true,
                 'autoWidth' => false,
-                'order' => [[2, 'desc']],
-            ])
-            ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>>tr<'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->buttons(Button::make('excel')->text('<i class="bi bi-file-excel"></i> Excel'), Button::make('print')->text('<i class="bi bi-printer"></i> Cetak'), Button::make('reset')->text('<i class="bi bi-arrow-clockwise"></i> Reset'), Button::make('reload')->text('<i class="bi bi-arrow-repeat"></i> Muat Ulang'));
+                'order' => [[2, 'desc']], // index 2 = kolom "Tanggal"
+            ]);
     }
 
     protected function getColumns()
@@ -213,6 +229,7 @@ class SalesDataTable extends DataTable
             Column::computed('row_detail')->title('')->exportable(false)->printable(false)->width(32)->className('text-center align-middle'),
             Column::make('reference')->title('Ref')->className('text-center align-middle'),
             Column::make('date')->title('Tanggal')->className('text-center align-middle'),
+
             Column::computed('status')->title('Status')->className('text-center align-middle'),
             Column::computed('total_amount')->title('Total')->className('text-center align-middle'),
             Column::computed('total_profit')->title('Profit')->className('text-center align-middle'),
@@ -221,7 +238,8 @@ class SalesDataTable extends DataTable
             Column::computed('payment_status')->title('Status Bayar')->className('text-center align-middle'),
             Column::computed('payment_method')->title('Pembayaran')->className('text-center align-middle'),
 
-            // ✅ KOLOM BARU
+            Column::computed('kasir')->title('Kasir')->className('text-center align-middle'),
+            Column::computed('input_manual')->title('Input Manual')->className('text-center align-middle'),
             Column::computed('price_adjustment')->title('Diskon')->className('text-center align-middle'),
 
             Column::computed('action')->title('Aksi')->exportable(false)->printable(false)->className('text-center align-middle'),

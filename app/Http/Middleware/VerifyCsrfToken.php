@@ -13,5 +13,6 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'api/midtrans/callback', // Exclude Midtrans callback dari CSRF
+        'api/webhooks/fontee',
     ];
 }

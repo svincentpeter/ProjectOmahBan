@@ -15,12 +15,41 @@
 @section('content')
     <div class="container-fluid">
         <div class="row">
+
             <div class="col-12">
                 @include('utils.alerts')
             </div>
+
+            {{-- ================= Page Header Card ================= --}}
+            <div class="col-12">
+                <div class="card page-head-card shadow-sm mb-3">
+                    <div class="card-body py-4 px-4">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap">
+                            <div class="mb-3 mb-md-0">
+                                <h4 class="mb-1 d-flex align-items-center">
+                                    <i class="cil-cart mr-2 text-primary"></i>
+                                    Point of Sale
+                                </h4>
+                                <div class="text-muted">
+                                    Pilih <strong>Produk Baru</strong>, <strong>Produk Bekas</strong>, atau <strong>Jasa /
+                                        Manual</strong> pada tab di bawah.
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <a href="{{ route('service-masters.index') }}" target="_blank"
+                                    class="btn btn-outline-primary btn-sm">
+                                    <i class="cil-settings mr-1"></i> Kelola Master Jasa
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ================= Left: Catalog Tabs ================= --}}
             <div class="col-lg-7">
-                {{-- ✅ Bootstrap 4 Native Tabs --}}
-                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                {{-- Tabs (Bootstrap 4) --}}
+                <ul class="nav nav-tabs pos-tabs" id="myTab" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link active" id="new-product-tab" data-toggle="tab" href="#new-product" role="tab"
                             aria-controls="new-product" aria-selected="true">
@@ -42,6 +71,7 @@
                 </ul>
 
                 <div class="tab-content" id="myTabContent">
+
                     {{-- Tab 1: Produk Baru --}}
                     <div class="tab-pane fade show active" id="new-product" role="tabpanel"
                         aria-labelledby="new-product-tab">
@@ -61,26 +91,105 @@
                     {{-- Tab 3: Jasa / Manual --}}
                     <div class="tab-pane fade" id="manual-item" role="tabpanel" aria-labelledby="manual-item-tab">
                         <div class="mt-3">
-                            <livewire:pos.manual-item-form />
+
+                            {{-- ===== SECTION A: Daftar Jasa (Master Data)
+                   Catatan: kalau komponen service-list SUDAH ber-card sendiri (versi terbaru),
+                   biarkan seperti ini. --}}
+                            <livewire:pos.service-list />
+
+                            {{-- ===== SECTION B: Input Manual (Non Master) --}}
+                            <div class="card shadow-sm mt-4">
+                                <div class="card-header bg-white py-3 border-bottom">
+                                    <h6 class="mb-1 font-weight-bold d-flex align-items-center">
+                                        <i class="cil-pencil mr-2 text-primary"></i>
+                                        Input Manual (Item Tidak Ada di Master)
+                                    </h6>
+                                    <small class="text-muted">Gunakan untuk jasa/barang yang belum ada di master
+                                        data</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="pos-callout pos-callout--danger mb-4">
+                                        <i class="bi bi-exclamation-triangle mr-1"></i>
+                                        <strong>Perhatian:</strong> Setiap input manual akan dikirim sebagai notifikasi ke
+                                        Owner untuk audit.
+                                        Pastikan alasan diisi dengan jelas.
+                                    </div>
+
+                                    {{-- Komponen form manual (sudah kita rapikan & ada alasan wajib) --}}
+                                    <livewire:pos.manual-item-form />
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Checkout Panel --}}
+            {{-- ================= Right: Checkout Panel ================= --}}
             <div class="col-lg-5">
-                <livewire:pos.checkout :cart-instance="'sale'" />
+                @livewire('pos.checkout', ['cartInstance' => 'sale'])
             </div>
+
         </div>
     </div>
 @endsection
 
+@push('page_styles')
+    <style>
+        /* ===== Header card ===== */
+        .page-head-card {
+            border-radius: 12px;
+            background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+            border: 1px solid #edf2f7;
+        }
+
+        /* ===== Tabs look & feel (rapi & clickable) ===== */
+        .pos-tabs .nav-link {
+            font-weight: 600;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            padding: .6rem .9rem;
+            transition: .2s;
+        }
+
+        .pos-tabs .nav-link:hover {
+            background: #f8f9fa
+        }
+
+        .pos-tabs .nav-link.active {
+            color: #4834DF;
+            border-color: #dee2e6 #dee2e6 #fff;
+            box-shadow: inset 0 -2px 0 #4834DF;
+        }
+
+        /* ===== Callouts ===== */
+        .pos-callout {
+            border-radius: 10px;
+            padding: 12px 14px;
+            border-left: 4px solid
+        }
+
+        .pos-callout--danger {
+            border-color: #e55353;
+            background: #ffecec
+        }
+
+        .pos-callout--warning {
+            border-color: #f9b115;
+            background: #fff7e6
+        }
+
+        .pos-callout--info {
+            border-color: #39f;
+            background: #f1f7ff
+        }
+    </style>
+@endpush
+
 @push('page_scripts')
     <script>
-        // ✅ FIXED: Pakai 'livewire:initialized' bukan 'DOMContentLoaded'
+        // Livewire init + helpers
         document.addEventListener('livewire:initialized', () => {
-            console.log('✅ Livewire initialized on POS page');
-
             // Konfirmasi reset keranjang
             window.confirmReset = function() {
                 Swal.fire({
@@ -92,16 +201,11 @@
                     cancelButtonColor: '#3085d6',
                     confirmButtonText: 'Ya, Hapus!',
                     cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // ✅ FIXED: Livewire 3 syntax
-                        Livewire.dispatch('resetCart');
-                    }
+                }).then((r) => {
+                    if (r.isConfirmed) Livewire.dispatch('resetCart');
                 });
             };
 
-            // ✅ Listener untuk event Swal (sudah ada di main-js.blade.php secara global)
-            // Tapi bisa ditambahkan lagi di sini jika perlu override
             Livewire.on('swal-success', (data) => {
                 const msg = Array.isArray(data) ? data[0] : data;
                 Swal.fire({
@@ -114,17 +218,14 @@
                     position: 'top-end'
                 });
             });
-
             Livewire.on('swal-error', (data) => {
                 const msg = Array.isArray(data) ? data[0] : data;
                 Swal.fire({
                     icon: 'error',
                     title: 'Error!',
-                    text: msg,
-                    confirmButtonText: 'OK'
+                    text: msg
                 });
             });
-
             Livewire.on('swal-warning', (data) => {
                 const msg = Array.isArray(data) ? data[0] : data;
                 Swal.fire({
@@ -138,20 +239,15 @@
                 });
             });
 
-            // ✅ Modal checkout (jika digunakan di masa depan)
             Livewire.on('showCheckoutModal', () => {
-                if (typeof $ !== 'undefined' && $('#checkoutModal').length) {
-                    $('#checkoutModal').modal('show');
-                }
+                if (typeof $ !== 'undefined' && $('#checkoutModal').length) $('#checkoutModal').modal(
+                    'show');
             });
         });
 
-        // ✅ TAMBAHAN: jQuery ready untuk Bootstrap tabs (fallback)
-        $(document).ready(function() {
-            console.log('✅ jQuery ready - Bootstrap tabs initialized');
-            
-            // Pastikan Bootstrap tabs berfungsi
-            $('#myTab a').on('click', function (e) {
+        // Fallback init tabs (Bootstrap 4)
+        $(function() {
+            $('#myTab a').on('click', function(e) {
                 e.preventDefault();
                 $(this).tab('show');
             });

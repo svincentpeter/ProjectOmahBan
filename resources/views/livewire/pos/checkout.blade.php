@@ -115,11 +115,8 @@
                                             onmouseout="this.style.borderColor='#e9ecef'; this.style.background='white'">
                                             <input type="radio" id="payCash" name="payment_method"
                                                 class="custom-control-input" wire:model.live="payment_method"
-                                                wire:change="onPaymentMethodChange" value="Tunai" wire:key="pm-tunai">
-                                            <label class="custom-control-label" for="payCash"
-                                                style="font-size: 0.95rem; font-weight: 500; cursor: pointer;">
-                                                💵 Tunai
-                                            </label>
+                                                wire:change="onPaymentMethodChange" value="Cash" wire:key="pm-cash">
+                                            <label class="custom-control-label" for="payCash">💵 Tunai</label>
                                         </div>
 
                                         <div class="custom-control custom-radio"
@@ -212,14 +209,15 @@
                                             masukkan nominal secara manual di bawah untuk menandai lunas.
                                         </div>
 
-                                        <div class="form-group" x-data="paidBox(@entangle('paid_amount').live)" x-init="init()"
+                                        <div class="form-group" x-data="paidBox(@entangle('paid_amount').live, '#paid_amount_view_midtrans')" x-init="init()"
                                             style="margin-bottom: 1rem;">
                                             <label for="paid_amount_view"
                                                 style="font-weight: 600; font-size: 0.95rem; color: #495057; margin-bottom: 0.5rem;">
                                                 💰 Jumlah Dibayar (Manual)
                                             </label>
                                             <div wire:ignore>
-                                                <input type="text" class="form-control" id="paid_amount_view"
+                                                <input type="text" class="form-control"
+                                                    id="paid_amount_view_midtrans"
                                                     style="padding: 0.6rem; border-radius: 8px; border: 2px solid #ced4da; font-size: 1rem; font-weight: 600; text-align: right;"
                                                     inputmode="numeric" placeholder="0" autocomplete="off">
                                             </div>
@@ -271,14 +269,15 @@
                                             </div>
                                         @endif
 
-                                        <div class="form-group" x-data="paidBox(@entangle('paid_amount').live)" x-init="init()"
+                                        <div class="form-group" x-data="paidBox(@entangle('paid_amount').live, '#paid_amount_view_manual')" x-init="init()"
                                             style="margin-bottom: 1rem;">
                                             <label for="paid_amount_view"
                                                 style="font-weight: 600; font-size: 0.95rem; color: #495057; margin-bottom: 0.5rem;">
                                                 💰 Jumlah Dibayar
                                             </label>
                                             <div wire:ignore>
-                                                <input type="text" class="form-control" id="paid_amount_view"
+                                                <input type="text" class="form-control"
+                                                    id="paid_amount_view_manual"
                                                     style="padding: 0.6rem; border-radius: 8px; border: 2px solid #ced4da; font-size: 1rem; font-weight: 600; text-align: right;"
                                                     inputmode="numeric" placeholder="0" autocomplete="off">
                                             </div>
@@ -406,7 +405,7 @@
                                                 {{ format_currency($cart_item->price) }}
                                             </strong><br>
                                             <span class="badge badge-warning badge-sm mt-1"
-                                                title="{{ $cart_item->options->price_adjustment_note ?? 'Ada diskon' }}"
+                                                title="Potongan {{ format_currency($cart_item->options->price_adjustment_amount ?? 0) }}{{ !empty($cart_item->options->price_adjustment_note) ? ' • ' . $cart_item->options->price_adjustment_note : '' }}"
                                                 style="cursor: help;">
                                                 <i class="bi bi-tag-fill"></i> Diskon
                                             </span>
@@ -417,21 +416,43 @@
                                     </td>
 
                                     <td class="align-middle" style="padding: 1rem;">
-                                        @if (in_array($cart_item->options->source_type, ['new', 'manual']))
-                                            <div class="input-group">
-                                                <input wire:model.live.debounce.500ms="quantity.{{ $cart_item->id }}"
-                                                    style="min-width: 40px;" type="number"
-                                                    class="form-control text-center" value="{{ $cart_item->qty }}"
-                                                    min="1">
+                                        @php
+                                            // Item yang BISA edit qty:
+                                            // - new: Produk baru dari master
+                                            // - manual: Input manual dari ManualItemForm
+                                            // - service_master: Jasa dari ServiceMaster
+                                            $editableQty = in_array($cart_item->options->source_type, [
+                                                'new',
+                                                'manual',
+                                                'service_master',
+                                            ]);
+                                        @endphp
+
+                                        @if ($editableQty)
+                                            {{-- BISA EDIT QTY --}}
+                                            <div class="input-group" style="min-width: 150px;">
+                                                <div class="input-group-prepend">
+                                                    <button type="button"
+                                                        wire:click="decrementQuantity('{{ $cart_item->rowId }}')"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        {{ $cart_item->qty <= 1 ? 'disabled' : '' }}>
+                                                        <i class="bi bi-dash"></i>
+                                                    </button>
+                                                </div>
+                                                <input wire:model.defer="quantity.{{ $cart_item->id }}"
+                                                    wire:blur="updateQuantity('{{ $cart_item->rowId }}', '{{ $cart_item->id }}', '{{ $cart_item->options->source_type }}')"
+                                                    type="number" class="form-control text-center"
+                                                    value="{{ $cart_item->qty }}" min="1">
                                                 <div class="input-group-append">
                                                     <button type="button"
-                                                        wire:click="updateQuantity('{{ $cart_item->rowId }}', '{{ $cart_item->id }}', '{{ $cart_item->options->source_type }}')"
-                                                        class="btn btn-info">
-                                                        <i class="bi bi-check"></i>
+                                                        wire:click="incrementQuantity('{{ $cart_item->rowId }}')"
+                                                        class="btn btn-sm btn-outline-secondary">
+                                                        <i class="bi bi-plus"></i>
                                                     </button>
                                                 </div>
                                             </div>
                                         @else
+                                            {{-- READONLY: Tidak bisa edit qty --}}
                                             <input type="number" class="form-control text-center"
                                                 value="{{ $cart_item->qty }}" readonly>
                                         @endif
@@ -447,12 +468,13 @@
                                         <div class="btn-group-vertical" role="group" style="gap: .25rem;">
                                             {{-- ✅ BUTTON EDIT HARGA (hanya new/second) --}}
                                             @if (in_array($cart_item->options->source_type ?? 'new', ['new', 'second']))
-                                                <button type="button"
-                                                    wire:click="openEditPriceModal('{{ $cart_item->rowId }}')"
-                                                    class="btn btn-sm btn-warning" title="Edit Harga"
-                                                    style="min-width: 120px;">
-                                                    <i class="bi bi-pencil-square"></i> Edit Harga
-                                                </button>
+                                                @hasanyrole('Admin|Super Admin|Owner|Supervisor|Kasir')
+                                                    <button type="button"
+                                                        wire:click="openEditPriceModal('{{ $cart_item->rowId }}')"
+                                                        class="btn btn-sm btn-warning" style="min-width:120px;">
+                                                        <i class="bi bi-pencil-square"></i> Edit Harga
+                                                    </button>
+                                                @endhasanyrole
                                             @endif
 
                                             {{-- Button Hapus --}}
@@ -582,94 +604,80 @@
                         </div>
                     </div>
 
-                    {{-- Harga Original (Read-only) --}}
+                    {{-- Harga Asli (read-only) --}}
                     <div class="form-group">
-                        <label class="font-weight-bold"><i class="bi bi-tag"></i> Harga Asli (Original)</label>
+                        <label class="font-weight-bold"><i class="bi bi-tag"></i> Harga Asli</label>
                         <input type="text" class="form-control form-control-lg bg-light"
                             value="Rp {{ number_format($editingOriginalPrice, 0, ',', '.') }}" disabled readonly>
-                        <small class="form-text text-muted">Harga dari master produk (tidak bisa diubah)</small>
+                        <small class="form-text text-muted">Harga dari master produk.</small>
                     </div>
 
-                    {{-- Harga Baru (AutoNumeric) --}}
-                    <div class="form-group">
-                        <label class="font-weight-bold"><i class="bi bi-currency-dollar"></i> Harga Baru <span
-                                class="text-danger">*</span></label>
-                        <input type="text" wire:model.lazy="newPrice" id="newPriceInput"
-                            class="form-control form-control-lg @error('newPrice') is-invalid @enderror"
-                            placeholder="Masukkan harga baru" x-data x-init="new AutoNumeric('#newPriceInput', {
-                                currencySymbol: 'Rp ',
-                                decimalCharacter: ',',
-                                digitGroupSeparator: '.',
-                                decimalPlaces: 0,
-                                minimumValue: '1',
-                                modifyValueOnWheel: false
-                            });">
-                        @error('newPrice')
+                    {{-- Pengurangan Harga (AutoNumeric) --}}
+                    <div class="form-group" x-data="paidBox(@entangle('discountAmount').live, '#discount_amount_input')" x-init="init()">
+                        <label class="font-weight-bold">
+                            <i class="bi bi-cash-stack"></i> Pengurangan Harga <span class="text-danger">*</span>
+                        </label>
+                        <div wire:ignore>
+                            <input type="text" id="discount_amount_input"
+                                class="form-control form-control-lg @error('discountAmount') is-invalid @enderror"
+                                placeholder="0" inputmode="numeric" autocomplete="off" style="text-align: right;">
+                        </div>
+                        @error('discountAmount')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
-                        <small class="form-text text-muted"><i class="bi bi-info-circle"></i> Minimal Rp 1. Format: Rp
-                            1.000.000</small>
+                        <small class="form-text text-muted">
+                            Masukkan 0 jika tidak ada diskon. Batas maksimal = harga asli.
+                        </small>
                     </div>
 
-                    {{-- Selisih/Diskon (Computed) --}}
                     @php
-                        $diff = (int) $editingOriginalPrice - (int) $newPrice;
-                        $diffPercent = $editingOriginalPrice > 0 ? round(($diff / $editingOriginalPrice) * 100, 1) : 0;
+                        $orig = (int) ($editingOriginalPrice ?? 0);
+                        $disc = (int) ($discountAmount ?? 0);
+                        $new = max(0, $orig - $disc);
+                        $pct = $orig > 0 ? round(($disc / $orig) * 100, 1) : 0;
                     @endphp
-                    @if ($diff != 0)
-                        <div class="alert {{ $diff > 0 ? 'alert-warning' : 'alert-success' }} mb-3">
-                            <div class="row align-items-center">
-                                <div class="col-md-6">
-                                    <strong style="font-size: 1.1em;">
-                                        @if ($diff > 0)
-                                            <i class="bi bi-arrow-down-circle text-danger"></i> Diskon/Potongan:
-                                        @else
-                                            <i class="bi bi-arrow-up-circle text-success"></i> Kenaikan Harga:
-                                        @endif
-                                    </strong>
-                                </div>
-                                <div class="col-md-6 text-right">
-                                    <h4 class="mb-0 {{ $diff > 0 ? 'text-danger' : 'text-success' }}">
-                                        Rp {{ number_format(abs($diff), 0, ',', '.') }}
-                                    </h4>
-                                    <small class="text-muted">({{ $diffPercent }}% dari harga asli)</small>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
 
-                    {{-- Catatan (WAJIB jika harga turun) --}}
-                    @if ((int) $newPrice < (int) $editingOriginalPrice)
-                        <div class="form-group">
-                            <label class="font-weight-bold text-danger">
-                                <i class="bi bi-chat-left-text"></i> Catatan/Alasan Diskon
-                                <span class="badge badge-danger">WAJIB DIISI</span>
-                            </label>
-                            <textarea wire:model.defer="priceNote" class="form-control @error('priceNote') is-invalid @enderror" rows="4"
-                                placeholder="Contoh:
-- Nego customer Rp 50.000
-- Promo diskon 10% bulan ini
-- Barang cacat minor (lecet/goresan)
-- Customer loyal/repeat order"
-                                required></textarea>
-                            @error('priceNote')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                            <small class="form-text text-muted">
-                                <i class="bi bi-exclamation-triangle"></i> <strong>Minimal 10 karakter.</strong>
-                                Jelaskan alasan penurunan harga.
-                            </small>
+                    {{-- Ringkasan --}}
+                    <div class="alert {{ $disc > 0 ? 'alert-warning' : 'alert-secondary' }} mb-3"
+                        style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>
+                                {{ $disc > 0 ? 'Diskon/Potongan:' : 'Tidak ada diskon' }}
+                            </strong>
+                            @if ($disc > 0)
+                                <div>Rp {{ number_format($disc, 0, ',', '.') }} ({{ $pct }}% dari harga asli)
+                                </div>
+                            @endif
                         </div>
-                    @else
-                        <div class="form-group">
-                            <label class="font-weight-bold"><i class="bi bi-chat-left-text"></i> Catatan
-                                (Opsional)</label>
-                            <textarea wire:model.defer="priceNote" class="form-control" rows="3"
-                                placeholder="Catatan tambahan (opsional)"></textarea>
-                            <small class="form-text text-muted">Anda bisa menambahkan catatan meskipun harga tidak
-                                turun.</small>
+                        <div style="text-align:right;">
+                            <div class="text-muted" style="font-size:.9rem;">Harga Setelah Potong</div>
+                            <div class="h4 m-0">Rp {{ number_format($new, 0, ',', '.') }}</div>
                         </div>
-                    @endif
+                    </div>
+
+                    {{-- Alasan (WAJIB jika ada diskon) --}}
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                            <i class="bi bi-chat-left-text"></i> Alasan
+                            @if ($disc > 0)
+                                <span class="badge badge-danger">WAJIB</span>
+                            @else
+                                <span class="badge badge-secondary">Opsional</span>
+                            @endif
+                        </label>
+                        <textarea wire:model.defer="priceNote" class="form-control @error('priceNote') is-invalid @enderror" rows="4"
+                            placeholder="Contoh:
+- Nego pelanggan (1 set)
+- Promo stok tahun lama
+- Barang cacat minor">
+            </textarea>
+                        @error('priceNote')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                        <small class="form-text text-muted">
+                            Minimal 10 karakter jika ada potongan.
+                        </small>
+                    </div>
                 </div>
 
                 {{-- Footer --}}
@@ -679,10 +687,12 @@
                     </button>
                     <button type="button" class="btn btn-warning btn-lg" wire:click="saveEditedPrice"
                         wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="saveEditedPrice"><i class="bi bi-check-circle"></i>
-                            Simpan Perubahan</span>
-                        <span wire:loading wire:target="saveEditedPrice"><i class="bi bi-hourglass-split"></i>
-                            Menyimpan...</span>
+                        <span wire:loading.remove wire:target="saveEditedPrice">
+                            <i class="bi bi-check-circle"></i> Simpan Perubahan
+                        </span>
+                        <span wire:loading wire:target="saveEditedPrice">
+                            <i class="bi bi-hourglass-split"></i> Menyimpan...
+                        </span>
                     </button>
                 </div>
             </div>
@@ -699,50 +709,49 @@
         </script>
 
         <script>
-            function paidBox(entangled) {
+            function paidBox(entangled, selector) {
                 return {
                     an: null,
                     paid: entangled,
+                    el: null,
                     init() {
-                        const el = document.getElementById('paid_amount_view');
-                        if (!el || el._anInitialized) return;
-                        el._anInitialized = true;
+                        this.el = document.querySelector(selector);
+                        if (!this.el || this.el._anInitialized) return;
+                        this.el._anInitialized = true;
 
                         const toInt = (s) => (s == null) ? 0 : (parseInt(String(s).replace(/[^\d-]/g, ''), 10) || 0);
 
                         if (window.AutoNumeric) {
-                            this.an = new AutoNumeric(el, {
+                            this.an = new AutoNumeric(this.el, {
                                 digitGroupSeparator: '.',
                                 decimalCharacter: ',',
                                 decimalPlaces: 0,
                                 unformatOnSubmit: true,
                                 modifyValueOnWheel: false,
+                                minimumValue: '0',
+                                // biar user bisa clear field tanpa warning
+                                overrideMinMaxLimits: 'invalid',
+                                allowDecimalPadding: false,
                             });
-
-                            this.$nextTick(() => {
-                                const initVal = Number(this.paid || 0);
-                                this.an.set(initVal);
-                            });
+                            this.$nextTick(() => this.an.set(Number(this.paid || 0)));
 
                             const push = () => {
                                 const raw = this.an.getNumber();
                                 const v = raw ? parseInt(raw, 10) : 0;
                                 if (this.paid !== v) this.paid = v;
                             };
-
-                            el.addEventListener('autoNumeric:rawValueModified', push);
-                            el.addEventListener('change', push);
+                            this.el.addEventListener('autoNumeric:rawValueModified', push);
+                            this.el.addEventListener('change', push);
                         } else {
                             const push = () => {
-                                const v = toInt(el.value);
+                                const v = toInt(this.el.value);
                                 if (this.paid !== v) this.paid = v;
                             };
-                            el.addEventListener('input', push);
-                            el.addEventListener('change', push);
-
+                            this.el.addEventListener('input', push);
+                            this.el.addEventListener('change', push);
                             this.$nextTick(() => {
                                 const n = Number(this.paid || 0);
-                                el.value = n ? n.toLocaleString('id-ID') : '';
+                                this.el.value = n ? n.toLocaleString('id-ID') : '';
                             });
                         }
 
@@ -750,11 +759,9 @@
                             const n = Number(v || 0);
                             if (this.an) {
                                 const current = this.an.getNumber();
-                                if (String(n) !== String(current)) {
-                                    this.an.set(isNaN(n) ? 0 : n);
-                                }
+                                if (String(n) !== String(current)) this.an.set(isNaN(n) ? 0 : n);
                             } else {
-                                el.value = n ? n.toLocaleString('id-ID') : '';
+                                this.el.value = n ? n.toLocaleString('id-ID') : '';
                             }
                         });
                     }

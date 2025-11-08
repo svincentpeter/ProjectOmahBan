@@ -95,7 +95,7 @@
                 text: @json(session('swal-success')),
                 timer: 3000,
                 showConfirmButton: false,
-                position: 'top-right'
+                position: 'top-end'
             });
         @endif
 
@@ -106,7 +106,7 @@
                 text: @json(session('swal-error')),
                 timer: 3000,
                 showConfirmButton: false,
-                position: 'top-right'
+                position: 'top-end'
             });
         @endif
 
@@ -117,7 +117,7 @@
                 text: @json(session('swal-warning')),
                 timer: 3000,
                 showConfirmButton: false,
-                position: 'top-right'
+                position: 'top-end'
             });
         @endif
 
@@ -128,7 +128,7 @@
                 text: @json(session('swal-info')),
                 timer: 3000,
                 showConfirmButton: false,
-                position: 'top-right'
+                position: 'top-end'
             });
         @endif
 
@@ -140,7 +140,7 @@
                     title: 'Validasi Gagal',
                     text: @json($error),
                     timer: 3000,
-                    position: 'top-right'
+                    position: 'top-end'
                 });
             @endforeach
         @endif
@@ -148,6 +148,196 @@
 
     {{-- 10. Page Scripts (dari blade pages, ini eksekusi terakhir) --}}
     @stack('page_scripts')
+
+    <script>
+        // ================================
+        // NOTIFICATION BADGE AUTO-UPDATE
+        // ================================
+        const UNREAD_URL = "{{ route('notifications.unread-count') }}";
+        const LATEST_URL = "{{ route('notifications.latest') }}";
+
+        function getSeverityIcon(severity) {
+            switch (String(severity || '').toLowerCase()) {
+                case 'critical':
+                    return '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+                case 'warning':
+                    return '<i class="bi bi-exclamation-circle-fill text-warning"></i>';
+                case 'info':
+                    return '<i class="bi bi-info-circle-fill text-info"></i>';
+                case 'success':
+                    return '<i class="bi bi-check-circle-fill text-success"></i>';
+                default:
+                    return '<i class="bi bi-bell"></i>';
+            }
+        }
+
+        async function updateNotificationBadge() {
+            try {
+                const res = await fetch(UNREAD_URL, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                const data = res.ok ? await res.json() : {
+                    count: 0
+                };
+                const badge = document.getElementById('notif-badge');
+                if (!badge) return;
+
+                const count = parseInt(data.count || 0, 10);
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : String(count);
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (err) {
+                // diamkan saja; jangan ganggu UI
+                console.warn('Unread badge error:', err);
+            }
+        }
+
+        function renderNotifItems(container, items) {
+            container.innerHTML = '';
+            items.forEach(n => {
+                const icon = getSeverityIcon(n.severity);
+                const title = n.title || 'Notifikasi';
+                const message = (n.message || '').length > 140 ? (n.message.substring(0, 140) + '…') : (n.message ||
+                    '');
+                const timeAgo = n.time_ago || '';
+
+                const el = document.createElement('div');
+                el.className = 'notif-item';
+                el.innerHTML = `
+      <a href="{{ url('notifications') }}/${n.id}" class="dropdown-item py-2">
+        <div class="d-flex align-items-start">
+          <div class="mr-2" style="line-height:1.1">${icon}</div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between">
+              <span class="small font-weight-bold">${title}</span>
+              <small class="text-muted ml-2">${timeAgo}</small>
+            </div>
+            <div class="text-muted small" style="white-space:normal">${message}</div>
+          </div>
+        </div>
+      </a>
+      <div class="dropdown-divider m-0"></div>
+    `;
+                container.appendChild(el);
+            });
+        }
+
+        async function loadLatestNotifications() {
+            const loading = document.getElementById('notif-loading');
+            const empty = document.getElementById('notif-empty');
+            const list = document.getElementById('notif-list');
+
+            if (!loading || !empty || !list) return;
+
+            loading.style.display = 'block';
+            empty.style.display = 'none';
+            list.innerHTML = '';
+
+            let hideSpinner = () => {
+                loading.style.display = 'none';
+            };
+
+            try {
+                const res = await fetch(LATEST_URL, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!res.ok) {
+                    throw new Error('Server mengembalikan status ' + res.status);
+                }
+
+                // Tahan kemungkinan respon bukan JSON
+                let data;
+                try {
+                    data = await res.json();
+                } catch {
+                    throw new Error('Respon bukan JSON yang valid');
+                }
+
+                const items = Array.isArray(data) ? data :
+                    Array.isArray(data?.notifications) ? data.notifications : [];
+
+                if (!items.length) {
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                renderNotifItems(list, items);
+            } catch (err) {
+                console.error('Load latest notifications error:', err);
+                empty.style.display = 'block';
+                // optional: beri tahu user sekali
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal memuat notifikasi',
+                    text: err.message || 'Terjadi kesalahan jaringan/server.',
+                    timer: 2500,
+                    showConfirmButton: false,
+                    position: 'top-end'
+                });
+            } finally {
+                hideSpinner();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Perbarui badge saat halaman dibuka + interval
+            updateNotificationBadge();
+            setInterval(updateNotificationBadge, 30000);
+
+            // Muat isi dropdown saat dropdown benar-benar dibuka
+            // (pakai event Bootstrap)
+            let _notifLastLoadedAt = 0;
+
+            const $wrap = $('#notifWrap');
+            if ($wrap.length) {
+                // load saat dropdown akan dibuka (lebih reliable)
+                $wrap.on('show.bs.dropdown', function() {
+                    const now = Date.now();
+                    // reload maksimal tiap 20 detik
+                    if (now - _notifLastLoadedAt > 20000) {
+                        loadLatestNotifications().then(() => {
+                            _notifLastLoadedAt = now;
+                        });
+                    }
+                });
+            }
+
+        });
+    </script>
+
+
+    {{-- 12. Sedikit styling agar lebih “keliatan” --}}
+    <style>
+        .notif-item {
+            transition: background .15s ease;
+        }
+
+        .notif-item:hover {
+            background: #f8f9fa;
+        }
+
+        .notif-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ced4da;
+        }
+    </style>
+
     @stack('scripts')
 </body>
 

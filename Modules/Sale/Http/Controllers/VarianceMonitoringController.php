@@ -4,7 +4,8 @@ namespace Modules\Sale\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Modules\Sale\Entities\PriceVarianceLog;
+use Modules\Sale\Entities\ManualInputLog;
+use App\Models\User;
 use DataTables;
 use Carbon\Carbon;
 
@@ -16,16 +17,19 @@ class VarianceMonitoringController extends Controller
     public function index()
     {
         // Top 10 deviasi terbesar
-        $top_deviations = PriceVarianceLog::where('variance_level', '!=', 'minor')->orderByDesc('variance_percent')->limit(10)->get();
+        $top_deviations = ManualInputLog::where('variance_level', '!=', 'minor')->with('cashier')->orderByDesc('variance_percent')->limit(10)->get();
 
         // Summary stats
         $summary = [
-            'critical_count' => PriceVarianceLog::where('variance_level', 'critical')->where('approval_status', 'pending')->count(),
-            'warning_count' => PriceVarianceLog::where('variance_level', 'warning')->where('approval_status', 'pending')->count(),
-            'total_variance_value' => PriceVarianceLog::where('approval_status', 'pending')->sum('variance_amount'),
+            'critical_count' => ManualInputLog::where('variance_level', 'critical')->where('approval_status', 'pending')->count(),
+            'warning_count' => ManualInputLog::where('variance_level', 'warning')->where('approval_status', 'pending')->count(),
+            'total_variance_value' => ManualInputLog::where('approval_status', 'pending')->sum('variance_amount'),
         ];
 
-        return view('sale::variance-monitoring.index', compact('top_deviations', 'summary'));
+        // ✅ GET USERS UNTUK FILTER (All active users yang bisa jadi kasir)
+        $cashiers = User::where('is_active', true)->orderBy('name')->get();
+
+        return view('sale::variance-monitoring.index', compact('top_deviations', 'summary', 'cashiers'));
     }
 
     /**
@@ -33,7 +37,7 @@ class VarianceMonitoringController extends Controller
      */
     public function dataTable(Request $request)
     {
-        $query = PriceVarianceLog::with(['cashier', 'sale'])->orderByDesc('created_at');
+        $query = ManualInputLog::with(['cashier', 'sale'])->orderByDesc('created_at');
 
         // Filter kasir
         if ($request->has('cashier_id') && $request->cashier_id) {
@@ -59,7 +63,27 @@ class VarianceMonitoringController extends Controller
             $query->where('approval_status', $request->approval_status);
         }
 
-        return DataTables::eloquent($query)->addColumn('kasir_name', fn($d) => $d->cashier->name ?? '-')->addColumn('service_name', fn($d) => $d->item_name)->addColumn('sale_date', fn($d) => $d->sale?->date?->format('d M Y') ?? '-')->addColumn('master_price_fmt', fn($d) => format_currency($d->master_price))->addColumn('input_price_fmt', fn($d) => format_currency($d->input_price))->addColumn('variance_display', fn($d) => $this->formatVariance($d))->addColumn('reason_display', fn($d) => $d->reason_provided ? "<small class='text-muted'>{$d->reason_provided}</small>" : '<span class="text-danger">-</span>')->addColumn('level_badge', fn($d) => $this->getLevelBadge($d->variance_level))->make(true);
+        return DataTables::eloquent($query)
+            ->addIndexColumn()
+            ->addColumn('kasir_name', fn($d) => $d->cashier->name ?? '-')
+            ->addColumn('service_name', fn($d) => $d->item_name)
+            ->addColumn('sale_date', fn($d) => $d->sale?->date?->format('d M Y') ?? '-')
+            ->addColumn('master_price_fmt', fn($d) => format_currency($d->master_price))
+            ->addColumn('input_price_fmt', fn($d) => format_currency($d->input_price))
+            ->addColumn('variance_display', fn($d) => $this->formatVariance($d))
+            ->addColumn('reason_display', fn($d) => $d->reason_provided ? "<small class='text-muted'>{$d->reason_provided}</small>" : '<span class="text-danger">-</span>')
+            ->addColumn('level_badge', fn($d) => $this->getLevelBadge($d->variance_level))
+            ->addColumn('approval_status_badge', fn($d) => $this->getApprovalBadge($d->approval_status))
+            ->addColumn(
+                'action',
+                fn($d) => '<a href="' .
+                    route('sale.variance-monitoring.show', $d->id) .
+                    '" class="btn btn-sm btn-info" title="Detail">
+                    <i class="bi bi-eye"></i>
+                </a>',
+            )
+            ->rawColumns(['variance_display', 'reason_display', 'level_badge', 'approval_status_badge', 'action'])
+            ->make(true);
     }
 
     /**
@@ -79,9 +103,21 @@ class VarianceMonitoringController extends Controller
     private function getLevelBadge($level)
     {
         return match ($level) {
-            'critical' => '<span class="badge bg-danger">CRITICAL</span>',
-            'warning' => '<span class="badge bg-warning text-dark">WARNING</span>',
-            default => '<span class="badge bg-info">Minor</span>',
+            'critical' => '<span class="badge bg-danger">🚨 CRITICAL</span>',
+            'warning' => '<span class="badge bg-warning text-dark">⚠️ WARNING</span>',
+            default => '<span class="badge bg-info">ℹ️ Minor</span>',
+        };
+    }
+
+    /**
+     * Get badge HTML untuk approval status
+     */
+    private function getApprovalBadge($status)
+    {
+        return match ($status) {
+            'approved' => '<span class="badge bg-success">✅ Approved</span>',
+            'rejected' => '<span class="badge bg-danger">❌ Rejected</span>',
+            default => '<span class="badge bg-warning text-dark">⏳ Pending</span>',
         };
     }
 
@@ -90,9 +126,9 @@ class VarianceMonitoringController extends Controller
      */
     public function export(Request $request)
     {
-        $logs = PriceVarianceLog::with('cashier', 'sale')->orderByDesc('created_at')->get();
+        $logs = ManualInputLog::with('cashier', 'sale')->orderByDesc('created_at')->get();
 
-        // Return JSON untuk data preparation
+        // Return JSON untuk data preparation (bisa diubah jadi Excel export nanti)
         return response()->json($logs);
     }
 
@@ -101,7 +137,7 @@ class VarianceMonitoringController extends Controller
      */
     public function show($id)
     {
-        $varianceLog = PriceVarianceLog::findOrFail($id);
+        $varianceLog = ManualInputLog::findOrFail($id);
         $varianceLog->load(['cashier', 'sale', 'saleDetail', 'approver']);
 
         return view('sale::variance-monitoring.detail', compact('varianceLog'));
@@ -112,14 +148,14 @@ class VarianceMonitoringController extends Controller
      */
     public function approve($id, Request $request)
     {
-        $varianceLog = PriceVarianceLog::findOrFail($id);
+        $varianceLog = ManualInputLog::findOrFail($id);
         $varianceLog->update([
             'approval_status' => 'approved',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
         ]);
 
-        return back()->with('success', 'Deviasi harga disetujui.');
+        return back()->with('success', 'Deviasi harga berhasil disetujui.');
     }
 
     /**
@@ -127,13 +163,13 @@ class VarianceMonitoringController extends Controller
      */
     public function reject($id, Request $request)
     {
-        $varianceLog = PriceVarianceLog::findOrFail($id);
+        $varianceLog = ManualInputLog::findOrFail($id);
         $varianceLog->update([
             'approval_status' => 'rejected',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
         ]);
 
-        return back()->with('success', 'Deviasi harga ditolak.', 'warning');
+        return back()->with('warning', 'Deviasi harga ditolak.');
     }
 }

@@ -8,6 +8,8 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Illuminate\Support\Facades\Event;
 use Modules\Product\Entities\Product;
 use Modules\Product\Observers\ProductObserver;
+use App\Events\ManualInputCreated;
+use App\Listeners\NotifyOwnerOfManualInput;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,10 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
+        ],
+        // ✅ Tambahkan ini
+        ManualInputCreated::class => [
+            NotifyOwnerOfManualInput::class,
         ],
     ];
 
