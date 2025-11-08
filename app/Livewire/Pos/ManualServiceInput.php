@@ -150,6 +150,9 @@ class ManualServiceInput extends Component
             'is_price_adjusted' => $this->service_price !== $service->standard_price,
             'price_adjustment_amount' => $this->service_price - $service->standard_price,
             'price_adjustment_note' => $this->reason,
+            'is_manual_input' => $this->servicePrice != $service->standard_price, // TRUE jika harga berubah
+            'manual_reason' => $this->reason, // Alasan sudah ada
+            'variance_level' => $this->showSupervisorPin ? 'critical' : ($this->showReasonField ? 'warning' : 'minor'),
         ];
 
         // Dispatch event ke Checkout component

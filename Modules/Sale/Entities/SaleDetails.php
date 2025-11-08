@@ -10,59 +10,63 @@ class SaleDetails extends Model
 {
     use HasFactory;
 
-    /**
-     * Jangan eager-load apapun by default agar hemat query.
-     * Pakai ->with('product') hanya saat dibutuhkan.
-     */
+    protected $table = 'sale_details';
+
+    /** Jangan eager-load default untuk hemat query */
     protected $with = [];
 
-    /**
-     * Kolom yang boleh mass-assign.
-     */
     protected $fillable = [
         'sale_id',
         'item_name',
-        'product_id', // untuk produk baru
-        'productable_id', // untuk produk second
-        'productable_type', // 'Modules\Product\Entities\ProductSecond'
+        'product_id',
+        'productable_id',
+        'productable_type', // contoh: 'Modules\Product\Entities\ProductSecond'
         'source_type', // new|second|manual
+        'manual_kind',
         'product_name',
         'product_code',
         'quantity',
         'price',
         'hpp',
+        'manual_hpp',
         'unit_price',
         'sub_total',
         'subtotal_profit',
         'product_discount_amount',
-        'product_discount_type', // fixed|percent (konsistenkan di UI)
+        'product_discount_type', // fixed|percent
         'product_tax_amount',
+        'original_price',
+        'is_price_adjusted',
+        'price_adjustment_amount',
+        'price_adjustment_note',
+        'adjusted_by',
+        'adjusted_at',
     ];
 
-    /**
-     * Casting numerik ke integer agar perhitungan konsisten.
-     */
     protected $casts = [
         'quantity' => 'integer',
         'price' => 'integer',
         'hpp' => 'integer',
+        'manual_hpp' => 'integer',
         'unit_price' => 'integer',
         'sub_total' => 'integer',
         'subtotal_profit' => 'integer',
         'product_discount_amount' => 'integer',
         'product_tax_amount' => 'integer',
+        'original_price' => 'integer',
+        'price_adjustment_amount' => 'integer',
+        'is_price_adjusted' => 'boolean',
+        'adjusted_at' => 'datetime',
     ];
 
-    /**
-     * Default attributes (fallback aman).
-     */
     protected $attributes = [
         'product_discount_type' => 'fixed',
     ];
 
-    /**
-     * Hook: set nilai default agar data rapi.
-     */
+    /* ============================
+     | Model Hooks
+     |============================ */
+
     protected static function booted()
     {
         static::creating(function (SaleDetails $d) {
@@ -72,79 +76,82 @@ class SaleDetails extends Model
 
             // sanitasi source_type
             $st = strtolower((string) $d->source_type);
-            if (!in_array($st, ['new', 'second', 'manual'], true)) {
-                $st = 'new';
-            }
-            $d->source_type = $st;
+            $d->source_type = in_array($st, ['new', 'second', 'manual'], true) ? $st : 'new';
 
             // default discount type
             $dt = strtolower((string) $d->product_discount_type);
-            if (!in_array($dt, ['fixed', 'percent'], true)) {
-                $dt = 'fixed';
+            $d->product_discount_type = in_array($dt, ['fixed', 'percent'], true) ? $dt : 'fixed';
+
+            // ===== Default & kalkulasi edit harga =====
+            $d->price = (int) ($d->price ?? 0);
+            $d->original_price = is_null($d->original_price) ? $d->price : (int) $d->original_price;
+
+            $d->is_price_adjusted = (int) ($d->price !== $d->original_price);
+            $d->price_adjustment_amount = (int) ($d->original_price - $d->price); // bisa negatif jika markup
+
+            if ($d->is_price_adjusted && empty($d->adjusted_by)) {
+                $d->adjusted_by = optional(auth()->user())->id;
+                $d->adjusted_at = now();
             }
-            $d->product_discount_type = $dt;
         });
 
         static::updating(function (SaleDetails $d) {
-            // Jaga konsistensi saat update
+            // hygiene
             $st = strtolower((string) $d->source_type);
-            if (!in_array($st, ['new', 'second', 'manual'], true)) {
-                $st = 'new';
-            }
-            $d->source_type = $st;
+            $d->source_type = in_array($st, ['new', 'second', 'manual'], true) ? $st : 'new';
 
             $dt = strtolower((string) $d->product_discount_type);
-            if (!in_array($dt, ['fixed', 'percent'], true)) {
-                $dt = 'fixed';
+            $d->product_discount_type = in_array($dt, ['fixed', 'percent'], true) ? $dt : 'fixed';
+
+            // recalculation
+            $d->price = (int) ($d->price ?? 0);
+            $d->original_price = is_null($d->original_price) ? $d->price : (int) $d->original_price;
+
+            $d->is_price_adjusted = (int) ($d->price !== $d->original_price);
+            $d->price_adjustment_amount = (int) ($d->original_price - $d->price);
+
+            if ($d->is_price_adjusted && empty($d->adjusted_by)) {
+                $d->adjusted_by = optional(auth()->user())->id;
+                $d->adjusted_at = now();
             }
-            $d->product_discount_type = $dt;
         });
     }
 
-    /**
-     * Relasi ke header penjualan.
-     */
-    public function sale()
+    /* ============================
+     | Relationships
+     |============================ */
+
+    public function sale(): BelongsTo
     {
-        return $this->belongsTo(\Modules\Sale\Entities\Sale::class);
+        return $this->belongsTo(Sale::class, 'sale_id');
     }
 
-    /**
-     * Relasi polymorphic ke barang second (atau entitas lain jika nanti ada).
-     */
     public function productable()
     {
         return $this->morphTo();
     }
 
-    /**
-     * Relasi ke produk baru (non-polymorphic).
-     */
-    public function product()
+    public function product(): BelongsTo
     {
         return $this->belongsTo(\Modules\Product\Entities\Product::class, 'product_id', 'id');
-    }
-
-    /**
-     * Helper kecil untuk mempermudah logika di tempat lain.
-     */
-    public function isNew(): bool
-    {
-        return $this->source_type === 'new';
-    }
-
-    public function isSecond(): bool
-    {
-        return $this->source_type === 'second';
-    }
-
-    public function isManual(): bool
-    {
-        return $this->source_type === 'manual';
     }
 
     public function adjuster(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'adjusted_by');
+    }
+
+    /* ============================
+     | Scopes bantu
+     |============================ */
+
+    public function scopeAdjusted($q)
+    {
+        return $q->where('is_price_adjusted', 1);
+    }
+
+    public function scopeManual($q)
+    {
+        return $q->where('source_type', 'manual');
     }
 }

@@ -6,8 +6,9 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
@@ -16,32 +17,16 @@ class Sale extends Model
 
     protected $table = 'sales';
 
-    // 👇 REVISI: Tambahkan customer_name dan kolom lain yang diperlukan
-    protected $fillable = [
-        'reference',
-        'date',
-        'customer_name', // 👈 TAMBAHAN: Agar customer_name bisa disimpan
-        'status', // Draft | Pending | Completed
-        'payment_status', // Unpaid | Partial | Paid
-        'total_amount',
-        'paid_amount',
-        'due_amount',
-        'payment_method', // info default di header
-        'bank_name', // opsional (di header)
-        'note',
-        'user_id',
-        'tax_percentage', // 👈 TAMBAHAN: Agar bisa simpan tax dari POS
-        'tax_amount', // 👈 TAMBAHAN
-        'discount_percentage', // 👈 TAMBAHAN: Agar bisa simpan discount dari POS
-        'discount_amount', // 👈 TAMBAHAN
-        'shipping_amount', // 👈 TAMBAHAN: Agar bisa simpan ongkir
-        'total_hpp', // 👈 TAMBAHAN: Harga Pokok Penjualan
-        'total_profit', // 👈 TAMBAHAN: Profit per transaksi
-        'snap_token',
-        'midtrans_transaction_id',
-        'midtrans_payment_type',
-        'paid_at',
-    ];
+    /** Status & Payment status (hindari typo) */
+    public const STATUS_DRAFT = 'Draft';
+    public const STATUS_PENDING = 'Pending';
+    public const STATUS_COMPLETED = 'Completed';
+
+    public const PAY_UNPAID = 'Unpaid';
+    public const PAY_PARTIAL = 'Partial';
+    public const PAY_PAID = 'Paid';
+
+    protected $fillable = ['reference', 'date', 'customer_name', 'status', 'payment_status', 'total_amount', 'paid_amount', 'due_amount', 'payment_method', 'bank_name', 'note', 'user_id', 'tax_percentage', 'tax_amount', 'discount_percentage', 'discount_amount', 'shipping_amount', 'total_hpp', 'total_profit', 'snap_token', 'midtrans_transaction_id', 'midtrans_payment_type', 'paid_at', 'has_price_adjustment', 'has_manual_input', 'manual_input_count', 'manual_input_summary', 'is_manual_input_notified', 'notified_at'];
 
     protected $casts = [
         'shipping_amount' => 'integer',
@@ -55,67 +40,60 @@ class Sale extends Model
         'total_hpp' => 'integer',
         'total_profit' => 'integer',
         'date' => 'datetime',
+        'has_price_adjustment' => 'boolean',
+        'has_manual_input' => 'boolean',
+        'manual_input_count' => 'integer',
+        'manual_input_summary' => 'array',
+        'is_manual_input_notified' => 'boolean',
+        'paid_at' => 'datetime',
+        'notified_at' => 'datetime',
     ];
 
-    /* =========================================================
-    | RELATIONSHIPS
-    |=========================================================*/
+    /* ============================
+     | Relationships
+     |============================ */
 
-    /**
-     * Detail item (relasi hasMany ke SaleDetails)
-     */
+    /** Detail item */
     public function saleDetails(): HasMany
     {
         return $this->hasMany(SaleDetails::class, 'sale_id');
     }
 
-    /**
-     * Alias untuk saleDetails (kompatibilitas kode lama)
-     */
+    /** Alias kompatibilitas */
     public function details(): HasMany
     {
-        return $this->hasMany(SaleDetails::class, 'sale_id');
+        return $this->saleDetails();
     }
 
-    /**
-     * Relasi ke pembayaran (payments)
-     */
+    /** Pembayaran (riwayat) */
     public function payments(): HasMany
     {
         return $this->hasMany(SalePayment::class, 'sale_id');
     }
 
-    /**
-     * Alias untuk payments (kompatibilitas kode lama)
-     */
+    /** Alias kompatibilitas */
     public function salePayments(): HasMany
     {
-        return $this->hasMany(\Modules\Sale\Entities\SalePayment::class, 'sale_id');
+        return $this->payments();
     }
 
-    /**
-     * Pembayaran terakhir
-     */
-    public function latestPayment()
+    /** Pembayaran terakhir berdasar kolom `date` pada sale_payments */
+    public function latestPayment(): HasOne
     {
-        return $this->hasOne(\Modules\Sale\Entities\SalePayment::class, 'sale_id')->latestOfMany('date');
+        return $this->hasOne(SalePayment::class, 'sale_id')->latestOfMany('date');
     }
 
-    /**
-     * Relasi ke user (kasir yang membuat transaksi)
-     */
+    /** Kasir / pembuat transaksi */
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
 
-    /* =========================================================
-    | QUERY SCOPES
-    |=========================================================*/
+    /* ============================
+     | Query Scopes
+     |============================ */
 
-    /**
-     * Filter sale berdasarkan rentang tanggal
-     */
+    /** Filter berdasarkan rentang tanggal (normalisasi hari) */
     public function scopeBetween(Builder $q, $from, $to): Builder
     {
         $from = Carbon::parse($from)->startOfDay();
@@ -123,30 +101,41 @@ class Sale extends Model
         return $q->whereBetween('date', [$from, $to]);
     }
 
-    /**
-     * Alias untuk scopeBetween
-     */
+    /** Alias */
     public function scopeDatedBetween(Builder $q, $start, $end): Builder
     {
         return $q->whereBetween('date', [$start, $end]);
     }
 
-    /**
-     * Filter hanya sale yang sudah completed
-     */
+    /** Hanya transaksi Completed */
     public function scopeCompleted(Builder $q): Builder
     {
-        return $q->where('status', 'Completed')->whereNull('deleted_at');
+        return $q->where('status', self::STATUS_COMPLETED)->whereNull('deleted_at');
     }
 
-    /* =========================================================
-    | HELPERS
-    |=========================================================*/
+    /** Hanya transaksi yang punya input manual */
+    public function scopeHasManualInput(Builder $q): Builder
+    {
+        return $q->where('has_manual_input', 1);
+    }
+
+    /** Hanya transaksi yang punya item edit harga */
+    public function scopeHasPriceAdjustment(Builder $q): Builder
+    {
+        return $q->where('has_price_adjustment', 1);
+    }
+
+    /* ============================
+     | Helpers
+     |============================ */
 
     /**
-     * Hitung ulang paid_amount, due_amount, payment_status,
-     * dan otomatis mapping workflow status (Draft/Pending/Completed),
-     * lalu save().
+     * Recalc paid_amount, due_amount, payment_status, status, & paid_at lalu save().
+     * - paid_amount = sum(sale_payments.amount)
+     * - due_amount  = max(total_amount - paid_amount, 0)
+     * - payment_status: Paid | Partial | Unpaid
+     * - status otomatis: Paid -> Completed; Partial -> Pending (jika Draft/Pending); Unpaid -> minimal Pending
+     * - paid_at di-set saat menjadi Paid, di-null-kan bila mundur dari Paid
      */
     public function recalcPaymentAndStatus(): self
     {
@@ -156,21 +145,32 @@ class Sale extends Model
 
         // Payment status
         if ($this->due_amount <= 0) {
-            $this->payment_status = 'Paid';
+            $newPayStatus = self::PAY_PAID;
         } elseif ($this->paid_amount > 0) {
-            $this->payment_status = 'Partial';
+            $newPayStatus = self::PAY_PARTIAL;
         } else {
-            $this->payment_status = 'Unpaid';
+            $newPayStatus = self::PAY_UNPAID;
         }
+        $oldPayStatus = $this->payment_status;
+        $this->payment_status = $newPayStatus;
 
         // Workflow status otomatis
-        if ($this->payment_status === 'Paid') {
-            $this->status = 'Completed';
-        } elseif ($this->payment_status === 'Partial' && in_array($this->status, ['Draft', 'Pending'])) {
-            $this->status = 'Pending';
-        } elseif ($this->payment_status === 'Unpaid' && $this->status === 'Completed') {
+        if ($this->payment_status === self::PAY_PAID) {
+            $this->status = self::STATUS_COMPLETED;
+        } elseif ($this->payment_status === self::PAY_PARTIAL && in_array($this->status, [self::STATUS_DRAFT, self::STATUS_PENDING], true)) {
+            $this->status = self::STATUS_PENDING;
+        } elseif ($this->payment_status === self::PAY_UNPAID && $this->status === self::STATUS_COMPLETED) {
             // downgrade jika refund penuh
-            $this->status = 'Pending';
+            $this->status = self::STATUS_PENDING;
+        }
+
+        // paid_at handling
+        if ($oldPayStatus !== self::PAY_PAID && $this->payment_status === self::PAY_PAID && empty($this->paid_at)) {
+            $this->paid_at = now();
+        }
+        if ($oldPayStatus === self::PAY_PAID && $this->payment_status !== self::PAY_PAID) {
+            // bila mundur dari Paid → kosongkan paid_at agar akurat
+            $this->paid_at = null;
         }
 
         $this->save();
@@ -178,7 +178,23 @@ class Sale extends Model
     }
 
     /**
-     * Ringkasan angka + format rupiah untuk frontend/AJAX.
+     * Hitung ulang flag header (price adjustment & manual input) + counter lalu save().
+     */
+    public function refreshHeaderFlags(): self
+    {
+        $hasAdj = $this->saleDetails()->where('is_price_adjusted', 1)->exists();
+        $miCount = (int) $this->saleDetails()->where('source_type', 'manual')->count();
+
+        $this->has_price_adjustment = $hasAdj ? 1 : 0;
+        $this->manual_input_count = $miCount;
+        $this->has_manual_input = $miCount > 0 ? 1 : 0;
+
+        $this->save();
+        return $this;
+    }
+
+    /**
+     * Ringkasan angka + format rupiah (untuk AJAX/UI ringan).
      */
     public function toMoneySummary(): array
     {
@@ -197,22 +213,24 @@ class Sale extends Model
         ];
     }
 
-    /* =========================================================
-    | BOOT METHOD (Auto-generate reference)
-    |=========================================================*/
+    /* ============================
+     | Boot
+     |============================ */
 
-    /**
-     * Method ini akan berjalan otomatis saat ada data baru dibuat.
-     * Kita akan membuat nomor referensi di sini.
-     */
+    /** Auto-generate reference yang aman dari kosong (fallback bila helper tak ada). */
     protected static function boot()
     {
         parent::boot();
 
-        static::creating(function ($model) {
+        static::creating(function (self $model) {
             if (empty($model->reference)) {
-                $number = Sale::max('id') + 1;
-                $model->reference = make_reference_id('OB2', $number);
+                $next = (int) (self::max('id') ?? 0) + 1;
+                if (function_exists('make_reference_id')) {
+                    $model->reference = make_reference_id('OB2', $next);
+                } else {
+                    // fallback sederhana tapi unik
+                    $model->reference = 'OB2-' . now()->format('Ymd') . '-' . str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+                }
             }
         });
     }

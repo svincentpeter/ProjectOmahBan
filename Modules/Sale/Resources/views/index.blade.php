@@ -28,17 +28,13 @@
                 </div>
 
                 {{-- Quick Filters Section --}}
-                <div class="card-body py-4" style="background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);">
+                <div class="card-body py-4 border-bottom"
+                    style="background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);">
                     <div class="filter-container">
-                        {{-- Header with Reset Button --}}
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="d-flex align-items-center">
-                                <i class="cil-bolt text-primary mr-2" style="font-size: 1.25rem;"></i>
-                                <h6 class="mb-0 font-weight-bold text-dark">Filter Cepat</h6>
-                            </div>
-                            <button id="btn_filter_reset" class="btn btn-outline-secondary btn-sm">
-                                <i class="cil-reload mr-1"></i> Reset
-                            </button>
+                        {{-- Header --}}
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="cil-bolt text-primary mr-2" style="font-size: 1.25rem;"></i>
+                            <h6 class="mb-0 font-weight-bold text-dark">Filter Cepat</h6>
                         </div>
 
                         {{-- Quick Filter Pills --}}
@@ -106,7 +102,7 @@
                                     <input type="date" id="filter_sampai" class="form-control form-control-lg">
                                 </div>
 
-                                {{-- ✅ FILTER BARU: Hanya dengan Diskon --}}
+                                {{-- FILTER: Hanya dengan Diskon/Perubahan Harga --}}
                                 <div class="col-lg-3 col-md-6 mb-3">
                                     <label class="form-label small font-weight-semibold text-dark mb-2">
                                         <i class="bi bi-tag-fill text-warning mr-1"></i> Filter Diskon
@@ -125,14 +121,37 @@
                                     </small>
                                 </div>
 
-                                {{-- Apply Button --}}
+                                {{-- FILTER BARU: Input Manual --}}
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <label class="form-label small font-weight-semibold text-dark mb-2">
+                                        <i class="bi bi-pencil-square text-info mr-1"></i> Filter Input Manual
+                                    </label>
+                                    <div class="custom-control custom-checkbox mt-2">
+                                        <input type="checkbox" class="custom-control-input" id="filter_has_manual"
+                                            value="1">
+                                        <label class="custom-control-label font-weight-semibold" for="filter_has_manual">
+                                            <i class="bi bi-pencil-square text-info mr-1"></i>
+                                            Hanya Transaksi dengan Input Manual
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted mt-1">
+                                        Tampilkan hanya transaksi yang memiliki catatan input manual
+                                    </small>
+                                </div>
+
+                                {{-- Apply + Reset Button (selaras dengan halaman Produk) --}}
                                 <div class="col-lg-3 col-md-6 mb-3">
                                     <label class="form-label small font-weight-semibold text-dark mb-2 d-block">
                                         &nbsp;
                                     </label>
-                                    <button id="btn_filter_apply" class="btn btn-primary btn-lg w-100">
-                                        <i class="cil-filter mr-2"></i> Terapkan Filter
-                                    </button>
+                                    <div class="btn-group w-100" role="group">
+                                        <button id="btn_filter_apply" class="btn btn-primary btn-lg">
+                                            <i class="cil-filter mr-2"></i> Terapkan Filter
+                                        </button>
+                                        <button id="btn_filter_reset" class="btn btn-outline-secondary btn-lg">
+                                            <i class="cil-reload mr-1"></i> Reset
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -140,9 +159,48 @@
                             <div class="alert alert-info mb-0" role="alert">
                                 <i class="cil-info-circle mr-2"></i>
                                 <small>
-                                    <strong>Catatan:</strong> Jika mengisi rentang tanggal (Dari-Sampai),
+                                    <strong>Catatan:</strong> Jika mengisi rentang tanggal (Dari–Sampai),
                                     maka pilihan preset dan bulan akan diabaikan secara otomatis.
                                 </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ====== SUMMARY CARDS (pakai stats-card biar sama dengan Produk) ====== --}}
+                <div class="row mb-4 px-3" id="sales-summary">
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <div class="stats-card stats-card-purple">
+                            <div class="stats-icon">
+                                <i class="cil-cash"></i>
+                            </div>
+                            <div class="stats-content">
+                                <div class="stats-label">Total Penjualan</div>
+                                <div id="sum-total" class="stats-value">Rp 0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <div class="stats-card stats-card-success">
+                            <div class="stats-icon">
+                                <i class="cil-chart-line"></i>
+                            </div>
+                            <div class="stats-content">
+                                <div class="stats-label">Total Profit</div>
+                                <div id="sum-profit" class="stats-value">Rp 0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <div class="stats-card stats-card-info">
+                            <div class="stats-icon">
+                                <i class="cil-cart"></i>
+                            </div>
+                            <div class="stats-content">
+                                <div class="stats-label">Total Transaksi</div>
+                                <div id="sum-count" class="stats-value">0</div>
                             </div>
                         </div>
                     </div>
@@ -180,12 +238,98 @@
             }
         }
 
-        /* ========== Card Styling ========== */
+        /* ========== Card Shadow (selaras) ========== */
         .shadow-sm {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
         }
 
-        /* ========== Quick Filter Pills ========== */
+        /* ========== Statistics Cards (copy style Produk) ========== */
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            height: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .stats-card-purple {
+            border-left-color: #4834DF;
+        }
+
+        .stats-card-success {
+            border-left-color: #2eb85c;
+        }
+
+        .stats-card-warning {
+            border-left-color: #f9b115;
+        }
+
+        .stats-card-info {
+            border-left-color: #39f;
+        }
+
+        .stats-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .stats-card-purple .stats-icon {
+            background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
+            color: white;
+        }
+
+        .stats-card-success .stats-icon {
+            background: linear-gradient(135deg, #2eb85c 0%, #51d88a 100%);
+            color: white;
+        }
+
+        .stats-card-warning .stats-icon {
+            background: linear-gradient(135deg, #f9b115 0%, #ffc451 100%);
+            color: white;
+        }
+
+        .stats-card-info .stats-icon {
+            background: linear-gradient(135deg, #39f 0%, #5dadec 100%);
+            color: white;
+        }
+
+        .stats-content {
+            flex: 1;
+        }
+
+        .stats-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #6c757d;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stats-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #2d3748;
+            line-height: 1;
+        }
+
+        /* ========== Quick Filter Pills (copy dari Produk) ========== */
         .quick-filters {
             display: flex;
             flex-wrap: wrap;
@@ -227,11 +371,7 @@
             box-shadow: 0 4px 15px rgba(72, 52, 223, 0.3);
         }
 
-        .filter-pill.active:hover {
-            background: linear-gradient(135deg, #3d2bb8 0%, #5a5fc9 100%);
-            transform: translateY(-2px);
-        }
-
+        /* tambahan khusus tombol custom */
         .filter-pill-custom:hover {
             border-color: #a0a0a0;
             background: #f5f5f5;
@@ -241,14 +381,14 @@
         .filter-pill-custom.active {
             background: #4834DF !important;
             border-color: #4834DF !important;
-            color: white !important;
+            color: #fff !important;
         }
 
         /* ========== Advanced Filter ========== */
         .advanced-filter {
             margin-top: 20px;
             padding: 20px;
-            background: white;
+            background: #fff;
             border: 2px dashed #e0e0e0;
             border-radius: 12px;
             animation: slideDown 0.3s ease-out;
@@ -281,7 +421,7 @@
             color: #115293;
         }
 
-        /* ✅ STYLING CHECKBOX FILTER DISKON */
+        /* Checkbox styling */
         .custom-control-label {
             cursor: pointer;
             user-select: none;
@@ -297,7 +437,7 @@
             padding: 1rem;
         }
 
-        /* ========== DataTable Styling ========== */
+        /* ========== DataTable Styling (selaras dengan Produk) ========== */
         #sales-table thead th {
             font-size: 0.8125rem;
             text-transform: uppercase;
@@ -323,7 +463,7 @@
             background-color: rgba(72, 52, 223, 0.03) !important;
         }
 
-        /* Child row styling */
+        /* highlight row + child detail */
         #sales-table tbody tr.shown {
             background-color: rgba(72, 52, 223, 0.05) !important;
         }
@@ -333,7 +473,7 @@
             border-left: 4px solid #4834DF;
         }
 
-        /* ========== DataTable Controls ========== */
+        /* DataTable Controls */
         .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter,
         .dataTables_wrapper .dataTables_info,
@@ -355,7 +495,7 @@
             margin-left: 8px;
         }
 
-        /* ========== Empty State ========== */
+        /* Empty State */
         .dataTables_empty {
             padding: 40px 20px !important;
             text-align: center;
@@ -375,13 +515,15 @@
         }
 
         @media (max-width: 768px) {
+            .stats-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
             .datatable-wrapper {
                 padding: 0.5rem;
             }
         }
-
-        
-
     </style>
 @endpush
 
@@ -389,73 +531,97 @@
     {{ $dataTable->scripts() }}
 
     <script>
+        // ===== Config & Helpers =====
+        const SUMMARY_URL = "{{ route('sales.summary') }}";
+
+        function rupiah(n) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR'
+            }).format(Number(n || 0));
+        }
+
         function collectFilters() {
             return {
                 preset: document.getElementById('filter_preset')?.value || '',
                 bulan: document.getElementById('filter_bulan')?.value || '',
                 dari: document.getElementById('filter_dari')?.value || '',
                 sampai: document.getElementById('filter_sampai')?.value || '',
-                has_adjustment: document.getElementById('filter_has_adjustment')?.checked ? '1' : ''
+                has_adjustment: document.getElementById('filter_has_adjustment')?.checked ? 1 : '',
+                has_manual: document.getElementById('filter_has_manual')?.checked ? 1 : ''
             };
         }
 
-        $('#sales-table').on('preXhr.dt', function(e, settings, data) {
-            console.log('DataTable AJAX Request Data:', data);
-        });
-'
         function clearAll() {
             document.getElementById('filter_preset').value = '';
             ['filter_bulan', 'filter_dari', 'filter_sampai'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
-            // ✅ RESET CHECKBOX DISKON
-            document.getElementById('filter_has_adjustment').checked = false;
-
+            const adj = document.getElementById('filter_has_adjustment');
+            if (adj) adj.checked = false;
+            const man = document.getElementById('filter_has_manual');
+            if (man) man.checked = false;
             document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
         }
 
+        function updateSummary(params) {
+            $.get(SUMMARY_URL, {
+                    filter: params
+                })
+                .then(function(d) {
+                    $('#sum-total').text(rupiah(d.total_penjualan || 0));
+                    $('#sum-profit').text(rupiah(d.total_profit || 0));
+                    $('#sum-count').text(d.total_transaksi || 0);
+                })
+                .fail(function(xhr) {
+                    console.error('Gagal ambil summary', xhr.status, xhr.responseText);
+                });
+        }
+
+        // ===== DataTable wiring =====
         document.addEventListener('DOMContentLoaded', function() {
             $(document).on('init.dt', function(e, settings) {
                 if (settings.sTableId !== 'sales-table') return;
 
                 const table = $('#sales-table').DataTable();
 
-                // Inject filter data into AJAX requests
+                // inject filter ke ajax
                 $('#sales-table').on('preXhr.dt', function(evt, set, data) {
-                    Object.assign(data, collectFilters());
+                    data.filter = collectFilters();
                 });
 
-                // Quick filter pills handler
+                // Refresh summary setiap draw
+                table.on('draw', function() {
+                    updateSummary(collectFilters());
+                });
+
+                // panggil sekali untuk draw pertama
+                updateSummary(collectFilters());
+
+                // Quick filter pills (preset)
                 document.querySelectorAll('.filter-pill[data-preset]').forEach(pill => {
                     pill.addEventListener('click', function() {
-                        // Clear all active states
                         document.querySelectorAll('.filter-pill').forEach(p => p.classList
                             .remove('active'));
-
-                        // Set this pill as active
                         this.classList.add('active');
 
-                        // Set preset value
                         document.getElementById('filter_preset').value = this.dataset
-                            .preset;
+                        .preset;
+                        ['filter_bulan', 'filter_dari', 'filter_sampai'].forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) el.value = '';
+                        });
 
-                        // Clear manual filters
-                        document.getElementById('filter_bulan').value = '';
-                        document.getElementById('filter_dari').value = '';
-                        document.getElementById('filter_sampai').value = '';
-
-                        // Reload table
                         table.ajax.reload();
                     });
                 });
 
-                // Manual filter change handler
+                // Manual filter change (hapus preset saat ubah manual)
                 ['filter_bulan', 'filter_dari', 'filter_sampai'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
                         el.addEventListener('change', () => {
-                            // Clear preset when manual filter changes
                             document.getElementById('filter_preset').value = '';
                             document.querySelectorAll('.filter-pill').forEach(p => p
                                 .classList.remove('active'));
@@ -463,40 +629,38 @@
                     }
                 });
 
-                // ✅ HANDLER CHECKBOX DISKON - Auto reload saat diubah
-                document.getElementById('filter_has_adjustment').addEventListener('change', function() {
-                    // Optional: langsung reload tanpa klik "Terapkan Filter"
-                    // Uncomment baris ini jika ingin auto-reload:
+                // Checkbox (kalau mau auto reload, uncomment)
+                document.getElementById('filter_has_adjustment')?.addEventListener('change', () => {
+                    // table.ajax.reload();
+                });
+                document.getElementById('filter_has_manual')?.addEventListener('change', () => {
                     // table.ajax.reload();
                 });
 
-                // Apply button
-                document.getElementById('btn_filter_apply').addEventListener('click', () => {
+                // Apply
+                document.getElementById('btn_filter_apply')?.addEventListener('click', () => {
                     table.ajax.reload();
                 });
 
-                // Reset button
-                document.getElementById('btn_filter_reset').addEventListener('click', () => {
+                // Reset
+                document.getElementById('btn_filter_reset')?.addEventListener('click', () => {
                     clearAll();
-                    // Hide advanced filter
                     const advFilter = document.getElementById('advancedFilter');
-                    if (advFilter.style.display === 'block') {
+                    if (advFilter && advFilter.style.display === 'block') {
                         advFilter.style.display = 'none';
-                        document.getElementById('customFilterToggle').classList.remove('active');
+                        document.getElementById('customFilterToggle')?.classList.remove('active');
                     }
                     table.ajax.reload();
                 });
 
-                // Custom filter toggle
-                document.getElementById('customFilterToggle').addEventListener('click', function() {
+                // Toggle Advanced
+                document.getElementById('customFilterToggle')?.addEventListener('click', function() {
                     const advancedFilter = document.getElementById('advancedFilter');
-                    if (advancedFilter.style.display === 'none' || !advancedFilter.style.display) {
-                        advancedFilter.style.display = 'block';
-                        this.classList.add('active');
-                    } else {
-                        advancedFilter.style.display = 'none';
-                        this.classList.remove('active');
-                    }
+                    if (!advancedFilter) return;
+                    const show = (advancedFilter.style.display === 'none' || !advancedFilter.style
+                        .display);
+                    advancedFilter.style.display = show ? 'block' : 'none';
+                    this.classList.toggle('active', show);
                 });
 
                 // Child row detail toggle
@@ -506,7 +670,6 @@
                     const row = table.row(tr);
                     const url = $btn.data('url');
 
-                    // If row already shown, hide it
                     if (row.child.isShown()) {
                         row.child.hide();
                         tr.removeClass('shown');
@@ -514,17 +677,14 @@
                         return;
                     }
 
-                    // Show loading state
-                    $btn.prop('disabled', true).html(
-                        '<span class="spinner-border spinner-border-sm"></span>');
+                    $btn.prop('disabled', true)
+                        .html('<span class="spinner-border spinner-border-sm"></span>');
 
-                    // Fetch detail data
                     $.get(url, function(html) {
                         row.child(html).show();
                         tr.addClass('shown');
                         $btn.html('<i class="bi bi-chevron-up"></i>');
                     }).fail(function(jqXHR, textStatus, errorThrown) {
-                        // Show error with SweetAlert
                         Swal.fire({
                             icon: 'error',
                             title: 'Gagal Memuat Detail',

@@ -1,6 +1,50 @@
 {{-- Sidebar/Menu Utama --}}
 
 {{-- =======================
+     OPERASIONAL
+======================= --}}
+<li class="c-sidebar-nav-title">Operasional</li>
+
+@php
+    try {
+        $uid = auth()->id();
+        $base = \App\Models\OwnerNotification::where(fn($q) => $q->where('user_id', $uid)->orWhereNull('user_id'));
+
+        $unread = (clone $base)->where('is_read', false)->count();
+        $critical = (clone $base)->where('is_read', false)->where('severity', 'critical')->count();
+
+        $variant = $critical > 0 ? 'critical' : ($unread > 0 ? 'info' : 'none');
+        $dispUnread = $unread >= 1000 ? '999+' : ($unread >= 100 ? '99+' : (string) $unread);
+        $dispCritical = $critical >= 1000 ? '999+' : ($critical >= 100 ? '99+' : (string) $critical);
+    } catch (\Throwable $e) {
+        $unread = $critical = 0;
+        $variant = 'none';
+        $dispUnread = $dispCritical = '0';
+    }
+@endphp
+
+<li class="c-sidebar-nav-item">
+    <a class="c-sidebar-nav-link notif-{{ $variant }} {{ request()->routeIs('notifications.*') ? 'c-active' : '' }}"
+        href="{{ route('notifications.index') }}">
+        <i class="c-sidebar-nav-icon bi {{ $variant === 'critical' ? 'bi-exclamation-triangle-fill' : 'bi-bell' }}"
+            style="line-height:1;"></i>
+        Notifikasi
+
+        {{-- badge merah untuk critical --}}
+        <span class="badge ml-2 badge-danger" style="display: {{ $critical > 0 ? 'inline-flex' : 'none' }};">
+            {{ $dispCritical }}
+        </span>
+        {{-- badge biru untuk total unread --}}
+        <span class="badge ml-1 badge-info" style="display: {{ $unread > 0 ? 'inline-flex' : 'none' }};">
+            {{ $dispUnread }}
+        </span>
+
+        <span class="notif-pulse {{ $variant }}"
+            style="display: {{ $variant === 'none' ? 'none' : 'inline-block' }};"></span>
+    </a>
+</li>
+
+{{-- =======================
      DASHBOARD
 ======================= --}}
 <li class="c-sidebar-nav-item {{ request()->routeIs('home') ? 'c-active' : '' }}">
@@ -8,6 +52,7 @@
         <i class="c-sidebar-nav-icon bi bi-house" style="line-height: 1;"></i> Beranda
     </a>
 </li>
+
 
 {{-- =======================
      PRODUK
@@ -384,3 +429,131 @@
         </ul>
     </li>
 @endcanany
+@push('styles')
+    <style>
+        /* warna untuk dark sidebar */
+        .c-sidebar .c-sidebar-nav-link.notif-critical {
+            background: linear-gradient(90deg, rgba(239, 68, 68, .20), rgba(239, 68, 68, .04));
+            border-left: 4px solid #ef4444;
+            color: #fee2e2;
+            font-weight: 600;
+        }
+
+        .c-sidebar .c-sidebar-nav-link.notif-info {
+            background: linear-gradient(90deg, rgba(59, 130, 246, .18), rgba(59, 130, 246, .04));
+            border-left: 4px solid #3b82f6;
+            color: #dbeafe;
+            font-weight: 600;
+        }
+
+        .c-sidebar .c-sidebar-nav-link.notif-none {
+            opacity: .9;
+        }
+
+        /* perkaya ikon & badge */
+        .c-sidebar .c-sidebar-nav-link.notif-critical .bi {
+            color: #fca5a5;
+        }
+
+        .c-sidebar .c-sidebar-nav-link.notif-info .bi {
+            color: #93c5fd;
+        }
+
+        .badge {
+            border-radius: 9999px;
+            font-weight: 700;
+        }
+
+        .badge-danger {
+            background-color: #ef4444;
+        }
+
+        .badge-info {
+            background-color: #3b82f6;
+        }
+
+        /* dot berdenyut */
+        .notif-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 9999px;
+            margin-left: 8px;
+            position: relative;
+        }
+
+        .notif-pulse.critical {
+            background: #ef4444;
+        }
+
+        .notif-pulse.info {
+            background: #3b82f6;
+        }
+
+        .notif-pulse::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            animation: notif-ping 1.2s ease-out infinite;
+            background: currentColor;
+            opacity: .35;
+        }
+
+        @keyframes notif-ping {
+            0% {
+                transform: scale(.9);
+                opacity: .6
+            }
+
+            80%,
+            100% {
+                transform: scale(2.2);
+                opacity: 0
+            }
+        }
+    </style>
+@endpush
+@push('scripts')
+    <script>
+        (function refreshNotif() {
+            fetch('{{ route('notifications.summary') }}')
+                .then(r => r.json())
+                .then(({
+                    unread = 0,
+                    critical = 0
+                }) => {
+                    const link = document.querySelector(
+                        'a.c-sidebar-nav-link[href="{{ route('notifications.index') }}"]');
+                    if (!link) return;
+
+                    const bCrit = link.querySelector('.badge-danger');
+                    const bUnread = link.querySelector('.badge-info');
+                    const pulse = link.querySelector('.notif-pulse');
+
+                    const show = (el, n) => {
+                        if (!el) return;
+                        el.style.display = n > 0 ? 'inline-flex' : 'none';
+                        el.textContent = n >= 1000 ? '999+' : (n >= 100 ? '99+' : String(n));
+                    }
+
+                    show(bCrit, critical);
+                    show(bUnread, unread);
+
+                    link.classList.remove('notif-critical', 'notif-info', 'notif-none');
+                    pulse && (pulse.style.display = (critical > 0 || unread > 0) ? 'inline-block' : 'none');
+
+                    if (critical > 0) {
+                        link.classList.add('notif-critical');
+                        pulse && pulse.classList.add('critical');
+                    } else if (unread > 0) {
+                        link.classList.add('notif-info');
+                        pulse && pulse.classList.add('info');
+                    } else {
+                        link.classList.add('notif-none');
+                    }
+                })
+                .catch(() => {})
+                .finally(() => setTimeout(refreshNotif, 30000));
+        })();
+    </script>
+@endpush

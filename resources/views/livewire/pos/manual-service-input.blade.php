@@ -1,127 +1,215 @@
-{{-- Modal untuk input jasa manual dengan validasi deviasi harga --}}
-<div class="modal fade" id="manualServiceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">💼 Input Jasa Manual</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+{{-- Modal: Input Jasa Manual (seragam gaya "Jasa") --}}
+<div class="modal fade" id="manualServiceModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow-sm">
+
+            {{-- Header --}}
+            <div class="modal-header bg-white border-bottom">
+                <h5 class="modal-title mb-0">
+                    <i class="bi bi-briefcase-fill text-primary mr-2"></i> Input Jasa Manual
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
+            {{-- Body --}}
             <div class="modal-body">
-                <form wire:submit="addService">
-                    {{-- 1. PILIH JASA DARI MASTER DATA --}}
-                    <div class="mb-3">
+                <form wire:submit.prevent="addService">
+
+                    {{-- 1) Pilih jasa dari master --}}
+                    <div class="form-group mb-3">
                         <label class="form-label">Jasa <span class="text-danger">*</span></label>
-                        <select class="form-select" wire:model="selected_service"
-                            wire:change="updatedSelectedService()">
+                        <select class="form-select" wire:model="selected_service" wire:change="updatedSelectedService">
                             <option value="">-- Pilih Jasa Dari Master --</option>
                             @foreach ($services as $id => $name)
                                 <option value="{{ $id }}">{{ $name }}</option>
                             @endforeach
                         </select>
                         @error('selected_service')
-                            <span class="text-danger small">{{ $message }}</span>
+                            <small class="text-danger d-block">{{ $message }}</small>
                         @enderror
                     </div>
 
-                    {{-- 2. INFO HARGA STANDAR --}}
+                    {{-- 2) Info harga standar (hindari query di view) --}}
                     @if ($selected_service)
-                        @php
-                            $svc = \Modules\Product\Entities\ServiceMaster::find($selected_service);
-                        @endphp
-                        <div class="mb-3 bg-light p-3 rounded">
-                            <small class="text-muted d-block mb-1">📌 Harga Standar Master Data</small>
-                            <h5 class="text-primary mb-0">{{ format_currency($svc->standard_price ?? 0) }}</h5>
+                        <div class="pos-callout pos-callout--info mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-info-circle mr-2"></i>
+                                <div>
+                                    <small class="text-muted d-block">Harga Standar (Master Data)</small>
+                                    <strong class="text-primary h5 mb-0 d-block">
+                                        {{ format_currency($selected_service_price ?? 0) }}
+                                    </strong>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
-                    {{-- 3. INPUT HARGA JUAL --}}
-                    <div class="mb-3">
-                        <label class="form-label">Harga Jual <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" wire:model.debounce="service_price" min="0"
-                            step="1" placeholder="Masukkan harga jual">
-                        @error('service_price')
-                            <span class="text-danger small">{{ $message }}</span>
-                        @enderror
+                    <div class="row">
+                        {{-- 3) Harga jual --}}
+                        <div class="col-md-6 mb-3" x-data="posMoneyBox('service_price')" x-init="init()">
+                            <label class="form-label">Harga Jual <span class="text-danger">*</span></label>
+                            <div wire:ignore>
+                                <input type="text" class="form-control @error('service_price') is-invalid @enderror"
+                                    inputmode="numeric" autocomplete="off" placeholder="0">
+                            </div>
+                            @error('service_price')
+                                <small class="text-danger d-block">{{ $message }}</small>
+                            @enderror
+                            <small class="text-muted">Gunakan angka tanpa desimal.</small>
+                        </div>
+
+                        {{-- 4) Jumlah --}}
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Jumlah</label>
+                            <input type="number" class="form-control" wire:model="service_qty" min="1"
+                                step="1" value="1">
+                        </div>
                     </div>
 
-                    {{-- 4. JUMLAH JASA --}}
-                    <div class="mb-3">
-                        <label class="form-label">Jumlah</label>
-                        <input type="number" class="form-control" wire:model="service_qty" min="1"
-                            step="1" value="1">
-                    </div>
-
-                    {{-- 5. CONDITIONAL: FIELD ALASAN (jika deviasi 30-50%) --}}
+                    {{-- 5) Alasan (deviasi 30–50%) --}}
                     @if ($show_reason_field)
-                        <div
-                            class="mb-3 border-start border-4 border-warning ps-3 bg-warning bg-opacity-10 p-3 rounded">
-                            <label class="form-label fw-bold text-warning">
-                                ⚠️ Alasan Perubahan Harga
-                            </label>
-                            <small class="d-block text-muted mb-2">
-                                Harga berbeda dari standar. Silakan pilih atau jelaskan alasannya.
-                            </small>
+                        <div class="pos-callout pos-callout--warning mb-3">
+                            <label class="form-label fw-bold text-warning mb-1">⚠️ Alasan Perubahan Harga</label>
+                            <small class="text-muted d-block mb-2">Harga berbeda dari standar. Pilih atau jelaskan
+                                alasannya.</small>
 
-                            <select class="form-select mb-2" wire:model="reason">
+                            <select class="form-select mb-2" wire:model="reason_key">
                                 <option value="">-- Pilih Alasan --</option>
                                 @foreach ($reason_presets as $key => $label)
                                     <option value="{{ $key }}">{{ $label }}</option>
                                 @endforeach
-                                <option value="other">Lainnya (input custom)</option>
+                                <option value="other">Lainnya (input manual)</option>
                             </select>
 
-                            @if ($reason === 'other')
-                                <textarea class="form-control" placeholder="Jelaskan alasan perubahan harga..." rows="2" wire:model="reason"></textarea>
+                            @if ($reason_key === 'other')
+                                <textarea class="form-control" rows="2" placeholder="Jelaskan alasan perubahan harga..." wire:model="reason_note"></textarea>
                             @endif
 
-                            @error('reason')
-                                <span class="text-danger small">{{ $message }}</span>
+                            @error('reason_key')
+                                <small class="text-danger d-block">{{ $message }}</small>
+                            @enderror
+                            @error('reason_note')
+                                <small class="text-danger d-block">{{ $message }}</small>
                             @enderror
                         </div>
                     @endif
 
-                    {{-- 6. CONDITIONAL: FIELD PIN SUPERVISOR (jika deviasi >50%) --}}
+                    {{-- 6) PIN Supervisor (deviasi > 50%) --}}
                     @if ($show_supervisor_pin)
-                        <div class="mb-3 border-start border-4 border-danger ps-3 bg-danger bg-opacity-10 p-3 rounded">
-                            <label class="form-label fw-bold text-danger">
-                                🔐 PIN Supervisor (Deviasi >50%)
-                            </label>
-                            <small class="d-block text-muted mb-2">
-                                Deviasi harga melebihi 50%. Approval supervisor diperlukan.
-                            </small>
-
+                        <div class="pos-callout pos-callout--danger mb-3">
+                            <label class="form-label fw-bold text-danger mb-1">🔐 PIN Supervisor (Deviasi &gt;
+                                50%)</label>
+                            <small class="text-muted d-block mb-2">Approval supervisor diperlukan.</small>
                             <input type="password" class="form-control" wire:model="supervisor_pin"
                                 placeholder="Masukkan PIN supervisor">
-
                             @error('supervisor_pin')
-                                <span class="text-danger small">{{ $message }}</span>
+                                <small class="text-danger d-block">{{ $message }}</small>
                             @enderror
                         </div>
                     @endif
 
-                    {{-- 7. TOMBOL SUBMIT --}}
+                    {{-- 7) Submit --}}
                     <button type="submit" class="btn btn-primary w-100">
                         ✅ Tambah ke Keranjang
                     </button>
                 </form>
             </div>
+
         </div>
     </div>
 </div>
 
-{{-- Script untuk trigger modal dari menu --}}
-@push('scripts')
+{{-- Trigger dari luar (checkout page) --}}
+@push('page_scripts')
     <script>
-        // Bisa dipanggil dari tombol di checkout page
         document.addEventListener('openManualServiceModal', function() {
-            const modal = new bootstrap.Modal(document.getElementById('manualServiceModal'));
-            modal.show();
+            const el = document.getElementById('manualServiceModal');
+            (new bootstrap.Modal(el)).show();
         });
-
         document.addEventListener('closeManualServiceModal', function() {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('manualServiceModal'));
-            if (modal) modal.hide();
+            const el = document.getElementById('manualServiceModal');
+            const m = bootstrap.Modal.getInstance(el);
+            if (m) m.hide();
         });
     </script>
 @endpush
+
+@push('page_styles')
+    <style>
+        /* Callout seragam */
+        .pos-callout {
+            border-radius: 10px;
+            padding: 12px 14px;
+            border-left: 4px solid;
+            background: #f8f9fa
+        }
+
+        .pos-callout--info {
+            border-color: #39f;
+            background: #f1f7ff
+        }
+
+        .pos-callout--warning {
+            border-color: #f9b115;
+            background: #fff7e6
+        }
+
+        .pos-callout--danger {
+            border-color: #e55353;
+            background: #ffecec
+        }
+    </style>
+@endpush
+
+@once
+    @push('page_scripts')
+        <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
+        <script>
+            // Binder uang IDR <-> Livewire (dipakai juga di komponen lain)
+            window.posMoneyBox = function(prop) {
+                return {
+                    prop,
+                    an: null,
+                    init() {
+                        const input = this.$root.querySelector('input[type="text"]');
+                        if (!input) return;
+
+                        const pushToWire = () => {
+                            let v = 0;
+                            if (this.an) {
+                                const raw = this.an.getNumber();
+                                v = (raw !== null && raw !== undefined) ? parseInt(raw, 10) : 0;
+                            } else {
+                                v = parseInt((input.value || '').replace(/[^\d-]/g, ''), 10) || 0;
+                            }
+                            if (this.$wire) {
+                                this.$wire.set(this.prop, v);
+                            } else {
+                                this.$wire[this.prop] = v;
+                            }
+                        };
+
+                        if (window.AutoNumeric) {
+                            this.an = new AutoNumeric(input, {
+                                digitGroupSeparator: '.',
+                                decimalCharacter: ',',
+                                decimalPlaces: 0,
+                                unformatOnSubmit: true,
+                                minimumValue: '0',
+                                maximumValue: '999999999',
+                                modifyValueOnWheel: false,
+                                allowDecimalPadding: false,
+                            });
+                            input.addEventListener('autoNumeric:rawValueModified', pushToWire);
+                            input.addEventListener('change', pushToWire);
+                            input.addEventListener('blur', pushToWire);
+                        } else {
+                            input.addEventListener('input', pushToWire);
+                            input.addEventListener('change', pushToWire);
+                        }
+                    }
+                }
+            };
+        </script>
+    @endpush
+@endonce

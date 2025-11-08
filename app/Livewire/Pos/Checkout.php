@@ -4,20 +4,26 @@ namespace App\Livewire\Pos;
 
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Illuminate\Support\Str;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductSecond;
+use Modules\Product\Entities\ServiceMaster;
 use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
+use Modules\Sale\Entities\ManualInputLog;
 use App\Services\Midtrans\CreateSnapTokenService;
+use App\Events\ManualInputCreated;
+use App\Models\ManualInputDetail;
 
 class Checkout extends Component
 {
     // ========= Properti keranjang & data pendukung =========
     public $cart_instance;
-    public $customer_name = ''; // [NEW] nama customer (opsional)
+    public $customer_name = '';
     public $global_discount = 0;
     public $global_tax = 0;
     public $shipping = 0;
@@ -30,7 +36,7 @@ class Checkout extends Component
 
     // ========= Properti checkout =========
     public $paid_amount;
-    public $payment_method = 'Tunai'; // Tunai | Transfer | QRIS | (Midtrans diproses terpisah)
+    public $payment_method = 'Tunai'; // Tunai | Transfer | QRIS | Midtrans (UI)
     public $bank_name;
     public $note;
     public $change = 0;
@@ -46,9 +52,10 @@ class Checkout extends Component
     public $editingProductName = '';
     public $editingSourceType = '';
     public $editingOriginalPrice = 0;
-    public $newPrice = 0;
-    public $priceNote = '';
 
+    // public $newPrice = 0; // ❌ tidak dipakai lagi
+    public $discountAmount = 0; // ✅ nominal POTONGAN (Rp)
+    public $priceNote = '';
     // UI flag: form pembayaran muncul setelah "Lanjut ke Pembayaran"
     public bool $show_payment = false;
 
@@ -57,11 +64,33 @@ class Checkout extends Component
 
     protected $rules = [
         'customer_name' => 'nullable|string|max:255',
-        'payment_method' => 'required|string|in:Tunai,Transfer,QRIS',
+        'payment_method' => 'required|string|in:Tunai,Transfer,QRIS,Midtrans',
         'paid_amount' => 'nullable|numeric|min:0',
     ];
 
     // ========= Helpers =========
+
+    /**
+     * Deteksi apakah item di cart merupakan manual input (termasuk jasa ServiceMaster).
+     * Meng-cover:
+     * - source_type: manual | service_master
+     * - manual_kind: service
+     * - code berawalan SRV-
+     * - productable_type = ServiceMaster
+     * - flag options.is_manual_input = true
+     */
+    private function isManualInput($cartItem): bool
+    {
+        $src = (string) data_get($cartItem->options, 'source_type');
+        $mkind = (string) data_get($cartItem->options, 'manual_kind');
+        $code = (string) data_get($cartItem->options, 'code', '');
+        $ptype = (string) data_get($cartItem->options, 'productable_type');
+
+        $serviceTypes = [ServiceMaster::class, 'Modules\Product\Entities\ServiceMaster'];
+
+        return in_array($src, ['manual', 'service_master'], true) || $mkind === 'service' || Str::startsWith($code, 'SRV-') || in_array($ptype, $serviceTypes, true) || (bool) data_get($cartItem->options, 'is_manual_input', false);
+    }
+
     private function cart()
     {
         return Cart::instance($this->cart_instance);
@@ -75,7 +104,7 @@ class Checkout extends Component
         if (is_numeric($value)) {
             return (int) $value;
         }
-        $clean = preg_replace('/[^\d]/', '', (string) $value);
+        $clean = preg_replace('/[^\d-]/', '', (string) $value);
         return (int) ($clean ?: 0);
     }
 
@@ -90,16 +119,34 @@ class Checkout extends Component
                 return ['method' => 'transfer', 'label' => 'Transfer'];
             case 'qris':
                 return ['method' => 'qris', 'label' => 'QRIS'];
+            case 'midtrans':
+                return ['method' => 'midtrans', 'label' => 'Midtrans'];
             default:
                 return ['method' => 'cash', 'label' => 'Tunai'];
         }
     }
 
+    // di class Checkout
+    protected array $rolesCanAdjust = ['Admin', 'Super Admin', 'Owner', 'Supervisor', 'Kasir'];
+
+    protected function userCanAdjust(): bool
+    {
+        $u = auth()->user();
+        return $u?->hasAnyRole($this->rolesCanAdjust) ?? false;
+    }
+
     // total angka murni (tanpa pemisah)
     private function cartTotalInt(): int
     {
-        $total = $this->cart()->total(0, '', ''); // string angka
-        return (int) $total + (int) $this->shipping;
+        $totalStr = $this->cart()->total(0, '', ''); // "12345"
+        $total = (int) $totalStr;
+
+        $shipping = (int) $this->shipping;
+        if ($shipping < 0) {
+            $shipping = 0; // hardening kecil
+        }
+
+        return $total + $shipping;
     }
 
     // ========= Lifecycle =========
@@ -127,7 +174,6 @@ class Checkout extends Component
         $cart_items = $this->cart()->content();
         foreach ($cart_items as $item) {
             $itemId = $item->id;
-
             if (!isset($this->quantity[$itemId])) {
                 $this->quantity[$itemId] = $item->qty;
             }
@@ -180,7 +226,8 @@ class Checkout extends Component
             'price' => (int) ($calculated['price'] ?? ($product['product_price'] ?? 0)),
             'weight' => 1,
             'options' => [
-                'source_type' => 'new',
+                // hormati source_type dari payload bila ada
+                'source_type' => $product['source_type'] ?? 'new',
                 'code' => $product['product_code'] ?? '-',
                 'stock' => (int) ($product['product_quantity'] ?? ($product['stock'] ?? 999)),
                 'unit_price' => (int) ($calculated['unit_price'] ?? ($product['product_price'] ?? 0)),
@@ -190,8 +237,8 @@ class Checkout extends Component
                 'discount' => (int) ($calculated['discount'] ?? 0),
                 'discount_type' => 'fixed',
 
-                // ✅ TAMBAHAN BARU: Tracking original price
-                'original_price' => (int) ($product['product_price'] ?? 0), // ← PENTING!
+                // ✅ Tracking original price
+                'original_price' => (int) ($product['product_price'] ?? 0),
                 'is_price_adjusted' => false,
                 'price_adjustment_amount' => 0,
                 'price_adjustment_note' => null,
@@ -216,7 +263,6 @@ class Checkout extends Component
         if (!$p) {
             return [];
         }
-
         return [
             'id' => $p->id,
             'product_name' => (string) $p->product_name,
@@ -248,18 +294,25 @@ class Checkout extends Component
     public function calculate($product)
     {
         $price = (int) ($product['product_price'] ?? 0);
+        $rate = (int) ($product['product_order_tax'] ?? 0);
+        $type = (int) ($product['product_tax_type'] ?? 0); // 0: none, 1: inclusive, 2: exclusive
+
         $tax = 0;
         $unit_price = $price;
         $sub_total = $price;
 
-        if (isset($product['product_tax_type']) && (int) $product['product_tax_type'] === 1) {
-            // Inclusive
-            $tax = (int) round(($price * ($product['product_order_tax'] ?? 0)) / 100);
-            $sub_total = $price + $tax;
-        } elseif (isset($product['product_tax_type']) && (int) $product['product_tax_type'] === 2) {
-            // Exclusive
-            $tax = (int) round(($price * ($product['product_order_tax'] ?? 0)) / 100);
-            $unit_price = $price - $tax;
+        if ($rate > 0) {
+            if ($type === 1) {
+                // Inclusive
+                $tax = (int) round($price * ($rate / (100 + $rate)));
+                $unit_price = $price - $tax;
+                $sub_total = $price;
+            } elseif ($type === 2) {
+                // Exclusive
+                $tax = (int) round($price * ($rate / 100));
+                $unit_price = $price;
+                $sub_total = $price + $tax;
+            }
         }
 
         return [
@@ -282,14 +335,11 @@ class Checkout extends Component
             $this->dispatch('swal-warning', 'Keranjang masih kosong!');
             return;
         }
-        $this->dispatch('showCheckoutModal');
     }
 
     public function removeItem($rowId)
     {
-        // ✅ Cek existence sebelum remove
         if (!$this->cart()->content()->has($rowId)) {
-            // Item sudah tidak ada (double click atau refresh)
             $this->dispatch('cartUpdated');
             return;
         }
@@ -306,17 +356,30 @@ class Checkout extends Component
 
     public function updateQuantity($rowId, $productId, $sourceType = 'new')
     {
+        $newQty = max(1, (int) ($this->quantity[$productId] ?? 1));
+
         if ($sourceType === 'new') {
-            $product = Product::findOrFail($productId);
-            if (($this->quantity[$productId] ?? 1) > $product->product_quantity) {
+            $product = Product::find($productId);
+            if ($product && $newQty > $product->product_quantity) {
                 $this->dispatch('swal-warning', 'Kuantitas melebihi stok.');
-                $this->quantity[$productId] = $this->cart()->get($rowId)->qty;
+                $item = Cart::instance($this->cart_instance)->get($rowId);
+                $this->quantity[$productId] = $item ? $item->qty : 1;
                 return;
             }
+        } elseif ($sourceType === 'second') {
+            $this->dispatch('swal-warning', 'Qty item bekas tidak dapat diubah.');
+            $item = Cart::instance($this->cart_instance)->get($rowId);
+            $this->quantity[$productId] = $item ? $item->qty : 1;
+            return;
         }
 
-        $this->cart()->update($rowId, $this->quantity[$productId] ?? 1);
+        Cart::instance($this->cart_instance)->update($rowId, ['qty' => $newQty]);
+
+        $this->total_amount = $this->cartTotalInt();
+        $this->calculateChange();
+
         $this->dispatch('cartUpdated');
+        $this->dispatch('swal-success', 'Qty berhasil diupdate.');
     }
 
     public function setProductDiscount($rowId, $productId)
@@ -335,11 +398,9 @@ class Checkout extends Component
         $cart->update($rowId, [
             'price' => $newPrice,
             'options' => array_merge($item->options->toArray(), [
-                // tandai sebagai penyesuaian harga agar tervalidasi di createInvoice
                 'original_price' => $original,
                 'is_price_adjusted' => $isAdjusted,
                 'price_adjustment_amount' => $adjustAmt,
-                // note dibiarkan null bila belum diisi; akan ditolak di validasi final
             ]),
         ]);
 
@@ -349,12 +410,13 @@ class Checkout extends Component
 
     // ========= EDIT HARGA PER ITEM =========
 
-    /**
-     * Buka modal untuk edit harga item di cart
-     */
     public function openEditPriceModal($rowId)
     {
-        // Validasi item ada di cart
+        if (!$this->userCanAdjust()) {
+            $this->dispatch('swal-error', 'Anda tidak berhak mengubah harga.');
+            return;
+        }
+
         if (!$this->cart()->content()->has($rowId)) {
             $this->dispatch('swal-warning', 'Item tidak ditemukan di keranjang.');
             return;
@@ -363,113 +425,112 @@ class Checkout extends Component
         $item = $this->cart()->get($rowId);
         $sourceType = $item->options->source_type ?? 'new';
 
-        // ⚠️ Hanya boleh edit produk "new" dan "second", tidak boleh "manual"
         if ($sourceType === 'manual') {
             $this->dispatch('swal-warning', 'Harga item manual tidak bisa diedit di keranjang.');
             return;
         }
 
-        // Set data untuk modal
         $this->editingRowId = $rowId;
         $this->editingProductId = $item->id;
         $this->editingProductName = $item->name;
         $this->editingSourceType = $sourceType;
 
-        // Original price: ambil dari options (sudah disimpan saat add to cart)
-        // Jika belum ada (backward compat), gunakan harga current
-        $this->editingOriginalPrice = $item->options->original_price ?? $item->price;
+        // Harga asli → dari options.original_price kalau ada, fallback harga saat ini
+        $this->editingOriginalPrice = (int) ($item->options->original_price ?? $item->price);
 
-        // Harga baru default = harga saat ini
-        $this->newPrice = $item->price;
-
-        // Note: ambil existing note (jika sudah pernah diedit)
-        $this->priceNote = $item->options->price_adjustment_note ?? '';
+        // Nilai default form (persist jika sudah pernah disesuaikan)
+        $this->discountAmount = (int) ($item->options->price_adjustment_amount ?? 0);
+        $this->priceNote = (string) ($item->options->price_adjustment_note ?? '');
 
         $this->showEditPriceModal = true;
     }
 
-    /**
-     * Simpan perubahan harga
-     */
     public function saveEditedPrice()
     {
-        // Validasi basic
+        // 1) Permission
+        if (!$this->userCanAdjust()) {
+            $this->addError('discountAmount', 'Anda tidak berhak mengubah harga.');
+            return;
+        }
+        // 2) Ambil angka & hitung harga baru
+        $orig = (int) $this->editingOriginalPrice;
+        if ($orig < 1) {
+            $this->addError('discountAmount', 'Harga asli tidak valid.');
+            return;
+        }
+
+        $disc = (int) $this->sanitizeMoney($this->discountAmount);
+        $new = max(0, $orig - $disc);
+
+        // 3) Validasi
         $this->validate(
             [
-                'newPrice' => 'required|numeric|min:1',
+                'discountAmount' => ['required', 'integer', 'min:0', 'lte:' . $orig],
+                'priceNote' => [$disc > 0 ? 'required' : 'nullable', 'string', $disc > 0 ? 'min:10' : 'min:0'],
             ],
             [
-                'newPrice.required' => 'Harga baru wajib diisi',
-                'newPrice.numeric' => 'Harga harus berupa angka',
-                'newPrice.min' => 'Harga minimal Rp 1',
+                'discountAmount.lte' => 'Pengurangan tidak boleh melebihi harga asli.',
+                'priceNote.required' => 'Alasan wajib diisi saat ada potongan.',
+                'priceNote.min' => 'Alasan minimal 10 karakter.',
             ],
         );
 
-        $item = $this->cart()->get($this->editingRowId);
-        $originalPrice = (int) $this->editingOriginalPrice;
-        $newPrice = (int) $this->sanitizeMoney($this->newPrice);
-
-        // ✅ VALIDASI WAJIB: Jika harga TURUN, catatan WAJIB
-        if ($newPrice < $originalPrice) {
-            $noteClean = trim($this->priceNote);
-            if (empty($noteClean)) {
-                $this->addError('priceNote', 'Catatan wajib diisi jika harga dikurangi dari harga asli.');
-                return;
-            }
-
-            // Validasi minimal panjang catatan (opsional, sesuaikan kebutuhan)
-            if (mb_strlen($noteClean) < 10) {
-                $this->addError('priceNote', 'Catatan terlalu singkat. Minimal 10 karakter untuk alasan diskon.');
-                return;
-            }
+        // (Opsional) kalau ingin melarang harga 0, pertahankan guard ini.
+        if ($new < 1) {
+            $this->addError('discountAmount', 'Potongan terlalu besar. Harga setelah potong minimal Rp 1.');
+            return;
         }
 
-        // Hitung selisih
-        $adjustmentAmount = $originalPrice - $newPrice;
-        $isPriceAdjusted = $newPrice != $originalPrice;
+        // 4) Update cart
+        $item = $this->cart()->get($this->editingRowId);
+        if (!$item) {
+            $this->dispatch('swal-error', 'Item tidak ditemukan.');
+            return;
+        }
 
-        // Update cart item dengan harga baru + tracking data
+        $options = $item->options->toArray();
+        $options['unit_price'] = $options['unit_price'] ?? $new;
+        $options['original_price'] = $orig;
+        $options['is_price_adjusted'] = $disc > 0;
+        $options['price_adjustment_amount'] = $disc;
+        $options['price_adjustment_note'] = $disc > 0 ? trim((string) $this->priceNote) : null;
+        $options['price_adjustment_source'] = 'manual_discount';
+        $options['price_adjusted_at'] = now()->toDateTimeString();
+
         $this->cart()->update($this->editingRowId, [
-            'price' => $newPrice, // ← Harga final yang akan ditagih
-            'options' => [
-                // Pertahankan options existing
-                'source_type' => $item->options->source_type,
-                'code' => $item->options->code ?? '-',
-                'stock' => $item->options->stock ?? 999,
-                'unit_price' => $item->options->unit_price ?? $newPrice,
-                'cost_price' => $item->options->cost_price ?? 0,
-                'tax' => $item->options->tax ?? 0,
-                'tax_type' => $item->options->tax_type ?? null,
-                'discount' => $item->options->discount ?? 0,
-                'discount_type' => $item->options->discount_type ?? 'fixed',
-                'productable_id' => $item->options->productable_id ?? null,
-                'productable_type' => $item->options->productable_type ?? null,
-                'manual_kind' => $item->options->manual_kind ?? null,
-
-                // ✅ TAMBAHAN BARU: Tracking perubahan harga
-                'original_price' => $originalPrice, // Tetap simpan harga asli
-                'is_price_adjusted' => $isPriceAdjusted,
-                'price_adjustment_amount' => $adjustmentAmount,
-                'price_adjustment_note' => $isPriceAdjusted ? trim($this->priceNote) : null,
-            ],
+            'price' => $new,
+            'options' => $options,
         ]);
 
-        // Close modal & reset state
-        $this->showEditPriceModal = false;
-        $this->reset(['editingRowId', 'editingProductId', 'editingProductName', 'editingSourceType', 'editingOriginalPrice', 'newPrice', 'priceNote']);
+        // 5) (Opsional) Notifikasi owner jika melewati threshold
+        $pct = $orig > 0 ? ($disc / $orig) * 100 : 0;
+        if ($pct >= 10) {
+            // panggil service/event notifikasi owner di sini
+            // contoh:
+            // event(new SignificantPriceAdjustment(auth()->user(), $item->id, $orig, $disc, $new, $this->priceNote));
+        }
 
-        // Refresh cart total
+        // 6) Bereskan state & refresh UI
+        $this->showEditPriceModal = false;
+        $this->reset(['editingRowId', 'editingProductId', 'editingProductName', 'editingSourceType', 'editingOriginalPrice', 'discountAmount', 'priceNote']);
+
         $this->dispatch('cartUpdated');
-        $this->dispatch('swal-success', 'Harga berhasil diubah!');
+        $this->dispatch('swal-success', 'Harga berhasil disesuaikan!');
     }
 
-    /**
-     * Tutup modal tanpa simpan
-     */
     public function closeEditPriceModal()
     {
         $this->showEditPriceModal = false;
-        $this->reset(['editingRowId', 'editingProductId', 'editingProductName', 'editingSourceType', 'editingOriginalPrice', 'newPrice', 'priceNote']);
+        $this->reset([
+            'editingRowId',
+            'editingProductId',
+            'editingProductName',
+            'editingSourceType',
+            'editingOriginalPrice',
+            // 'newPrice', // ❌
+            'discountAmount', // ✅
+            'priceNote',
+        ]);
         $this->resetErrorBag();
     }
 
@@ -486,15 +547,19 @@ class Checkout extends Component
             return;
         }
 
+        Log::info('Checkout:createInvoice invoked', [
+            'cart_count' => $this->cart()->count(),
+            'payment_method' => $this->payment_method,
+            'user_id' => auth()->id(),
+        ]);
+
         // VALIDASI FINAL: sebelum DB::transaction
         $cartItems = $this->cart()->content();
 
-        // Backfill original_price jika kosong (fallback aman)
+        // Backfill original_price jika kosong
         foreach ($cartItems as $ci) {
             $orig = (int) data_get($ci->options, 'original_price', 0);
             if ($orig <= 0) {
-                // Fallback: set original dari price saat ini agar tidak NULL
-                // Catatan: untuk second sebaiknya ambil dari master, lihat blok tambahan di bawah.
                 $this->cart()->update($ci->rowId, [
                     'options' => array_merge($ci->options->toArray(), [
                         'original_price' => (int) $ci->price,
@@ -502,7 +567,6 @@ class Checkout extends Component
                 ]);
             }
         }
-
         // Re-load setelah backfill
         $cartItems = $this->cart()->content();
 
@@ -522,14 +586,17 @@ class Checkout extends Component
         }
 
         try {
-            $sale = DB::transaction(function () {
+            // Siapkan kolektor manual items untuk event
+            $manualItems = [];
+            $hasManualInput = false;
+
+            $sale = DB::transaction(function () use (&$manualItems, &$hasManualInput) {
                 $cartItems = $this->cart()->content();
                 $totalAmount = $this->total_amount ?? $this->cartTotalInt();
 
-                // normalisasi metode bayar
                 $norm = $this->normalizePaymentMethod($this->payment_method);
-                $paymentLabel = $norm['label']; // "Tunai"/"Transfer"/"QRIS"
-                $paymentIsBank = $norm['method'] === 'transfer'; // untuk set bank_name
+                $paymentLabel = $norm['label'];
+                $paymentIsBank = $norm['method'] === 'transfer';
 
                 $sale = Sale::create([
                     'date' => now()->toDateString(),
@@ -547,7 +614,7 @@ class Checkout extends Component
                     'due_amount' => (int) $totalAmount,
                     'status' => 'Draft',
                     'payment_status' => 'Unpaid',
-                    'payment_method' => $paymentLabel, // simpan label agar kompatibel data lama
+                    'payment_method' => $paymentLabel,
                     'bank_name' => $paymentIsBank ? ($this->bank_name ?: null) : null,
                     'note' => $this->note,
                 ]);
@@ -556,47 +623,36 @@ class Checkout extends Component
                 $totalProfit = 0;
 
                 foreach ($cartItems as $item) {
-                    $src = data_get($item->options, 'source_type', 'new'); // new|second|manual
+                    $src = data_get($item->options, 'source_type', 'new'); // new|second|manual|service_master
                     $code = data_get($item->options, 'code', '-');
 
-                    // ✅ FIXED: Baca productable dari cart options
                     $productableId = data_get($item->options, 'productable_id');
                     $productableType = data_get($item->options, 'productable_type');
-
-                    // ✅ FIXED: Baca manual_kind dari cart options
                     $manualKind = data_get($item->options, 'manual_kind');
 
-                    // === HPP per item (PERBAIKAN) ===
+                    // HPP
                     $hpp = 0;
                     $manualHpp = null;
 
                     if ($src === 'new') {
-                        // Produk baru: ambil HPP dari products.product_cost
                         if ($p = Product::find($item->id)) {
                             $hpp = (int) $p->product_cost;
                         }
                     } elseif ($src === 'second') {
-                        // Produk bekas dari database
                         if ($productableId) {
-                            // Cari dari ProductSecond via productable_id
                             $s = ProductSecond::find($productableId);
                             $hpp = $s ? (int) ($s->purchase_price ?? 0) : (int) data_get($item->options, 'cost_price', 0);
                         } else {
-                            // Fallback: baca dari cart options (tidak akan terjadi setelah fix ProductListSecond)
                             $hpp = (int) data_get($item->options, 'cost_price', 0);
                         }
                     } elseif ($src === 'manual') {
-                        // ✅ FIXED: Manual items - pisahkan service vs goods
                         if ($manualKind === 'service') {
-                            // Jasa: tidak ada HPP
                             $hpp = 0;
                             $manualHpp = null;
                         } elseif ($manualKind === 'goods') {
-                            // Barang fisik manual: pakai manual_hpp
-                            $hpp = 0; // hpp utama tetap 0
+                            $hpp = 0;
                             $manualHpp = (int) data_get($item->options, 'cost_price', 0);
                         } else {
-                            // Fallback jika manual_kind tidak valid
                             $hpp = 0;
                             $manualHpp = null;
                         }
@@ -606,16 +662,31 @@ class Checkout extends Component
                     $unitPrice = (int) $item->price;
                     $subTotal = $qty * $unitPrice;
 
-                    // Hitung profit
+                    // ===== Normalisasi item JASA jadi manual/service =====
+                    $isService = Str::startsWith((string) $code, 'SRV-') || in_array($productableType, [ServiceMaster::class, 'Modules\Product\Entities\ServiceMaster'], true);
+
+                    if ($isService) {
+                        $src = 'manual';
+                        $manualKind = 'service';
+
+                        if (empty($productableId) && preg_match('/^SRV-(\d+)/', (string) $code, $m)) {
+                            $productableId = (int) $m[1];
+                            $productableType = ServiceMaster::class;
+                        }
+
+                        $qty = 1;
+                        $subTotal = $unitPrice;
+                        $hpp = 0;
+                        $manualHpp = null;
+                    }
+                    // ===== END Normalisasi =====
+
                     $totalHppItem = $hpp + ($manualHpp ?? 0);
                     $subtotalProfit = $subTotal - $totalHppItem * $qty;
 
-                    // ✅ TAMBAHAN: Ambil data adjustment dari cart options
                     $originalPrice = (int) data_get($item->options, 'original_price', $item->price);
-
-                    // Untuk second, upayakan original dari master jika tersedia
                     if ($src === 'second' && $productableId) {
-                        if ($s = \Modules\Product\Entities\ProductSecond::find($productableId)) {
+                        if ($s = ProductSecond::find($productableId)) {
                             $originalPrice = (int) ($s->sale_price ?? $originalPrice);
                         }
                     }
@@ -623,7 +694,8 @@ class Checkout extends Component
                     $priceAdjustmentAmount = (int) data_get($item->options, 'price_adjustment_amount', 0);
                     $priceAdjustmentNote = data_get($item->options, 'price_adjustment_note');
 
-                    SaleDetails::create([
+                    // Simpan detail penjualan (TERMASUK field manual_kind, original_price, adjustments)
+                    $detail = SaleDetails::create([
                         'sale_id' => $sale->id,
                         'product_id' => $src === 'new' ? (int) $item->id : null,
                         'productable_type' => $productableType,
@@ -633,10 +705,10 @@ class Checkout extends Component
                         'item_name' => $item->name,
                         'product_name' => $item->name,
                         'product_code' => $code,
-                        'quantity' => $qty,
-                        'price' => $unitPrice, // ← Harga final (setelah edit jika ada)
-                        'unit_price' => $unitPrice,
-                        'sub_total' => $subTotal,
+                        'quantity' => (int) $qty,
+                        'price' => (int) $unitPrice,
+                        'unit_price' => (int) $unitPrice,
+                        'sub_total' => (int) $subTotal,
                         'hpp' => (int) $hpp,
                         'manual_hpp' => $manualHpp,
                         'subtotal_profit' => (int) $subtotalProfit,
@@ -644,37 +716,99 @@ class Checkout extends Component
                         'product_discount_type' => data_get($item->options, 'discount_type', 'fixed'),
                         'product_tax_amount' => (int) data_get($item->options, 'tax', 0),
 
-                        // ✅ KOLOM BARU: Tracking perubahan harga
-                        'original_price' => $originalPrice,
+                        'original_price' => (int) $originalPrice,
                         'is_price_adjusted' => $isPriceAdjusted ? 1 : 0,
-                        'price_adjustment_amount' => $priceAdjustmentAmount,
+                        'price_adjustment_amount' => (int) $priceAdjustmentAmount,
                         'price_adjustment_note' => $priceAdjustmentNote,
                         'adjusted_by' => $isPriceAdjusted ? auth()->id() : null,
                         'adjusted_at' => $isPriceAdjusted ? now() : null,
                     ]);
 
+                    // ===== DETEKSI & CATAT MANUAL INPUT =====
+                    $isManual = $src === 'manual' || $manualKind === 'service' || $src === 'service_master';
+                    $isManual = $isManual || $this->isManualInput($item);
+
+                    if ($isManual) {
+                        $hasManualInput = true;
+
+                        // Detail manual untuk owner review
+                        ManualInputDetail::create([
+                            'sale_id' => $sale->id,
+                            'sale_detail_id' => $detail->id,
+                            'cashier_id' => auth()->id(),
+                            'item_type' => (string) ($manualKind ?? data_get($item->options, 'manual_kind', 'goods')),
+                            'item_name' => $item->name,
+                            'quantity' => (int) $qty,
+                            'price' => (int) $unitPrice,
+                            'manual_reason' => data_get($item->options, 'manual_reason'),
+                            'cost_price' => (int) data_get($item->options, 'cost_price', 0),
+                        ]);
+
+                        // Log audit untuk approval flow
+                        ManualInputLog::create([
+                            'sale_id' => $sale->id,
+                            'sale_detail_id' => $detail->id,
+                            'cashier_id' => auth()->id(),
+                            'input_type' => 'manual_item',
+                            'item_name' => $item->name,
+                            'quantity' => (int) $qty,
+                            'input_price' => (int) $unitPrice,
+                            'reason_provided' => data_get($item->options, 'manual_reason', 'No reason provided'),
+                            'approval_status' => 'pending',
+                        ]);
+
+                        // Kumpulkan untuk event dispatch
+                        $manualItems[] = [
+                            'name' => $item->name,
+                            'quantity' => (int) $qty,
+                            'price' => (int) $unitPrice,
+                            'reason' => data_get($item->options, 'manual_reason'),
+                            'type' => (string) ($manualKind ?? data_get($item->options, 'manual_kind', 'goods')),
+                        ];
+                    }
+                    // ===== END MANUAL INPUT =====
+
                     $totalHpp += $totalHppItem * $qty;
                     $totalProfit += (int) $subtotalProfit;
                 }
 
-                $hasPriceAdjustment = $cartItems->contains(function ($item) {
-                    return (bool) data_get($item->options, 'is_price_adjusted', false);
-                });
+                $hasPriceAdjustment = $cartItems->contains(fn($i) => (bool) data_get($i->options, 'is_price_adjusted', false));
 
-                // Update flag di tabel sales
+                // Update flag di sale
                 $sale->update([
                     'total_hpp' => $totalHpp,
                     'total_profit' => $totalProfit,
-                    'has_price_adjustment' => $hasPriceAdjustment ? 1 : 0, // ← SET FLAG
+                    'has_price_adjustment' => $hasPriceAdjustment ? 1 : 0,
+                    'has_manual_input' => $hasManualInput ? 1 : 0,
+                    'manual_input_count' => $hasManualInput ? count($manualItems) : 0,
+                    'manual_input_summary' => $hasManualInput ? json_encode($manualItems) : null,
+                    'is_manual_input_notified' => 0, // akan diset 1 oleh listener event
                 ]);
 
                 return $sale;
             });
 
+            // ====== SET STATE KOMPONEN ======
             $this->sale = $sale;
             $this->sale_details = SaleDetails::where('sale_id', $sale->id)->get();
 
-            $this->cart()->destroy(); // kosongkan keranjang setelah jadi invoice
+            // Dispatch event pakai $manualItems yang baru diproses (lebih andal)
+            if (!empty($manualItems)) {
+                Log::info('Dispatch ManualInputCreated from Checkout', [
+                    'sale_id' => $this->sale->id,
+                    'items_count' => count($manualItems),
+                ]);
+
+                event(new ManualInputCreated($this->sale->fresh(), $manualItems, auth()->user()));
+            }
+
+            // Kosongkan keranjang setelah jadi invoice
+            $this->cart()->destroy();
+
+            $this->quantity = [];
+            $this->check_quantity = [];
+            $this->discount_type = [];
+            $this->item_discount = [];
 
             // Default paid_amount = total invoice (mempermudah "Tandai Lunas")
             $this->paid_amount = (int) $sale->total_amount;
@@ -702,21 +836,46 @@ class Checkout extends Component
         }
 
         $this->show_payment = true;
-        $this->dispatch('paid-input-ready'); // init AutoNumeric saat form muncul
+        $this->dispatch('paid-input-ready');
     }
 
-    // ========= Anti "double-double" & bersih saat ganti metode =========
+    /**
+     * Finalize: buat invoice + (opsional) proses pembayaran full jika input sudah memenuhi.
+     */
+    public function finalize(): void
+    {
+        if ($this->cart()->count() === 0 && !$this->sale) {
+            $this->dispatch('swal-error', 'Keranjang masih kosong.');
+            return;
+        }
+
+        if (!$this->sale) {
+            $this->createInvoice();
+            if (!$this->sale) {
+                return;
+            }
+        }
+
+        $payInt = (int) $this->sanitizeMoney($this->paid_amount);
+        if ($payInt >= (int) $this->sale->total_amount) {
+            $this->markAsPaid();
+        }
+
+        $this->dispatch('checkout-success', [
+            'invoice' => $this->sale->reference,
+            'has_manual_input' => (int) $this->sale->has_manual_input === 1,
+        ]);
+    }
+
     public function onPaymentMethodChange(): void
     {
-        // Transfer butuh bank_name, lainnya bersihkan
         if ($this->payment_method !== 'Transfer') {
             $this->bank_name = null;
         }
-        // jika UI kamu punya opsi Midtrans di radio, sembunyikan panel manual
         $this->show_midtrans_payment = false;
     }
 
-    // ========= Tandai Lunas (manual: Tunai/Transfer/QRIS) =========
+    // ========= Tandai Lunas (manual: Tunai/Transfer/QRIS/Midtrans fallback) =========
     public function markAsPaid()
     {
         if (!$this->sale) {
@@ -728,13 +887,16 @@ class Checkout extends Component
             return;
         }
 
-        $this->validate(['payment_method' => 'required|in:Tunai,Transfer,QRIS']);
-        if ($this->payment_method !== 'Tunai') {
+        $this->validate(['payment_method' => 'required|in:Tunai,Transfer,QRIS,Midtrans']);
+
+        if ($this->payment_method === 'Transfer') {
             $this->validate(['bank_name' => 'required|string|max:255']);
-        }
-        if ($this->payment_method === 'Transfer' && empty($this->bank_name)) {
-            $this->addError('bank_name', 'Nama bank wajib diisi untuk pembayaran transfer.');
-            return;
+            if (empty($this->bank_name)) {
+                $this->addError('bank_name', 'Nama bank wajib diisi untuk pembayaran transfer.');
+                return;
+            }
+        } else {
+            $this->bank_name = null;
         }
 
         $pay = $this->sanitizeMoney($this->paid_amount);
@@ -747,25 +909,20 @@ class Checkout extends Component
 
         try {
             DB::transaction(function () use ($total) {
-                // LOCK baris sale + ambil detail
                 $sale = Sale::lockForUpdate()->with('saleDetails')->find($this->sale->id);
                 if (!$sale) {
                     throw new \RuntimeException('Invoice tidak ditemukan/terkunci.');
                 }
 
-                // Normalisasi metode bayar
                 $norm = $this->normalizePaymentMethod($this->payment_method);
-                $pmLabel = $norm['label']; // "Tunai"/"Transfer"/"QRIS"
-                $pmMethod = $norm['method']; // "cash"/"transfer"/"qris"
+                $pmLabel = $norm['label'];
+                $pmMethod = $norm['method'];
 
-                // Hitung jumlah bayar yang dipakai
                 $payAmount = (int) min($total, max(0, (int) $this->sanitizeMoney($this->paid_amount)));
 
-                // === [1] Mutasi stok (sekali saja, jika belum Completed) ===
                 if ($sale->status !== 'Completed') {
                     foreach ($sale->saleDetails as $d) {
                         if ($d->source_type === 'new' && $d->product_id) {
-                            // kunci baris produk
                             $p = Product::whereKey($d->product_id)->lockForUpdate()->first();
                             if (!$p) {
                                 throw new \RuntimeException("Produk ID {$d->product_id} tidak ditemukan.");
@@ -773,15 +930,12 @@ class Checkout extends Component
                             if ((int) $p->product_quantity < (int) $d->quantity) {
                                 throw new \RuntimeException("Stok {$p->product_name} tidak mencukupi.");
                             }
-
-                            // update aman
                             $affected = Product::whereKey($p->id)
                                 ->where('product_quantity', '>=', (int) $d->quantity)
                                 ->update(['product_quantity' => DB::raw('product_quantity - ' . (int) $d->quantity)]);
                             if ($affected < 1) {
                                 throw new \RuntimeException("Gagal mengurangi stok {$p->product_name} (race).");
                             }
-
                             DB::table('stock_movements')->insert([
                                 'productable_type' => Product::class,
                                 'productable_id' => $p->id,
@@ -793,9 +947,6 @@ class Checkout extends Component
                                 'updated_at' => now(),
                             ]);
                         } elseif ($d->source_type === 'second' && $d->productable_id) {
-                            // ✅ FIXED: Hanya update jika memang dari DB (ada productable_id)
-                            // Item second manual (tanpa productable_id) tidak perlu update status
-
                             $ps = ProductSecond::whereKey($d->productable_id)->lockForUpdate()->first();
                             if (!$ps) {
                                 throw new \RuntimeException("Item second ID {$d->productable_id} tidak ditemukan.");
@@ -803,7 +954,6 @@ class Checkout extends Component
                             if ($ps->status !== 'available') {
                                 throw new \RuntimeException("Item second {$ps->unique_code} sudah terjual / tidak tersedia.");
                             }
-
                             $ps->status = 'sold';
                             $ps->save();
 
@@ -821,7 +971,6 @@ class Checkout extends Component
                     }
                 }
 
-                // === [2] Catat pembayaran ===
                 SalePayment::create([
                     'date' => now()->toDateString(),
                     'reference' => 'INV/' . ($sale->reference ?? $sale->id),
@@ -831,7 +980,6 @@ class Checkout extends Component
                     'note' => $pmMethod === 'transfer' ? (string) ($this->bank_name ?? '') : null,
                 ]);
 
-                // === [3] Update status sale ===
                 $sale->update([
                     'paid_amount' => (int) $payAmount,
                     'due_amount' => max(0, (int) $sale->total_amount - (int) $payAmount),
@@ -841,12 +989,11 @@ class Checkout extends Component
                     'bank_name' => $pmMethod === 'transfer' ? $this->bank_name ?? null : null,
                 ]);
 
-                // sinkronkan instance di komponen
                 $this->sale = $sale;
             });
 
             $this->sale->refresh();
-            $this->show_payment = false; // sembunyikan form setelah lunas
+            $this->show_payment = false;
             $this->dispatch('swal-success', 'Pembayaran diterima. Transaksi telah dilunasi.');
         } catch (\Throwable $e) {
             report($e);
@@ -916,9 +1063,115 @@ class Checkout extends Component
         if ($this->sale->payment_status === 'Paid') {
             $this->show_payment = false;
             $this->show_midtrans_payment = false;
-
-            // konsisten dengan event swal lain
             $this->dispatch('swal-success', 'Pembayaran Midtrans berhasil.');
         }
+    }
+
+    /**
+     * Increment quantity (tambah 1)
+     */
+    public function incrementQuantity(string $rowId): void
+    {
+        $item = Cart::instance($this->cart_instance)->get($rowId);
+
+        if (!$item) {
+            $this->dispatch('swal-error', 'Item tidak ditemukan di keranjang.');
+            return;
+        }
+
+        $newQty = $item->qty + 1;
+
+        $sourceType = data_get($item->options, 'source_type', 'manual');
+
+        if ($sourceType === 'new' || $sourceType === 'second') {
+            $productId = $item->id;
+            $product = Product::find($productId);
+
+            if ($product && $newQty > $product->product_quantity) {
+                $this->dispatch('swal-error', "Stock tidak cukup! Tersedia: {$product->product_quantity}");
+                return;
+            }
+        }
+
+        Cart::instance($this->cart_instance)->update($rowId, $newQty);
+
+        $this->quantity[$item->id] = $newQty;
+        $this->total_amount = $this->cartTotalInt();
+
+        if (!$this->sale) {
+            $this->paid_amount = $this->total_amount;
+        }
+
+        $this->calculateChange();
+        $this->dispatch('cartUpdated');
+    }
+
+    /**
+     * Decrement quantity (kurang 1)
+     */
+    public function decrementQuantity(string $rowId): void
+    {
+        $item = Cart::instance($this->cart_instance)->get($rowId);
+
+        if (!$item) {
+            $this->dispatch('swal-error', 'Item tidak ditemukan di keranjang.');
+            return;
+        }
+
+        $newQty = $item->qty - 1;
+
+        if ($newQty < 1) {
+            $this->dispatch('swal-error', 'Qty minimal 1. Jika ingin hapus, klik tombol Hapus.');
+            return;
+        }
+
+        Cart::instance($this->cart_instance)->update($rowId, $newQty);
+
+        $this->quantity[$item->id] = $newQty;
+
+        $this->total_amount = $this->cartTotalInt();
+
+        if (!$this->sale) {
+            $this->paid_amount = $this->total_amount;
+        }
+
+        $this->calculateChange();
+
+        $this->dispatch('cartUpdated');
+    }
+
+    /**
+     * Dipanggil otomatis saat $quantity diubah via wire:model
+     */
+    public function updatedQuantity($value, $key)
+    {
+        $item = Cart::instance($this->cart_instance)->search(fn($cartItem) => $cartItem->id == $key)->first();
+
+        if (!$item) {
+            return;
+        }
+
+        $newQty = max(1, (int) $value);
+        $sourceType = data_get($item->options, 'source_type', 'manual');
+
+        if ($sourceType === 'new') {
+            $product = Product::find($key);
+            if ($product && $newQty > $product->product_quantity) {
+                $this->quantity[$key] = $item->qty;
+                $this->dispatch('swal-error', "Stock tidak cukup! Tersedia: {$product->product_quantity}");
+                return;
+            }
+        } elseif ($sourceType === 'second') {
+            $this->quantity[$key] = $item->qty;
+            $this->dispatch('swal-warning', 'Qty item bekas tidak dapat diubah.');
+            return;
+        }
+
+        Cart::instance($this->cart_instance)->update($item->rowId, ['qty' => $newQty]);
+
+        $this->total_amount = $this->cartTotalInt();
+        $this->calculateChange();
+
+        $this->dispatch('cartUpdated');
     }
 }

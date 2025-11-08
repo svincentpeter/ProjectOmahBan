@@ -13,18 +13,27 @@ class ManualItemForm extends Component
     public string $item_type = 'service';
 
     public string $name = '';
-    public $price = 0; // ✅ CHANGED: Ubah dari string ke nullable integer
-    public $cost_price = 0; // ✅ CHANGED: Ubah dari string ke nullable integer
+
+    /** @var int|string */
+    public $price = 0; // integer|string (akan diparse)
+    /** @var int|string */
+    public $cost_price = 0; // integer|string (akan diparse)
+
     public int $manual_qty = 1; // Qty item/jasa
+
+    // ✅ Disesuaikan dengan Blade (camelCase)
+    public string $manualReason = '';
 
     protected function rules(): array
     {
         return [
             'item_type' => 'required|in:service,item',
             'name' => 'required|string|max:255',
-            'price' => 'nullable|numeric|min:0', // ✅ FIXED: Nullable, numeric, dan min:0
-            'cost_price' => 'nullable|numeric|min:0', // ✅ FIXED: Nullable, numeric, dan min:0
+            'price' => 'nullable|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
             'manual_qty' => 'required|integer|min:1',
+            // ✅ validasi alasan manual (camelCase)
+            'manualReason' => 'required|string|min:10|max:500',
         ];
     }
 
@@ -35,7 +44,12 @@ class ManualItemForm extends Component
         'price.min' => 'Harga jual tidak boleh negatif.',
         'cost_price.numeric' => 'Harga beli harus berupa angka.',
         'cost_price.min' => 'Harga beli tidak boleh negatif.',
-        'manual_qty.*' => 'Qty minimal 1.',
+        'manual_qty.required' => 'Qty minimal 1.',
+        'manual_qty.min' => 'Qty minimal 1.',
+        // ✅ pesan khusus alasan manual (camelCase)
+        'manualReason.required' => 'Alasan input manual wajib diisi!',
+        'manualReason.min' => 'Alasan terlalu singkat. Minimal 10 karakter.',
+        'manualReason.max' => 'Alasan terlalu panjang. Maksimal 500 karakter.',
     ];
 
     private function moneyToInt($v): int
@@ -43,10 +57,19 @@ class ManualItemForm extends Component
         if ($v === null || $v === '') {
             return 0;
         }
+        if (is_int($v)) {
+            return $v;
+        }
+        if (is_float($v)) {
+            return (int) round($v);
+        }
         if (is_numeric($v)) {
             return (int) $v;
         }
-        return (int) preg_replace('/[^\d-]/', '', (string) $v);
+
+        // Hapus pemisah ribuan/karakter non-digit
+        $clean = preg_replace('/[^\d-]/', '', (string) $v);
+        return (int) ($clean === '' ? 0 : $clean);
     }
 
     public function add(): void
@@ -55,8 +78,6 @@ class ManualItemForm extends Component
 
         $qty = max(1, (int) $this->manual_qty);
         $sellPrice = $this->moneyToInt($this->price);
-        
-        // ✅ REMOVED: Tidak perlu validasi < 0 karena sudah di rules
 
         // Tentukan manual_kind berdasarkan item_type
         if ($this->item_type === 'service') {
@@ -66,12 +87,9 @@ class ManualItemForm extends Component
         } else {
             // Item fisik manual (BUKAN second!)
             $manualKind = 'goods';
-
             $costPrice = $this->moneyToInt($this->cost_price);
 
-            // ✅ REMOVED: Validasi sudah di rules
-
-            // Warning jika harga jual < HPP (tapi tetap boleh simpan)
+            // Warning jika harga jual < HPP (tetap boleh simpan)
             if ($sellPrice < $costPrice && $costPrice > 0) {
                 $this->dispatch('swal-warning', 'Perhatian: Harga jual lebih kecil dari harga beli!');
             }
@@ -79,9 +97,9 @@ class ManualItemForm extends Component
             $typeLabel = 'Barang';
         }
 
-        // Semua manual items pakai source_type='manual' + manual_kind
+        // ✅ Tambahkan ke cart dengan FLAG manual untuk trigger notifikasi Owner di checkout
         Cart::instance($this->cart_instance)->add([
-            'id' => 'MAN-' . uniqid(),
+            'id' => 'MAN_' . uniqid(),
             'name' => trim($this->name),
             'qty' => $qty,
             'price' => $sellPrice,
@@ -89,20 +107,27 @@ class ManualItemForm extends Component
             'options' => [
                 'code' => '-',
                 'source_type' => 'manual',
-                'manual_kind' => $manualKind, // 'service' atau 'goods'
+                'manual_kind' => $manualKind, // 'service' | 'goods'
                 'cost_price' => $costPrice,
-                'source_type_label' => $typeLabel, // 'Jasa' atau 'Barang'
+                'source_type_label' => $typeLabel, // 'Jasa' | 'Barang'
+
+                // ✅ FLAG MANUAL INPUT (dipakai di halaman checkout untuk notifikasi Owner)
+                'is_manual_input' => true,
+                'manual_reason' => trim($this->manualReason), // simpan sebagai snake di options (boleh)
+                'manual_input_by' => auth()->id(),
+                'manual_input_at' => now()->toDateTimeString(),
             ],
         ]);
 
-        // Reset field numeric & nama, biarkan item_type tetap (biar user nyaman)
-        $this->reset(['name', 'price', 'cost_price']);
+        // Reset field, pertahankan item_type agar nyaman dipakai kasir
+        $this->reset(['name', 'price', 'cost_price', 'manualReason']);
         $this->manual_qty = 1;
 
         // Beri tahu komponen Checkout untuk refresh ringkasan
         $this->dispatch('cartUpdated')->to(\App\Livewire\Pos\Checkout::class);
 
-        $this->dispatch('swal-success', "{$typeLabel} manual berhasil ditambahkan ke keranjang.");
+        // Konsisten dengan event swal-* yang sudah kamu pakai
+        $this->dispatch('swal-success', "{$typeLabel} manual berhasil ditambahkan. Owner akan menerima notifikasi.");
     }
 
     public function addToCart(): void

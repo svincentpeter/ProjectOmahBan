@@ -1,14 +1,32 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Sale')
+@section('title', 'Edit Penjualan')
 
 @section('breadcrumb')
     <ol class="breadcrumb border-0 m-0">
         <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('sales.index') }}">Sales</a></li>
+        <li class="breadcrumb-item"><a href="{{ route('sales.index') }}">Penjualan</a></li>
         <li class="breadcrumb-item active">Edit</li>
     </ol>
 @endsection
+
+@php
+    // ====== Opsional: sembunyikan kolom pajak per-item kalau memang tidak dipakai ======
+    $USE_ITEM_TAX = true; // set ke false untuk menyembunyikan kolom "Pajak Item" di tabel editor
+@endphp
+
+@push('third_party_stylesheets')
+    @if (!$USE_ITEM_TAX)
+        <style>
+            /* Sembunyikan kolom Pajak Item (kolom ke-5) di tabel editor */
+            #edit-cart-table thead th:nth-child(5),
+            #edit-cart-table tbody td:nth-child(5),
+            #edit-cart-table tfoot th:nth-child(5) {
+                display: none !important;
+            }
+        </style>
+    @endif
+@endpush
 
 @section('content')
     <div class="container-fluid mb-4">
@@ -32,19 +50,17 @@
                             <div class="form-row">
                                 <div class="col-lg-4">
                                     <div class="form-group">
-                                        <label for="reference">Reference <span class="text-danger">*</span></label>
+                                        <label for="reference">Nomor Referensi <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" name="reference" required
                                             value="{{ $sale->reference }}" readonly>
                                     </div>
                                 </div>
 
                                 <div class="col-lg-4">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="date">Date <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" name="date" required
-                                                value="{{ $sale->date }}">
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="date">Tanggal <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" name="date" required
+                                            value="{{ $sale->date }}">
                                     </div>
                                 </div>
                             </div>
@@ -54,6 +70,7 @@
 
                                 $cartItems = Cart::instance('sale')->content();
 
+                                // Subtotal item (server-truth) — sesuai struktur detail (price, qty, discount, tax)
                                 $subtotalServer = $cartItems->sum(function ($i) {
                                     $price = (int) $i->price;
                                     $qty = data_get($i->options, 'source_type') === 'second' ? 1 : (int) $i->qty;
@@ -62,6 +79,7 @@
                                     return max(0, $price * $qty - $disc + $tax);
                                 });
 
+                                // Normalisasi angka ribuan yang mungkin disimpan x100 (kebiasaan impor)
                                 $normalize100 = function ($amount) use ($subtotalServer) {
                                     $amount = (int) $amount;
                                     if (
@@ -76,7 +94,7 @@
                                 };
                             @endphp
 
-                            {{-- ========== Editor Keranjang (isolasi dari Livewire) ========== --}}
+                            {{-- ========== Editor Keranjang (tetap pakai partial baris agar selaras server) ========== --}}
                             <div wire:ignore id="cart-editor">
                                 <div class="card shadow-sm mb-3">
                                     <div class="card-body p-2">
@@ -85,16 +103,17 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Produk</th>
-                                                        <th style="width:110px" class="text-right">Harga</th>
+                                                        <th style="width:110px" class="text-right">Harga Jual</th>
                                                         <th style="width:90px" class="text-center">Qty</th>
-                                                        <th style="width:120px" class="text-right">Diskon</th>
-                                                        <th style="width:100px" class="text-right">Pajak</th>
+                                                        <th style="width:120px" class="text-right">Diskon Item</th>
+                                                        <th style="width:100px" class="text-right">Pajak Item</th>
                                                         <th style="width:140px" class="text-right">Sub Total</th>
                                                         <th style="width:42px"></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     @foreach ($cartItems as $it)
+                                                        {{-- Tetap gunakan partial agar markup server (rowHtml) konsisten --}}
                                                         @include('sale::partials.edit-row', ['it' => $it])
                                                     @endforeach
                                                 </tbody>
@@ -114,7 +133,7 @@
                                     </div>
                                 </div>
 
-                                {{-- === Tambah Item Manual (dekat tabel) === --}}
+                                {{-- === Tambah Item Manual === --}}
                                 <div class="card mb-3" wire:ignore>
                                     <div class="card-body">
                                         <h6 class="mb-2">Tambah Item Manual</h6>
@@ -132,9 +151,8 @@
                                                     class="form-control" placeholder="Qty">
                                             </div>
                                             <div class="col-md-3">
-                                                <button id="btnAddManual" type="button" class="btn btn-success">
-                                                    Tambah
-                                                </button>
+                                                <button id="btnAddManual" type="button"
+                                                    class="btn btn-success">Tambah</button>
                                             </div>
                                         </div>
                                         <small class="text-muted d-block mt-1">
@@ -154,18 +172,16 @@
                                         <select class="form-control" name="status" id="status" required>
                                             <option {{ $sale->status == 'Pending' ? 'selected' : '' }} value="Pending">
                                                 Pending</option>
-                                            <option {{ $sale->status == 'Shipped' ? 'selected' : '' }} value="Shipped">
-                                                Shipped</option>
                                             <option {{ $sale->status == 'Completed' ? 'selected' : '' }} value="Completed">
                                                 Completed</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                {{-- Payment Method (bisa diubah) + bank_name saat Transfer --}}
+                                {{-- Metode Pembayaran + bank_name saat Transfer --}}
                                 <div class="col-lg-4">
                                     <div class="form-group" x-data="{ pm: '{{ old('payment_method', $sale->payment_method) }}' }">
-                                        <label class="mb-1">Payment Method <span class="text-danger">*</span></label>
+                                        <label class="mb-1">Metode Pembayaran <span class="text-danger">*</span></label>
                                         <select name="payment_method" class="form-control" x-model="pm">
                                             <option value="Tunai">Tunai</option>
                                             <option value="Transfer">Transfer</option>
@@ -178,17 +194,17 @@
                                                 value="{{ old('bank_name', $sale->bank_name) }}"
                                                 placeholder="BCA a.n. ..." :disabled="pm !== 'Transfer'"
                                                 x-effect="if(pm !== 'Transfer'){ $el.value = '' }">
-                                            <small class="text-muted">Dicatat di pembayaran sebagai catatan.</small>
+                                            <small class="text-muted">Akan muncul pada catatan pembayaran.</small>
                                         </div>
                                     </div>
                                 </div>
 
-                                {{-- Kolom kiri tambahan: ongkir, pajak %, diskon % --}}
+                                {{-- Ongkir, Pajak (%), Diskon (%) sesuai field header sale --}}
                                 <div class="col-lg-4">
                                     <div class="form-row">
                                         <div class="col-12">
                                             <div class="form-group">
-                                                <label for="shipping_amount">Ongkir</label>
+                                                <label for="shipping_amount">Biaya Kirim</label>
                                                 @php $shipValue = $normalize100($sale->shipping_amount ?? 0); @endphp
                                                 <input type="text" id="shipping_amount" name="shipping_amount"
                                                     class="form-control js-money"
@@ -217,7 +233,7 @@
                             </div>
 
                             @php
-                                // >>>>>>>>>> PENTING: gunakan aggregate header paid_amount agar konsisten
+                                // Catatan: gunakan aggregate header paid_amount agar konsisten
                                 $existingPaid = (int) ($sale->paid_amount ?? 0);
                             @endphp
 
@@ -231,8 +247,8 @@
                                             value="{{ number_format($existingPaid, 0, ',', '.') }}"
                                             placeholder="mis. 1.500.000">
                                         <small class="text-muted">
-                                            Isi bila ingin menambah/mengurangi pembayaran (refund). Kosongkan = tetap
-                                            seperti total pembayaran saat ini.
+                                            Isi bila ingin menambah/mengurangi pembayaran (refund). Kosongkan = biarkan
+                                            total pembayaran saat ini.
                                         </small>
                                     </div>
 
@@ -251,13 +267,8 @@
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <strong>Preview Status Baru</strong>
                                             <span class="badge"
-                                                :class="{
-                                                    'badge-success': status === 'Paid',
-                                                    'badge-warning': status === 'Partial',
-                                                    'badge-secondary': status === 'Unpaid'
-                                                }"
-                                                x-text="status">
-                                            </span>
+                                                :class="{ 'badge-success': status === 'Paid', 'badge-warning': status === 'Partial', 'badge-secondary': status === 'Unpaid' }"
+                                                x-text="status"></span>
                                         </div>
 
                                         <div class="small text-muted mb-2">
@@ -306,16 +317,15 @@
                             {{-- ===== /Panel Ringkasan ===== --}}
 
                             <div class="form-group mt-3">
-                                <label for="note">Note (If Needed)</label>
+                                <label for="note">Catatan</label>
                                 <textarea name="note" id="note" rows="5" class="form-control">{{ $sale->note }}</textarea>
                             </div>
 
                             <div class="mt-3 d-flex">
-                                <a href="{{ url()->previous() ?: route('sales.index') }}" class="btn btn-light mr-2">
-                                    Cancel
-                                </a>
+                                <a href="{{ url()->previous() ?: route('sales.index') }}"
+                                    class="btn btn-light mr-2">Batal</a>
                                 <button type="submit" class="btn btn-primary">
-                                    Update Sale <i class="bi bi-check"></i>
+                                    Simpan Perubahan <i class="bi bi-check"></i>
                                 </button>
                             </div>
                         </form>
@@ -394,39 +404,38 @@
 
         /** ================= fetch wrapper ================= */
         async function postJSON(url, payload, timeoutMs = 15000) {
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), timeoutMs);
-
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': getCsrfToken(),
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(payload),
-            signal: ctl.signal
-        });
-
-        let json;
-        try { json = await res.json(); }
-        catch { throw new Error('Respon bukan JSON valid'); }
-
-        if (!res.ok || json.ok === false) {
-            throw new Error(json.message || ('HTTP ' + res.status));
+            const ctl = new AbortController();
+            const timer = setTimeout(() => ctl.abort(), timeoutMs);
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
+                    signal: ctl.signal
+                });
+                let json;
+                try {
+                    json = await res.json();
+                } catch {
+                    throw new Error('Respon bukan JSON valid');
+                }
+                if (!res.ok || json.ok === false) {
+                    throw new Error(json.message || ('HTTP ' + res.status));
+                }
+                return json;
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    throw new Error('Permintaan timeout. Coba lagi.');
+                }
+                throw err;
+            } finally {
+                clearTimeout(timer);
+            }
         }
-        return json;
-    } catch (err) {
-        if (err.name === 'AbortError') {
-            throw new Error('Permintaan timeout. Coba lagi.');
-        }
-        throw err;
-    } finally {
-        clearTimeout(timer);
-    }
-}
-
 
         /** ================= Invoice Summary (Alpine) ================= */
         function invoiceSummary({
@@ -437,7 +446,7 @@
             return {
                 WARN_ABS: 100000,
                 WARN_PCT: 5,
-                AUTO_K: true, // ⇐ angka pendek dianggap ribuan (100 ⇒ 100.000) bila transaksi ribuan
+                AUTO_K: true,
                 existingPaid: parseInt(existingPaid || 0),
                 subtotal: parseInt(initialSubtotal || 0),
                 shipping: 0,
@@ -456,12 +465,10 @@
                     const elDisc = document.getElementById(ids.disc);
                     const elPaid = document.getElementById(ids.paid);
 
-                    // Subtotal dari DOM + observe perubahan
                     const readSubtotal = () => this.subtotal = stripMoney(elSub?.textContent || '0');
                     if (elSub) {
                         readSubtotal();
-                        const mo = new MutationObserver(readSubtotal);
-                        mo.observe(elSub, {
+                        new MutationObserver(readSubtotal).observe(elSub, {
                             childList: true,
                             subtree: true,
                             characterData: true
@@ -489,22 +496,19 @@
 
                     const readPaid = () => {
                         let v = getAN(elPaid);
-                        // ==== Smart short-hand: 100 => 100.000 jika transaksi ribuan ====
                         if (this.AUTO_K && v > 0 && v < 1000 && (this.subtotal >= 5000 || this.shipping >= 5000)) {
                             v = v * 1000;
-                            if (elPaid?._an) elPaid._an.set(v); // tampilkan sebagai 100.000
+                            if (elPaid?._an) elPaid._an.set(v);
                         }
                         this.targetPaid = v;
                     };
                     if (elPaid) {
                         readPaid();
                         elPaid.addEventListener('input', readPaid);
-                        // Anti autofill: paksa re-format 2x setelah load
                         setTimeout(readPaid, 120);
                         setTimeout(readPaid, 400);
                     }
 
-                    // Unmask saat submit (uang ⇒ integer)
                     const form = document.getElementById('sale-form');
                     form?.addEventListener('submit', () => {
                         [ids.paid, ids.ship].forEach(id => {
@@ -574,8 +578,6 @@
                     const t = parseInt(this.tax || 0, 10) || 0;
                     return Math.max(0, (p - d + t) * q);
                 },
-
-                // Tetap disediakan sebagai alias untuk kompatibilitas internal
                 get lineSubtotalLocal() {
                     return this.lineSubtotal;
                 },
@@ -631,23 +633,18 @@
                             price: this.price,
                             qty: (this.source === 'second') ? 1 : this.qty,
                             discount: this.discount,
-                            tax: this.tax,
+                            tax: this.tax
                         });
 
-                        // rowId bisa berubah (remove+add di server)
                         if (data.rowIdNew && data.rowIdNew !== this.rowId) {
                             this.rowId = data.rowIdNew;
                             this.$root?.setAttribute('data-rowid', this.rowId);
                         }
-
-                        // Subtotal item (server truth)
                         const subEl = document.getElementById('js-cart-subtotal');
                         if (subEl) {
                             subEl.textContent = data.formatted?.subtotalItems ?? formatIDR(data.subtotalItems);
                             subEl.dataset.raw = String(data.subtotalItems ?? 0);
                         }
-
-                        // Subtotal baris (server)
                         const lineEl = this.$root?.querySelector('.js-line-subtotal');
                         if (lineEl) {
                             lineEl.textContent = data.formatted?.lineSubtotal ?? formatIDR(data.lineSubtotal);
@@ -715,7 +712,6 @@
             const qty = document.getElementById('m_qty');
             const tbody = document.querySelector('#edit-cart-table tbody');
 
-            // Enter to add
             [name, price, qty].forEach(el => {
                 el?.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
@@ -747,18 +743,19 @@
                 }
 
                 btn.disabled = true;
-// 👇 JANGAN di-await
-Swal.fire({
-    title: 'Menambahkan...',
-    didOpen: () => Swal.showLoading(),
-    allowOutsideClick: false
-});
+                Swal.fire({
+                    title: 'Menambahkan...',
+                    didOpen: () => Swal.showLoading(),
+                    allowOutsideClick: false
+                });
 
-try {
-    const data = await postJSON(window.URLS.addManual, { name: nm, price: pr, qty: q });
-
-    // Tutup modal loading sebelum tampilkan success
-    Swal.close();
+                try {
+                    const data = await postJSON(window.URLS.addManual, {
+                        name: nm,
+                        price: pr,
+                        qty: q
+                    });
+                    Swal.close();
 
                     if (data.rowHtml) {
                         const temp = document.createElement('tbody');
@@ -788,14 +785,22 @@ try {
                     if (price) price._an ? price._an.clear(true) : (price.value = '');
                     if (qty) qty.value = 1;
 
-                    Swal.fire({ icon: 'success', title: 'Item manual ditambahkan', timer: 1200, showConfirmButton: false });
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Item manual ditambahkan',
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
                 } catch (e) {
-    // Pastikan loading ditutup meski error
-    Swal.close();
-    Swal.fire({ icon: 'error', title: 'Gagal', text: e.message || 'Tidak bisa menambah item.' });
-} finally {
-    btn.disabled = false;
-}
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: e.message || 'Tidak bisa menambah item.'
+                    });
+                } finally {
+                    btn.disabled = false;
+                }
             });
 
             // Konfirmasi submit + unmask AN + cegah double submit
