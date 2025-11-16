@@ -9,6 +9,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media; // FIX: Import untuk conversions
 use Modules\Adjustment\Entities\StockMovement;
+use Modules\Adjustment\Entities\AdjustedProduct;
 
 class Product extends Model implements HasMedia
 {
@@ -71,8 +72,7 @@ class Product extends Model implements HasMedia
 
     public function adjustedProducts()
     {
-        return $this->hasMany(\Modules\Adjustment\Entities\AdjustedProduct::class, 'productid');
-    }
+        return $this->hasMany(AdjustedProduct::class, 'product_id');}
 
     // Relasi ke stock movements (polymorphic, adaptif ke DB current)
     public function stockMovements()

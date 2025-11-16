@@ -3,7 +3,7 @@
     <div class="col-lg-8">
         {{-- Alert for Used Products --}}
         @if (!isset($product))
-            <div class="alert alert-warning shadow-sm mb-4" role="alert">
+            <div class="alert alert-warning second-alert-warning second-shadow-sm mb-4" role="alert">
                 <div class="d-flex align-items-start">
                     <i class="cil-info mr-3 mt-1" style="font-size: 1.5rem;"></i>
                     <div>
@@ -18,7 +18,7 @@
         @endif
 
         {{-- Basic Info Card --}}
-        <div class="card shadow-sm mb-4">
+        <div class="card second-shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-bottom">
                 <h6 class="mb-0 font-weight-bold">
                     <i class="cil-info mr-2 text-primary"></i>
@@ -34,10 +34,15 @@
                                 <i class="cil-tag mr-1 text-muted"></i> Nama Barang
                                 <span class="text-danger">*</span>
                             </label>
-                            <input type="text" id="name" name="name"
-                                class="form-control form-control-lg @error('name') is-invalid @enderror"
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                class="form-control form-control-lg second-form-control-lg @error('name') is-invalid @enderror"
                                 value="{{ old('name', $product->name ?? '') }}"
-                                placeholder="Contoh: Ban Bekas Bridgestone 185/70 R14" required>
+                                placeholder="Contoh: Ban Bekas Bridgestone 185/70 R14"
+                                required
+                            >
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -55,13 +60,18 @@
                                 <i class="cil-folder mr-1 text-muted"></i> Kategori
                                 <span class="text-danger">*</span>
                             </label>
-                            <select id="category_id" name="category_id"
-                                class="form-control form-control-lg @error('category_id') is-invalid @enderror"
-                                required>
+                            <select
+                                id="category_id"
+                                name="category_id"
+                                class="form-control form-control-lg second-form-control-lg @error('category_id') is-invalid @enderror"
+                                required
+                            >
                                 <option value="">-- Pilih Kategori --</option>
                                 @foreach ($categories as $category)
-                                    <option value="{{ $category->id }}"
-                                        {{ (isset($product) && $product->category_id == $category->id) || old('category_id') == $category->id ? 'selected' : '' }}>
+                                    <option
+                                        value="{{ $category->id }}"
+                                        {{ (isset($product) && $product->category_id == $category->id) || old('category_id') == $category->id ? 'selected' : '' }}
+                                    >
                                         {{ $category->category_name }}
                                     </option>
                                 @endforeach
@@ -78,12 +88,17 @@
                             <label for="brand_id" class="form-label font-weight-semibold">
                                 <i class="cil-bookmark mr-1 text-muted"></i> Merek
                             </label>
-                            <select id="brand_id" name="brand_id"
-                                class="form-control form-control-lg @error('brand_id') is-invalid @enderror">
+                            <select
+                                id="brand_id"
+                                name="brand_id"
+                                class="form-control form-control-lg second-form-control-lg @error('brand_id') is-invalid @enderror"
+                            >
                                 <option value="">-- Tanpa Merek --</option>
                                 @foreach ($brands as $brand)
-                                    <option value="{{ $brand->id }}"
-                                        {{ (isset($product) && $product->brand_id == $brand->id) || old('brand_id') == $brand->id ? 'selected' : '' }}>
+                                    <option
+                                        value="{{ $brand->id }}"
+                                        {{ (isset($product) && $product->brand_id == $brand->id) || old('brand_id') == $brand->id ? 'selected' : '' }}
+                                    >
                                         {{ $brand->name }}
                                     </option>
                                 @endforeach
@@ -101,10 +116,15 @@
                                 <i class="cil-barcode mr-1 text-muted"></i> Kode Unik
                                 <span class="text-danger">*</span>
                             </label>
-                            <input type="text" id="unique_code" name="unique_code"
-                                class="form-control form-control-lg @error('unique_code') is-invalid @enderror"
+                            <input
+                                type="text"
+                                id="unique_code"
+                                name="unique_code"
+                                class="form-control form-control-lg second-form-control-lg @error('unique_code') is-invalid @enderror"
                                 value="{{ old('unique_code', $product->unique_code ?? 'SH-' . strtoupper(substr(md5(time()), 0, 6))) }}"
-                                placeholder="SH-XXXXXX" required>
+                                placeholder="SH-XXXXXX"
+                                required
+                            >
                             @error('unique_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -119,7 +139,7 @@
         </div>
 
         {{-- Specifications Card --}}
-        <div class="card shadow-sm mb-4">
+        <div class="card second-shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-bottom">
                 <h6 class="mb-0 font-weight-bold">
                     <i class="cil-settings mr-2 text-primary"></i>
@@ -134,9 +154,14 @@
                             <label for="size" class="form-label font-weight-semibold">
                                 <i class="cil-resize-both mr-1 text-muted"></i> Ukuran
                             </label>
-                            <input type="text" id="size" name="size"
-                                class="form-control form-control-lg @error('size') is-invalid @enderror"
-                                value="{{ old('size', $product->size ?? '') }}" placeholder="185/70 R14">
+                            <input
+                                type="text"
+                                id="size"
+                                name="size"
+                                class="form-control form-control-lg second-form-control-lg @error('size') is-invalid @enderror"
+                                value="{{ old('size', $product->size ?? '') }}"
+                                placeholder="185/70 R14"
+                            >
                             @error('size')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -149,9 +174,14 @@
                             <label for="ring" class="form-label font-weight-semibold">
                                 <i class="cil-sun mr-1 text-muted"></i> Ring
                             </label>
-                            <input type="text" id="ring" name="ring"
-                                class="form-control form-control-lg @error('ring') is-invalid @enderror"
-                                value="{{ old('ring', $product->ring ?? '') }}" placeholder="14">
+                            <input
+                                type="text"
+                                id="ring"
+                                name="ring"
+                                class="form-control form-control-lg second-form-control-lg @error('ring') is-invalid @enderror"
+                                value="{{ old('ring', $product->ring ?? '') }}"
+                                placeholder="14"
+                            >
                             @error('ring')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -164,10 +194,16 @@
                             <label for="product_year" class="form-label font-weight-semibold">
                                 <i class="cil-calendar mr-1 text-muted"></i> Tahun
                             </label>
-                            <input type="number" id="product_year" name="product_year"
-                                class="form-control form-control-lg @error('product_year') is-invalid @enderror"
+                            <input
+                                type="number"
+                                id="product_year"
+                                name="product_year"
+                                class="form-control form-control-lg second-form-control-lg @error('product_year') is-invalid @enderror"
                                 value="{{ old('product_year', $product->product_year ?? '') }}"
-                                placeholder="{{ date('Y') }}" min="1990" max="{{ date('Y') }}">
+                                placeholder="{{ date('Y') }}"
+                                min="1990"
+                                max="{{ date('Y') }}"
+                            >
                             @error('product_year')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -178,7 +214,7 @@
         </div>
 
         {{-- Pricing Card --}}
-        <div class="card shadow-sm mb-4">
+        <div class="card second-shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-bottom">
                 <h6 class="mb-0 font-weight-bold">
                     <i class="cil-dollar mr-2 text-primary"></i>
@@ -194,9 +230,14 @@
                                 <i class="cil-arrow-circle-bottom mr-1 text-muted"></i> Harga Beli
                                 <span class="text-danger">*</span>
                             </label>
-                            <input type="text" id="purchase_price" name="purchase_price"
-                                class="form-control form-control-lg @error('purchase_price') is-invalid @enderror"
-                                value="{{ old('purchase_price', $product->purchase_price ?? '0') }}" required>
+                            <input
+                                type="text"
+                                id="purchase_price"
+                                name="purchase_price"
+                                class="form-control form-control-lg second-form-control-lg @error('purchase_price') is-invalid @enderror"
+                                value="{{ old('purchase_price', $product->purchase_price ?? '0') }}"
+                                required
+                            >
                             @error('purchase_price')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -214,9 +255,14 @@
                                 <i class="cil-arrow-circle-top mr-1 text-muted"></i> Harga Jual
                                 <span class="text-danger">*</span>
                             </label>
-                            <input type="text" id="selling_price" name="selling_price"
-                                class="form-control form-control-lg @error('selling_price') is-invalid @enderror"
-                                value="{{ old('selling_price', $product->selling_price ?? '0') }}" required>
+                            <input
+                                type="text"
+                                id="selling_price"
+                                name="selling_price"
+                                class="form-control form-control-lg second-form-control-lg @error('selling_price') is-invalid @enderror"
+                                value="{{ old('selling_price', $product->selling_price ?? '0') }}"
+                                required
+                            >
                             @error('selling_price')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -229,7 +275,7 @@
 
                     {{-- Profit Margin --}}
                     <div class="col-12">
-                        <div class="alert alert-info" id="profitMarginAlert" style="display: none;">
+                        <div class="alert alert-info second-alert-info" id="profitMarginAlert" style="display: none;">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong>Margin Keuntungan:</strong>
@@ -246,7 +292,7 @@
         </div>
 
         {{-- Condition & Status Card --}}
-        <div class="card shadow-sm">
+        <div class="card second-shadow-sm">
             <div class="card-header bg-white py-3 border-bottom">
                 <h6 class="mb-0 font-weight-bold">
                     <i class="cil-notes mr-2 text-primary"></i>
@@ -263,9 +309,12 @@
                                     <i class="cil-task mr-1 text-muted"></i> Status Produk
                                     <span class="text-danger">*</span>
                                 </label>
-                                <select id="status" name="status"
-                                    class="form-control form-control-lg @error('status') is-invalid @enderror"
-                                    required>
+                                <select
+                                    id="status"
+                                    name="status"
+                                    class="form-control form-control-lg second-form-control-lg @error('status') is-invalid @enderror"
+                                    required
+                                >
                                     <option value="available" {{ $product->status == 'available' ? 'selected' : '' }}>
                                         Tersedia
                                     </option>
@@ -290,9 +339,13 @@
                             <label for="condition_notes" class="form-label font-weight-semibold">
                                 <i class="cil-pencil mr-1 text-muted"></i> Deskripsi Kondisi
                             </label>
-                            <textarea id="condition_notes" name="condition_notes" rows="4"
-                                class="form-control @error('condition_notes') is-invalid @enderror"
-                                placeholder="Jelaskan kondisi fisik, kerusakan, atau kekurangan produk secara detail...">{{ old('condition_notes', $product->condition_notes ?? '') }}</textarea>
+                            <textarea
+                                id="condition_notes"
+                                name="condition_notes"
+                                rows="4"
+                                class="form-control second-form-textarea @error('condition_notes') is-invalid @enderror"
+                                placeholder="Jelaskan kondisi fisik, kerusakan, atau kekurangan produk secara detail..."
+                            >{{ old('condition_notes', $product->condition_notes ?? '') }}</textarea>
                             @error('condition_notes')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -309,7 +362,7 @@
 
     {{-- Right Column: Images --}}
     <div class="col-lg-4">
-        <div class="card shadow-sm sticky-sidebar">
+        <div class="card second-shadow-sm sticky-sidebar">
             <div class="card-header bg-white py-3 border-bottom">
                 <h6 class="mb-0 font-weight-bold">
                     <i class="cil-image mr-2 text-primary"></i>
@@ -321,7 +374,7 @@
                     <div id="document-dropzone" class="dropzone"></div>
                 </div>
 
-                <div class="alert alert-warning mt-3" role="alert">
+                <div class="alert alert-warning second-alert-warning mt-3" role="alert">
                     <small>
                         <i class="cil-camera mr-1"></i>
                         <strong>Sangat Penting:</strong> Upload foto kondisi aktual dari berbagai sudut.
@@ -349,23 +402,24 @@
 
 @push('page_styles')
     <style>
-        .shadow-sm {
+        /* Khusus halaman Produk Bekas / Second */
+
+        .second-shadow-sm {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
         }
 
-        .form-control-lg {
+        .second-form-control-lg {
             height: 50px;
             font-size: 1rem;
         }
 
-        .form-control:focus,
-        select.form-control:focus,
-        textarea.form-control:focus {
+        .second-form-control-lg:focus,
+        .second-form-textarea:focus {
             border-color: #4834DF;
             box-shadow: 0 0 0 0.2rem rgba(72, 52, 223, 0.25);
         }
 
-        textarea.form-control {
+        .second-form-textarea {
             resize: vertical;
             min-height: 80px;
         }
@@ -380,14 +434,14 @@
             padding: 0.5rem 1rem;
         }
 
-        .alert-info {
+        .second-alert-info {
             background-color: #e7f6fc;
             border-color: #8ad4ee;
             color: #115293;
             border-radius: 8px;
         }
 
-        .alert-warning {
+        .second-alert-warning {
             background-color: #fff3cd;
             border-color: #ffc107;
             color: #856404;

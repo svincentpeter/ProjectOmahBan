@@ -10,18 +10,69 @@
                     Invoice <strong style="font-size: 1.0rem;">{{ $sale->reference }}</strong> berhasil dibuat!
                 </div>
 
-                {{-- Customer Name --}}
-                @if (!empty($sale->customer_name))
+                {{-- Customer Info (Updated) --}}
+                @if ($sale->customer_id || $sale->customer_name)
                     <div class="alert alert-info"
-                        style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); border: none; border-left: 5px solid #17a2b8; border-radius: 10px; padding: 1rem; display: flex; align-items: center; margin-bottom: 1.0rem;">
-                        <i class="bi bi-person-badge-fill"
-                            style="font-size: 1rem; margin-right: 1rem; color: #17a2b8;"></i>
-                        <div>
-                            <strong style="font-size: 1rem;">Customer:</strong>
-                            <span style="font-size: 1rem; font-weight: 600;">{{ $sale->customer_name }}</span>
+                        style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); border: none; border-left: 5px solid #17a2b8; border-radius: 10px; padding: 1rem; display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.0rem;">
+
+                        <div style="display: flex; align-items: flex-start;">
+                            <i class="bi bi-person-circle"
+                                style="font-size: 1.6rem; margin-right: 1rem; color: #17a2b8;"></i>
+
+                            <div>
+                                {{-- Nama utama pakai accessor --}}
+                                <h6 style="margin: 0 0 0.25rem 0; font-weight: 700; font-size: 1.05rem;">
+                                    {{ $sale->customer_display_name }}
+                                </h6>
+
+                                <div class="small text-muted">
+                                    {{-- Email: prioritas dari relasi customer --}}
+                                    @if ($sale->customer && $sale->customer->customer_email)
+                                        <div class="mb-1">
+                                            <i class="bi bi-envelope mr-1"></i>
+                                            {{ $sale->customer->customer_email }}
+                                        </div>
+                                    @elseif($sale->customer_email)
+                                        <div class="mb-1">
+                                            <i class="bi bi-envelope mr-1"></i>
+                                            {{ $sale->customer_email }}
+                                        </div>
+                                    @endif
+
+                                    {{-- Phone --}}
+                                    @if ($sale->customer && $sale->customer->customer_phone)
+                                        <div class="mb-1">
+                                            <i class="bi bi-telephone mr-1"></i>
+                                            {{ $sale->customer->customer_phone }}
+                                        </div>
+                                    @elseif($sale->customer_phone)
+                                        <div class="mb-1">
+                                            <i class="bi bi-telephone mr-1"></i>
+                                            {{ $sale->customer_phone }}
+                                        </div>
+                                    @endif
+
+                                    {{-- City --}}
+                                    @if ($sale->customer && $sale->customer->city)
+                                        <div>
+                                            <i class="bi bi-geo-alt mr-1"></i>
+                                            {{ $sale->customer->city }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
+
+                        {{-- Link ke detail customer kalau punya customer_id --}}
+                        @if ($sale->customer_id)
+                            <a href="{{ route('customers.show', $sale->customer_id) }}"
+                                class="btn btn-sm btn-outline-primary" target="_blank" title="Lihat Detail Customer">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        @endif
                     </div>
                 @endif
+
 
                 {{-- Detail Items --}}
                 <div class="table-responsive" style="margin-bottom: 1.5rem;">
@@ -525,21 +576,126 @@
                     </table>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label for="customer_name" style="font-weight: 600; font-size: 1.05rem; color: #495057;">
-                        <i class="bi bi-person-fill" style="margin-right: 0.5rem;"></i> Nama Customer
-                        <span class="badge badge-secondary" style="font-size: 0.75rem;">Opsional</span>
-                    </label>
-                    <input type="text" id="customer_name" class="form-control" wire:model.defer="customer_name"
-                        style="padding: 0.75rem; border-radius: 8px; border: 2px solid #ced4da; font-size: 1rem;"
-                        placeholder="Kosongkan jika tidak perlu" maxlength="255">
-                    <small class="form-text text-muted" style="font-size: 0.9rem;">
-                        💡 Isi hanya jika customer meminta namanya dicantumkan di invoice
-                    </small>
-                    @error('customer_name')
-                        <span class="text-danger" style="display: block; margin-top: 0.5rem;">{{ $message }}</span>
-                    @enderror
+                {{-- ==================== CUSTOMER SECTION (REVISED) ==================== --}}
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-person-circle text-primary mr-2" style="font-size: 1.5rem;"></i>
+                            <div>
+                                <h6 class="mb-0 font-weight-bold">Data Customer</h6>
+                                <small class="text-muted">Pilih dari database atau input manual</small>
+                            </div>
+                            <span class="badge badge-light-info ml-auto">Opsional</span>
+                        </div>
+
+                        {{-- Toggle: Select Customer atau Manual Input (PAKAI LIVEWIRE) --}}
+                        <div class="btn-group w-100 mb-3" role="group" aria-label="Customer mode">
+                            <button type="button"
+                                class="btn btn-outline-primary {{ $customer_mode === 'select' ? 'active' : '' }}"
+                                wire:click="setCustomerMode('select')" id="btn-select-customer">
+                                <i class="bi bi-search mr-1"></i> Pilih Customer
+                            </button>
+                            <button type="button"
+                                class="btn btn-outline-primary {{ $customer_mode === 'manual' ? 'active' : '' }}"
+                                wire:click="setCustomerMode('manual')" id="btn-manual-customer">
+                                <i class="bi bi-pencil mr-1"></i> Input Manual
+                            </button>
+                        </div>
+
+                        {{-- Mode 1: Select Customer dari Database --}}
+                        <div id="select-customer-mode" @class(['d-none' => $customer_mode !== 'select'])>
+                            <div class="form-group mb-3">
+                                <label class="small font-weight-semibold mb-2">
+                                    <i class="bi bi-person-check mr-1 text-primary"></i> Pilih Customer Terdaftar
+                                </label>
+
+                                {{-- Penting: isolasi Select2 dari Livewire --}}
+                                <div wire:ignore>
+                                    <select class="form-control select2-customer" id="select-customer"
+                                        style="width: 100%;">
+                                        <option value="">-- Ketik untuk mencari customer --</option>
+                                    </select>
+                                </div>
+
+                                
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-info-circle mr-1"></i>
+                                    Cari berdasarkan nama, email, atau nomor telepon
+                                </small>
+                            </div>
+
+                            {{-- Display Selected Customer Info (PAKAI DATA LIVEWIRE, persist saat re-render) --}}
+                            <div id="selected-customer-info"
+                                class="alert alert-success border-0 shadow-sm {{ $customer_id ? '' : 'd-none' }}">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-success mr-2 mt-1"
+                                        style="font-size: 1.5rem;"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="font-weight-bold mb-1" id="display-customer-name"
+                                            style="font-size: 1.05rem;">
+                                            {{ $customer_name }}
+                                        </div>
+                                        <div class="small text-muted">
+                                            <div class="mb-1"><i class="bi bi-envelope mr-1"></i>
+                                                <span id="display-customer-email">{{ $customer_email ?: '-' }}</span>
+                                            </div>
+                                            <div class="mb-1"><i class="bi bi-telephone mr-1"></i>
+                                                <span id="display-customer-phone">{{ $customer_phone ?: '-' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle"
+                                        id="clear-customer" title="Hapus Pilihan">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Mode 2: Manual Input Customer --}}
+                        <div id="manual-customer-mode" @class(['d-none' => $customer_mode !== 'manual'])>
+                            <div class="form-group mb-3">
+                                <label class="small font-weight-semibold mb-2">
+                                    <i class="bi bi-person mr-1 text-primary"></i> Nama Customer
+                                </label>
+                                <input type="text" class="form-control" id="manual-customer-name"
+                                    wire:model.defer="customer_name" placeholder="Kosongkan jika tidak perlu">
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-lightbulb mr-1 text-warning"></i>
+                                    Isi hanya jika customer meminta namanya dicantumkan di invoice
+                                </small>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="small font-weight-semibold mb-2">
+                                            <i class="bi bi-envelope mr-1"></i> Email
+                                        </label>
+                                        <input type="email" class="form-control" id="manual-customer-email"
+                                            wire:model.defer="customer_email" placeholder="email@example.com">
+                                        <small class="form-text text-muted">Opsional</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="small font-weight-semibold mb-2">
+                                            <i class="bi bi-telephone mr-1"></i> No. Telepon
+                                        </label>
+                                        <input type="text" class="form-control" id="manual-customer-phone"
+                                            wire:model.defer="customer_phone" placeholder="08123456789">
+                                        <small class="form-text text-muted">Opsional</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Hidden input untuk customer_id terpilih --}}
+                        <input type="hidden" id="selected-customer-id" wire:model.defer="customer_id">
+                    </div>
                 </div>
+                {{-- ==================== END CUSTOMER SECTION ==================== --}}
+
 
                 <button wire:click="createInvoice" wire:loading.attr="disabled" class="btn btn-primary btn-block"
                     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 0.6rem; font-size: 0.95rem; font-weight: 600; border-radius: 8px; transition: all 0.3s; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);"
@@ -700,6 +856,101 @@
     </div>
     {{-- ====== /Modal ====== --}}
 </div> {{-- <-- Ini penutup ROOT Livewire. Tidak ada elemen HTML lain setelahnya --}}
+@push('styles')
+    {{-- ... existing styles ... --}}
+
+    <style>
+        /* ========== CUSTOMER SECTION STYLES ========== */
+        .btn-group-toggle .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn-group-toggle .btn.active {
+            background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
+            color: white;
+            border-color: #4834DF;
+            box-shadow: 0 4px 12px rgba(72, 52, 223, 0.3);
+        }
+
+        .btn-group-toggle .btn:not(.active) {
+            background: white;
+            color: #4834DF;
+            border-color: #e0e0e0;
+        }
+
+        .btn-group-toggle .btn:not(.active):hover {
+            background: #f8f7ff;
+            border-color: #4834DF;
+            transform: translateY(-2px);
+        }
+
+        /* Select2 Customer Dropdown */
+        .select2-customer {
+            font-size: 0.95rem;
+        }
+
+        .select2-result-customer {
+            padding: 8px 0;
+        }
+
+        .select2-result-customer__name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .select2-result-customer__meta {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .select2-result-customer__meta i {
+            color: #a0aec0;
+            margin-right: 4px;
+        }
+
+        /* Selected Customer Info Alert */
+        #selected-customer-info {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #selected-customer-info .btn-outline-danger {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #selected-customer-info .btn-outline-danger:hover {
+            background-color: #e55353;
+            border-color: #e55353;
+            color: white;
+        }
+
+        /* Badge Light Info */
+        .badge-light-info {
+            background-color: #e7f3ff;
+            color: #004085;
+            padding: 0.35em 0.65em;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+    </style>
+@endpush
 
 {{-- SCRIPTS --}}
 @once
@@ -709,6 +960,9 @@
         </script>
 
         <script>
+            // ==========================
+            // Currency helper (AutoNumeric)
+            // ==========================
             function paidBox(entangled, selector) {
                 return {
                     an: null,
@@ -716,10 +970,10 @@
                     el: null,
                     init() {
                         this.el = document.querySelector(selector);
-                        if (!this.el || this.el._anInitialized) return;
-                        this.el._anInitialized = true;
+                        if (!this.el || this.el.anInitialized) return;
+                        this.el.anInitialized = true;
 
-                        const toInt = (s) => (s == null) ? 0 : (parseInt(String(s).replace(/[^\d-]/g, ''), 10) || 0);
+                        const toInt = (s) => s == null ? 0 : (parseInt(String(s).replace(/-/g, ''), 10) || 0);
 
                         if (window.AutoNumeric) {
                             this.an = new AutoNumeric(this.el, {
@@ -728,18 +982,21 @@
                                 decimalPlaces: 0,
                                 unformatOnSubmit: true,
                                 modifyValueOnWheel: false,
-                                minimumValue: '0',
-                                // biar user bisa clear field tanpa warning
+                                minimumValue: 0,
                                 overrideMinMaxLimits: 'invalid',
                                 allowDecimalPadding: false,
                             });
-                            this.$nextTick(() => this.an.set(Number(this.paid || 0)));
+
+                            this.$nextTick(() => {
+                                this.an.set(Number(this.paid) || 0);
+                            });
 
                             const push = () => {
                                 const raw = this.an.getNumber();
                                 const v = raw ? parseInt(raw, 10) : 0;
                                 if (this.paid !== v) this.paid = v;
                             };
+
                             this.el.addEventListener('autoNumeric:rawValueModified', push);
                             this.el.addEventListener('change', push);
                         } else {
@@ -747,27 +1004,34 @@
                                 const v = toInt(this.el.value);
                                 if (this.paid !== v) this.paid = v;
                             };
+
                             this.el.addEventListener('input', push);
                             this.el.addEventListener('change', push);
+
                             this.$nextTick(() => {
-                                const n = Number(this.paid || 0);
+                                const n = Number(this.paid) || 0;
                                 this.el.value = n ? n.toLocaleString('id-ID') : '';
                             });
-                        }
 
-                        this.$watch('paid', (v) => {
-                            const n = Number(v || 0);
-                            if (this.an) {
-                                const current = this.an.getNumber();
-                                if (String(n) !== String(current)) this.an.set(isNaN(n) ? 0 : n);
-                            } else {
-                                this.el.value = n ? n.toLocaleString('id-ID') : '';
-                            }
-                        });
+                            this.$watch('paid', (v) => {
+                                const n = Number(v) || 0;
+                                if (this.an) {
+                                    const current = this.an.getNumber();
+                                    if (String(n) !== String(current)) {
+                                        this.an.set(isNaN(n) ? 0 : n);
+                                    }
+                                } else {
+                                    this.el.value = n ? n.toLocaleString('id-ID') : '';
+                                }
+                            });
+                        }
                     }
-                }
+                };
             }
 
+            // ==========================
+            // Midtrans handlers
+            // ==========================
             document.addEventListener('livewire:initialized', () => {
                 Livewire.on('open-midtrans-snap', (data) => {
                     const snapToken = data?.[0]?.token || null;
@@ -821,6 +1085,199 @@
                     }
                 });
             });
+
+            // ==========================
+            // Customer UI state & Select2 init
+            // ==========================
+            (function() {
+                const MODE_KEY = 'ob_customer_mode';
+                const SELECTED_CACHE_KEY = 'ob_customer_selected';
+
+                let customerMode = localStorage.getItem(MODE_KEY) || 'select';
+
+                function applyMode() {
+                    if (customerMode === 'manual') {
+                        $('#select-customer-mode').hide();
+                        $('#manual-customer-mode').show();
+                        $('#btn-manual-customer').addClass('active');
+                        $('#btn-select-customer').removeClass('active');
+                    } else {
+                        $('#select-customer-mode').show();
+                        $('#manual-customer-mode').hide();
+                        $('#btn-select-customer').addClass('active');
+                        $('#btn-manual-customer').removeClass('active');
+                    }
+                }
+
+                function saveMode(mode) {
+                    customerMode = mode === 'manual' ? 'manual' : 'select';
+                    localStorage.setItem(MODE_KEY, customerMode);
+                    applyMode();
+                }
+
+                function cacheSelectedCustomer(data) {
+                    const cached = {
+                        id: data?.id ?? null,
+                        customer_name: data?.customer_name || data?.text || '',
+                        customer_email: data?.customer_email || '',
+                        customer_phone: data?.customer_phone || '',
+                        city: data?.city || ''
+                    };
+                    localStorage.setItem(SELECTED_CACHE_KEY, JSON.stringify(cached));
+                }
+
+                function clearCachedCustomer() {
+                    localStorage.removeItem(SELECTED_CACHE_KEY);
+                }
+
+                function refreshSelectedInfoUI() {
+                    const id = $('#selected-customer-id').val();
+                    if (id) {
+                        const cached = JSON.parse(localStorage.getItem(SELECTED_CACHE_KEY) || '{}');
+                        if (cached.customer_name) $('#display-customer-name').text(cached.customer_name);
+                        if ('customer_email' in cached) $('#display-customer-email').text(cached.customer_email || '-');
+                        if ('customer_phone' in cached) $('#display-customer-phone').text(cached.customer_phone || '-');
+                        if ('city' in cached) $('#display-customer-city').text(cached.city || '-');
+                        $('#selected-customer-info').removeClass('d-none');
+                    } else {
+                        $('#selected-customer-info').addClass('d-none');
+                    }
+                }
+
+                function initCustomerSelect2() {
+                    const $el = $('#select-customer');
+                    if (!$el.length || $el.data('select2')) return;
+
+                    if (typeof $el.select2 !== 'function') {
+                        console.warn('Select2 belum ter-load di halaman ini.');
+                        return;
+                    }
+
+                    $el.select2({
+                        placeholder: '-- Ketik untuk mencari customer --',
+                        allowClear: true,
+                        ajax: {
+                            url: '{{ route('customers.list') }}',
+                            dataType: 'json',
+                            delay: 250,
+                            data: function(params) {
+                                return {
+                                    search: params.term || '',
+                                    q: params.term || '',
+                                    term: params.term || '',
+                                    page: params.page || 1
+                                };
+                            },
+                            processResults: function(data, params) {
+                                params.page = params.page || 1;
+
+                                const itemsRaw = data?.results ?? data?.data ?? data?.items ?? data ?? [];
+                                const items = Array.isArray(itemsRaw) ? itemsRaw : [];
+                                const results = items.map(it => ({
+                                    id: it.id ?? it.value ?? it.customer_id ?? null,
+                                    customer_name: it.customer_name ?? it.name ?? it.text ?? '',
+                                    customer_email: it.customer_email ?? it.email ?? '',
+                                    customer_phone: it.customer_phone ?? it.phone ?? '',
+                                    city: it.city ?? it.kota ?? '',
+                                    text: it.customer_name ?? it.name ?? it.text ?? ''
+                                })).filter(r => r.id !== null);
+
+                                const more = Boolean(data?.pagination?.more || data?.next_page_url);
+                                return {
+                                    results,
+                                    pagination: {
+                                        more
+                                    }
+                                };
+                            },
+                            cache: true
+                        },
+                        minimumInputLength: 0,
+                        templateResult: function(c) {
+                            if (c.loading) return c.text;
+                            if (!c.id) return c.text;
+                            return $(
+                                '<div class="select2-result-customer">' +
+                                '<div class="select2-result-customer__name">' + (c.customer_name || c
+                                .text) + '</div>' +
+                                '<div class="select2-result-customer__meta">' +
+                                '<i class="bi bi-envelope"></i> ' + (c.customer_email || '-') + ' | ' +
+                                '<i class="bi bi-telephone"></i> ' + (c.customer_phone || '-') + ' | ' +
+                                '<i class="bi bi-geo-alt"></i> ' + (c.city || '-') +
+                                '</div>' +
+                                '</div>'
+                            );
+                        },
+                        templateSelection: function(c) {
+                            return c.customer_name || c.text || '';
+                        },
+                        language: {
+                            inputTooShort: () => 'Ketik untuk mencari customer...',
+                            searching: () => 'Mencari...',
+                            noResults: () => 'Customer tidak ditemukan'
+                        }
+                    });
+
+                    $el.on('select2:select', function(e) {
+                        const d = e.params.data || {};
+                        cacheSelectedCustomer(d);
+
+                        @this.set('customer_id', d.id);
+                        @this.set('customer_name', d.customer_name || d.text || '');
+                        @this.set('customer_email', d.customer_email || '');
+                        @this.set('customer_phone', d.customer_phone || '');
+
+                        $('#selected-customer-id').val(d.id);
+                        $('#display-customer-name').text(d.customer_name || d.text || '');
+                        $('#display-customer-email').text(d.customer_email || '-');
+                        $('#display-customer-phone').text(d.customer_phone || '-');
+                        $('#display-customer-city').text(d.city || '-');
+                        $('#selected-customer-info').removeClass('d-none');
+
+                        saveMode('select');
+                    });
+
+                    $el.on('select2:clear', function() {
+                        clearCachedCustomer();
+
+                        @this.set('customer_id', null);
+                        @this.set('customer_name', '');
+                        @this.set('customer_email', '');
+                        @this.set('customer_phone', '');
+
+                        $('#selected-customer-id').val('');
+                        $('#selected-customer-info').addClass('d-none');
+                    });
+                }
+
+                // Toggle mode (hanya UI)
+                $(document).on('click', '#btn-select-customer', function(e) {
+                    e.preventDefault();
+                    saveMode('select');
+                });
+                $(document).on('click', '#btn-manual-customer', function(e) {
+                    e.preventDefault();
+                    saveMode('manual');
+                });
+
+                function bootCustomerUI() {
+                    applyMode();
+                    initCustomerSelect2();
+                    refreshSelectedInfoUI();
+                }
+
+                // 1)Init saat DOM ready
+                $(function() {
+                    bootCustomerUI();
+                });
+
+                // 2) Init ulang setelah Livewire render
+                if (window.Livewire && typeof Livewire.hook === 'function') {
+                    Livewire.hook('message.processed', () => {
+                        bootCustomerUI();
+                    });
+                }
+            })();
         </script>
     @endpush
 @endonce

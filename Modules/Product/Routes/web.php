@@ -14,9 +14,9 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::resource('products', ProductController::class);
-    Route::post('products/upload', [ProductController::class, 'uploadImage'])->name('dropzone.upload');
-    Route::post('products/delete-image', [ProductController::class, 'deleteImage'])->name('dropzone.delete');
+    Route::post('products/upload', [ProductController::class, 'uploadImage'])->name('products.dropzone.upload');
 
+    Route::post('products/delete-image', [ProductController::class, 'deleteImage'])->name('products.dropzone.delete');
     /*
     |--------------------------------------------------------------------------
     | PRODUCT CATEGORY CRUD

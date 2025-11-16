@@ -53,38 +53,38 @@ class PosController extends Controller
         }
 
         // --- Normalisasi input uang ---
-        $shippingAmount     = $this->sanitizeMoney($request->input('shipping_amount'));
-        $paidAmountRequest  = $this->sanitizeMoney($request->input('paid_amount'));
-        $taxPercent         = (int) ($request->input('tax_percentage') ?? 0);
-        $discountPercent    = (int) ($request->input('discount_percentage') ?? 0);
+        $shippingAmount = $this->sanitizeMoney($request->input('shipping_amount'));
+        $paidAmountRequest = $this->sanitizeMoney($request->input('paid_amount'));
+        $taxPercent = (int) ($request->input('tax_percentage') ?? 0);
+        $discountPercent = (int) ($request->input('discount_percentage') ?? 0);
 
         // --- Hitung subtotal berdasarkan item keranjang ---
         $items = $cart->content();
-        $subtotal    = 0;
-        $totalHpp    = 0;
+        $subtotal = 0;
+        $totalHpp = 0;
 
         foreach ($items as $item) {
-            $qty        = (int) $item->qty;
-            $unitPrice  = (int) $item->price;
-            $line       = $unitPrice * $qty;
+            $qty = (int) $item->qty;
+            $unitPrice = (int) $item->price;
+            $line = $unitPrice * $qty;
 
-            $itemDisc   = (int) data_get($item->options, 'discount', 0);
-            $itemTax    = (int) data_get($item->options, 'tax', 0);
-            $lineNet    = $line - $itemDisc + $itemTax;
+            $itemDisc = (int) data_get($item->options, 'discount', 0);
+            $itemTax = (int) data_get($item->options, 'tax', 0);
+            $lineNet = $line - $itemDisc + $itemTax;
 
-            $subtotal  += $lineNet;
-            $totalHpp  += ((int) data_get($item->options, 'hpp', 0)) * $qty;
+            $subtotal += $lineNet;
+            $totalHpp += ((int) data_get($item->options, 'hpp', 0)) * $qty;
         }
 
-        $taxAmount       = (int) round($subtotal * ($taxPercent / 100));
-        $discountAmount  = (int) round($subtotal * ($discountPercent / 100));
+        $taxAmount = (int) round($subtotal * ($taxPercent / 100));
+        $discountAmount = (int) round($subtotal * ($discountPercent / 100));
 
-        $grandTotal      = max(0, $subtotal + $taxAmount - $discountAmount + $shippingAmount);
+        $grandTotal = max(0, $subtotal + $taxAmount - $discountAmount + $shippingAmount);
 
         // Lindungi dari input salah: paid tidak boleh > total
-        $paidAmount      = (int) min($grandTotal, max(0, $paidAmountRequest));
-        $dueAmount       = max(0, $grandTotal - $paidAmount);
-        $paymentStatus   = $paidAmount >= $grandTotal ? 'Paid' : ($paidAmount > 0 ? 'Partial' : 'Unpaid');
+        $paidAmount = (int) min($grandTotal, max(0, $paidAmountRequest));
+        $dueAmount = max(0, $grandTotal - $paidAmount);
+        $paymentStatus = $paidAmount >= $grandTotal ? 'Paid' : ($paidAmount > 0 ? 'Partial' : 'Unpaid');
 
         DB::beginTransaction();
 
@@ -97,45 +97,45 @@ class PosController extends Controller
 
             // Simpan header sale
             $sale = Sale::create([
-                'date'                => now()->toDateString(),
-                'reference'           => $reference,
-                'user_id'             => auth()->id(),
-                'customer_name'       => $request->input('customer_name') ?: null, // 👈 TAMBAHAN: Simpan customer name
-                'tax_percentage'      => $taxPercent,
+                'date' => now()->toDateString(),
+                'reference' => $reference,
+                'user_id' => auth()->id(),
+                'customer_name' => $request->input('customer_name') ?: null, // 👈 TAMBAHAN: Simpan customer name
+                'tax_percentage' => $taxPercent,
                 'discount_percentage' => $discountPercent,
-                'shipping_amount'     => $shippingAmount,
-                'paid_amount'         => $paidAmount,
-                'total_amount'        => $grandTotal,
-                'due_amount'          => $dueAmount,
-                'status'              => 'Completed',
-                'payment_status'      => $paymentStatus,
-                'payment_method'      => $request->input('payment_method', 'Tunai'),
-                'bank_name'           => $request->input('payment_method') === 'Transfer' ? (string) $request->input('bank_name') : null,
-                'note'                => $request->input('note'),
-                'tax_amount'          => $taxAmount,
-                'discount_amount'     => $discountAmount,
-                'total_hpp'           => $totalHpp,
-                'total_profit'        => max(0, $grandTotal - $taxAmount - $discountAmount - $shippingAmount - $totalHpp), // konservatif
+                'shipping_amount' => $shippingAmount,
+                'paid_amount' => $paidAmount,
+                'total_amount' => $grandTotal,
+                'due_amount' => $dueAmount,
+                'status' => 'Completed',
+                'payment_status' => $paymentStatus,
+                'payment_method' => $request->input('payment_method', 'Tunai'),
+                'bank_name' => $request->input('payment_method') === 'Transfer' ? (string) $request->input('bank_name') : null,
+                'note' => $request->input('note'),
+                'tax_amount' => $taxAmount,
+                'discount_amount' => $discountAmount,
+                'total_hpp' => $totalHpp,
+                'total_profit' => max(0, $grandTotal - $taxAmount - $discountAmount - $shippingAmount - $totalHpp), // konservatif
             ]);
 
             // Simpan detail + lakukan mutasi stok/status
             foreach ($items as $item) {
-                $qty        = (int) $item->qty;
-                $unitPrice  = (int) $item->price;
-                $line       = $unitPrice * $qty;
+                $qty = (int) $item->qty;
+                $unitPrice = (int) $item->price;
+                $line = $unitPrice * $qty;
 
-                $itemDisc   = (int) data_get($item->options, 'discount', 0);
-                $itemTax    = (int) data_get($item->options, 'tax', 0);
-                $lineNet    = $line - $itemDisc + $itemTax;
+                $itemDisc = (int) data_get($item->options, 'discount', 0);
+                $itemTax = (int) data_get($item->options, 'tax', 0);
+                $lineNet = $line - $itemDisc + $itemTax;
 
-                $source     = data_get($item->options, 'source_type', 'new');
-                $code       = (string) data_get($item->options, 'code', data_get($item->options, 'product_code', 'MANUAL'));
-                $hpp        = (int) data_get($item->options, 'hpp', 0);
-                $name       = $item->name;
+                $source = data_get($item->options, 'source_type', 'new');
+                $code = (string) data_get($item->options, 'code', data_get($item->options, 'product_code', 'MANUAL'));
+                $hpp = (int) data_get($item->options, 'hpp', 0);
+                $name = $item->name;
 
-                $productId        = null;
-                $productableType  = null;
-                $productableId    = null;
+                $productId = null;
+                $productableType = null;
+                $productableId = null;
 
                 if ($source === 'new') {
                     $productId = (int) $item->id;
@@ -151,35 +151,35 @@ class PosController extends Controller
                     // Catat mutasi
                     DB::table('stock_movements')->insert([
                         'productable_type' => Product::class,
-                        'productable_id'   => $p->id,
-                        'type'             => 'out',
-                        'quantity'         => $qty,
-                        'description'      => 'Sale #' . $reference,
-                        'user_id'          => auth()->id(),
-                        'created_at'       => now(),
-                        'updated_at'       => now(),
+                        'productable_id' => $p->id,
+                        'type' => 'out',
+                        'quantity' => $qty,
+                        'description' => 'Sale #' . $reference,
+                        'user_id' => auth()->id(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 } elseif ($source === 'second') {
                     // Tandai sold
-                    $second = ProductSecond::lockForUpdate()->findOrFail((int)$item->id);
-                    if (strtolower((string)$second->status) !== 'available') {
+                    $second = ProductSecond::lockForUpdate()->findOrFail((int) $item->id);
+                    if (strtolower((string) $second->status) !== 'available') {
                         throw new \RuntimeException("Produk bekas {$second->name} sudah terjual/tidak tersedia.");
                     }
                     $second->update(['status' => 'sold']);
 
                     $productableType = ProductSecond::class;
-                    $productableId   = $second->id;
+                    $productableId = $second->id;
 
                     // Catat mutasi keluar 1 unit
                     DB::table('stock_movements')->insert([
                         'productable_type' => ProductSecond::class,
-                        'productable_id'   => $second->id,
-                        'type'             => 'out',
-                        'quantity'         => 1,
-                        'description'      => 'Sale (second) #' . $reference,
-                        'user_id'          => auth()->id(),
-                        'created_at'       => now(),
-                        'updated_at'       => now(),
+                        'productable_id' => $second->id,
+                        'type' => 'out',
+                        'quantity' => 1,
+                        'description' => 'Sale (second) #' . $reference,
+                        'user_id' => auth()->id(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 } else {
                     // manual service/item
@@ -187,32 +187,32 @@ class PosController extends Controller
                 }
 
                 SaleDetails::create([
-                    'sale_id'                => $sale->id,
-                    'item_name'              => $name,
-                    'product_id'             => $productId,
-                    'productable_type'       => $productableType,
-                    'productable_id'         => $productableId,
-                    'source_type'            => $source,
-                    'product_name'           => $name,
-                    'product_code'           => $code,
-                    'quantity'               => $qty,
-                    'price'                  => $unitPrice,
-                    'hpp'                    => $hpp,
-                    'unit_price'             => $unitPrice,
-                    'sub_total'              => $lineNet,
-                    'subtotal_profit'        => max(0, ($unitPrice - $hpp) * $qty),
-                    'product_discount_amount'=> $itemDisc,
-                    'product_discount_type'  => data_get($item->options, 'discount_type', 'fixed'),
-                    'product_tax_amount'     => $itemTax,
+                    'sale_id' => $sale->id,
+                    'item_name' => $name,
+                    'product_id' => $productId,
+                    'productable_type' => $productableType,
+                    'productable_id' => $productableId,
+                    'source_type' => $source,
+                    'product_name' => $name,
+                    'product_code' => $code,
+                    'quantity' => $qty,
+                    'price' => $unitPrice,
+                    'hpp' => $hpp,
+                    'unit_price' => $unitPrice,
+                    'sub_total' => $lineNet,
+                    'subtotal_profit' => max(0, ($unitPrice - $hpp) * $qty),
+                    'product_discount_amount' => $itemDisc,
+                    'product_discount_type' => data_get($item->options, 'discount_type', 'fixed'),
+                    'product_tax_amount' => $itemTax,
                 ]);
             }
 
             // Catat pembayaran jika ada (boleh 0)
             SalePayment::create([
-                'date'           => now()->toDateString(),
-                'reference'      => 'INV/' . $sale->reference,
-                'amount'         => $paidAmount,
-                'sale_id'        => $sale->id,
+                'date' => now()->toDateString(),
+                'reference' => 'INV/' . $sale->reference,
+                'amount' => $paidAmount,
+                'sale_id' => $sale->id,
                 'payment_method' => $request->input('payment_method', 'Tunai'),
                 'note' => $request->input('payment_method') === 'Transfer' ? (string) $request->input('bank_name') : null,
             ]);
@@ -238,7 +238,7 @@ class PosController extends Controller
     {
         foreach ($items as $item) {
             $source = data_get($item->options, 'source_type', 'new');
-            $qty    = (int) $item->qty;
+            $qty = (int) $item->qty;
 
             if ($source === 'new') {
                 /** @var Product $p */
@@ -248,7 +248,7 @@ class PosController extends Controller
                 }
             } elseif ($source === 'second') {
                 $second = ProductSecond::lockForUpdate()->findOrFail((int) $item->id);
-                if (strtolower((string)$second->status) !== 'available') {
+                if (strtolower((string) $second->status) !== 'available') {
                     throw new \RuntimeException("Produk bekas {$second->name} sudah terjual/tidak tersedia.");
                 }
             } else {
@@ -262,8 +262,12 @@ class PosController extends Controller
      */
     protected function sanitizeMoney($value): int
     {
-        if (is_null($value)) return 0;
-        if (is_int($value)) return $value;
+        if (is_null($value)) {
+            return 0;
+        }
+        if (is_int($value)) {
+            return $value;
+        }
         $digits = preg_replace('/[^\d]/', '', (string) $value);
         return $digits === '' ? 0 : (int) $digits;
     }
@@ -273,11 +277,26 @@ class PosController extends Controller
      */
     public function printPos(Sale $sale)
     {
-        // Memuat semua relasi yang dibutuhkan untuk nota
+        // ⭐ FIXED: Conditional eager loading berdasarkan productable_type
         $sale->load([
             'user',
-            'saleDetails.product.brand',     // Untuk produk baru
-            'saleDetails.productable.brand'  // Untuk produk bekas
+            'customer', // ⭐ Tambahkan customer relationship
+            'saleDetails' => function ($query) {
+                $query->with([
+                    'product.brand', // Eager load product & brand (untuk produk normal)
+                    'productable' => function ($q) {
+                        $q->when(
+                            function ($model) {
+                                // Hanya load brand jika productable adalah Product atau ProductSecond
+                                return in_array(get_class($model), ['Modules\Product\Entities\Product', 'Modules\Product\Entities\ProductSecond']);
+                            },
+                            function ($q) {
+                                $q->with('brand');
+                            },
+                        );
+                    },
+                ]);
+            },
         ]);
 
         // 👇 DEBUG: Uncomment untuk cek apakah customer_name ada
@@ -290,6 +309,6 @@ class PosController extends Controller
             ->setOption('margin-left', 5)
             ->setOption('margin-right', 5);
 
-        return $pdf->stream('nota-' . $sale->reference . '.pdf');
+        return $pdf->stream("Nota-{$sale->reference}.pdf");
     }
 }

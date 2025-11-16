@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\People\Entities\Customer; // ⭐ TAMBAHAN: Relasi ke Customer
 
 class Sale extends Model
 {
@@ -26,7 +27,51 @@ class Sale extends Model
     public const PAY_PARTIAL = 'Partial';
     public const PAY_PAID = 'Paid';
 
-    protected $fillable = ['reference', 'date', 'customer_name', 'status', 'payment_status', 'total_amount', 'paid_amount', 'due_amount', 'payment_method', 'bank_name', 'note', 'user_id', 'tax_percentage', 'tax_amount', 'discount_percentage', 'discount_amount', 'shipping_amount', 'total_hpp', 'total_profit', 'snap_token', 'midtrans_transaction_id', 'midtrans_payment_type', 'paid_at', 'has_price_adjustment', 'has_manual_input', 'manual_input_count', 'manual_input_summary', 'is_manual_input_notified', 'notified_at'];
+    /**
+     * Kolom yang boleh di-mass-assign.
+     * Ditambah field customer_* sesuai catatan.
+     */
+    protected $fillable = [
+        'reference',
+        'date',
+
+        // ⭐ CUSTOMER FIELDS
+        'customer_id', // FK ke tabel customers (nullable)
+        'customer_name', // Fallback/display name
+        'customer_email', // Email (opsional)
+        'customer_phone', // No HP (opsional)
+
+        'status',
+        'payment_status',
+        'total_amount',
+        'paid_amount',
+        'due_amount',
+        'payment_method',
+        'bank_name',
+        'note',
+        'user_id',
+        'tax_percentage',
+        'tax_amount',
+        'discount_percentage',
+        'discount_amount',
+        'shipping_amount',
+        'total_hpp',
+        'total_profit',
+
+        // Midtrans / online payment
+        'snap_token',
+        'midtrans_transaction_id',
+        'midtrans_payment_type',
+        'paid_at',
+
+        // Flag analitik / audit
+        'has_price_adjustment',
+        'has_manual_input',
+        'manual_input_count',
+        'manual_input_summary',
+        'is_manual_input_notified',
+        'notified_at',
+    ];
 
     protected $casts = [
         'shipping_amount' => 'integer',
@@ -89,6 +134,16 @@ class Sale extends Model
         return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
 
+    // ⭐⭐⭐ RELATIONSHIP CUSTOMER ⭐⭐⭐
+    /**
+     * Relasi ke table customers (BelongsTo).
+     * Satu sale boleh punya satu customer (opsional).
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
+
     /* ============================
      | Query Scopes
      |============================ */
@@ -123,6 +178,52 @@ class Sale extends Model
     public function scopeHasPriceAdjustment(Builder $q): Builder
     {
         return $q->where('has_price_adjustment', 1);
+    }
+
+    /* ============================
+     | Accessors (Customer helper)
+     |============================ */
+
+    /**
+     * Display name customer (untuk tabel / invoice).
+     * Prioritas:
+     * 1. relasi customer->customer_name
+     * 2. kolom customer_name di sales
+     * 3. "Guest"
+     */
+    public function getCustomerDisplayNameAttribute(): string
+    {
+        if ($this->customer) {
+            return (string) $this->customer->customer_name;
+        }
+
+        return (string) ($this->customer_name ?? 'Guest');
+    }
+
+    /**
+     * Informasi customer lengkap (untuk invoice / cetak).
+     * Jika ada relasi customer, ambil dari sana.
+     * Jika tidak, fallback ke kolom di tabel sales.
+     */
+    public function getCustomerInfoAttribute(): array
+    {
+        if ($this->customer) {
+            return [
+                'name' => (string) $this->customer->customer_name,
+                'email' => (string) $this->customer->customer_email,
+                'phone' => (string) $this->customer->customer_phone,
+                'city' => (string) ($this->customer->city ?? '-'),
+                'address' => (string) ($this->customer->address ?? '-'),
+            ];
+        }
+
+        return [
+            'name' => (string) ($this->customer_name ?? 'Guest'),
+            'email' => (string) ($this->customer_email ?? '-'),
+            'phone' => (string) ($this->customer_phone ?? '-'),
+            'city' => '-',
+            'address' => '-',
+        ];
     }
 
     /* ============================

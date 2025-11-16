@@ -1,24 +1,46 @@
-@can('edit_customers')
-    <a href="{{ route('customers.edit', $data->id) }}" class="btn btn-info btn-sm">
-        <i class="bi bi-pencil"></i>
-    </a>
-@endcan
-@can('show_customers')
-    <a href="{{ route('customers.show', $data->id) }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-eye"></i>
-    </a>
-@endcan
-@can('delete_customers')
-    <button id="delete" class="btn btn-danger btn-sm" onclick="
-        event.preventDefault();
-        if (confirm('Are you sure? It will delete the data permanently!')) {
-        document.getElementById('destroy{{ $data->id }}').submit()
-        }
-        ">
-        <i class="bi bi-trash"></i>
-        <form id="destroy{{ $data->id }}" class="d-none" action="{{ route('customers.destroy', $data->id) }}" method="POST">
-            @csrf
-            @method('delete')
-        </form>
+<div class="btn-group dropleft">
+    <button type="button" class="btn btn-ghost-primary dropdown rounded" data-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-three-dots-vertical"></i>
     </button>
-@endcan
+
+    <div class="dropdown-menu">
+        {{-- Lihat Detail --}}
+        @can('show_customers')
+            <a href="{{ route('customers.show', $data->id) }}" class="dropdown-item">
+                <i class="bi bi-eye mr-2 text-info" style="line-height: 1;"></i>
+                Detail Customer
+            </a>
+        @endcan
+
+        {{-- Edit Customer --}}
+        @can('edit_customers')
+            <div class="dropdown-divider"></div>
+            <a href="{{ route('customers.edit', $data->id) }}" class="dropdown-item">
+                <i class="bi bi-pencil-square mr-2 text-primary" style="line-height: 1;"></i>
+                Edit Customer
+            </a>
+        @endcan
+
+        {{-- Buat Penjualan via POS --}}
+        @can('access_sales')
+            <div class="dropdown-divider"></div>
+            <a href="{{ route('app.pos.index') }}?customer_id={{ $data->id }}" class="dropdown-item">
+                <i class="bi bi-cart-plus mr-2 text-success" style="line-height: 1;"></i>
+                Buat Penjualan
+            </a>
+        @endcan
+
+        {{-- Hapus Customer --}}
+        @can('delete_customers')
+            <div class="dropdown-divider"></div>
+            <button type="button" 
+                    class="dropdown-item text-danger delete-customer" 
+                    data-id="{{ $data->id }}"
+                    data-name="{{ $data->customer_name }}"
+                    data-has-sales="{{ $data->sales_count > 0 ? 'true' : 'false' }}">
+                <i class="bi bi-trash mr-2" style="line-height: 1;"></i>
+                Hapus Customer
+            </button>
+        @endcan
+    </div>
+</div>

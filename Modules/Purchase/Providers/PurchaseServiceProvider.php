@@ -37,7 +37,8 @@ class PurchaseServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->register(RouteServiceProvider::class);
+        // ✅ FIX: Gunakan FQCN (Fully Qualified Class Name)
+        $this->app->register(\Modules\Purchase\Providers\RouteServiceProvider::class);
     }
 
     /**
@@ -47,12 +48,13 @@ class PurchaseServiceProvider extends ServiceProvider
      */
     protected function registerConfig()
     {
-        $this->publishes([
-            module_path($this->moduleName, 'Config/config.php') => config_path($this->moduleNameLower . '.php'),
-        ], 'config');
-        $this->mergeConfigFrom(
-            module_path($this->moduleName, 'Config/config.php'), $this->moduleNameLower
+        $this->publishes(
+            [
+                module_path($this->moduleName, 'Config/config.php') => config_path($this->moduleNameLower . '.php'),
+            ],
+            'config',
         );
+        $this->mergeConfigFrom(module_path($this->moduleName, 'Config/config.php'), $this->moduleNameLower);
     }
 
     /**
@@ -66,9 +68,12 @@ class PurchaseServiceProvider extends ServiceProvider
 
         $sourcePath = module_path($this->moduleName, 'Resources/views');
 
-        $this->publishes([
-            $sourcePath => $viewPath
-        ], ['views', $this->moduleNameLower . '-module-views']);
+        $this->publishes(
+            [
+                $sourcePath => $viewPath,
+            ],
+            ['views', $this->moduleNameLower . '-module-views'],
+        );
 
         $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->moduleNameLower);
     }

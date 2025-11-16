@@ -12,7 +12,7 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    protected $moduleNamespace = 'Modules\Purchase\Http\Controllers';
+    protected $moduleNamespace = 'Modules\Purchase\Http\Controllers'; // ← TAMBAH INI!
 
     /**
      * Called before routes are registered.
@@ -47,9 +47,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapWebRoutes()
     {
-        Route::middleware('web')
-            ->namespace($this->moduleNamespace)
-            ->group(module_path('Purchase', '/Routes/web.php'));
+        Route::middleware('web')->namespace($this->moduleNamespace)->group(module_path('Purchase', '/Routes/web.php'));
     }
 
     /**
@@ -61,9 +59,6 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapApiRoutes()
     {
-        Route::prefix('api')
-            ->middleware('api')
-            ->namespace($this->moduleNamespace)
-            ->group(module_path('Purchase', '/Routes/api.php'));
+        Route::prefix('api')->middleware('api')->namespace($this->moduleNamespace)->group(module_path('Purchase', '/Routes/api.php'));
     }
 }
