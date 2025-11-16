@@ -3,66 +3,132 @@
 namespace Modules\Purchase\Http\Controllers;
 
 use Modules\Purchase\DataTables\PurchaseDataTable;
-use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Modules\People\Entities\Supplier;
 use Modules\Product\Entities\Product;
 use Modules\Purchase\Entities\Purchase;
 use Modules\Purchase\Entities\PurchaseDetail;
-use Modules\Purchase\Entities\PurchasePayment;
+use Modules\People\Entities\Supplier;
+use Gloudemans\Shoppingcart\Facades\Cart;
 use Modules\Purchase\Http\Requests\StorePurchaseRequest;
 use Modules\Purchase\Http\Requests\UpdatePurchaseRequest;
+use Illuminate\Http\Request;
 
 class PurchaseController extends Controller
 {
-
-    public function index(PurchaseDataTable $dataTable) {
+    /**
+     * Display a listing of purchases with filtering
+     * Mirip dengan ExpenseController
+     */
+    public function index(Request $request, PurchaseDataTable $dataTable)
+    {
         abort_if(Gate::denies('access_purchases'), 403);
 
-        return $dataTable->render('purchase::index');
+        // Query builder
+        $query = Purchase::query()->with(['supplier', 'user']);
+
+        // === FILTER BY QUICK FILTER ===
+        $from = null;
+        $to = null;
+
+        switch ($request->get('quick_filter')) {
+            case 'yesterday':
+                $from = $to = now()->subDay()->toDateString();
+                break;
+            case 'this_week':
+                $from = now()->startOfWeek()->toDateString();
+                $to = now()->toDateString();
+                break;
+            case 'this_month':
+                $from = now()->startOfMonth()->toDateString();
+                $to = now()->toDateString();
+                break;
+            case 'last_month':
+                $from = now()->subMonth()->startOfMonth()->toDateString();
+                $to = now()->subMonth()->endOfMonth()->toDateString();
+                break;
+            case 'all':
+                // No date filter
+                break;
+            default:
+                // Default: Today atau custom range dari request
+                $from = $request->filled('from') ? $request->from : now()->toDateString();
+                $to = $request->filled('to') ? $request->to : now()->toDateString();
+        }
+
+        // Apply date filters
+        if ($from && $request->get('quick_filter') !== 'all') {
+            $query->whereDate('date', '>=', $from);
+        }
+        if ($to && $request->get('quick_filter') !== 'all') {
+            $query->whereDate('date', '<=', $to);
+        }
+
+        // === FILTER BY SUPPLIER ===
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+
+        // === FILTER BY PAYMENT STATUS ===
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        // === CALCULATE SUMMARY ===
+        $total_amount = $query->sum('total_amount');
+        $total_paid = $query->sum('paid_amount');
+        $total_due = $query->sum('due_amount');
+
+        // Get purchases with pagination
+        $purchases = $query->latest('date')->latest('id')->paginate(20);
+
+        // Get suppliers for filter dropdown
+        $suppliers = Supplier::orderBy('supplier_name')->get();
+
+        return view('purchase::index', compact('purchases', 'suppliers', 'total_amount', 'total_paid', 'total_due', 'from', 'to'));
     }
 
-
-    public function create() {
+    /**
+     * Show the form for creating a new purchase
+     */
+    public function create()
+    {
         abort_if(Gate::denies('create_purchases'), 403);
 
+        // Clear cart sebelum create baru
         Cart::instance('purchase')->destroy();
 
         return view('purchase::create');
     }
 
-
-    public function store(StorePurchaseRequest $request) {
+    /**
+     * Store a newly created purchase (SIMPLIFIED untuk UMKM)
+     */
+    public function store(StorePurchaseRequest $request)
+    {
         DB::transaction(function () use ($request) {
+            // Hitung payment status sederhana
             $due_amount = $request->total_amount - $request->paid_amount;
-            if ($due_amount == $request->total_amount) {
-                $payment_status = 'Unpaid';
-            } elseif ($due_amount > 0) {
-                $payment_status = 'Partial';
-            } else {
-                $payment_status = 'Paid';
-            }
+            $payment_status = $due_amount == 0 ? 'Lunas' : 'Belum Lunas';
 
+            // Create purchase - TANPA tax, discount, shipping
             $purchase = Purchase::create([
                 'date' => $request->date,
                 'supplier_id' => $request->supplier_id,
                 'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
-                'tax_percentage' => $request->tax_percentage,
-                'discount_percentage' => $request->discount_percentage,
-                'shipping_amount' => $request->shipping_amount * 100,
-                'paid_amount' => $request->paid_amount * 100,
-                'total_amount' => $request->total_amount * 100,
-                'due_amount' => $due_amount * 100,
+                'total_amount' => $request->total_amount, // Langsung Rupiah
+                'paid_amount' => $request->paid_amount, // Langsung Rupiah
+                'due_amount' => $due_amount, // Langsung Rupiah
                 'status' => $request->status,
                 'payment_status' => $payment_status,
                 'payment_method' => $request->payment_method,
+                'bank_name' => $request->bank_name, // BARU
                 'note' => $request->note,
-                'tax_amount' => Cart::instance('purchase')->tax() * 100,
-                'discount_amount' => Cart::instance('purchase')->discount() * 100,
+                'user_id' => auth()->id(), // BARU - Audit trail
             ]);
 
+            // Create purchase details dari Cart
             foreach (Cart::instance('purchase')->content() as $cart_item) {
                 PurchaseDetail::create([
                     'purchase_id' => $purchase->id,
@@ -70,122 +136,111 @@ class PurchaseController extends Controller
                     'product_name' => $cart_item->name,
                     'product_code' => $cart_item->options->code,
                     'quantity' => $cart_item->qty,
-                    'price' => $cart_item->price * 100,
-                    'unit_price' => $cart_item->options->unit_price * 100,
-                    'sub_total' => $cart_item->options->sub_total * 100,
-                    'product_discount_amount' => $cart_item->options->product_discount * 100,
-                    'product_discount_type' => $cart_item->options->product_discount_type,
-                    'product_tax_amount' => $cart_item->options->product_tax * 100,
+                    'unit_price' => $cart_item->price, // Langsung Rupiah
+                    'sub_total' => $cart_item->subtotal, // Langsung Rupiah
                 ]);
 
+                // Update stock produk jika status Completed
                 if ($request->status == 'Completed') {
                     $product = Product::findOrFail($cart_item->id);
                     $product->update([
-                        'product_quantity' => $product->product_quantity + $cart_item->qty
+                        'product_quantity' => $product->product_quantity + $cart_item->qty,
                     ]);
                 }
             }
 
+            // Clear cart setelah simpan
             Cart::instance('purchase')->destroy();
-
-            if ($purchase->paid_amount > 0) {
-                PurchasePayment::create([
-                    'date' => $request->date,
-                    'reference' => 'INV/'.$purchase->reference,
-                    'amount' => $purchase->paid_amount,
-                    'purchase_id' => $purchase->id,
-                    'payment_method' => $request->payment_method
-                ]);
-            }
         });
 
-        toast('Purchase Created!', 'success');
-
+        toast('Pembelian berhasil disimpan!', 'success');
         return redirect()->route('purchases.index');
     }
 
-
-    public function show(Purchase $purchase) {
+    /**
+     * Display the specified purchase
+     */
+    public function show(Purchase $purchase)
+    {
         abort_if(Gate::denies('show_purchases'), 403);
 
-        $supplier = Supplier::findOrFail($purchase->supplier_id);
+        $purchase->load(['purchaseDetails.product', 'supplier', 'user']);
 
-        return view('purchase::show', compact('purchase', 'supplier'));
+        return view('purchase::show', compact('purchase'));
     }
 
-
-    public function edit(Purchase $purchase) {
+    /**
+     * Show the form for editing the specified purchase
+     */
+    public function edit(Purchase $purchase)
+    {
         abort_if(Gate::denies('edit_purchases'), 403);
 
         $purchase_details = $purchase->purchaseDetails;
 
+        // Clear cart dan populate dengan data existing
         Cart::instance('purchase')->destroy();
-
         $cart = Cart::instance('purchase');
 
         foreach ($purchase_details as $purchase_detail) {
             $cart->add([
-                'id'      => $purchase_detail->product_id,
-                'name'    => $purchase_detail->product_name,
-                'qty'     => $purchase_detail->quantity,
-                'price'   => $purchase_detail->price,
-                'weight'  => 1,
+                'id' => $purchase_detail->product_id,
+                'name' => $purchase_detail->product_name,
+                'qty' => $purchase_detail->quantity,
+                'price' => $purchase_detail->unit_price, // Langsung Rupiah
+                'weight' => 1,
                 'options' => [
-                    'product_discount' => $purchase_detail->product_discount_amount,
-                    'product_discount_type' => $purchase_detail->product_discount_type,
-                    'sub_total'   => $purchase_detail->sub_total,
-                    'code'        => $purchase_detail->product_code,
-                    'stock'       => Product::findOrFail($purchase_detail->product_id)->product_quantity,
-                    'product_tax' => $purchase_detail->product_tax_amount,
-                    'unit_price'  => $purchase_detail->unit_price
-                ]
+                    'sub_total' => $purchase_detail->sub_total, // Langsung Rupiah
+                    'code' => $purchase_detail->product_code,
+                    'stock' => Product::findOrFail($purchase_detail->product_id)->product_quantity,
+                    'unit_price' => $purchase_detail->unit_price,
+                ],
             ]);
         }
 
         return view('purchase::edit', compact('purchase'));
     }
 
-
-    public function update(UpdatePurchaseRequest $request, Purchase $purchase) {
+    /**
+     * Update the specified purchase (SIMPLIFIED untuk UMKM)
+     */
+    public function update(UpdatePurchaseRequest $request, Purchase $purchase)
+    {
         DB::transaction(function () use ($request, $purchase) {
+            // Hitung payment status sederhana
             $due_amount = $request->total_amount - $request->paid_amount;
-            if ($due_amount == $request->total_amount) {
-                $payment_status = 'Unpaid';
-            } elseif ($due_amount > 0) {
-                $payment_status = 'Partial';
-            } else {
-                $payment_status = 'Paid';
-            }
+            $payment_status = $due_amount == 0 ? 'Lunas' : 'Belum Lunas';
 
+            // Restore stock jika purchase sebelumnya Completed
             foreach ($purchase->purchaseDetails as $purchase_detail) {
                 if ($purchase->status == 'Completed') {
                     $product = Product::findOrFail($purchase_detail->product_id);
                     $product->update([
-                        'product_quantity' => $product->product_quantity - $purchase_detail->quantity
+                        'product_quantity' => $product->product_quantity - $purchase_detail->quantity,
                     ]);
                 }
+                // Delete old purchase details
                 $purchase_detail->delete();
             }
 
+            // Update purchase - TANPA tax, discount, shipping
             $purchase->update([
                 'date' => $request->date,
                 'reference' => $request->reference,
                 'supplier_id' => $request->supplier_id,
                 'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
-                'tax_percentage' => $request->tax_percentage,
-                'discount_percentage' => $request->discount_percentage,
-                'shipping_amount' => $request->shipping_amount * 100,
-                'paid_amount' => $request->paid_amount * 100,
-                'total_amount' => $request->total_amount * 100,
-                'due_amount' => $due_amount * 100,
+                'total_amount' => $request->total_amount, // Langsung Rupiah
+                'paid_amount' => $request->paid_amount, // Langsung Rupiah
+                'due_amount' => $due_amount, // Langsung Rupiah
                 'status' => $request->status,
                 'payment_status' => $payment_status,
                 'payment_method' => $request->payment_method,
+                'bank_name' => $request->bank_name, // BARU
                 'note' => $request->note,
-                'tax_amount' => Cart::instance('purchase')->tax() * 100,
-                'discount_amount' => Cart::instance('purchase')->discount() * 100,
+                // user_id tidak diupdate, tetap user yang create
             ]);
 
+            // Create new purchase details dari Cart
             foreach (Cart::instance('purchase')->content() as $cart_item) {
                 PurchaseDetail::create([
                     'purchase_id' => $purchase->id,
@@ -193,38 +248,47 @@ class PurchaseController extends Controller
                     'product_name' => $cart_item->name,
                     'product_code' => $cart_item->options->code,
                     'quantity' => $cart_item->qty,
-                    'price' => $cart_item->price * 100,
-                    'unit_price' => $cart_item->options->unit_price * 100,
-                    'sub_total' => $cart_item->options->sub_total * 100,
-                    'product_discount_amount' => $cart_item->options->product_discount * 100,
-                    'product_discount_type' => $cart_item->options->product_discount_type,
-                    'product_tax_amount' => $cart_item->options->product_tax * 100,
+                    'unit_price' => $cart_item->price, // Langsung Rupiah
+                    'sub_total' => $cart_item->subtotal, // Langsung Rupiah
                 ]);
 
+                // Update stock produk jika status Completed
                 if ($request->status == 'Completed') {
                     $product = Product::findOrFail($cart_item->id);
                     $product->update([
-                        'product_quantity' => $product->product_quantity + $cart_item->qty
+                        'product_quantity' => $product->product_quantity + $cart_item->qty,
                     ]);
                 }
             }
 
+            // Clear cart setelah update
             Cart::instance('purchase')->destroy();
         });
 
-        toast('Purchase Updated!', 'info');
-
+        toast('Pembelian berhasil diperbarui!', 'info');
         return redirect()->route('purchases.index');
     }
 
-
-    public function destroy(Purchase $purchase) {
+    /**
+     * Remove the specified purchase from storage
+     */
+    public function destroy(Purchase $purchase)
+    {
         abort_if(Gate::denies('delete_purchases'), 403);
+
+        // Restore stock jika purchase Completed sebelum delete
+        if ($purchase->status == 'Completed') {
+            foreach ($purchase->purchaseDetails as $purchase_detail) {
+                $product = Product::findOrFail($purchase_detail->product_id);
+                $product->update([
+                    'product_quantity' => $product->product_quantity - $purchase_detail->quantity,
+                ]);
+            }
+        }
 
         $purchase->delete();
 
-        toast('Purchase Deleted!', 'warning');
-
+        toast('Pembelian berhasil dihapus!', 'warning');
         return redirect()->route('purchases.index');
     }
 }

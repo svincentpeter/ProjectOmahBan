@@ -8,16 +8,6 @@ use Illuminate\Database\Eloquent\Factory;
 class PeopleServiceProvider extends ServiceProvider
 {
     /**
-     * @var string $moduleName
-     */
-    protected $moduleName = 'People';
-
-    /**
-     * @var string $moduleNameLower
-     */
-    protected $moduleNameLower = 'people';
-
-    /**
      * Boot the application events.
      *
      * @return void
@@ -27,7 +17,7 @@ class PeopleServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
-        $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+        $this->loadMigrationsFrom(module_path('People', 'Database/Migrations'));
     }
 
     /**
@@ -47,12 +37,13 @@ class PeopleServiceProvider extends ServiceProvider
      */
     protected function registerConfig()
     {
-        $this->publishes([
-            module_path($this->moduleName, 'Config/config.php') => config_path($this->moduleNameLower . '.php'),
-        ], 'config');
-        $this->mergeConfigFrom(
-            module_path($this->moduleName, 'Config/config.php'), $this->moduleNameLower
+        $this->publishes(
+            [
+                module_path('People', 'Config/config.php') => config_path('people.php'),
+            ],
+            'config',
         );
+        $this->mergeConfigFrom(module_path('People', 'Config/config.php'), 'people');
     }
 
     /**
@@ -62,15 +53,18 @@ class PeopleServiceProvider extends ServiceProvider
      */
     public function registerViews()
     {
-        $viewPath = resource_path('views/modules/' . $this->moduleNameLower);
+        $viewPath = resource_path('views/modules/people');
 
-        $sourcePath = module_path($this->moduleName, 'Resources/views');
+        $sourcePath = module_path('People', 'Resources/views');
 
-        $this->publishes([
-            $sourcePath => $viewPath
-        ], ['views', $this->moduleNameLower . '-module-views']);
+        $this->publishes(
+            [
+                $sourcePath => $viewPath,
+            ],
+            ['views', 'people-module-views'],
+        );
 
-        $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->moduleNameLower);
+        $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), 'people');
     }
 
     /**
@@ -80,12 +74,12 @@ class PeopleServiceProvider extends ServiceProvider
      */
     public function registerTranslations()
     {
-        $langPath = resource_path('lang/modules/' . $this->moduleNameLower);
+        $langPath = resource_path('lang/modules/people');
 
         if (is_dir($langPath)) {
-            $this->loadTranslationsFrom($langPath, $this->moduleNameLower);
+            $this->loadTranslationsFrom($langPath, 'people');
         } else {
-            $this->loadTranslationsFrom(module_path($this->moduleName, 'Resources/lang'), $this->moduleNameLower);
+            $this->loadTranslationsFrom(module_path('People', 'Resources/lang'), 'people');
         }
     }
 
@@ -103,8 +97,8 @@ class PeopleServiceProvider extends ServiceProvider
     {
         $paths = [];
         foreach (\Config::get('view.paths') as $path) {
-            if (is_dir($path . '/modules/' . $this->moduleNameLower)) {
-                $paths[] = $path . '/modules/' . $this->moduleNameLower;
+            if (is_dir($path . '/modules/people')) {
+                $paths[] = $path . '/modules/people';
             }
         }
         return $paths;

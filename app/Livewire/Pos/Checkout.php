@@ -15,6 +15,7 @@ use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
 use Modules\Sale\Entities\ManualInputLog;
+use Modules\People\Entities\Customer; // ⭐ Customer Entity
 use App\Services\Midtrans\CreateSnapTokenService;
 use App\Events\ManualInputCreated;
 use App\Models\ManualInputDetail;
@@ -36,7 +37,7 @@ class Checkout extends Component
 
     // ========= Properti checkout =========
     public $paid_amount;
-    public $payment_method = 'Tunai'; // Tunai | Transfer | QRIS | Midtrans (UI)
+    public $payment_method = 'Tunai'; // Tunai | Transfer | QRIS | Midtrans (UI bisa kirim "Cash")
     public $bank_name;
     public $note;
     public $change = 0;
@@ -45,7 +46,17 @@ class Checkout extends Component
     public $sale = null;
     public $sale_details = null;
 
-    // ========= PROPERTIES BARU: Edit Harga =========
+    // ========= CUSTOMER PROPERTIES =========
+    public $customer_id = null; // ID customer (select)
+    public $customer_email = null; // Email customer
+    public $customer_phone = null; // No HP customer
+    public $customer_city = null; // Kota
+    public $customer_address = null; // Alamat
+
+    // ⭐ UI MODE: 'select' | 'manual' (dipakai Blade untuk toggle tampilan)
+    public string $customer_mode = 'select';
+
+    // ========= PROPERTIES: Edit Harga =========
     public $showEditPriceModal = false;
     public $editingRowId = null;
     public $editingProductId = null;
@@ -53,7 +64,6 @@ class Checkout extends Component
     public $editingSourceType = '';
     public $editingOriginalPrice = 0;
 
-    // public $newPrice = 0; // ❌ tidak dipakai lagi
     public $discountAmount = 0; // ✅ nominal POTONGAN (Rp)
     public $priceNote = '';
     // UI flag: form pembayaran muncul setelah "Lanjut ke Pembayaran"
@@ -64,20 +74,60 @@ class Checkout extends Component
 
     protected $rules = [
         'customer_name' => 'nullable|string|max:255',
-        'payment_method' => 'required|string|in:Tunai,Transfer,QRIS,Midtrans',
+        'customer_email' => 'nullable|email|max:255',
+        'customer_phone' => 'nullable|string|max:20',
+        // Terima kedua bentuk: "Tunai" (ID) & "Cash" (EN) supaya kompatibel dengan UI lama
+        'payment_method' => 'required|string|in:Tunai,Transfer,QRIS,Midtrans,Cash',
         'paid_amount' => 'nullable|numeric|min:0',
     ];
 
     // ========= Helpers =========
 
     /**
+     * Ganti mode tampilan customer ('select' | 'manual') dan bersihkan field yang tidak relevan.
+     */
+    public function setCustomerMode(string $mode): void
+    {
+        $this->customer_mode = in_array($mode, ['select', 'manual'], true) ? $mode : 'select';
+
+        if ($this->customer_mode === 'select') {
+            // Bereskan field manual
+            $this->customer_name = '';
+            $this->customer_email = '';
+            $this->customer_phone = '';
+            $this->customer_city = null;
+            $this->customer_address = null;
+        } else {
+            // Mode manual: hapus pilihan dari dropdown
+            $this->customer_id = null;
+        }
+    }
+
+    /**
+     * Sinkron info saat customer_id berubah (mis. di-set dari Select2 via JS).
+     * Aman kalau JS sudah mengisi name/email/phone — method ini hanya fallback.
+     */
+    public function updatedCustomerId($value): void
+    {
+        if (!$value) {
+            $this->customer_name = $this->customer_email = $this->customer_phone = '';
+            return;
+        }
+
+        // Jika properti belum diisi oleh JS, ambil dari DB agar info tetap tampil saat re-render
+        if (empty($this->customer_name) && empty($this->customer_email) && empty($this->customer_phone)) {
+            if ($c = Customer::find($value)) {
+                $this->customer_name = $c->customer_name ?? '';
+                $this->customer_email = $c->customer_email ?? null;
+                $this->customer_phone = $c->customer_phone ?? null;
+                $this->customer_city = $c->city ?? null;
+                $this->customer_address = $c->address ?? null;
+            }
+        }
+    }
+
+    /**
      * Deteksi apakah item di cart merupakan manual input (termasuk jasa ServiceMaster).
-     * Meng-cover:
-     * - source_type: manual | service_master
-     * - manual_kind: service
-     * - code berawalan SRV-
-     * - productable_type = ServiceMaster
-     * - flag options.is_manual_input = true
      */
     private function isManualInput($cartItem): bool
     {
@@ -114,6 +164,7 @@ class Checkout extends Component
         $r = trim((string) $raw);
         switch (mb_strtolower($r)) {
             case 'tunai':
+            case 'cash':
                 return ['method' => 'cash', 'label' => 'Tunai'];
             case 'transfer':
                 return ['method' => 'transfer', 'label' => 'Transfer'];
@@ -126,7 +177,6 @@ class Checkout extends Component
         }
     }
 
-    // di class Checkout
     protected array $rolesCanAdjust = ['Admin', 'Super Admin', 'Owner', 'Supervisor', 'Kasir'];
 
     protected function userCanAdjust(): bool
@@ -475,7 +525,6 @@ class Checkout extends Component
             ],
         );
 
-        // (Opsional) kalau ingin melarang harga 0, pertahankan guard ini.
         if ($new < 1) {
             $this->addError('discountAmount', 'Potongan terlalu besar. Harga setelah potong minimal Rp 1.');
             return;
@@ -502,14 +551,6 @@ class Checkout extends Component
             'options' => $options,
         ]);
 
-        // 5) (Opsional) Notifikasi owner jika melewati threshold
-        $pct = $orig > 0 ? ($disc / $orig) * 100 : 0;
-        if ($pct >= 10) {
-            // panggil service/event notifikasi owner di sini
-            // contoh:
-            // event(new SignificantPriceAdjustment(auth()->user(), $item->id, $orig, $disc, $new, $this->priceNote));
-        }
-
         // 6) Bereskan state & refresh UI
         $this->showEditPriceModal = false;
         $this->reset(['editingRowId', 'editingProductId', 'editingProductName', 'editingSourceType', 'editingOriginalPrice', 'discountAmount', 'priceNote']);
@@ -521,16 +562,7 @@ class Checkout extends Component
     public function closeEditPriceModal()
     {
         $this->showEditPriceModal = false;
-        $this->reset([
-            'editingRowId',
-            'editingProductId',
-            'editingProductName',
-            'editingSourceType',
-            'editingOriginalPrice',
-            // 'newPrice', // ❌
-            'discountAmount', // ✅
-            'priceNote',
-        ]);
+        $this->reset(['editingRowId', 'editingProductId', 'editingProductName', 'editingSourceType', 'editingOriginalPrice', 'discountAmount', 'priceNote']);
         $this->resetErrorBag();
     }
 
@@ -547,10 +579,12 @@ class Checkout extends Component
             return;
         }
 
-        Log::info('Checkout:createInvoice invoked', [
+        Log::info('Checkout::createInvoice invoked', [
             'cart_count' => $this->cart()->count(),
             'payment_method' => $this->payment_method,
             'user_id' => auth()->id(),
+            'customer_id' => $this->customer_id,
+            'customer_name' => $this->customer_name,
         ]);
 
         // VALIDASI FINAL: sebelum DB::transaction
@@ -585,6 +619,9 @@ class Checkout extends Component
             return;
         }
 
+        // ⭐ AUTO-CREATE / FIND CUSTOMER dari input manual (jika perlu)
+        $this->ensureCustomer();
+
         try {
             // Siapkan kolektor manual items untuk event
             $manualItems = [];
@@ -601,7 +638,13 @@ class Checkout extends Component
                 $sale = Sale::create([
                     'date' => now()->toDateString(),
                     'user_id' => auth()->id(),
+
+                    // ⭐ CUSTOMER FIELDS
+                    'customer_id' => $this->customer_id,
                     'customer_name' => $this->customer_name ?: null,
+                    'customer_email' => $this->customer_email ?: null,
+                    'customer_phone' => $this->customer_phone ?: null,
+
                     'tax_percentage' => (int) $this->global_tax,
                     'tax_amount' => (int) ($this->cart()->tax() ?? 0),
                     'discount_percentage' => (int) $this->global_discount,
@@ -694,7 +737,7 @@ class Checkout extends Component
                     $priceAdjustmentAmount = (int) data_get($item->options, 'price_adjustment_amount', 0);
                     $priceAdjustmentNote = data_get($item->options, 'price_adjustment_note');
 
-                    // Simpan detail penjualan (TERMASUK field manual_kind, original_price, adjustments)
+                    // Simpan detail penjualan
                     $detail = SaleDetails::create([
                         'sale_id' => $sale->id,
                         'product_id' => $src === 'new' ? (int) $item->id : null,
@@ -887,7 +930,8 @@ class Checkout extends Component
             return;
         }
 
-        $this->validate(['payment_method' => 'required|in:Tunai,Transfer,QRIS,Midtrans']);
+        // Terima "Cash" dari UI lama & "Tunai" dari UI baru
+        $this->validate(['payment_method' => 'required|in:Tunai,Transfer,QRIS,Midtrans,Cash']);
 
         if ($this->payment_method === 'Transfer') {
             $this->validate(['bank_name' => 'required|string|max:255']);
@@ -1001,12 +1045,78 @@ class Checkout extends Component
         }
     }
 
+    // ========= HELPER: AUTO-CREATE / UPDATE CUSTOMER =========
+
+    /**
+     * Auto-create/update customer dari form manual.
+     * Dipanggil sebelum createInvoice jika customer_id null tapi ada customer_name.
+     */
+    private function ensureCustomer(): void
+    {
+        // Jika customer sudah dipilih dari dropdown
+        if ($this->customer_id) {
+            return;
+        }
+
+        // Jika tidak ada nama customer → guest transaction
+        if (empty($this->customer_name)) {
+            return;
+        }
+
+        $customer = null;
+
+        // Cari berdasarkan email jika diisi
+        if (!empty($this->customer_email)) {
+            $customer = Customer::where('customer_email', $this->customer_email)->first();
+        }
+
+        // Kalau belum ketemu dan ada phone → cari berdasarkan phone
+        if (!$customer && !empty($this->customer_phone)) {
+            $customer = Customer::where('customer_phone', $this->customer_phone)->first();
+        }
+
+        // Jika masih tidak ketemu → buat baru
+        if (!$customer) {
+            try {
+                $customer = Customer::create([
+                    'customer_name' => $this->customer_name,
+                    'customer_email' => $this->customer_email ?? 'guest_' . time() . '@temp.com',
+                    'customer_phone' => $this->customer_phone ?? '-',
+                    'city' => $this->customer_city ?? '-',
+                    'country' => 'Indonesia',
+                    'address' => $this->customer_address ?? '-',
+                ]);
+
+                Log::info('Auto-created customer from POS', [
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->customer_name,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to auto-create customer: ' . $e->getMessage());
+                // lanjut tanpa customer_id → dianggap guest transaction
+                return;
+            }
+        }
+
+        // Set customer_id supaya ikut tersimpan ke Sale
+        $this->customer_id = $customer->id;
+    }
+
     // ========= Transaksi Baru =========
     public function newTransaction()
     {
         $this->sale = null;
         $this->sale_details = null;
+
+        // Reset customer fields
+        $this->customer_id = null;
         $this->customer_name = '';
+        $this->customer_email = null;
+        $this->customer_phone = null;
+        $this->customer_city = null;
+        $this->customer_address = null;
+        $this->customer_mode = 'select';
+
         $this->paid_amount = null;
         $this->bank_name = null;
         $this->note = null;

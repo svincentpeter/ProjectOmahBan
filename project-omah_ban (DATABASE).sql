@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Nov 08, 2025 at 08:09 AM
+-- Generation Time: Nov 16, 2025 at 09:21 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.12
 
@@ -240,10 +240,10 @@ INSERT INTO `categories` (`id`, `category_code`, `category_name`, `created_at`, 
 -- (See below for the actual view)
 --
 CREATE TABLE `categories_view` (
-`id` bigint unsigned
-,`category_code` varchar(255)
-,`name` varchar(255)
+`category_code` varchar(255)
 ,`created_at` timestamp
+,`id` bigint unsigned
+,`name` varchar(255)
 ,`updated_at` timestamp
 );
 
@@ -288,8 +288,21 @@ CREATE TABLE `customers` (
 `country` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 `created_at` timestamp NULL DEFAULT NULL,
-`updated_at` timestamp NULL DEFAULT NULL
+`updated_at` timestamp NULL DEFAULT NULL,
+`deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `customers`
+--
+
+INSERT INTO `customers` (`id`, `customer_name`, `customer_email`, `customer_phone`, `city`, `country`, `address`,
+`created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Peter Vincent', 'peter@gmail.com', '082227863969', 'Semarang', 'Indonesia', 'Jalan Alvita Indah Timur', '2025-11-11
+13:57:10', '2025-11-11 13:57:10', NULL),
+(2, 'Peter', '', '', '-', 'Indonesia', '-', '2025-11-12 06:38:22', '2025-11-12 06:38:22', NULL),
+(3, 'Peter', 'guest_1762933601@temp.com', '-', '-', 'Indonesia', '-', '2025-11-12 06:46:41', '2025-11-12 06:46:41',
+NULL);
 
 -- --------------------------------------------------------
 
@@ -415,7 +428,8 @@ INSERT INTO `manual_input_details` (`id`, `sale_id`, `sale_detail_id`, `cashier_
 (1, 2, 2, 5, 'service', 'Balancing', 1, 20000, 'Velg besar', 0, '2025-11-06 19:10:20', '2025-11-06 19:10:20'),
 (3, 4, 5, 5, 'service', 'Jasa Pasang Ban', 1, 30000, 'Pemasangan', 0, '2025-11-06 19:40:06', '2025-11-06 19:40:06'),
 (4, 4, 6, 5, 'goods', 'Nitrogen', 1, 8000, 'Isi ulang', 0, '2025-11-06 19:40:08', '2025-11-06 19:40:08'),
-(5, 6, 7, 5, 'service', 'Ngetestt', 1, 22222, 'TWESTTTTTINFGGGGG', 0, '2025-11-07 06:52:09', '2025-11-07 06:52:09');
+(5, 6, 7, 5, 'service', 'Ngetestt', 1, 22222, 'TWESTTTTTINFGGGGG', 0, '2025-11-07 06:52:09', '2025-11-07 06:52:09'),
+(6, 7, 8, 1, 'service', 'Spooring Ban', 1, 150000, NULL, 0, '2025-11-12 06:46:41', '2025-11-12 06:46:41');
 
 --
 -- Triggers `manual_input_details`
@@ -510,7 +524,9 @@ NULL, NULL, '2025-11-06 19:40:06', '2025-11-06 19:40:06'),
 (6, 4, 6, 5, 'manual_item', 'Nitrogen', 1, NULL, 8000, NULL, NULL, 'Isi ulang', 0, NULL, 'pending', NULL, 0, NULL, NULL,
 '2025-11-06 19:40:08', '2025-11-06 19:40:08'),
 (7, 6, 7, 5, 'manual_item', 'Ngetestt', 1, NULL, 22222, NULL, NULL, 'TWESTTTTTINFGGGGG', 0, NULL, 'pending', NULL, 1, 7,
-'2025-11-07 06:52:09', '2025-11-07 06:52:09', '2025-11-07 06:52:09');
+'2025-11-07 06:52:09', '2025-11-07 06:52:09', '2025-11-07 06:52:09'),
+(8, 7, 8, 1, 'manual_item', 'Spooring Ban', 1, NULL, 150000, NULL, NULL, 'No reason provided', 0, NULL, 'pending', NULL,
+1, 11, '2025-11-12 06:46:41', '2025-11-12 06:46:41', '2025-11-12 06:46:41');
 
 -- --------------------------------------------------------
 
@@ -539,7 +555,9 @@ dashboard performa';
 
 INSERT INTO `manual_input_summary_daily` (`id`, `date`, `cashier_id`, `total_transactions`, `manual_input_count`,
 `total_manual_items`, `total_manual_value`, `pending_approvals`, `top_manual_items`, `created_at`, `updated_at`) VALUES
-(1, '2025-11-07', 5, 5, 4, 4, 80222, 0, NULL, '2025-11-07 07:36:15', '2025-11-07 07:52:09');
+(1, '2025-11-07', 5, 5, 4, 4, 80222, 0, NULL, '2025-11-07 07:36:15', '2025-11-07 07:52:09'),
+(12, '2025-11-12', 1, 1, 1, 1, 150000, 0, NULL, '2025-11-12 07:46:41', '2025-11-12 07:46:41'),
+(14, '2025-11-16', 1, 1, 0, 0, 0, 0, NULL, '2025-11-15 18:09:00', '2025-11-15 18:09:00');
 
 -- --------------------------------------------------------
 
@@ -771,7 +789,31 @@ input manual:\n\nNgetestt (1x @ Rp 22.222)\n\nTotal: Rp 22.222\nInvoice: OB2-000
 '{\"items\": [{\"name\": \"Ngetestt\", \"type\": \"service\", \"price\": 22222, \"reason\": \"TWESTTTTTINFGGGGG\",
 \"quantity\": 1}], \"cashier_id\": 5, \"invoice_no\": \"OB2-00005\", \"items_count\": 1, \"cashier_name\": \"Ani (Kasir
 1)\", \"total_amount\": 22222}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-07 06:52:09',
-'2025-11-07 06:52:09', NULL);
+'2025-11-07 06:52:09', NULL),
+(8, 1, 7, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00007', 'Kasir Administrator membuat transaksi dengan 1 item
+input manual:\n\nSpooring Ban (1x @ Rp 150.000)\n\nTotal: Rp 150.000\nInvoice: OB2-00007\nWaktu: 12-11-2025 13:46:41',
+'{\"items\": [{\"name\": \"Spooring Ban\", \"type\": \"service\", \"price\": 150000, \"reason\": null, \"quantity\":
+1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00007\", \"items_count\": 1, \"cashier_name\": \"Administrator\",
+\"total_amount\": 150000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-12 06:46:41',
+'2025-11-12 06:46:41', NULL),
+(9, 2, 7, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00007', 'Kasir Administrator membuat transaksi dengan 1 item
+input manual:\n\nSpooring Ban (1x @ Rp 150.000)\n\nTotal: Rp 150.000\nInvoice: OB2-00007\nWaktu: 12-11-2025 13:46:41',
+'{\"items\": [{\"name\": \"Spooring Ban\", \"type\": \"service\", \"price\": 150000, \"reason\": null, \"quantity\":
+1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00007\", \"items_count\": 1, \"cashier_name\": \"Administrator\",
+\"total_amount\": 150000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-12 06:46:41',
+'2025-11-12 06:46:41', NULL),
+(10, 3, 7, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00007', 'Kasir Administrator membuat transaksi dengan 1 item
+input manual:\n\nSpooring Ban (1x @ Rp 150.000)\n\nTotal: Rp 150.000\nInvoice: OB2-00007\nWaktu: 12-11-2025 13:46:41',
+'{\"items\": [{\"name\": \"Spooring Ban\", \"type\": \"service\", \"price\": 150000, \"reason\": null, \"quantity\":
+1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00007\", \"items_count\": 1, \"cashier_name\": \"Administrator\",
+\"total_amount\": 150000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-12 06:46:41',
+'2025-11-12 06:46:41', NULL),
+(11, 4, 7, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00007', 'Kasir Administrator membuat transaksi dengan 1 item
+input manual:\n\nSpooring Ban (1x @ Rp 150.000)\n\nTotal: Rp 150.000\nInvoice: OB2-00007\nWaktu: 12-11-2025 13:46:41',
+'{\"items\": [{\"name\": \"Spooring Ban\", \"type\": \"service\", \"price\": 150000, \"reason\": null, \"quantity\":
+1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00007\", \"items_count\": 1, \"cashier_name\": \"Administrator\",
+\"total_amount\": 150000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-12 06:46:41',
+'2025-11-12 06:46:41', NULL);
 
 -- --------------------------------------------------------
 
@@ -931,7 +973,7 @@ INSERT INTO `products` (`id`, `is_active`, `category_id`, `product_name`, `produ
 '2025-10-10 02:50:49', NULL, 1, '31x10,5', '15', NULL),
 (2, 1, 2, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 23, 20, 725000, 925000, 'PC', 4, NULL, NULL,
 NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 2, '185/65', '15', 2024),
-(3, 1, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 24, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL,
+(3, 1, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 23, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL,
 '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 3, '205/65', '16', 2024),
 (4, 1, 2, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 23, 16, 640000, 835000, 'PC', 3, NULL, NULL, NULL,
 '2025-08-17 05:04:07', '2025-11-06 09:43:29', NULL, 1, '195/65', '15', 2024),
@@ -971,7 +1013,7 @@ CREATE TABLE `product_seconds` (
 INSERT INTO `product_seconds` (`id`, `name`, `unique_code`, `condition_notes`, `purchase_price`, `selling_price`,
 `status`, `created_at`, `updated_at`, `deleted_at`, `category_id`, `brand_id`, `size`, `ring`, `product_year`) VALUES
 (1, 'Ban Bekas Dunlop AT3 265/65 R17 (80%)', 'SEC-DN-26565R17-001', 'Kondisi 80%, tahun 2021, tambalan 0, ban seragam,
-masih empuk', 600000, 850000, 'available', '2025-08-17 05:04:07', '2025-08-21 02:08:13', NULL, 2, 3, '265/65', '17',
+masih empuk', 600000, 850000, 'available', '2025-08-17 05:04:07', '2025-11-16 07:02:57', NULL, 2, 3, '265/65', '17',
 2021),
 (2, 'Ban Bekas GT Radial Savero 235/70 R16 (70%)', 'SEC-GT-23570R16-001', 'Kondisi 70%, tahun 2020, ada serat halus,
 masih layak harian', 400000, 650000, 'available', '2025-08-17 05:04:07', '2025-08-20 13:25:00', NULL, 2, 1, '235/70',
@@ -993,18 +1035,15 @@ CREATE TABLE `purchases` (
 `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 `supplier_id` bigint UNSIGNED DEFAULT NULL,
 `supplier_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-`tax_percentage` int NOT NULL DEFAULT '0',
-`tax_amount` bigint NOT NULL DEFAULT '0',
-`discount_percentage` int NOT NULL DEFAULT '0',
-`discount_amount` bigint NOT NULL DEFAULT '0',
-`shipping_amount` bigint NOT NULL DEFAULT '0',
 `total_amount` bigint NOT NULL DEFAULT '0',
 `paid_amount` bigint NOT NULL DEFAULT '0',
 `due_amount` bigint NOT NULL DEFAULT '0',
 `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+`bank_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
 `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+`user_id` bigint UNSIGNED DEFAULT NULL,
 `created_at` timestamp NULL DEFAULT NULL,
 `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1022,12 +1061,8 @@ CREATE TABLE `purchase_details` (
 `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 `quantity` int NOT NULL,
-`price` bigint NOT NULL,
 `unit_price` bigint NOT NULL,
 `sub_total` bigint NOT NULL,
-`product_discount_amount` bigint NOT NULL,
-`product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
-`product_tax_amount` bigint NOT NULL,
 `created_at` timestamp NULL DEFAULT NULL,
 `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1035,17 +1070,54 @@ CREATE TABLE `purchase_details` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `purchase_payments`
+-- Table structure for table `purchase_seconds`
 --
 
-CREATE TABLE `purchase_payments` (
+CREATE TABLE `purchase_seconds` (
 `id` bigint UNSIGNED NOT NULL,
-`purchase_id` bigint UNSIGNED NOT NULL,
-`amount` bigint NOT NULL,
-`date` date NOT NULL,
-`reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-`payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-`note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+`date` date NOT NULL COMMENT 'Tanggal beli bekas',
+`reference` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Format: PBS-YYYYMMDD-0001',
+`customer_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nama customer yang jual bekas',
+`customer_phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nomor HP customer',
+`total_amount` bigint NOT NULL DEFAULT '0' COMMENT 'Total bayar ke customer',
+`paid_amount` bigint NOT NULL DEFAULT '0' COMMENT 'Jumlah yang sudah dibayar',
+`due_amount` bigint NOT NULL DEFAULT '0' COMMENT 'Sisa yang belum dibayar',
+`status` enum('Pending','Completed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Pending' COMMENT 'Status pembelian',
+`payment_status` enum('Lunas','Belum Lunas') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Belum Lunas',
+`payment_method` enum('Tunai','Transfer') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Tunai',
+`bank_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nama bank jika Transfer',
+`note` text COLLATE utf8mb4_unicode_ci COMMENT 'Catatan tambahan',
+`user_id` bigint UNSIGNED DEFAULT NULL COMMENT 'User yang input',
+`created_at` timestamp NULL DEFAULT NULL,
+`updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `purchase_seconds`
+--
+
+INSERT INTO `purchase_seconds` (`id`, `date`, `reference`, `customer_name`, `customer_phone`, `total_amount`,
+`paid_amount`, `due_amount`, `status`, `payment_status`, `payment_method`, `bank_name`, `note`, `user_id`, `created_at`,
+`updated_at`) VALUES
+(1, '2025-11-08', 'PBS-20251108-0001', 'Test Customer', NULL, 1000000, 1000000, 0, 'Completed', 'Lunas', 'Tunai', NULL,
+NULL, 1, '2025-11-08 16:41:31', '2025-11-08 16:41:31');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase_second_details`
+--
+
+CREATE TABLE `purchase_second_details` (
+`id` bigint UNSIGNED NOT NULL,
+`purchase_second_id` bigint UNSIGNED NOT NULL,
+`product_second_id` bigint UNSIGNED NOT NULL COMMENT 'ID dari productseconds (TANPA underscore)',
+`product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+`product_code` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+`condition_notes` text COLLATE utf8mb4_unicode_ci COMMENT 'Catatan kondisi produk',
+`quantity` int NOT NULL DEFAULT '1' COMMENT 'Selalu 1 untuk produk bekas',
+`unit_price` bigint NOT NULL DEFAULT '0' COMMENT 'Harga beli per unit',
+`sub_total` bigint NOT NULL DEFAULT '0' COMMENT 'Total = unit_price * 1',
 `created_at` timestamp NULL DEFAULT NULL,
 `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1342,10 +1414,13 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 
 CREATE TABLE `sales` (
 `id` bigint UNSIGNED NOT NULL,
+`customer_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Foreign key ke table customers',
 `date` date NOT NULL,
 `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 `user_id` bigint UNSIGNED DEFAULT NULL,
 `customer_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+`customer_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Email customer (opsional)',
+`customer_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nomor telepon customer (opsional)',
 `has_price_adjustment` tinyint(1) DEFAULT '0' COMMENT '1=ada item dengan harga diedit',
 `tax_percentage` int NOT NULL DEFAULT '0',
 `tax_amount` bigint NOT NULL DEFAULT '0',
@@ -1382,29 +1457,39 @@ utf8mb4_unicode_ci DEFAULT NULL,
 -- Dumping data for table `sales`
 --
 
-INSERT INTO `sales` (`id`, `date`, `reference`, `user_id`, `customer_name`, `has_price_adjustment`, `tax_percentage`,
-`tax_amount`, `discount_percentage`, `discount_amount`, `shipping_amount`, `total_amount`, `has_manual_input`,
-`total_hpp`, `total_profit`, `paid_amount`, `due_amount`, `status`, `payment_status`, `paid_at`, `payment_method`,
-`snap_token`, `midtrans_transaction_id`, `midtrans_payment_type`, `bank_name`, `note`, `created_at`, `updated_at`,
-`deleted_at`, `manual_input_count`, `manual_input_summary`, `is_manual_input_notified`, `notified_at`) VALUES
-(1, '2025-11-07', 'OB2-00001', 5, 'Walk-in', 1, 0, 0, 0, 0, 0, 900000, 0, 725000, 175000, 900000, 0, 'Completed',
-'Paid', NULL, 'Transfer', NULL, NULL, NULL, 'BCA', NULL, '2025-11-06 19:00:00', '2025-11-06 19:20:00', NULL, 0, NULL, 0,
-NULL),
-(2, '2025-11-07', 'OB2-00002', 5, 'Walk-in', 1, 0, 0, 0, 0, 0, 25000, 1, 0, 25000, 25000, 0, 'Completed', 'Paid', NULL,
-'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-11-06 19:10:00', '2025-11-06 19:20:30', NULL, 1, '[{\"name\":
-\"Balancing\", \"type\": \"service\", \"price\": 25000, \"reason\": \"Velg besar\", \"quantity\": 1}]', 1, '2025-11-06
-19:20:30'),
-(3, '2025-11-07', 'OB2-00003', 5, 'Walk-in', 0, 0, 0, 0, 0, 0, 835000, 0, 640000, 195000, 845000, 0, 'Completed',
-'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-11-06 19:30:00', '2025-11-06 19:32:30', NULL, 0, NULL, 0,
-NULL),
-(4, '2025-11-07', 'OB2-00004', 5, 'Walk-in', 0, 0, 0, 0, 0, 0, 38000, 1, 0, 38000, 38000, 0, 'Completed', 'Paid', NULL,
-'QRIS', NULL, NULL, NULL, NULL, NULL, '2025-11-06 19:40:00', '2025-11-06 19:40:00', NULL, 2, '[{\"name\": \"Jasa Pasang
-Ban\", \"type\": \"service\", \"price\": 30000, \"reason\": \"Pemasangan\", \"quantity\": 1}, {\"name\": \"Nitrogen\",
-\"type\": \"goods\", \"price\": 8000, \"reason\": \"Isi ulang\", \"quantity\": 1}]', 1, '2025-11-06 19:40:10'),
-(6, '2025-11-07', 'OB2-00005', 5, NULL, 0, 0, 0, 0, 0, 0, 22222, 1, 0, 22222, 22222, 0, 'Completed', 'Paid', NULL,
-'QRIS', NULL, NULL, NULL, NULL, NULL, '2025-11-07 06:52:09', '2025-11-07 06:52:15', NULL, 1,
+INSERT INTO `sales` (`id`, `customer_id`, `date`, `reference`, `user_id`, `customer_name`, `customer_email`,
+`customer_phone`, `has_price_adjustment`, `tax_percentage`, `tax_amount`, `discount_percentage`, `discount_amount`,
+`shipping_amount`, `total_amount`, `has_manual_input`, `total_hpp`, `total_profit`, `paid_amount`, `due_amount`,
+`status`, `payment_status`, `paid_at`, `payment_method`, `snap_token`, `midtrans_transaction_id`,
+`midtrans_payment_type`, `bank_name`, `note`, `created_at`, `updated_at`, `deleted_at`, `manual_input_count`,
+`manual_input_summary`, `is_manual_input_notified`, `notified_at`) VALUES
+(1, NULL, '2025-11-07', 'OB2-00001', 5, 'Walk-in', NULL, NULL, 1, 0, 0, 0, 0, 0, 900000, 0, 725000, 175000, 900000, 0,
+'Completed', 'Paid', NULL, 'Transfer', NULL, NULL, NULL, 'BCA', NULL, '2025-11-06 19:00:00', '2025-11-06 19:20:00',
+NULL, 0, NULL, 0, NULL),
+(2, NULL, '2025-11-07', 'OB2-00002', 5, 'Walk-in', NULL, NULL, 1, 0, 0, 0, 0, 0, 25000, 1, 0, 25000, 25000, 0,
+'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-11-06 19:10:00', '2025-11-06 19:20:30', NULL, 1,
+'[{\"name\": \"Balancing\", \"type\": \"service\", \"price\": 25000, \"reason\": \"Velg besar\", \"quantity\": 1}]', 1,
+'2025-11-06 19:20:30'),
+(3, NULL, '2025-11-07', 'OB2-00003', 5, 'Walk-in', NULL, NULL, 0, 0, 0, 0, 0, 0, 835000, 0, 640000, 195000, 845000, 0,
+'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-11-06 19:30:00', '2025-11-06 19:32:30', NULL, 0,
+NULL, 0, NULL),
+(4, NULL, '2025-11-07', 'OB2-00004', 5, 'Walk-in', NULL, NULL, 0, 0, 0, 0, 0, 0, 38000, 1, 0, 38000, 38000, 0,
+'Completed', 'Paid', NULL, 'QRIS', NULL, NULL, NULL, NULL, NULL, '2025-11-06 19:40:00', '2025-11-06 19:40:00', NULL, 2,
+'[{\"name\": \"Jasa Pasang Ban\", \"type\": \"service\", \"price\": 30000, \"reason\": \"Pemasangan\", \"quantity\": 1},
+{\"name\": \"Nitrogen\", \"type\": \"goods\", \"price\": 8000, \"reason\": \"Isi ulang\", \"quantity\": 1}]', 1,
+'2025-11-06 19:40:10'),
+(6, NULL, '2025-11-07', 'OB2-00005', 5, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 22222, 1, 0, 22222, 22222, 0, 'Completed',
+'Paid', NULL, 'QRIS', NULL, NULL, NULL, NULL, NULL, '2025-11-07 06:52:09', '2025-11-07 06:52:15', NULL, 1,
 '\"[{\\\"name\\\":\\\"Ngetestt\\\",\\\"quantity\\\":1,\\\"price\\\":22222,\\\"reason\\\":\\\"TWESTTTTTINFGGGGG\\\",\\\"type\\\":\\\"service\\\"}]\"',
-1, '2025-11-07 06:52:09');
+1, '2025-11-07 06:52:09'),
+(7, 3, '2025-11-12', 'OB2-00007', 1, 'Peter', NULL, NULL, 0, 0, 0, 0, 0, 0, 150000, 1, 0, 150000, 0, 150000, 'Draft',
+'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-11-12 06:46:41', '2025-11-12 06:46:41', NULL, 1,
+'\"[{\\\"name\\\":\\\"Spooring
+Ban\\\",\\\"quantity\\\":1,\\\"price\\\":150000,\\\"reason\\\":null,\\\"type\\\":\\\"service\\\"}]\"', 1, '2025-11-12
+06:46:41'),
+(8, 1, '2025-11-16', 'OB2-00008', 1, 'Peter Vincent', 'peter@gmail.com', '082227863969', 1, 0, 0, 0, 0, 0, 990000, 0,
+890000, 100000, 0, 990000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-11-15 17:09:00',
+'2025-11-15 17:09:00', NULL, 0, NULL, 0, NULL);
 
 --
 -- Triggers `sales`
@@ -1478,7 +1563,13 @@ NULL, NULL, NULL, 0, 0, 30000, 30000, 30000, 0, 'fixed', 0, '2025-11-06 19:40:05
 (6, 4, 'Nitrogen', NULL, NULL, NULL, 'manual', 'goods', 'Nitrogen', 'GD-N2', 1, 8000, 8000, 0, 0, NULL, NULL, NULL, 0,
 0, 8000, 8000, 8000, 0, 'fixed', 0, '2025-11-06 19:40:07', '2025-11-06 19:40:07'),
 (7, 6, 'Ngetestt', NULL, NULL, NULL, 'manual', 'service', 'Ngetestt', '-', 1, 22222, 22222, 0, 0, NULL, NULL, NULL, 0,
-NULL, 22222, 22222, 22222, 0, 'fixed', 0, '2025-11-07 06:52:09', '2025-11-07 06:52:09');
+NULL, 22222, 22222, 22222, 0, 'fixed', 0, '2025-11-07 06:52:09', '2025-11-07 06:52:09'),
+(8, 7, 'Spooring Ban', NULL, 1, 'Modules\\Product\\Entities\\ServiceMaster', 'manual', 'service', 'Spooring Ban',
+'SRV-1', 1, 150000, 150000, 0, 0, NULL, NULL, NULL, 0, NULL, 150000, 150000, 150000, 0, 'fixed', 0, '2025-11-12
+06:46:41', '2025-11-12 06:46:41'),
+(9, 8, 'Ban Dunlop SP Touring R1 205/65 R16', 3, NULL, NULL, 'new', NULL, 'Ban Dunlop SP Touring R1 205/65 R16',
+'DN-SPR1-20565R16', 1, 990000, 1090000, 1, 100000, 'tesssssssssssss', 1, '2025-11-15 17:09:00', 890000, NULL, 990000,
+990000, 100000, 0, 'fixed', 0, '2025-11-15 17:09:00', '2025-11-15 17:09:00');
 
 --
 -- Triggers `sale_details`
@@ -2076,7 +2167,9 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         (80, 'Modules\\Product\\Entities\\Product', 2, NULL, NULL, 'adjustment', 'out', 1, 'Sale
                         OB2-00001', 5, '2025-11-07 07:36:15', '2025-11-07 07:36:15', NULL),
                         (81, 'Modules\\Product\\Entities\\Product', 4, NULL, NULL, 'adjustment', 'out', 1, 'Sale
-                        OB2-00003', 5, '2025-11-07 07:36:26', '2025-11-07 07:36:26', NULL);
+                        OB2-00003', 5, '2025-11-07 07:36:26', '2025-11-07 07:36:26', NULL),
+                        (82, 'Modules\\Product\\Entities\\Product', 3, 3, 8, 'sale', 'out', 1, 'Sale OB2-00008', 1,
+                        '2025-11-15 18:09:00', '2025-11-15 18:09:00', NULL);
 
                         -- --------------------------------------------------------
 
@@ -2086,6 +2179,26 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
 
                         CREATE TABLE `suppliers` (
                         `id` bigint UNSIGNED NOT NULL,
+                        `supplier_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+                        `supplier_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+                        `supplier_phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+                        `city` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+                        `country` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT
+                        'Indonesia',
+                        `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+                        `created_at` timestamp NULL DEFAULT NULL,
+                        `updated_at` timestamp NULL DEFAULT NULL,
+                        `deleted_at` timestamp NULL DEFAULT NULL
+                        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                        -- --------------------------------------------------------
+
+                        --
+                        -- Table structure for table `suppliers_backup`
+                        --
+
+                        CREATE TABLE `suppliers_backup` (
+                        `id` bigint UNSIGNED NOT NULL DEFAULT '0',
                         `supplier_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
                         `supplier_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
                         `supplier_phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -2229,16 +2342,16 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         --
                         CREATE TABLE `v_adjustment_summary` (
                         `adjustment_id` bigint unsigned
-                        ,`reference` varchar(255)
-                        ,`date` date
-                        ,`status` enum('pending','approved','rejected')
-                        ,`reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya')
-                        ,`total_value` decimal(10,2)
-                        ,`requester_name` varchar(255)
                         ,`approver_name` varchar(255)
-                        ,`total_products` bigint
-                        ,`total_items` decimal(32,0)
+                        ,`date` date
                         ,`last_activity` varchar(24)
+                        ,`reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya')
+                        ,`reference` varchar(255)
+                        ,`requester_name` varchar(255)
+                        ,`status` enum('pending','approved','rejected')
+                        ,`total_items` decimal(32,0)
+                        ,`total_products` bigint
+                        ,`total_value` decimal(10,2)
                         );
 
                         --
@@ -2311,7 +2424,10 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         -- Indexes for table `customers`
                         --
                         ALTER TABLE `customers`
-                        ADD PRIMARY KEY (`id`);
+                        ADD PRIMARY KEY (`id`),
+                        ADD UNIQUE KEY `idx_email_unique` (`customer_email`),
+                        ADD KEY `idx_deleted_at` (`deleted_at`),
+                        ADD KEY `idx_city` (`city`);
 
                         --
                         -- Indexes for table `expenses`
@@ -2466,7 +2582,10 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         ADD PRIMARY KEY (`id`),
                         ADD UNIQUE KEY `purchases_reference_unique` (`reference`),
                         ADD KEY `purchases_supplier_id_foreign` (`supplier_id`),
-                        ADD KEY `idx_purchases_date` (`date`);
+                        ADD KEY `idx_purchases_date` (`date`),
+                        ADD KEY `purchases_user_id_foreign` (`user_id`),
+                        ADD KEY `idx_purchases_date_payment` (`date`,`payment_status`),
+                        ADD KEY `idx_purchases_supplier` (`supplier_id`,`date`);
 
                         --
                         -- Indexes for table `purchase_details`
@@ -2477,11 +2596,23 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         ADD KEY `purchase_details_product_id_foreign` (`product_id`);
 
                         --
-                        -- Indexes for table `purchase_payments`
+                        -- Indexes for table `purchase_seconds`
                         --
-                        ALTER TABLE `purchase_payments`
+                        ALTER TABLE `purchase_seconds`
                         ADD PRIMARY KEY (`id`),
-                        ADD KEY `purchase_payments_purchase_id_foreign` (`purchase_id`);
+                        ADD UNIQUE KEY `purchase_seconds_reference_unique` (`reference`),
+                        ADD KEY `purchase_seconds_date_index` (`date`),
+                        ADD KEY `purchase_seconds_status_index` (`status`),
+                        ADD KEY `purchase_seconds_payment_status_index` (`payment_status`),
+                        ADD KEY `purchase_seconds_user_id_foreign` (`user_id`);
+
+                        --
+                        -- Indexes for table `purchase_second_details`
+                        --
+                        ALTER TABLE `purchase_second_details`
+                        ADD PRIMARY KEY (`id`),
+                        ADD KEY `purchase_second_details_purchase_second_id_foreign` (`purchase_second_id`),
+                        ADD KEY `purchase_second_details_product_second_id_foreign` (`product_second_id`);
 
                         --
                         -- Indexes for table `roles`
@@ -2512,7 +2643,8 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         ADD KEY `idx_sales_has_adjustment` (`has_price_adjustment`,`date`),
                         ADD KEY `idx_has_manual_input` (`has_manual_input`),
                         ADD KEY `idx_is_notified` (`is_manual_input_notified`),
-                        ADD KEY `idx_created_user` (`created_at`,`user_id`);
+                        ADD KEY `idx_created_user` (`created_at`,`user_id`),
+                        ADD KEY `idx_customer_id` (`customer_id`);
 
                         --
                         -- Indexes for table `sale_details`
@@ -2584,7 +2716,11 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         -- Indexes for table `suppliers`
                         --
                         ALTER TABLE `suppliers`
-                        ADD PRIMARY KEY (`id`);
+                        ADD PRIMARY KEY (`id`),
+                        ADD KEY `idx_supplier_name` (`supplier_name`),
+                        ADD KEY `idx_supplier_email` (`supplier_email`),
+                        ADD KEY `idx_city` (`city`),
+                        ADD KEY `idx_deleted_at` (`deleted_at`);
 
                         --
                         -- Indexes for table `units`
@@ -2663,7 +2799,7 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         -- AUTO_INCREMENT for table `customers`
                         --
                         ALTER TABLE `customers`
-                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
                         --
                         -- AUTO_INCREMENT for table `expenses`
@@ -2693,19 +2829,19 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         -- AUTO_INCREMENT for table `manual_input_details`
                         --
                         ALTER TABLE `manual_input_details`
-                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
                         --
                         -- AUTO_INCREMENT for table `manual_input_logs`
                         --
                         ALTER TABLE `manual_input_logs`
-                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
                         --
                         -- AUTO_INCREMENT for table `manual_input_summary_daily`
                         --
                         ALTER TABLE `manual_input_summary_daily`
-                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
                         --
                         -- AUTO_INCREMENT for table `media`
@@ -2723,13 +2859,13 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         -- AUTO_INCREMENT for table `owner_notifications`
                         --
                         ALTER TABLE `owner_notifications`
-                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
                         --
                         -- AUTO_INCREMENT for table `permissions`
                         --
                         ALTER TABLE `permissions`
-                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=158;
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=159;
 
                         --
                         -- AUTO_INCREMENT for table `products`
@@ -2747,7 +2883,7 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         -- AUTO_INCREMENT for table `purchases`
                         --
                         ALTER TABLE `purchases`
-                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
                         --
                         -- AUTO_INCREMENT for table `purchase_details`
@@ -2756,9 +2892,15 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
                         --
-                        -- AUTO_INCREMENT for table `purchase_payments`
+                        -- AUTO_INCREMENT for table `purchase_seconds`
                         --
-                        ALTER TABLE `purchase_payments`
+                        ALTER TABLE `purchase_seconds`
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+                        --
+                        -- AUTO_INCREMENT for table `purchase_second_details`
+                        --
+                        ALTER TABLE `purchase_second_details`
                         MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
                         --
@@ -2807,7 +2949,7 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         -- AUTO_INCREMENT for table `stock_movements`
                         --
                         ALTER TABLE `stock_movements`
-                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+                        MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
 
                         --
                         -- AUTO_INCREMENT for table `suppliers`
@@ -3018,7 +3160,9 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         --
                         ALTER TABLE `purchases`
                         ADD CONSTRAINT `purchases_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES
-                        `suppliers` (`id`) ON DELETE SET NULL;
+                        `suppliers` (`id`) ON DELETE SET NULL,
+                        ADD CONSTRAINT `purchases_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON
+                        DELETE SET NULL ON UPDATE CASCADE;
 
                         --
                         -- Constraints for table `purchase_details`
@@ -3034,13 +3178,13 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         `purchases` (`id`) ON DELETE CASCADE;
 
                         --
-                        -- Constraints for table `purchase_payments`
+                        -- Constraints for table `purchase_second_details`
                         --
-                        ALTER TABLE `purchase_payments`
-                        ADD CONSTRAINT `fk_ppay_pur` FOREIGN KEY (`purchase_id`) REFERENCES `purchases` (`id`) ON DELETE
-                        CASCADE ON UPDATE CASCADE,
-                        ADD CONSTRAINT `purchase_payments_purchase_id_foreign` FOREIGN KEY (`purchase_id`) REFERENCES
-                        `purchases` (`id`) ON DELETE CASCADE;
+                        ALTER TABLE `purchase_second_details`
+                        ADD CONSTRAINT `purchase_second_details_product_second_id_foreign` FOREIGN KEY
+                        (`product_second_id`) REFERENCES `product_seconds` (`id`) ON DELETE RESTRICT,
+                        ADD CONSTRAINT `purchase_second_details_purchase_second_id_foreign` FOREIGN KEY
+                        (`purchase_second_id`) REFERENCES `purchase_seconds` (`id`) ON DELETE CASCADE;
 
                         --
                         -- Constraints for table `role_has_permissions`
@@ -3055,6 +3199,8 @@ IF NEW.price IS NULL OR NEW.price < 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_T
                         -- Constraints for table `sales`
                         --
                         ALTER TABLE `sales`
+                        ADD CONSTRAINT `fk_sales_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON
+                        DELETE SET NULL ON UPDATE CASCADE,
                         ADD CONSTRAINT `fk_sales_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET
                         NULL ON UPDATE CASCADE,
                         ADD CONSTRAINT `sales_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON

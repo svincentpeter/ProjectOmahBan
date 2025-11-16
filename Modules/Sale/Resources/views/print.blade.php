@@ -154,6 +154,7 @@
     </style>
 </head>
 <body>
+    @php($customer = $sale->customer_info)
     <div class="container">
         {{-- Header --}}
         <div class="header">
@@ -182,14 +183,6 @@
             </div>
             <div>
                 <table>
-                    {{-- 👇 TAMBAHAN: Tampilkan Customer Name (jika ada) --}}
-                    @if(!empty($sale->customer_name))
-                    <tr>
-                        <td>Customer</td>
-                        <td>: <strong>{{ $sale->customer_name }}</strong></td>
-                    </tr>
-                    @endif
-                    {{-- 👆 SAMPAI SINI --}}
                     <tr>
                         <td>Metode Bayar</td>
                         <td>: {{ $sale->payment_method ?? 'Tunai' }}</td>
@@ -202,6 +195,34 @@
                     @endif
                 </table>
             </div>
+        </div>
+
+        {{-- Customer Info --}}
+        <div style="margin-bottom: 20px;">
+            <table style="width: 100%; border: 1px solid #ddd; padding: 10px;">
+                <tr>
+                    <td style="width: 30%; font-weight: bold;">Customer:</td>
+                    <td>{{ $customer['name'] }}</td>
+                </tr>
+                @if($customer['email'] && $customer['email'] !== '-')
+                    <tr>
+                        <td style="font-weight: bold;">Email:</td>
+                        <td>{{ $customer['email'] }}</td>
+                    </tr>
+                @endif
+                @if($customer['phone'] && $customer['phone'] !== '-')
+                    <tr>
+                        <td style="font-weight: bold;">Telepon:</td>
+                        <td>{{ $customer['phone'] }}</td>
+                    </tr>
+                @endif
+                @if($customer['city'] && $customer['city'] !== '-')
+                    <tr>
+                        <td style="font-weight: bold;">Kota:</td>
+                        <td>{{ $customer['city'] }}</td>
+                    </tr>
+                @endif
+            </table>
         </div>
 
         {{-- 👇 HAPUS WATERMARK (tidak ada kondisi @if payment_status) --}}

@@ -619,13 +619,28 @@ class SaleController extends Controller
         ]);
     }
 
-    public function printA4(Sale $sale)
+    public function printA4($id)
     {
-        // Eager load seperlunya
-        $sale->load('user', 'saleDetails.product.brand');
+        $sale = Sale::with(['saleDetails', 'customer'])->findOrFail($id); // ⭐ EAGER LOAD CUSTOMER
 
-        $pdf = \PDF::loadView('sale::print', ['sale' => $sale])->setPaper('a4');
-        return $pdf->stream('sale-' . $sale->reference . '.pdf');
+        $settings = Setting::first();
+
+        // Customer info dengan fallback
+        $customerInfo = [
+            'name' => $sale->customer_display_name,
+            'email' => $sale->customer_email ?? ($sale->customer->customer_email ?? '-'),
+            'phone' => $sale->customer_phone ?? ($sale->customer->customer_phone ?? '-'),
+            'city' => $sale->customer->city ?? '-',
+            'address' => $sale->customer->address ?? '-',
+        ];
+
+        $pdf = PDF::loadView('sale::sales.print-a4', [
+            'sale' => $sale,
+            'customer' => $customerInfo, // ⭐ PASS CUSTOMER INFO
+            'settings' => $settings,
+        ])->setPaper('a4');
+
+        return $pdf->stream("invoice-{$sale->reference}.pdf");
     }
 
     /**

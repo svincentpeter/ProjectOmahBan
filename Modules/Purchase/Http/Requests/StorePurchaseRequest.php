@@ -8,6 +8,16 @@ use Illuminate\Support\Facades\Gate;
 class StorePurchaseRequest extends FormRequest
 {
     /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return Gate::allows('create_purchases'); // FIX: Dari 'create_sales' ke 'create_purchases'
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array
@@ -15,26 +25,45 @@ class StorePurchaseRequest extends FormRequest
     public function rules()
     {
         return [
-            'supplier_id' => 'required|numeric',
+            'date' => 'required|date',
+            'supplier_id' => 'required|numeric|exists:suppliers,id',
             'reference' => 'required|string|max:255',
-            'tax_percentage' => 'required|integer|min:0|max:100',
-            'discount_percentage' => 'required|integer|min:0|max:100',
-            'shipping_amount' => 'required|numeric',
-            'total_amount' => 'required|numeric',
-            'paid_amount' => 'required|numeric',
-            'status' => 'required|string|max:255',
-            'payment_method' => 'required|string|max:255',
-            'note' => 'nullable|string|max:1000'
+
+            // Kolom yang disederhanakan - tidak ada tax, discount, shipping
+            'total_amount' => 'required|numeric|min:0',
+            'paid_amount' => 'required|numeric|min:0',
+
+            'status' => 'required|string|in:Pending,Completed',
+
+            // Field baru untuk UMKM
+            'payment_method' => 'required|string|in:Tunai,Transfer',
+            'bank_name' => 'required_if:payment_method,Transfer|nullable|string|max:100',
+
+            'note' => 'nullable|string|max:1000',
         ];
     }
 
     /**
-     * Determine if the user is authorized to make this request.
+     * Get custom messages for validator errors.
      *
-     * @return bool
+     * @return array
      */
-    public function authorize()
+    public function messages()
     {
-        return Gate::allows('create_sales');
+        return [
+            'date.required' => 'Tanggal pembelian wajib diisi.',
+            'supplier_id.required' => 'Supplier wajib dipilih.',
+            'supplier_id.exists' => 'Supplier yang dipilih tidak valid.',
+            'reference.required' => 'Nomor referensi wajib diisi.',
+            'total_amount.required' => 'Total pembelian wajib diisi.',
+            'total_amount.min' => 'Total pembelian tidak boleh negatif.',
+            'paid_amount.required' => 'Jumlah bayar wajib diisi.',
+            'paid_amount.min' => 'Jumlah bayar tidak boleh negatif.',
+            'status.required' => 'Status pembelian wajib dipilih.',
+            'status.in' => 'Status pembelian harus Pending atau Completed.',
+            'payment_method.required' => 'Metode pembayaran wajib dipilih.',
+            'payment_method.in' => 'Metode pembayaran harus Tunai atau Transfer.',
+            'bank_name.required_if' => 'Nama bank wajib diisi jika metode pembayaran Transfer.',
+        ];
     }
 }

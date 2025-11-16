@@ -8,27 +8,6 @@ use Illuminate\Support\Facades\Gate;
 class UpdatePurchaseRequest extends FormRequest
 {
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
-    {
-        return [
-            'supplier_id' => 'required|numeric',
-            'reference' => 'required|string|max:255',
-            'tax_percentage' => 'required|integer|min:0|max:100',
-            'discount_percentage' => 'required|integer|min:0|max:100',
-            'shipping_amount' => 'required|numeric',
-            'total_amount' => 'required|numeric',
-            'paid_amount' => 'required|numeric|max:' . $this->purchase->total_amount,
-            'status' => 'required|string|max:255',
-            'payment_method' => 'required|string|max:255',
-            'note' => 'nullable|string|max:1000'
-        ];
-    }
-
-    /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
@@ -36,5 +15,55 @@ class UpdatePurchaseRequest extends FormRequest
     public function authorize()
     {
         return Gate::allows('edit_purchases');
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules()
+    {
+        return [
+            'date' => 'required|date',
+            'supplier_id' => 'required|numeric|exists:suppliers,id',
+            'reference' => 'required|string|max:255',
+
+            // Kolom yang disederhanakan - tidak ada tax, discount, shipping
+            'total_amount' => 'required|numeric|min:0',
+            'paid_amount' => 'required|numeric|min:0',
+
+            'status' => 'required|string|in:Pending,Completed',
+
+            // Field baru untuk UMKM
+            'payment_method' => 'required|string|in:Tunai,Transfer',
+            'bank_name' => 'required_if:payment_method,Transfer|nullable|string|max:100',
+
+            'note' => 'nullable|string|max:1000',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'date.required' => 'Tanggal pembelian wajib diisi.',
+            'supplier_id.required' => 'Supplier wajib dipilih.',
+            'supplier_id.exists' => 'Supplier yang dipilih tidak valid.',
+            'reference.required' => 'Nomor referensi wajib diisi.',
+            'total_amount.required' => 'Total pembelian wajib diisi.',
+            'total_amount.min' => 'Total pembelian tidak boleh negatif.',
+            'paid_amount.required' => 'Jumlah bayar wajib diisi.',
+            'paid_amount.min' => 'Jumlah bayar tidak boleh negatif.',
+            'status.required' => 'Status pembelian wajib dipilih.',
+            'status.in' => 'Status pembelian harus Pending atau Completed.',
+            'payment_method.required' => 'Metode pembayaran wajib dipilih.',
+            'payment_method.in' => 'Metode pembayaran harus Tunai atau Transfer.',
+            'bank_name.required_if' => 'Nama bank wajib diisi jika metode pembayaran Transfer.',
+        ];
     }
 }

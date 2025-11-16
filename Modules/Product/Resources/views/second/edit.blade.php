@@ -22,7 +22,7 @@
                 @method('PUT')
 
                 {{-- Sticky Action Bar --}}
-                <div class="action-bar shadow-sm mb-4">
+                <div class="action-bar second-shadow-sm mb-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-0 font-weight-bold">
@@ -42,245 +42,18 @@
                     </div>
                 </div>
 
-                {{-- Include Modern Form --}}
-                @include('product::second._form', ['product' => $product])
+                {{-- Include Modern Form (edit mode: dengan $product) --}}
+                @include('product::second.partials._form', ['product' => $product])
             </form>
+
+            {{-- Shared scripts for create & edit (Dropzone, MaskMoney, Swal, dll) --}}
+            @include('product::second.partials._scripts')
         </div>
     </div>
 @endsection
 
-@section('third_party_scripts')
-    <script src="{{ asset('js/dropzone.js') }}"></script>
-@endsection
-
-@push('page_scripts')
-    <script src="{{ asset('js/jquery-mask-money.js') }}"></script>
-    <script>
-        // DISABLE AUTO-DISCOVER - IMPORTANT!
-        Dropzone.autoDiscover = false;
-
-        $(document).ready(function() {
-            // Manual Dropzone Initialization
-            var uploadedDocumentMap = {};
-
-            var myDropzone = new Dropzone("#document-dropzone", {
-                url: '{{ route('dropzone.upload') }}',
-                maxFilesize: 1, // 1MB
-                acceptedFiles: '.jpg, .jpeg, .png',
-                maxFiles: 3,
-                addRemoveLinks: true,
-                dictDefaultMessage: '<i class="cil-cloud-upload" style="font-size: 3rem;"></i><br>Drop foto di sini atau klik untuk upload',
-                dictRemoveFile: '<i class="cil-x-circle"></i> Hapus',
-                dictMaxFilesExceeded: 'Maksimal 3 foto',
-                dictCancelUpload: 'Batal',
-                dictRemoveFileConfirmation: 'Yakin hapus foto ini?',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-
-                @if (isset($product) && $product->getMedia('images')->count() > 0)
-                    init: function() {
-                        var thisDropzone = this;
-                        // Load existing images
-                        var files = {!! json_encode($product->getMedia('images')) !!};
-
-                        $.each(files, function(key, file) {
-                            var mockFile = {
-                                name: file.file_name,
-                                size: file.size,
-                                accepted: true
-                            };
-
-                            thisDropzone.emit("addedfile", mockFile);
-                            thisDropzone.emit("thumbnail", mockFile, file.original_url);
-                            thisDropzone.emit("complete", mockFile);
-
-                            // Add to form
-                            $('form').append('<input type="hidden" name="document[]" value="' +
-                                file.file_name + '">');
-                            uploadedDocumentMap[mockFile.name] = file.file_name;
-                        });
-                    },
-                @endif
-
-                success: function(file, response) {
-                    console.log('Upload success:', response);
-                    $('form').append('<input type="hidden" name="document[]" value="' + response.name +
-                        '">');
-                    uploadedDocumentMap[file.name] = response.name;
-                },
-
-                removedfile: function(file) {
-                    console.log('Removing file:', file.name);
-
-                    // Remove preview
-                    if (file.previewElement) {
-                        file.previewElement.remove();
-                    }
-
-                    // Remove from form
-                    var name = uploadedDocumentMap[file.name] || file.file_name;
-                    $('form').find('input[name="document[]"][value="' + name + '"]').remove();
-
-                    // Remove from map
-                    delete uploadedDocumentMap[file.name];
-                },
-
-                error: function(file, message) {
-                    console.error('Upload error:', message);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Upload Gagal',
-                        text: typeof message === 'string' ? message :
-                            'Terjadi kesalahan saat upload',
-                        confirmButtonColor: '#4834DF'
-                    });
-                }
-            });
-
-            // Mask Money
-            $('#purchase_price, #selling_price').maskMoney({
-                prefix: '{{ settings()->currency->symbol }} ',
-                thousands: '{{ settings()->currency->thousand_separator }}',
-                decimal: '{{ settings()->currency->decimal_separator }}',
-                precision: 0
-            });
-
-            $('#purchase_price, #selling_price').maskMoney('mask');
-
-            // Calculate Profit
-            function calculateProfit() {
-                const purchase = parseFloat($('#purchase_price').maskMoney('unmasked')[0]) || 0;
-                const selling = parseFloat($('#selling_price').maskMoney('unmasked')[0]) || 0;
-
-                if (purchase > 0 && selling > 0) {
-                    const profit = selling - purchase;
-                    const percentage = ((profit / purchase) * 100).toFixed(2);
-
-                    const formattedProfit = '{{ settings()->currency->symbol }} ' + profit.toString().replace(
-                        /\B(?=(\d{3})+(?!\d))/g, '{{ settings()->currency->thousand_separator }}');
-
-                    $('#profitAmount').text(formattedProfit);
-                    $('#profitPercentage').text(percentage + '%');
-                    $('#profitMarginAlert').fadeIn();
-
-                    // Color coding
-                    if (percentage < 10) {
-                        $('#profitPercentage').removeClass('badge-primary badge-success badge-warning').addClass(
-                            'badge-danger');
-                    } else if (percentage < 30) {
-                        $('#profitPercentage').removeClass('badge-primary badge-danger badge-success').addClass(
-                            'badge-warning');
-                    } else {
-                        $('#profitPercentage').removeClass('badge-danger badge-warning').addClass('badge-success');
-                    }
-                } else {
-                    $('#profitMarginAlert').fadeOut();
-                }
-            }
-
-            $('#purchase_price, #selling_price').on('blur', calculateProfit);
-
-            @if (isset($product))
-                // Calculate initial profit for edit mode
-                calculateProfit();
-            @endif
-
-            // Form Submit
-            $('#product-form').on('submit', function(e) {
-                e.preventDefault();
-
-                // Unmask
-                $('#purchase_price').val($('#purchase_price').maskMoney('unmasked')[0]);
-                $('#selling_price').val($('#selling_price').maskMoney('unmasked')[0]);
-
-                const purchase = parseFloat($('#purchase_price').val());
-                const selling = parseFloat($('#selling_price').val());
-
-                // Validate
-                if (purchase <= 0 || selling <= 0) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Harga Tidak Valid',
-                        text: 'Harga beli dan jual harus lebih besar dari 0',
-                        confirmButtonColor: '#4834DF'
-                    });
-                    $('#purchase_price, #selling_price').maskMoney('mask');
-                    return false;
-                }
-
-                // Warning if loss
-                if (selling < purchase) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Harga Jual Lebih Rendah',
-                        text: 'Harga jual lebih rendah dari harga beli. Yakin melanjutkan?',
-                        showCancelButton: true,
-                        confirmButtonColor: '#4834DF',
-                        cancelButtonColor: '#768192',
-                        confirmButtonText: 'Ya, Lanjutkan',
-                        cancelButtonText: 'Batal'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            submitForm();
-                        } else {
-                            $('#purchase_price, #selling_price').maskMoney('mask');
-                        }
-                    });
-                    return false;
-                }
-
-                submitForm();
-            });
-
-            function submitForm() {
-                @if (isset($product))
-                    // Edit mode - confirmation
-                    Swal.fire({
-                        title: 'Simpan Perubahan?',
-                        html: 'Produk bekas <strong>"{{ $product->name }}"</strong> akan diperbarui',
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonColor: '#4834DF',
-                        cancelButtonColor: '#768192',
-                        confirmButtonText: '<i class="cil-save mr-1"></i> Ya, Simpan!',
-                        cancelButtonText: '<i class="cil-x mr-1"></i> Batal',
-                        reverseButtons: true
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            showLoadingAndSubmit();
-                        } else {
-                            $('#purchase_price, #selling_price').maskMoney('mask');
-                        }
-                    });
-                @else
-                    // Create mode - direct submit
-                    showLoadingAndSubmit();
-                @endif
-            }
-
-            function showLoadingAndSubmit() {
-                Swal.fire({
-                    title: 'Menyimpan...',
-                    html: 'Mohon tunggu sebentar',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-                $('#product-form')[0].submit();
-            }
-
-            // Auto-focus
-            @if (!isset($product))
-                $('#name').focus();
-            @endif
-
-            // Initialize tooltips
-            $('[data-toggle="tooltip"]').tooltip();
-        });
-    </script>
-@endpush
+{{-- Section third_party_scripts & page_scripts JS lama DIHAPUS,
+    karena sudah dipindah ke partial _scripts --}}
 
 @push('page_styles')
     <style>

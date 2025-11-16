@@ -29,29 +29,7 @@ Route::middleware('auth')->group(function () {
         ->name('sales.cart.addManual')
         ->middleware('can:edit_sales');
 
-    // ===================== Sales (Protected by can:access_sales) =====================
-    Route::prefix('sales')
-        ->name('sales.')
-        ->middleware('can:access_sales')
-        ->group(function () {
-            Route::get('/', [SaleController::class, 'index'])->name('index'); // DataTable Index
-            Route::get('/summary', [SaleController::class, 'summary'])->name('summary'); // Summary Cards (JSON)
-            Route::get('/{sale}/items', [SaleController::class, 'items'])->name('items'); // Row Expand
-            Route::get('/{sale}', [SaleController::class, 'show'])->name('show'); // Detail Transaksi
-        });
-
-    // ===================== Sales Tambahan (EDIT, PATCH, RESOURCE) =====================
-    Route::get('sales/{sale}/edit', [SaleController::class, 'edit'])
-        ->name('sales.edit')
-        ->middleware('can:edit_sales');
-    Route::match(['put', 'patch'], 'sales/{sale}', [SaleController::class, 'update'])
-        ->name('sales.update')
-        ->middleware('can:edit_sales');
-    // NOTE: resource sales untuk index dan show sudah termasuk di atas (prefix group)
-    // Jika ingin tetap mempertahankan secara resource, bisa pakai yang berikut (tapi hati-hati duplikasi):
-    // Route::resource('sales', SaleController::class)->only(['index', 'show']);
-
-    // ===================== PDF A4 & PDF POS (A6) =====================
+    // ===================== PDF Routes (HARUS DI ATAS {sale}) =====================
     Route::get('/sales/pdf/{sale}', [SaleController::class, 'printA4'])
         ->name('sales.pdf')
         ->middleware('can:access_sales');
@@ -59,13 +37,36 @@ Route::middleware('auth')->group(function () {
         ->name('sales.pos.pdf')
         ->middleware('can:access_sales');
 
-    // ===================== Payments (AJAX dan Halaman Klasik) =====================
-    Route::prefix('/sale-payments')->group(function () {
-        Route::post('/ajax/store', [SalePaymentsController::class, 'ajaxStore'])->name('sale-payments.ajax.store');
-        Route::patch('/ajax/{salePayment}', [SalePaymentsController::class, 'ajaxUpdate'])->name('sale-payments.ajax.update');
-        Route::delete('/ajax/{salePayment}', [SalePaymentsController::class, 'ajaxDestroy'])->name('sale-payments.ajax.destroy');
-        Route::get('/ajax/summary/{sale}', [SalePaymentsController::class, 'ajaxSummary'])->name('sale-payments.ajax.summary');
-    });
+    // ===================== Sales Edit & Update =====================
+    Route::get('sales/{sale}/edit', [SaleController::class, 'edit'])
+        ->name('sales.edit')
+        ->middleware('can:edit_sales');
+    Route::match(['put', 'patch'], 'sales/{sale}', [SaleController::class, 'update'])
+        ->name('sales.update')
+        ->middleware('can:edit_sales');
+
+    // ===================== Sales (Protected by can:access_sales) =====================
+    Route::prefix('sales')
+        ->name('sales.')
+        ->middleware('can:access_sales')
+        ->group(function () {
+            Route::get('/', [SaleController::class, 'index'])->name('index');
+            Route::get('/summary', [SaleController::class, 'summary'])->name('summary');
+            Route::get('/{sale}/items', [SaleController::class, 'items'])->name('items');
+            Route::get('/{sale}', [SaleController::class, 'show'])->name('show');
+        });
+
+    // ===================== Payments (AJAX) =====================
+    Route::prefix('/sale-payments/ajax')
+        ->name('sale-payments.ajax.')
+        ->group(function () {
+            Route::post('/store', [SalePaymentsController::class, 'ajaxStore'])->name('store');
+            Route::patch('/{salePayment}', [SalePaymentsController::class, 'ajaxUpdate'])->name('update');
+            Route::delete('/{salePayment}', [SalePaymentsController::class, 'ajaxDestroy'])->name('destroy');
+            Route::get('/summary/{sale}', [SalePaymentsController::class, 'ajaxSummary'])->name('summary');
+        });
+
+    // ===================== Payments (Halaman Klasik) =====================
     Route::get('/sale-payments/{sale_id}', [SalePaymentsController::class, 'index'])->name('sale-payments.index');
     Route::get('/sale-payments/{sale_id}/create', [SalePaymentsController::class, 'create'])->name('sale-payments.create');
     Route::post('/sale-payments/store', [SalePaymentsController::class, 'store'])->name('sale-payments.store');
@@ -73,14 +74,17 @@ Route::middleware('auth')->group(function () {
     Route::patch('/sale-payments/update/{salePayment}', [SalePaymentsController::class, 'update'])->name('sale-payments.update');
     Route::delete('/sale-payments/destroy/{salePayment}', [SalePaymentsController::class, 'destroy'])->name('sale-payments.destroy');
 
-    // Prefix payment untuk transaksi spesifik
+    // ===================== REMOVED: Duplikat prefix payment =====================
+    // HAPUS BAGIAN INI karena duplikat dengan route di atas
+    /*
     Route::prefix('sales/{sale}/payments')
         ->name('sale-payments.')
         ->group(function () {
-            Route::get('/', [SalePaymentsController::class, 'index'])->name('index');
+            Route::get('/', [SalePaymentsController::class, 'index'])->name('index'); // ❌ DUPLIKAT
             Route::get('/data', [SalePaymentsController::class, 'datatable'])->name('datatable');
-            Route::delete('/{payment}', [SalePaymentsController::class, 'destroy'])->name('destroy');
+            Route::delete('/{payment}', [SalePaymentsController::class, 'destroy'])->name('destroy'); // ❌ DUPLIKAT
         });
+    */
 
     // ===================== Laporan =====================
     Route::get('/sales/reports/profit', [ReportController::class, 'profitReport'])->name('sales.reports.profit');
@@ -108,3 +112,5 @@ Route::middleware('auth')
                 Route::post('/{id}/reject', 'reject')->name('reject');
             });
     });
+
+    

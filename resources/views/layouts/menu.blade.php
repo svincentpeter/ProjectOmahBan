@@ -53,7 +53,6 @@
     </a>
 </li>
 
-
 {{-- =======================
      PRODUK
 ======================= --}}
@@ -61,7 +60,7 @@
 
 @can('access_products')
     <li
-        class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['products.*', 'product-categories.*', 'brands.*', 'products_second.*']) ? 'c-show' : '' }}">
+        class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['products.*', 'product-categories.*', 'brands.*', 'products_second.*', 'service-masters.*']) ? 'c-show' : '' }}">
         <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
             <i class="c-sidebar-nav-icon bi bi-journal-bookmark" style="line-height: 1;"></i> Manajemen Produk
         </a>
@@ -103,14 +102,16 @@
             <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('service-masters.index') ? 'c-active' : '' }}"
                     href="{{ route('service-masters.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-recycle" style="line-height: 1;"></i> Daftar Jasa
+                    <i class="c-sidebar-nav-icon bi bi-tools" style="line-height: 1;"></i> Daftar Jasa
                 </a>
             </li>
         </ul>
     </li>
 @endcan
 
-{{-- ======================= STOK & PENAWARAN ======================= --}}
+{{-- ======================= 
+     STOK & PENAWARAN 
+======================= --}}
 <li class="c-sidebar-nav-title">Stok & Penawaran</li>
 
 @can('access_adjustments')
@@ -119,7 +120,6 @@
             <i class="c-sidebar-nav-icon bi bi-clipboard-check" style="line-height: 1;"></i> Penyesuaian Stok
         </a>
         <ul class="c-sidebar-nav-dropdown-items">
-            {{-- Buat Penyesuaian (hanya Kasir yang bisa buat) --}}
             @can('create_adjustments')
                 <li class="c-sidebar-nav-item">
                     <a class="c-sidebar-nav-link {{ request()->routeIs('adjustments.create') ? 'c-active' : '' }}"
@@ -129,7 +129,6 @@
                 </li>
             @endcan
 
-            {{-- Daftar Semua Penyesuaian (semua yang punya akses) --}}
             <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('adjustments.index') ? 'c-active' : '' }}"
                     href="{{ route('adjustments.index') }}">
@@ -137,7 +136,6 @@
                 </a>
             </li>
 
-            {{-- HANYA APPROVAL (Supervisor/Admin) --}}
             @can('approve_adjustments')
                 <li class="c-sidebar-nav-item">
                     <a class="c-sidebar-nav-link {{ request()->routeIs('adjustments.approvals') ? 'c-active' : '' }}"
@@ -145,7 +143,6 @@
                         <i class="c-sidebar-nav-icon bi bi-check-circle" style="line-height: 1;"></i>
                         Approval Penyesuaian
 
-                        {{-- Badge: Jumlah pending --}}
                         @php
                             $pendingCount = \Modules\Adjustment\Entities\Adjustment::where(
                                 'status',
@@ -162,59 +159,93 @@
     </li>
 @endcan
 
+{{-- =======================
+     MASTER DATA
+======================= --}}
+<li class="c-sidebar-nav-title">Master Data</li>
 
+{{-- People: Suppliers & Customers --}}
+<li
+    class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['suppliers.*', 'customers.*']) ? 'c-show' : '' }}">
+    <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
+        <i class="c-sidebar-nav-icon bi bi-people" style="line-height: 1;"></i> Data Relasi
+    </a>
+    <ul class="c-sidebar-nav-dropdown-items">
+        {{-- Suppliers --}}
+        @can('access_suppliers')
+            <li class="c-sidebar-nav-item">
+                <a class="c-sidebar-nav-link {{ request()->routeIs('suppliers.index') ? 'c-active' : '' }}"
+                    href="{{ route('suppliers.index') }}">
+                    <i class="c-sidebar-nav-icon bi bi-shop" style="line-height: 1;"></i> Daftar Supplier
+                </a>
+            </li>
+            @can('create_suppliers')
+                <li class="c-sidebar-nav-item">
+                    <a class="c-sidebar-nav-link {{ request()->routeIs('suppliers.create') ? 'c-active' : '' }}"
+                        href="{{ route('suppliers.create') }}">
+                        <i class="c-sidebar-nav-icon bi bi-plus-circle" style="line-height: 1;"></i> Tambah Supplier
+                    </a>
+                </li>
+            @endcan
+        @endcan
 
+        {{-- Customers --}}
+        @can('access_customers')
+            <li class="c-sidebar-nav-item">
+                <a class="c-sidebar-nav-link {{ request()->routeIs('customers.index') ? 'c-active' : '' }}"
+                    href="{{ route('customers.index') }}">
+                    <i class="c-sidebar-nav-icon bi bi-person-lines-fill" style="line-height: 1;"></i> Daftar Customer
+                </a>
+            </li>
+            @can('create_customers')
+                <li class="c-sidebar-nav-item">
+                    <a class="c-sidebar-nav-link {{ request()->routeIs('customers.create') ? 'c-active' : '' }}"
+                        href="{{ route('customers.create') }}">
+                        <i class="c-sidebar-nav-icon bi bi-plus-circle" style="line-height: 1;"></i> Tambah Customer
+                    </a>
+                </li>
+            @endcan
+        @endcan
+    </ul>
+</li>
 
 {{-- =======================
-     PEMBELIAN
-======================= 
+     PEMBELIAN STOK
+======================= --}}
 <li class="c-sidebar-nav-title">Pembelian</li>
 
 @can('access_purchases')
-<li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['purchases.*', 'purchase-payments.*']) ? 'c-show' : '' }}">
-    <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-        <i class="c-sidebar-nav-icon bi bi-bag" style="line-height: 1;"></i> Pembelian
-    </a>
-    <ul class="c-sidebar-nav-dropdown-items">
-        @can('create_purchases')
+    <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('purchases.*') ? 'c-show' : '' }}">
+        <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
+            <i class="c-sidebar-nav-icon bi bi-cart-plus" style="line-height: 1;"></i> Pembelian Stok
+        </a>
+        <ul class="c-sidebar-nav-dropdown-items">
+            @can('create_purchases')
+                <li class="c-sidebar-nav-item">
+                    <a class="c-sidebar-nav-link {{ request()->routeIs('purchases.create') ? 'c-active' : '' }}"
+                        href="{{ route('purchases.create') }}">
+                        <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Buat Pembelian
+                    </a>
+                </li>
+            @endcan
             <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('purchases.create') ? 'c-active' : '' }}" href="{{ route('purchases.create') }}">
-                    <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Buat Pembelian
+                <a class="c-sidebar-nav-link {{ request()->routeIs('purchases.index') ? 'c-active' : '' }}"
+                    href="{{ route('purchases.index') }}">
+                    <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Daftar Pembelian
                 </a>
             </li>
-        @endcan
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('purchases.index') ? 'c-active' : '' }}" href="{{ route('purchases.index') }}">
-                <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Semua Pembelian
-            </a>
-        </li>
-    </ul>
-</li>
-@endcan
 
-@can('access_purchase_returns')
-<li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['purchase-returns.*', 'purchase-return-payments.*']) ? 'c-show' : '' }}">
-    <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-        <i class="c-sidebar-nav-icon bi bi-arrow-return-right" style="line-height: 1;"></i> Retur Pembelian
-    </a>
-    <ul class="c-sidebar-nav-dropdown-items">
-        @can('create_purchase_returns')
+            {{-- MENU BARU: Pembelian Bekas --}}
             <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('purchase-returns.create') ? 'c-active' : '' }}" href="{{ route('purchase-returns.create') }}">
-                    <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Buat Retur
+                <a class="c-sidebar-nav-link {{ request()->routeIs('purchases.second.*') ? 'c-active' : '' }}"
+                    href="{{ route('purchases.second.index') }}">
+                    <i class="c-sidebar-nav-icon bi bi-recycle" style="line-height: 1;"></i> Daftar Pembelian Bekas
                 </a>
             </li>
-        @endcan
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('purchase-returns.index') ? 'c-active' : '' }}" href="{{ route('purchase-returns.index') }}">
-                <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> Semua Retur
-            </a>
-        </li>
-    </ul>
-</li>
+        </ul>
+    </li>
 @endcan
 
---}}
 
 {{-- =======================
      PENJUALAN
@@ -246,7 +277,7 @@
 <li
     class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['expenses.*', 'expense-categories.*']) ? 'c-show' : '' }}">
     <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-        <i class="c-sidebar-nav-icon bi bi-wallet2" style="line-height: 1;"></i> Pengeluaran
+        <i class="c-sidebar-nav-icon bi bi-wallet2" style="line-height: 1;"></i> Pengeluaran Operasional
     </a>
     <ul class="c-sidebar-nav-dropdown-items">
         @can('access_expense_categories')
@@ -281,36 +312,6 @@
         @endcan
     </ul>
 </li>
-
-{{-- =======================
-     KONTAK
-======================= 
-<li class="c-sidebar-nav-title">Kontak</li>
-
-@canany(['access_customers', 'access_suppliers'])
-<li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['customers.*', 'suppliers.*']) ? 'c-show' : '' }}">
-    <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-        <i class="c-sidebar-nav-icon bi bi-people" style="line-height: 1;"></i> Manajemen Kontak
-    </a>
-    <ul class="c-sidebar-nav-dropdown-items">
-        @can('access_customers')
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('customers.*') ? 'c-active' : '' }}" href="{{ route('customers.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-people-fill" style="line-height: 1;"></i> Pelanggan
-                </a>
-            </li>
-        @endcan
-        @can('access_suppliers')
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('suppliers.*') ? 'c-active' : '' }}" href="{{ route('suppliers.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-people-fill" style="line-height: 1;"></i> Pemasok
-                </a>
-            </li>
-        @endcan
-    </ul>
-</li>
-@endcanany
---}}
 
 {{-- =======================
      LAPORAN
@@ -351,7 +352,6 @@
                     <i class="c-sidebar-nav-icon bi bi-cash-coin" style="line-height:1;"></i> Laporan Laba/Rugi
                 </a>
             </li>
-
         </ul>
     </li>
 @endcan
@@ -429,6 +429,7 @@
         </ul>
     </li>
 @endcanany
+
 @push('styles')
     <style>
         /* warna untuk dark sidebar */
@@ -513,6 +514,7 @@
         }
     </style>
 @endpush
+
 @push('scripts')
     <script>
         (function refreshNotif() {

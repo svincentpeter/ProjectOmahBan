@@ -77,3 +77,5 @@ Route::prefix('notifications')
             ->whereNumber('notification')
             ->name('destroy.api');
     });
+
+    
