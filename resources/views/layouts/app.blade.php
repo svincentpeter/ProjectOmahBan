@@ -11,37 +11,132 @@
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('images/favicon.png') }}">
 
-    {{-- MAIN CSS (CoreUI + Bootstrap) --}}
+    {{-- 1. MAIN CSS (Vite + CoreUI + FontAwesome) --}}
     @include('includes.main-css')
 
-    {{-- Select2 CSS - HARUS sebelum JS --}}
+    {{-- 2. Select2 CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
-        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
 
-    {{-- SweetAlert2 CSS --}}
+    {{-- 3. SweetAlert2 CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css" rel="stylesheet">
 
-    {{-- DataTables CSS (jika pakai) --}}
+    {{-- 4. DataTables CSS --}}
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css" rel="stylesheet">
 
-    {{-- Filepond CSS --}}
+    {{-- 5. Filepond CSS --}}
     @include('includes.filepond-css')
 
-    {{-- Bootstrap Icons (untuk form icons) --}}
+    {{-- 6. Bootstrap Icons --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
+    {{-- 7. Custom CSS untuk Stock Opname --}}
+    <style>
+        /* Progress Bar Enhancement */
+        .progress {
+            border-radius: 0.25rem;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            transition: width 0.6s ease;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        /* Notification Dropdown */
+        .notif-item {
+            transition: background .15s ease;
+        }
+
+        .notif-item:hover {
+            background: #f8f9fa;
+        }
+
+        .notif-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ced4da;
+        }
+
+        /* DataTables Buttons */
+        .dataTables_wrapper .dt-buttons {
+            margin-bottom: 1rem;
+        }
+
+        .dt-button {
+            margin-right: 0.25rem;
+        }
+
+        /* Badge Enhancement */
+        .badge {
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+        }
+
+        /* Counting Page Cards */
+        .product-card {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .product-card.counted {
+            background-color: #f0fff4;
+            border-color: #28a745;
+        }
+
+        .product-card.variance-shortage {
+            background-color: #fff5f5;
+            border-left: 4px solid #dc3545;
+        }
+
+        .product-card.variance-surplus {
+            background-color: #f0fff4;
+            border-left: 4px solid #28a745;
+        }
+
+        .product-card.variance-match {
+            background-color: #f8f9fa;
+            border-left: 4px solid #6c757d;
+        }
+
+        /* Input number untuk counting */
+        .count-input {
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+            border: 2px solid #dee2e6;
+            border-radius: 0.5rem;
+        }
+
+        .count-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+    </style>
+
+    {{-- 8. Livewire & Page Styles --}}
     @livewireStyles
     @stack('page_styles')
     @yield('third_party_stylesheets')
 </head>
 
 <body class="c-app">
-    {{-- Sidebar kiri --}}
+    {{-- Sidebar --}}
     @include('layouts.sidebar')
 
     <div class="c-wrapper">
-        {{-- Header (INI YANG BENAR, bukan layouts.navbar) --}}
+        {{-- Header --}}
         <header class="c-header c-header-light c-header-fixed">
             @include('layouts.header')
 
@@ -60,34 +155,62 @@
         @include('layouts.footer')
     </div>
 
+    {{-- ======================================== 
+         JAVASCRIPT SECTION
+    ======================================== --}}
+
     {{-- 1. jQuery (HARUS PERTAMA) --}}
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
-    {{-- 2. Bootstrap --}}
+    {{-- 2. Moment.js (untuk format tanggal) --}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/id.min.js"></script>
+    <script>
+        moment.locale('id');
+    </script>
+
+    {{-- 3. Bootstrap JS (dari CoreUI bundle, sudah termasuk Popper) --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    {{-- 3. DataTables --}}
+    {{-- 4. DataTables --}}
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
 
-    {{-- 4. SweetAlert2 --}}
+    {{-- 5. DataTables Buttons --}}
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    {{-- 6. SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
 
-    {{-- 5. Main JS (CoreUI init) --}}
+    {{-- 7. Main JS (CoreUI + Vite) --}}
     @include('includes.main-js')
 
-    {{-- 6. Filepond JS --}}
+    {{-- 8. Filepond --}}
     @include('includes.filepond-js')
 
-    {{-- 7. Livewire --}}
+    {{-- 9. Livewire --}}
     @livewireScripts
 
-    {{-- 8. BARU: Select2 JS DIPINDAH KE SINI (SETELAH SEMUA YANG MUNGKIN MEMUAT jQuery) --}}
+    {{-- 10. Select2 --}}
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    {{-- 9. Toast/Notification Handler --}}
+    {{-- 11. Global DataTables Config --}}
     <script>
-        // Global SweetAlert handler untuk session flash
+        $.extend(true, $.fn.dataTable.defaults, {
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
+            }
+        });
+    </script>
+
+    {{-- 12. SweetAlert Session Handler --}}
+    <script>
         @if (session()->has('swal-success'))
             Swal.fire({
                 icon: 'success',
@@ -95,7 +218,8 @@
                 text: @json(session('swal-success')),
                 timer: 3000,
                 showConfirmButton: false,
-                position: 'top-end'
+                position: 'top-end',
+                toast: true
             });
         @endif
 
@@ -106,7 +230,8 @@
                 text: @json(session('swal-error')),
                 timer: 3000,
                 showConfirmButton: false,
-                position: 'top-end'
+                position: 'top-end',
+                toast: true
             });
         @endif
 
@@ -117,7 +242,8 @@
                 text: @json(session('swal-warning')),
                 timer: 3000,
                 showConfirmButton: false,
-                position: 'top-end'
+                position: 'top-end',
+                toast: true
             });
         @endif
 
@@ -128,11 +254,11 @@
                 text: @json(session('swal-info')),
                 timer: 3000,
                 showConfirmButton: false,
-                position: 'top-end'
+                position: 'top-end',
+                toast: true
             });
         @endif
 
-        // Handle validation errors
         @if ($errors->any())
             @foreach ($errors->all() as $error)
                 Swal.fire({
@@ -140,19 +266,21 @@
                     title: 'Validasi Gagal',
                     text: @json($error),
                     timer: 3000,
-                    position: 'top-end'
+                    position: 'top-end',
+                    toast: true
                 });
             @endforeach
         @endif
     </script>
 
-    {{-- 10. Page Scripts (dari blade pages, ini eksekusi terakhir) --}}
+    {{-- 13. Third Party Scripts --}}
+    @yield('third_party_scripts')
+
+    {{-- 14. Page Scripts --}}
     @stack('page_scripts')
 
+    {{-- 15. Notification System --}}
     <script>
-        // ================================
-        // NOTIFICATION BADGE AUTO-UPDATE
-        // ================================
         const UNREAD_URL = "{{ route('notifications.unread-count') }}";
         const LATEST_URL = "{{ route('notifications.latest') }}";
 
@@ -181,9 +309,7 @@
                     credentials: 'same-origin'
                 });
 
-                const data = res.ok ? await res.json() : {
-                    count: 0
-                };
+                const data = res.ok ? await res.json() : { count: 0 };
                 const badge = document.getElementById('notif-badge');
                 if (!badge) return;
 
@@ -195,7 +321,6 @@
                     badge.style.display = 'none';
                 }
             } catch (err) {
-                // diamkan saja; jangan ganggu UI
                 console.warn('Unread badge error:', err);
             }
         }
@@ -205,27 +330,27 @@
             items.forEach(n => {
                 const icon = getSeverityIcon(n.severity);
                 const title = n.title || 'Notifikasi';
-                const message = (n.message || '').length > 140 ? (n.message.substring(0, 140) + '…') : (n.message ||
-                    '');
+                const message = (n.message || '').length > 140 ?
+                    (n.message.substring(0, 140) + '…') : (n.message || '');
                 const timeAgo = n.time_ago || '';
 
                 const el = document.createElement('div');
                 el.className = 'notif-item';
                 el.innerHTML = `
-      <a href="{{ url('notifications') }}/${n.id}" class="dropdown-item py-2">
-        <div class="d-flex align-items-start">
-          <div class="mr-2" style="line-height:1.1">${icon}</div>
-          <div class="flex-grow-1">
-            <div class="d-flex justify-content-between">
-              <span class="small font-weight-bold">${title}</span>
-              <small class="text-muted ml-2">${timeAgo}</small>
-            </div>
-            <div class="text-muted small" style="white-space:normal">${message}</div>
-          </div>
-        </div>
-      </a>
-      <div class="dropdown-divider m-0"></div>
-    `;
+                    <a href="{{ url('notifications') }}/${n.id}" class="dropdown-item py-2">
+                        <div class="d-flex align-items-start">
+                            <div class="mr-2" style="line-height:1.1">${icon}</div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span class="small font-weight-bold">${title}</span>
+                                    <small class="text-muted ml-2">${timeAgo}</small>
+                                </div>
+                                <div class="text-muted small" style="white-space:normal">${message}</div>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider m-0"></div>
+                `;
                 container.appendChild(el);
             });
         }
@@ -241,10 +366,6 @@
             empty.style.display = 'none';
             list.innerHTML = '';
 
-            let hideSpinner = () => {
-                loading.style.display = 'none';
-            };
-
             try {
                 const res = await fetch(LATEST_URL, {
                     headers: {
@@ -254,16 +375,13 @@
                     credentials: 'same-origin'
                 });
 
-                if (!res.ok) {
-                    throw new Error('Server mengembalikan status ' + res.status);
-                }
+                if (!res.ok) throw new Error('Server error ' + res.status);
 
-                // Tahan kemungkinan respon bukan JSON
                 let data;
                 try {
                     data = await res.json();
                 } catch {
-                    throw new Error('Respon bukan JSON yang valid');
+                    throw new Error('Invalid JSON response');
                 }
 
                 const items = Array.isArray(data) ? data :
@@ -276,37 +394,23 @@
 
                 renderNotifItems(list, items);
             } catch (err) {
-                console.error('Load latest notifications error:', err);
+                console.error('Load notifications error:', err);
                 empty.style.display = 'block';
-                // optional: beri tahu user sekali
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal memuat notifikasi',
-                    text: err.message || 'Terjadi kesalahan jaringan/server.',
-                    timer: 2500,
-                    showConfirmButton: false,
-                    position: 'top-end'
-                });
             } finally {
-                hideSpinner();
+                loading.style.display = 'none';
             }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Perbarui badge saat halaman dibuka + interval
             updateNotificationBadge();
             setInterval(updateNotificationBadge, 30000);
 
-            // Muat isi dropdown saat dropdown benar-benar dibuka
-            // (pakai event Bootstrap)
             let _notifLastLoadedAt = 0;
-
             const $wrap = $('#notifWrap');
+
             if ($wrap.length) {
-                // load saat dropdown akan dibuka (lebih reliable)
                 $wrap.on('show.bs.dropdown', function() {
                     const now = Date.now();
-                    // reload maksimal tiap 20 detik
                     if (now - _notifLastLoadedAt > 20000) {
                         loadLatestNotifications().then(() => {
                             _notifLastLoadedAt = now;
@@ -314,30 +418,10 @@
                     }
                 });
             }
-
         });
     </script>
 
-
-    {{-- 12. Sedikit styling agar lebih “keliatan” --}}
-    <style>
-        .notif-item {
-            transition: background .15s ease;
-        }
-
-        .notif-item:hover {
-            background: #f8f9fa;
-        }
-
-        .notif-dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ced4da;
-        }
-    </style>
-
+    {{-- 16. Stack Scripts --}}
     @stack('scripts')
 </body>
 

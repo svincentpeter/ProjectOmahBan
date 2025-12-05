@@ -1,3 +1,4 @@
+{{-- resources/views/home.blade.php / dashboard.blade.php --}}
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
@@ -12,7 +13,10 @@
 @section('content')
     <div class="container-fluid">
         <div class="animated fadeIn">
-            {{-- Welcome Section --}}
+
+            {{-- =========================
+                 WELCOME BANNER
+            ========================== --}}
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="welcome-banner gradient-banner shadow-sm">
@@ -37,10 +41,12 @@
                 </div>
             </div>
 
-            {{-- Key Metrics Cards --}}
+            {{-- =========================
+                 SUMMARY CARDS
+            ========================== --}}
             @can('show_total_stats')
                 <div class="row mb-4">
-                    {{-- Revenue --}}
+                    {{-- TOTAL PENJUALAN --}}
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card stat-card border-0 shadow-sm h-100">
                             <div class="card-body">
@@ -66,7 +72,7 @@
                         </div>
                     </div>
 
-                    {{-- Profit --}}
+                    {{-- KEUNTUNGAN BERSIH --}}
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card stat-card border-0 shadow-sm h-100">
                             <div class="card-body">
@@ -86,13 +92,14 @@
                                 </h3>
                                 <small class="text-muted">
                                     <i class="cil-check-circle mr-1"></i>
-                                    Margin: {{ $revenue > 0 ? number_format(($profit / $revenue) * 100, 1) : 0 }}%
+                                    Margin:
+                                    {{ $revenue > 0 ? number_format(($profit / $revenue) * 100, 1) : 0 }}%
                                 </small>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Produk Aktif --}}
+                    {{-- TOTAL PRODUK --}}
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card stat-card border-0 shadow-sm h-100">
                             <div class="card-body">
@@ -118,7 +125,7 @@
                         </div>
                     </div>
 
-                    {{-- Kategori Produk --}}
+                    {{-- KATEGORI PRODUK --}}
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card stat-card border-0 shadow-sm h-100">
                             <div class="card-body">
@@ -146,9 +153,12 @@
                 </div>
             @endcan
 
-            {{-- Chart Section --}}
+            {{-- =========================
+                 CHART SECTION (ROW 1)
+            ========================== --}}
             @can('show_weekly_sales_purchases|show_month_overview')
                 <div class="row mb-4">
+                    {{-- LINE CHART: 7 HARI TERAKHIR --}}
                     @can('show_weekly_sales_purchases')
                         <div class="col-lg-8 mb-4">
                             <div class="card border-0 shadow-sm h-100">
@@ -162,7 +172,13 @@
                                     </div>
                                 </div>
                                 <div class="card-body p-4">
-                                    <canvas id="salesPurchasesChart" height="80"></canvas>
+                                    <div class="chart-container" style="position: relative; height: 280px;">
+                                        <canvas id="salesPurchasesChart"></canvas>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="cil-info mr-1"></i>
+                                        Data ditarik otomatis dari transaksi penjualan & pembelian harian.
+                                    </small>
                                 </div>
                                 <div class="card-footer bg-light border-top py-3">
                                     <div class="row text-center">
@@ -184,6 +200,7 @@
                         </div>
                     @endcan
 
+                    {{-- DOUGHNUT / PIE: RINGKASAN BULAN BERJALAN --}}
                     @can('show_month_overview')
                         <div class="col-lg-4 mb-4">
                             <div class="card border-0 shadow-sm h-100">
@@ -194,7 +211,8 @@
                                     </h6>
                                 </div>
                                 <div class="card-body d-flex flex-column justify-content-center align-items-center p-4">
-                                    <div class="chart-container mb-3" style="position: relative; height:220px; width:220px">
+                                    <div class="chart-container mb-3"
+                                         style="position: relative; height:220px; width:220px">
                                         <canvas id="currentMonthChart"></canvas>
                                     </div>
                                     <div class="w-100">
@@ -203,15 +221,19 @@
                                                 <span class="legend-dot bg-success mr-2"></span>
                                                 <small class="font-weight-semibold">Penjualan</small>
                                             </div>
-                                            <small class="font-weight-bold text-success">{{ format_currency($revenue) }}</small>
+                                            <small class="font-weight-bold text-success">
+                                                {{ format_currency($revenue) }}
+                                            </small>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="d-flex align-items-center">
                                                 <span class="legend-dot bg-danger mr-2"></span>
                                                 <small class="font-weight-semibold">Pembelian</small>
                                             </div>
-                                            <small class="font-weight-bold text-danger">{{ format_currency($profit) }}</small>
-                                            {{-- Gunakan profit untuk saldo --}}
+                                            <small class="font-weight-bold text-danger">
+                                                {{ format_currency($profit) }}
+                                                {{-- Di sini bisa kamu ganti ke total pembelian kalau variabelnya ada --}}
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -221,7 +243,9 @@
                 </div>
             @endcan
 
-            {{-- Monthly Cash Flow Chart --}}
+            {{-- =========================
+                 CHART SECTION (ROW 2) – CASH FLOW
+            ========================== --}}
             @can('show_monthly_cashflow')
                 <div class="row">
                     <div class="col-lg-12">
@@ -243,22 +267,25 @@
                                 </div>
                             </div>
                             <div class="card-body p-4">
-                                <canvas id="paymentChart" height="80"></canvas>
+                                <div class="chart-container" style="position: relative; height: 280px;">
+                                    <canvas id="paymentChart"></canvas>
+                                </div>
                             </div>
                             <div class="card-footer bg-light border-top py-3">
                                 <div class="row text-center">
-                                    <div class="col-md-4">
+                                    <div class="col-md-4 mb-3 mb-md-0">
                                         <small class="text-muted d-block mb-1">Total Pemasukan</small>
                                         <h6 class="mb-0 font-weight-bold text-success">
                                             <i class="cil-arrow-bottom mr-1"></i>
                                             {{ format_currency($revenue) }}
                                         </h6>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-4 mb-3 mb-md-0">
                                         <small class="text-muted d-block mb-1">Total Pengeluaran</small>
                                         <h6 class="mb-0 font-weight-bold text-danger">
                                             <i class="cil-arrow-top mr-1"></i>
-                                            {{ format_currency($profit) }} {{-- Gunakan profit jika ingin saldo keluar --}}
+                                            {{ format_currency($profit) }}
+                                            {{-- Ganti dengan total pengeluaran kalau sudah ada variabelnya --}}
                                         </h6>
                                     </div>
                                     <div class="col-md-4">
@@ -274,16 +301,23 @@
                     </div>
                 </div>
             @endcan
+
         </div>
     </div>
 @endsection
 
+{{-- =========================
+     THIRD-PARTY SCRIPTS (Chart.js)
+========================= --}}
 @section('third_party_scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.0/chart.min.js"
-        integrity="sha512-asxKqQghC1oBShyhiBwA+YgotaSYKxGP1rcSYTDrB0U6DxwlJjU59B67U8+5/++uFjcuVM8Hh5cokLjZlhm3Vg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            integrity="sha512-asxKqQghC1oBShyhiBwA+YgotaSYKxGP1rcSYTDrB0U6DxwlJjU59B67U8+5/++uFjcuVM8Hh5cokLjZlhm3Vg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 @endsection
 
+{{-- =========================
+     PAGE SCRIPTS (config Chart)
+========================= --}}
 @push('page_scripts')
     @vite('resources/js/chart-config.js')
 @endpush
@@ -294,17 +328,9 @@
         .animated.fadeIn {
             animation: fadeIn 0.5s ease-in;
         }
-
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         /* ========== Welcome Banner ========== */
@@ -313,13 +339,9 @@
             padding: 2rem;
             border-radius: 12px;
             color: white;
-        }
-
-        .gradient-banner {
             position: relative;
             overflow: hidden;
         }
-
         .gradient-banner::before {
             content: '';
             position: absolute;
@@ -330,17 +352,9 @@
             background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
             animation: pulse 3s ease-in-out infinite;
         }
-
         @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.05);
-            }
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.05); }
         }
 
         /* ========== Stat Cards ========== */
@@ -348,12 +362,10 @@
             transition: all 0.3s ease;
             border-radius: 12px;
         }
-
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
         }
-
         .stat-icon {
             width: 56px;
             height: 56px;
@@ -363,29 +375,16 @@
             justify-content: center;
             font-size: 1.5rem;
         }
+        .bg-primary-light { background-color: rgba(50, 31, 219, 0.1); }
+        .bg-success-light { background-color: rgba(40, 167, 69, 0.1); }
+        .bg-warning-light { background-color: rgba(255, 193, 7, 0.1); }
+        .bg-info-light    { background-color: rgba(23, 162, 184, 0.1); }
 
-        .bg-primary-light {
-            background-color: rgba(50, 31, 219, 0.1);
-        }
-
-        .bg-success-light {
-            background-color: rgba(40, 167, 69, 0.1);
-        }
-
-        .bg-warning-light {
-            background-color: rgba(255, 193, 7, 0.1);
-        }
-
-        .bg-info-light {
-            background-color: rgba(23, 162, 184, 0.1);
-        }
-
-        /* ========== Cards ========== */
+        /* ========== Card & Shadow ========== */
         .card {
             border-radius: 12px;
             overflow: hidden;
         }
-
         .shadow-sm {
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
         }
@@ -405,20 +404,23 @@
             font-weight: 600;
         }
 
+        /* ========== Chart Containers ========== */
+        .chart-container {
+            position: relative;
+            width: 100%;
+        }
+
         /* ========== Responsive ========== */
         @media (max-width: 768px) {
             .welcome-banner {
                 padding: 1.5rem;
             }
-
             .welcome-banner h4 {
                 font-size: 1.25rem;
             }
-
             .stat-card {
                 margin-bottom: 1rem;
             }
-
             .d-none.d-md-block {
                 display: none !important;
             }

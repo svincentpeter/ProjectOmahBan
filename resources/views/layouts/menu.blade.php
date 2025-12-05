@@ -115,16 +115,47 @@
 <li class="c-sidebar-nav-title">Stok & Penawaran</li>
 
 @can('access_adjustments')
-    <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('adjustments.*') ? 'c-show' : '' }}">
+    <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs(['adjustments.*', 'stock-opnames.*']) ? 'c-show' : '' }}">
         <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
             <i class="c-sidebar-nav-icon bi bi-clipboard-check" style="line-height: 1;"></i> Penyesuaian Stok
         </a>
         <ul class="c-sidebar-nav-dropdown-items">
+            {{-- ======== STOCK OPNAME (BARU) ======== --}}
+            @can('access_stock_opname')
+                <li class="c-sidebar-nav-item">
+                    <a class="c-sidebar-nav-link {{ request()->routeIs('stock-opnames.index') ? 'c-active' : '' }}"
+                        href="{{ route('stock-opnames.index') }}">
+                        <i class="c-sidebar-nav-icon bi bi-calculator" style="line-height: 1;"></i> Stock Opname
+                        
+                        @php
+                            try {
+                                $opnameInProgress = \Modules\Adjustment\Entities\StockOpname::where('status', 'in_progress')->count();
+                            } catch (\Throwable $e) {
+                                $opnameInProgress = 0;
+                            }
+                        @endphp
+                        @if($opnameInProgress > 0)
+                            <span class="badge badge-warning ml-2">{{ $opnameInProgress }}</span>
+                        @endif
+                    </a>
+                </li>
+
+                @can('create_stock_opname')
+                    <li class="c-sidebar-nav-item">
+                        <a class="c-sidebar-nav-link {{ request()->routeIs('stock-opnames.create') ? 'c-active' : '' }}"
+                            href="{{ route('stock-opnames.create') }}">
+                            <i class="c-sidebar-nav-icon bi bi-plus-circle" style="line-height: 1;"></i> Buat Stock Opname
+                        </a>
+                    </li>
+                @endcan
+            @endcan
+
+            {{-- ======== ADJUSTMENT MANUAL (EXISTING) ======== --}}
             @can('create_adjustments')
                 <li class="c-sidebar-nav-item">
                     <a class="c-sidebar-nav-link {{ request()->routeIs('adjustments.create') ? 'c-active' : '' }}"
                         href="{{ route('adjustments.create') }}">
-                        <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Buat Penyesuaian
+                        <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Buat Penyesuaian Manual
                     </a>
                 </li>
             @endcan
@@ -144,10 +175,11 @@
                         Approval Penyesuaian
 
                         @php
-                            $pendingCount = \Modules\Adjustment\Entities\Adjustment::where(
-                                'status',
-                                'pending',
-                            )->count();
+                            try {
+                                $pendingCount = \Modules\Adjustment\Entities\Adjustment::where('status', 'pending')->count();
+                            } catch (\Throwable $e) {
+                                $pendingCount = 0;
+                            }
                         @endphp
                         @if ($pendingCount > 0)
                             <span class="badge badge-danger ml-2">{{ $pendingCount }}</span>
@@ -158,6 +190,8 @@
         </ul>
     </li>
 @endcan
+
+
 
 {{-- =======================
      MASTER DATA
