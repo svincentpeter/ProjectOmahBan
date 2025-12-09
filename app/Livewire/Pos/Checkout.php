@@ -72,6 +72,11 @@ class Checkout extends Component
     public $show_midtrans_payment = false;
     public $midtrans_snap_token = null;
 
+    // ========= PROPERTIES: Modal Diskon =========
+    public $showDiscountModal = false;
+    public $tempDiscountAmount = 0;
+    public $discountNote = '';
+
     protected $rules = [
         'customer_name' => 'nullable|string|max:255',
         'customer_email' => 'nullable|email|max:255',
@@ -196,7 +201,16 @@ class Checkout extends Component
             $shipping = 0; // hardening kecil
         }
 
-        return $total + $shipping;
+        // ✅ FIX: Kurangi global_discount dari total
+        $discount = (int) ($this->global_discount ?? 0);
+        if ($discount < 0) {
+            $discount = 0;
+        }
+
+        $finalTotal = $total + $shipping - $discount;
+        
+        // Jangan sampai negatif
+        return max(0, $finalTotal);
     }
 
     // ========= Lifecycle =========
@@ -307,6 +321,82 @@ class Checkout extends Component
         $this->dispatch('paid-input-ready'); // re-init AutoNumeric
     }
 
+    /**
+     * Listener untuk form Input Manual Produk (tab terpisah)
+     * Dipanggil via JavaScript: Livewire.dispatch('addManualProduct', {...})
+     * 
+     * NOTE: Livewire 3 mengirim parameter dispatch sebagai single array/object
+     */
+    #[On('addManualProduct')]
+    public function addManualProduct($name = null, $cost_price = null, $price = null, $qty = null, $reason = null): void
+    {
+        // Logging untuk debug
+        Log::info('addManualProduct called', [
+            'name' => $name,
+            'cost_price' => $cost_price,
+            'price' => $price,
+            'qty' => $qty,
+            'reason' => $reason,
+        ]);
+
+        // Validasi
+        $name = trim((string) ($name ?? ''));
+        $qty = max(1, (int) ($qty ?? 1));
+        $sellPrice = (int) ($price ?? 0);
+        $costPrice = (int) ($cost_price ?? 0);
+        $reason = trim((string) ($reason ?? ''));
+
+        if (empty($name)) {
+            $this->dispatch('swal-error', 'Nama produk wajib diisi!');
+            return;
+        }
+
+        if ($sellPrice <= 0) {
+            $this->dispatch('swal-error', 'Harga jual harus lebih dari 0!');
+            return;
+        }
+
+        if (empty($reason)) {
+            $this->dispatch('swal-error', 'Alasan input manual wajib diisi!');
+            return;
+        }
+
+        // Warning jika harga jual < HPP
+        if ($sellPrice < $costPrice && $costPrice > 0) {
+            $this->dispatch('swal-warning', 'Perhatian: Harga jual lebih kecil dari harga beli!');
+        }
+
+        // Tambahkan ke keranjang dengan flag manual
+        $cartId = 'MAN_' . uniqid();
+        
+        $this->cart()->add([
+            'id' => $cartId,
+            'name' => $name,
+            'qty' => $qty,
+            'price' => $sellPrice,
+            'weight' => 1,
+            'options' => [
+                'code' => '-',
+                'source_type' => 'manual',
+                'manual_kind' => 'goods', // Barang, bukan jasa
+                'cost_price' => $costPrice,
+                'source_type_label' => 'Barang Manual',
+
+                // Flag untuk notifikasi owner
+                'is_manual_input' => true,
+                'manual_reason' => $reason,
+                'manual_input_by' => auth()->id(),
+                'manual_input_at' => now()->toDateTimeString(),
+            ],
+        ]);
+
+        Log::info('Manual product added to cart', ['cartId' => $cartId, 'name' => $name]);
+
+        $this->total_amount = $this->calculateTotal();
+        $this->dispatch('swal-success', 'Item manual ditambahkan! Owner akan menerima notifikasi.');
+        $this->dispatch('paid-input-ready');
+    }
+
     private function buildProductPayloadFromId(int $id): array
     {
         $p = Product::find($id);
@@ -344,26 +434,19 @@ class Checkout extends Component
     public function calculate($product)
     {
         $price = (int) ($product['product_price'] ?? 0);
-        $rate = (int) ($product['product_order_tax'] ?? 0);
-        $type = (int) ($product['product_tax_type'] ?? 0); // 0: none, 1: inclusive, 2: exclusive
+        
+        // Force tax to 0 as per user request
+        $rate = 0; 
+        $type = 0; 
 
         $tax = 0;
         $unit_price = $price;
         $sub_total = $price;
 
-        if ($rate > 0) {
-            if ($type === 1) {
-                // Inclusive
-                $tax = (int) round($price * ($rate / (100 + $rate)));
-                $unit_price = $price - $tax;
-                $sub_total = $price;
-            } elseif ($type === 2) {
-                // Exclusive
-                $tax = (int) round($price * ($rate / 100));
-                $unit_price = $price;
-                $sub_total = $price + $tax;
-            }
-        }
+        // Origin Logic reserved but disabled:
+        // $rate = (int) ($product['product_order_tax'] ?? 0);
+        // $type = (int) ($product['product_tax_type'] ?? 0);
+        // if ($rate > 0) { ... }
 
         return [
             'price' => $price,
@@ -386,6 +469,159 @@ class Checkout extends Component
             return;
         }
     }
+
+    /**
+     * Reset/Kosongkan seluruh keranjang
+     */
+    #[On('resetCart')]
+    public function resetCart()
+    {
+        try {
+            $this->cart()->destroy();
+            
+            // Reset all state
+            $this->quantity = [];
+            $this->check_quantity = [];
+            $this->discount_type = [];
+            $this->item_discount = [];
+            $this->global_discount = 0;
+            $this->total_amount = 0;
+            $this->paid_amount = 0;
+            $this->change = 0;
+            $this->note = '';
+            $this->customer_id = null;
+            $this->customer_name = '';
+            $this->customer_email = null;
+            $this->customer_phone = null;
+            
+            $this->dispatch('cartUpdated');
+            $this->dispatch('swal-success', 'Keranjang berhasil dikosongkan!');
+        } catch (\Exception $e) {
+            report($e);
+            $this->dispatch('swal-error', 'Gagal mengosongkan keranjang.');
+        }
+    }
+
+    // ========= METHOD: Modal Diskon =========
+    
+    /**
+     * Buka modal diskon
+     */
+    public function openDiscountModal(): void
+    {
+        $this->tempDiscountAmount = $this->global_discount;
+        $this->discountNote = '';
+        $this->showDiscountModal = true;
+    }
+
+    /**
+     * Tutup modal diskon
+     */
+    public function closeDiscountModal(): void
+    {
+        $this->showDiscountModal = false;
+        $this->tempDiscountAmount = 0;
+        $this->discountNote = '';
+    }
+
+    /**
+     * Simpan diskon dari modal
+     */
+    public function saveDiscount(): void
+    {
+        $amount = (int) $this->tempDiscountAmount;
+        
+        // Validasi: diskon tidak boleh negatif
+        if ($amount < 0) {
+            $this->dispatch('swal-error', 'Diskon tidak boleh negatif!');
+            return;
+        }
+
+        // Validasi: jika ada diskon, alasan wajib diisi
+        if ($amount > 0 && empty(trim($this->discountNote))) {
+            $this->dispatch('swal-error', 'Alasan diskon wajib diisi!');
+            return;
+        }
+
+        // Simpan diskon
+        $this->global_discount = $amount;
+        
+        // Recalculate total
+        $this->total_amount = $this->cartTotalInt();
+        $this->paid_amount = $this->total_amount;
+        $this->calculateChange();
+
+        // ✅ Simpan info diskon ke note transaksi (akan tercatat di database)
+        if ($amount > 0) {
+            $discountInfo = "[DISKON] Rp " . number_format($amount, 0, ',', '.') . " - " . $this->discountNote . " (oleh " . (auth()->user()->name ?? 'Kasir') . " pada " . now()->format('d/m/Y H:i') . ")";
+            $this->note = $this->note ? ($this->note . "\n" . $discountInfo) : $discountInfo;
+        }
+
+        $this->closeDiscountModal();
+        $this->dispatch('swal-success', $amount > 0 
+            ? 'Diskon Rp ' . number_format($amount, 0, ',', '.') . ' berhasil diterapkan!' 
+            : 'Diskon dihapus!');
+    }
+
+    /**
+     * Reset komponen untuk transaksi baru (dipanggil setelah invoice selesai)
+     */
+    public function resetForNewTransaction(): void
+    {
+        try {
+            // Reset invoice state
+            $this->sale = null;
+            $this->sale_details = null;
+            $this->show_payment = false;
+            
+            // Reset cart
+            $this->cart()->destroy();
+            
+            // Reset semua state
+            $this->quantity = [];
+            $this->check_quantity = [];
+            $this->discount_type = [];
+            $this->item_discount = [];
+            $this->global_discount = 0;
+            $this->total_amount = 0;
+            $this->paid_amount = 0;
+            $this->change = 0;
+            $this->note = '';
+            $this->payment_method = 'Tunai';
+            $this->bank_name = null;
+            
+            // Reset customer
+            $this->customer_id = null;
+            $this->customer_name = '';
+            $this->customer_email = null;
+            $this->customer_phone = null;
+            $this->customer_city = null;
+            $this->customer_address = null;
+            $this->customer_mode = 'select';
+            
+            // Reset edit price modal
+            $this->showEditPriceModal = false;
+            $this->editingRowId = null;
+            $this->editingProductId = null;
+            $this->editingProductName = '';
+            $this->editingSourceType = '';
+            $this->editingOriginalPrice = 0;
+            $this->discountAmount = 0;
+            $this->priceNote = '';
+            
+            // Reset Midtrans
+            $this->show_midtrans_payment = false;
+            $this->midtrans_snap_token = null;
+            
+            $this->dispatch('cartUpdated');
+            $this->dispatch('paid-input-ready');
+            $this->dispatch('swal-success', 'Siap untuk transaksi baru!');
+        } catch (\Exception $e) {
+            report($e);
+            $this->dispatch('swal-error', 'Gagal reset transaksi.');
+        }
+    }
+
 
     public function removeItem($rowId)
     {

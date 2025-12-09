@@ -18,7 +18,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/app/pos', [PosController::class, 'index'])->name('app.pos.index');
     Route::post('/app/pos', [PosController::class, 'store'])->name('app.pos.store');
 
-    // ========== Cart (Edit Sale) ==========
+    // ===================== POS Optimized Actions =====================
+    Route::post('/pos/cart/add', [PosController::class, 'addToCart'])->name('pos.cart.add');
+
     Route::post('/sales/cart/update-line', [CartController::class, 'updateLine'])
         ->name('sales.cart.updateLine')
         ->middleware('can:edit_sales');

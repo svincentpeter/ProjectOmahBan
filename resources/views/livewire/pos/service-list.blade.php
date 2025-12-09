@@ -1,275 +1,319 @@
 <div>
-
-    {{-- ===== Page Header Card ===== --}}
-    <div class="card page-head-card shadow-sm mb-4">
-        <div class="card-body py-4 px-4">
-            <div class="d-flex justify-content-between align-items-start flex-wrap">
-                <div class="mb-3 mb-md-0">
-                    <h4 class="mb-1 d-flex align-items-center">
-                        <i class="cil-notes mr-2 text-primary"></i>
-                        Jasa / Input Manual
-                    </h4>
-                    <div class="text-muted">
-                        Pilih jasa dari master data atau input manual untuk kasus khusus (non-master).
+    {{-- MAIN CONTENT --}}
+    <div class="space-y-4">
+        
+        {{-- Quick Service Templates (Dynamic from Database) --}}
+        @if($services && $services->count() > 0)
+        <div>
+            <div class="mb-3 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-900">
+                    <i class="bi bi-tools mr-1"></i>
+                    Jasa Tersedia
+                </h3>
+                <p class="text-xs text-slate-500">
+                    {{ $services->count() }} jasa • Klik untuk tambah ke keranjang
+                </p>
+            </div>
+            
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                
+                @php
+                    // Define color scheme for dynamic styling
+                    $colors = ['indigo', 'blue', 'emerald', 'amber', 'cyan', 'purple', 'pink', 'rose'];
+                    $icons = ['bi-tools', 'bi-gear', 'bi-wrench', 'bi-arrow-repeat', 'bi-droplet', 'bi-bandaid', 'bi-align-center', 'bi-rulers'];
+                @endphp
+                
+                @foreach($services as $index => $service)
+                    @php
+                        // Cycle through colors and icons
+                        $colorIndex = $index % count($colors);
+                        $color = $colors[$colorIndex];
+                        $icon = $icons[$colorIndex];
+                        
+                        // Service details
+                        $serviceName = $service->service_name;
+                        $servicePrice = $service->standard_price;
+                        $serviceCategory = $service->category ?? 'Layanan';
+                    @endphp
+                    
+                    <button type="button"
+                            wire:click="addServiceToCart({{ $service->id }})"
+                            wire:loading.attr="disabled"
+                            wire:key="service-{{ $service->id }}"
+                            class="relative group flex flex-col items-center gap-3 rounded-2xl border-2 border-{{ $color }}-200 bg-gradient-to-br from-white to-{{ $color }}-50/30 p-4 text-center shadow-sm transition-all hover:border-{{ $color }}-400 hover:shadow-md active:scale-95">
+                        
+                        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-{{ $color }}-100 text-{{ $color }}-600 transition-colors group-hover:bg-{{ $color }}-600 group-hover:text-white">
+                            <i class="bi {{ $icon }} text-2xl"></i>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900">{{ $serviceName }}</p>
+                            <p class="mt-0.5 text-xs text-slate-500">{{ $serviceCategory }}</p>
+                            <p class="mt-1 text-base font-bold text-{{ $color }}-600">{{ format_currency($servicePrice) }}</p>
+                        </div>
+                        
+                        {{-- Loading Indicator --}}
+                        <div wire:loading wire:target="addServiceToCart({{ $service->id }})" class="absolute inset-0 bg-white/80 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                            <svg class="animate-spin h-6 w-6 text-{{ $color }}-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                    </button>
+                @endforeach
+                
+                {{-- Custom Service Button --}}
+                <button type="button"
+                        onclick="openCustomServiceModal()"
+                        class="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white p-4 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50/50 active:scale-95">
+                    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-600">
+                        <i class="bi bi-plus-circle text-2xl"></i>
                     </div>
-                </div>
-
-                <div class="d-flex align-items-center flex-wrap gap-2">
-                    <div class="chip chip-info mr-2">
-                        <i class="cil-settings mr-1"></i> {{ $services->count() }} Jasa Tersedia
+                    <div>
+                        <p class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Jasa Lainnya</p>
+                        <p class="mt-0.5 text-xs text-slate-500">Input manual</p>
                     </div>
-
-                    <a href="{{ route('service-masters.index') }}" target="_blank" class="btn btn-primary">
-                        <i class="cil-plus mr-1"></i> Kelola Master Jasa
+                </button>
+                
+            </div>
+        </div>
+        @else
+            {{-- Empty State --}}
+            <div class="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-12">
+                <div class="text-center">
+                    <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+                        <i class="bi bi-inbox text-3xl text-slate-400"></i>
+                    </div>
+                    <h3 class="mb-1 text-base font-semibold text-slate-900">
+                        Belum Ada Jasa
+                    </h3>
+                    <p class="text-sm text-slate-500 mb-4">
+                        Silakan tambah jasa di master data terlebih dahulu.
+                    </p>
+                    <a href="{{ route('service-masters.index') }}" 
+                       class="inline-flex items-center gap-2 text-sm text-ob-primary hover:text-indigo-700 font-semibold transition-colors">
+                        <i class="bi bi-plus-circle"></i>
+                        Tambah Jasa Baru
                     </a>
                 </div>
             </div>
+        @endif
+        
+        {{-- Info Banner --}}
+        <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+            <div class="flex items-start gap-3">
+                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
+                    <i class="bi bi-info-circle text-indigo-600"></i>
+                </div>
+                <div class="flex-1 text-sm">
+                    <p class="font-semibold text-indigo-900">Tips Input Jasa</p>
+                    <ul class="mt-1 space-y-0.5 text-xs text-indigo-700">
+                        <li>• Klik <strong>Jasa</strong> untuk tambah langsung ke keranjang</li>
+                        <li>• Klik <strong>Jasa Lainnya</strong> untuk input jasa custom dengan harga manual</li>
+                        <li>• Anda bisa edit quantity jasa di keranjang sebelum checkout</li>
+                    </ul>
+                </div>
+            </div>
         </div>
+        
+        {{-- Link to Manage Services --}}
+        <div class="flex justify-center">
+            <a href="{{ route('service-masters.index') }}" 
+               class="inline-flex items-center gap-2 text-xs text-ob-primary hover:text-indigo-700 font-semibold transition-colors">
+                <i class="bi bi-gear"></i>
+                Kelola Master Jasa
+            </a>
+        </div>
+        
     </div>
 
-    {{-- ===== Card: Daftar Jasa (Master Data) ===== --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white py-3 border-bottom">
-            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                <div class="mb-2 mb-md-0">
-                    <h6 class="mb-1 font-weight-bold d-flex align-items-center">
-                        <i class="cil-settings mr-2 text-primary"></i>
-                        Daftar Jasa (Master Data)
-                    </h6>
-                    <small class="text-muted">Klik kartu atau tombol <em>Tambah</em> untuk memasukkan ke
-                        keranjang</small>
-                </div>
-                <div class="svc-search">
-                    <div class="input-group input-group-sm">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text bg-light"><i class="cil-magnifying-glass"></i></span>
-                        </div>
-                        <input id="svcSearch" type="text" class="form-control" placeholder="Cari jasa…">
+    {{-- MODAL: Custom Service Input --}}
+    <div id="custom-service-modal" tabindex="-1" aria-hidden="true" 
+         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full bg-slate-900/50">
+        <div class="relative p-4 w-full max-w-md">
+            <div class="relative bg-white rounded-2xl shadow-xl border border-slate-200">
+                
+                <div class="flex items-center justify-between p-4 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-900">Input Jasa Custom</h3>
+                        <p class="text-xs text-slate-500">Untuk jasa yang tidak ada di template</p>
                     </div>
+                    <button type="button" 
+                            onclick="closeCustomServiceModal()"
+                            class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
-            </div>
-        </div>
-
-        <div class="card-body">
-            @if ($services->isEmpty())
-                <div class="pos-callout pos-callout--info mb-0">
-                    <i class="bi bi-info-circle mr-2"></i> Belum ada jasa di master data.
-                    <a href="{{ route('service-masters.index') }}" target="_blank" class="font-weight-semibold">Tambah
-                        jasa di sini</a>
-                </div>
-            @else
-                <div class="row g-3">
-                    @foreach ($services as $service)
-                        @php
-                            $cat = $service->category ?? 'service';
-                            $catLabel =
-                                ['service' => 'Service', 'goods' => 'Goods', 'custom' => 'Custom'][$cat] ??
-                                ucfirst($cat);
-                            $catClass =
-                                [
-                                    'service' => 'badge-info',
-                                    'goods' => 'badge-success',
-                                    'custom' => 'badge-secondary',
-                                ][$cat] ?? 'badge-light';
-                        @endphp
-
-                        <div class="col-md-6" wire:key="svc-{{ $service->id }}">
-                            <div class="svc-card card shadow-sm h-100" role="button" tabindex="0"
-                                data-q="{{ Str::lower(trim($service->service_name . ' ' . $cat . ' ' . ($service->description ?? ''))) }}"
-                                wire:click="addServiceToCart({{ $service->id }})" wire:loading.class="opacity-50"
-                                wire:target="addServiceToCart">
-                                <div class="card-body p-3">
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <div class="pr-2">
-                                            <h6 class="mb-1 svc-name text-truncate">{{ $service->service_name }}</h6>
-                                            <span class="badge {{ $catClass }}">{{ $catLabel }}</span>
-                                        </div>
-                                        <div class="text-right">
-                                            <span
-                                                class="price-chip">{{ format_currency($service->standard_price) }}</span>
-                                        </div>
-                                    </div>
-
-                                    @if ($service->description)
-                                        <p class="text-muted small mb-3 svc-desc">
-                                            {{ Str::limit($service->description, 120) }}
-                                        </p>
-                                    @endif
-
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <button type="button" class="btn btn-sm btn-primary"
-                                            wire:click.stop="addServiceToCart({{ $service->id }})"
-                                            wire:loading.attr="disabled" wire:target="addServiceToCart">
-                                            <span wire:loading wire:target="addServiceToCart"
-                                                class="spinner-border spinner-border-sm mr-1"></span>
-                                            <i class="cil-plus mr-1" wire:loading.remove
-                                                wire:target="addServiceToCart"></i>
-                                            Tambah
-                                        </button>
-                                        <small class="text-muted">Klik kartu atau tombol untuk menambah</small>
-                                    </div>
-                                </div>
-                            </div>
+                
+                <form id="custom-service-form" class="p-4 space-y-4" onsubmit="submitCustomService(event)">
+                    
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold text-slate-700">
+                            Nama Jasa <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               id="service-name"
+                               class="w-full rounded-xl border-slate-200 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                               placeholder="Contoh: Ganti Oli Mesin, Cuci Velg, dll"
+                               required>
+                        <p class="mt-1 text-xs text-slate-500">
+                            <i class="bi bi-info-circle"></i>
+                            Nama jasa akan muncul di struk
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold text-slate-700">
+                            Harga Jasa <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 text-sm">
+                                Rp
+                            </span>
+                            <input type="number" 
+                                   id="service-price"
+                                   class="w-full rounded-xl border-slate-200 pl-10 pr-3 py-2.5 text-sm text-right font-semibold focus:border-indigo-500 focus:ring-indigo-500"
+                                   placeholder="0"
+                                   min="0"
+                                   step="1000"
+                                   required>
                         </div>
-                    @endforeach
+                    </div>
+                    
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold text-slate-700">
+                            Quantity
+                        </label>
+                        <div class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50">
+                            <button type="button"
+                                    onclick="changeServiceQty(-1)"
+                                    class="px-3 py-2 text-slate-500 hover:bg-slate-100 rounded-l-xl transition-colors">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <input type="number" 
+                                   id="service-qty"
+                                   value="1"
+                                   min="1"
+                                   class="w-16 border-x border-slate-200 bg-white text-center text-sm focus:outline-none">
+                            <button type="button"
+                                    onclick="changeServiceQty(1)"
+                                    class="px-3 py-2 text-slate-500 hover:bg-slate-100 rounded-r-xl transition-colors">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold text-slate-700">
+                            Catatan / Alasan <span class="text-xs text-slate-500">(Opsional)</span>
+                        </label>
+                        <textarea id="service-reason"
+                                  rows="2"
+                                  class="w-full rounded-xl border-slate-200 px-3 py-2 text-xs focus:border-indigo-500 focus:ring-indigo-500"
+                                  placeholder="Contoh: Oli 10W-40 fully synthetic, cuci velg + chrome, dll"></textarea>
+                        <p class="mt-1 text-xs text-slate-500">
+                            Catatan untuk audit/laporan, tidak muncul di struk
+                        </p>
+                    </div>
+                    
+                </form>
+                
+                <div class="px-4 py-3 border-t border-slate-100 flex gap-2">
+                    <button type="button"
+                            onclick="closeCustomServiceModal()"
+                            class="flex-1 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                        Batal
+                    </button>
+                    <button type="button"
+                            onclick="submitCustomService(event)"
+                            class="flex-1 inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors">
+                        <i class="bi bi-plus-circle mr-1.5"></i>
+                        Tambahkan
+                    </button>
                 </div>
-            @endif
-
-            <hr class="my-4">
-
-            <div class="pos-callout pos-callout--warning">
-                <small>
-                    <i class="bi bi-info-circle"></i>
-                    <strong>Catatan: </strong> Harga di atas adalah harga standar. Anda dapat mengubah harga di
-                    keranjang.
-                    Perubahan harga &gt; 30% memerlukan alasan.
-                </small>
+                
             </div>
         </div>
     </div>
 
-    {{-- ===== Card: Input Manual (Non Master) ===== --}}
-    <div class="card shadow-sm">
+    {{-- JavaScript --}}
+    <script>
+    function changeServiceQty(delta) {
+        const input = document.getElementById('service-qty');
+        const currentValue = parseInt(input.value) || 1;
+        const newValue = Math.max(1, currentValue + delta);
+        input.value = newValue;
+    }
+
+    function submitCustomService(event) {
+        if (event) event.preventDefault();
         
-
+        const name = document.getElementById('service-name').value.trim();
+        const price = parseInt(document.getElementById('service-price').value) || 0;
+        const qty = parseInt(document.getElementById('service-qty').value) || 1;
+        const reason = document.getElementById('service-reason').value.trim();
         
-    </div>
-
-</div>
-
-@push('page_styles')
-    <style>
-        /* Header card */
-        .page-head-card {
-            border-radius: 12px;
-            background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-            border: 1px solid #edf2f7;
+        if (!name) {
+            alert('Nama jasa harus diisi!');
+            return;
         }
-
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            border-radius: 999px;
-            padding: .35rem .65rem;
-            font-weight: 600;
-            font-size: .825rem;
-            border: 1px solid transparent
+        
+        if (price <= 0) {
+            alert('Harga jasa harus lebih dari 0!');
+            return;
         }
-
-        .chip-info {
-            background: #e7f1ff;
-            border-color: #cfe0ff;
-            color: #2477ff
+        
+        if (typeof Livewire !== 'undefined') {
+            Livewire.dispatch('addCustomService', { name, price, qty, reason });
+            document.getElementById('custom-service-form').reset();
+            document.getElementById('service-qty').value = 1;
+            closeCustomServiceModal();
+        } else if (typeof addToCart === 'function') {
+            addToCart(null, name, price, 'service', qty);
+            document.getElementById('custom-service-form').reset();
+            document.getElementById('service-qty').value = 1;
+            closeCustomServiceModal();
+        } else {
+            alert('Error: Cart function not available');
         }
+    }
 
-        /* Callouts */
-        .pos-callout {
-            border-radius: 10px;
-            padding: 12px 14px;
-            border-left: 4px solid
+    function closeCustomServiceModal() {
+        const modal = document.getElementById('custom-service-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
         }
+    }
 
-        .pos-callout--info {
-            border-color: #39f;
-            background: #f1f7ff
+    function openCustomServiceModal() {
+        const modal = document.getElementById('custom-service-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
         }
+    }
 
-        .pos-callout--warning {
-            border-color: #f9b115;
-            background: #fff7e6
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('custom-service-modal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeCustomServiceModal();
+            });
         }
+    });
 
-        .pos-callout--danger {
-            border-color: #e55353;
-            background: #ffecec
-        }
-
-        /* Service cards */
-        .svc-card {
-            transition: .2s;
-            border-radius: 12px
-        }
-
-        .svc-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, .08)
-        }
-
-        .svc-name {
-            font-weight: 600;
-            color: #2d3748
-        }
-
-        .svc-desc {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden
-        }
-
-        .price-chip {
-            display: inline-block;
-            padding: .35rem .6rem;
-            border-radius: 999px;
-            background: #e9f7ef;
-            border: 1px solid #cfe9da;
-            font-weight: 700;
-            color: #2eb85c;
-            font-size: .85rem;
-            white-space: nowrap
-        }
-
-        .badge-info {
-            background: #e7f1ff;
-            color: #2477ff;
-            border: 1px solid #cfe0ff
-        }
-
-        .badge-success {
-            background: #e9f7ef;
-            color: #2eb85c;
-            border: 1px solid #cfe9da
-        }
-
-        .badge-secondary {
-            background: #f1f3f5;
-            color: #495057;
-            border: 1px solid #e9ecef
-        }
-
-        .badge-light {
-            background: #fff;
-            color: #6c757d;
-            border: 1px solid #e9ecef
-        }
-
-        /* Search box width on small screens */
-        .svc-search {
-            min-width: 240px
-        }
-
-        @media (max-width:768px) {
-            .svc-search {
-                width: 100%;
-                margin-top: .5rem
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('custom-service-modal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closeCustomServiceModal();
             }
         }
-    </style>
-@endpush
-
-@push('page_scripts')
-    <script>
-        // Simple client-side filter untuk grid jasa (tanpa request baru)
-        (function() {
-            const input = document.getElementById('svcSearch');
-            if (!input) return;
-            input.addEventListener('input', function() {
-                const q = (this.value || '').toLowerCase();
-                document.querySelectorAll('.svc-card').forEach(function(card) {
-                    const hay = (card.getAttribute('data-q') || '').toLowerCase();
-                    card.parentElement.style.display = hay.includes(q) ? '' : 'none';
-                });
-            });
-        })();
+    });
     </script>
-@endpush
+</div>

@@ -67,7 +67,7 @@ class Product extends Model implements HasMedia
 
     public function brand()
     {
-        return $this->belongsTo(\Modules\Product\Entities\Brand::class, 'brandid'); // Legacy: Ganti ke 'brand_id' post-migrasi
+        return $this->belongsTo(\Modules\Product\Entities\Brand::class, 'brand_id'); // Fixed: was 'brandid'
     }
 
     public function adjustedProducts()
