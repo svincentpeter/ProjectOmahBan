@@ -6,6 +6,7 @@ use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Modules\Product\Entities\Brand;
 use Modules\Product\Entities\Category;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductSecond;
@@ -23,6 +24,7 @@ class PosController extends Controller
     {
         // Siapkan data pendukung untuk tab produk
         $categories = Category::orderBy('category_name')->get();
+        $brands = Brand::orderBy('name')->get();
 
         // Pastikan instance keranjang POS konsisten
         if (!session()->has('cart_instance')) {
@@ -31,7 +33,86 @@ class PosController extends Controller
 
         return view('sale::pos.index', [
             'categories' => $categories,
+            'brands' => $brands,
             'product_categories' => $categories, // alias agar view lama tetap hidup
+        ]);
+    }
+
+    /**
+     * Optimized Add to Cart (JSON API)
+     */
+    public function addToCart(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required',
+            'name' => 'required|string',
+            'price' => 'required|numeric',
+            'qty' => 'required|numeric|min:1',
+            'type' => 'required|string',
+        ]);
+
+        $id = $request->input('product_id');
+        $name = $request->input('name');
+        $price = $request->input('price');
+        $qty = $request->input('qty');
+        $type = $request->input('type');
+        $image = $request->input('image');
+
+        // Logic Cart ID & Options
+        $cartId = $id;
+        $options = [
+            'type' => $type,
+            'image' => $image
+        ];
+
+        // Custom Logic based on type
+        if ($type === 'product') {
+            $product = Product::find($id);
+            if (!$product) return response()->json(['success' => false, 'message' => 'Produk tidak ditemukan']);
+            
+            // Check stock logic if needed (optional for speed, or strict)
+            // For optimized flow, we might skip deep checks or do lightweight check
+            $options['code'] = $product->product_code;
+            $options['category'] = $product->category?->category_name;
+            $options['source_type'] = 'new';
+        } 
+        elseif ($type === 'service') {
+             $cartId = 'SRV-' . $id;
+             $options['source_type'] = 'service_master';
+             $options['is_from_master'] = true;
+        }
+
+        // Add to Cart
+        Cart::instance('sale')->add([
+            'id' => $cartId,
+            'name' => $name,
+            'qty' => $qty,
+            'price' => $price,
+            'weight' => 1,
+            'options' => $options
+        ]);
+
+        // Calculate Totals
+        $cart = Cart::instance('sale');
+        
+        return response()->json([
+            'success' => true,
+            'cart' => [
+                'count' => $cart->count(),
+                'subtotal' => (int) $cart->subtotal(),
+                'discount' => 0, // Implement discount logic if needed
+                'total' => (int) $cart->total(),
+                'items' => $cart->content()->map(function($item) {
+                    return [
+                        'rowId' => $item->rowId,
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'qty' => $item->qty,
+                        'price' => $item->price,
+                        'subtotal' => $item->subtotal
+                    ];
+                })->values()
+            ]
         ]);
     }
 

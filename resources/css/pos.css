@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   CUSTOM POS OPTIMIZATIONS
+   ======================================== */
+
+@layer components {
+
+    /* Card Hover - Hardware Accelerated */
+    .card-hover {
+        @apply transition-all duration-300 ease-out;
+        will-change: transform, box-shadow, border-color;
+    }
+
+    .card-hover:hover {
+        @apply -translate-y-1 shadow-lg;
+        border-color: theme('colors.indigo.500');
+    }
+
+    .card-hover:active {
+        @apply scale-[0.98];
+    }
+
+    /* Custom Scrollbar - Sleek */
+    .custom-scrollbar::-webkit-scrollbar {
+        @apply w-2;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        @apply bg-transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        @apply bg-slate-300 rounded-full;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        @apply bg-slate-400;
+    }
+
+    /* Smooth Loading Pulse */
+    @keyframes smooth-pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .animate-pulse {
+        animation: smooth-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Optimized Transitions */
+    .transition-smooth {
+        transition-property: color, background-color, border-color, transform, box-shadow;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 200ms;
+    }
+}
+
+@layer utilities {
+
+    /* GPU Acceleration for Animations */
+    .gpu-accelerate {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+    }
+
+    /* Prevent Layout Shift */
+    .prevent-shift {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 300px;
+    }
+
+    /* Smooth Scroll */
+    .smooth-scroll {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+/* Reduce Motion for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}

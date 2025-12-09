@@ -23,6 +23,7 @@ class ProductList extends Component
     public $brands; // Tambahkan property brands
     public $category_id;
     public $brand_id; // Tambahkan property brand_id
+    public $search = ''; // Search Term
     public $limit = 9;
 
     public function mount($categories)
@@ -36,11 +37,18 @@ class ProductList extends Component
     public function render()
     {
         return view('livewire.pos.product-list', [
-            'products' => Product::when($this->category_id, function ($query) {
+            'products' => Product::with(['brand', 'media', 'category'])
+                ->when($this->category_id, function ($query) {
                     return $query->where('category_id', $this->category_id);
                 })
-                ->when($this->brand_id, function ($query) { // Tambahkan filter brand
+                ->when($this->brand_id, function ($query) { 
                     return $query->where('brand_id', $this->brand_id);
+                })
+                ->when($this->search, function ($query) {
+                    return $query->where(function ($subQuery) {
+                        $subQuery->where('product_name', 'like', '%'.$this->search.'%')
+                                 ->orWhere('product_code', 'like', '%'.$this->search.'%');
+                    });
                 })
                 ->paginate($this->limit)
         ]);

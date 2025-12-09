@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 05, 2025 at 05:04 AM
+-- Generation Time: Dec 08, 2025 at 12:31 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.12
 
@@ -273,10 +273,10 @@ INSERT INTO `categories` (`id`, `category_code`, `category_name`, `created_at`, 
 -- (See below for the actual view)
 --
 CREATE TABLE `categories_view` (
-`id` bigint unsigned
-,`category_code` varchar(255)
-,`name` varchar(255)
+`category_code` varchar(255)
 ,`created_at` timestamp
+,`id` bigint unsigned
+,`name` varchar(255)
 ,`updated_at` timestamp
 );
 
@@ -2357,7 +2357,7 @@ CREATE TABLE `users` (
   `phone_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `last_login_at` timestamp NULL DEFAULT NULL,
   `login_ip` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -2378,7 +2378,8 @@ INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `su
 (9001, 'Owner OmahBan', 'owner@example.com', NULL, '$2y$10$hashdummy', NULL, NULL, NULL, NULL, 1, NULL, '2025-11-06 09:40:35', '2025-11-06 09:40:35', NULL),
 (9002, 'Kasir Demo', 'kasir@example.com', NULL, '$2y$10$hashdummy', NULL, NULL, NULL, NULL, 1, NULL, '2025-11-06 09:40:35', '2025-11-06 09:40:35', NULL),
 (9003, 'Owner', 'owner@ob.test', NULL, '$2y$10$OGGliCSV1Ksj.cl/IL5KfOMhUkYyuzGzJqsEN1CwB6tK1x2cMSVBu', NULL, NULL, NULL, NULL, 1, NULL, '2025-11-06 13:42:16', '2025-11-06 13:42:16', NULL),
-(9004, 'Kasir 1', 'kasir1@ob.test', NULL, '$2y$10$D6H6R2B21KNGkbDOounpWOk6boBureT1hSDZnI8op.lUj9pe.BnKW', NULL, NULL, NULL, NULL, 1, NULL, '2025-11-06 13:42:16', '2025-11-06 13:42:16', NULL);
+(9004, 'Kasir 1', 'kasir1@ob.test', NULL, '$2y$10$D6H6R2B21KNGkbDOounpWOk6boBureT1hSDZnI8op.lUj9pe.BnKW', NULL, NULL, NULL, NULL, 1, NULL, '2025-11-06 13:42:16', '2025-11-06 13:42:16', NULL),
+(9005, 'Peter', 'vincentpeter789@gmail.com', NULL, '$2y$10$HS/6la/RYA9Ai/U/LRwY3.aZmxDr3ZHvRRl//ziXcR6oPCkUkKm92', NULL, NULL, NULL, NULL, 1, NULL, '2025-12-08 08:06:34', '2025-12-08 08:06:34', NULL);
 
 -- --------------------------------------------------------
 
@@ -2405,16 +2406,16 @@ CREATE TABLE `user_activity_logs` (
 --
 CREATE TABLE `v_adjustment_summary` (
 `adjustment_id` bigint unsigned
-,`reference` varchar(255)
-,`date` date
-,`status` enum('pending','approved','rejected')
-,`reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya')
-,`total_value` decimal(10,2)
-,`requester_name` varchar(255)
 ,`approver_name` varchar(255)
-,`total_products` bigint
-,`total_items` decimal(32,0)
+,`date` date
 ,`last_activity` varchar(24)
+,`reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya')
+,`reference` varchar(255)
+,`requester_name` varchar(255)
+,`status` enum('pending','approved','rejected')
+,`total_items` decimal(32,0)
+,`total_products` bigint
+,`total_value` decimal(10,2)
 );
 
 --
@@ -3094,7 +3095,7 @@ ALTER TABLE `uploads`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9005;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9006;
 
 --
 -- AUTO_INCREMENT for table `user_activity_logs`

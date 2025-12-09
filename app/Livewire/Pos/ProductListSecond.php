@@ -17,6 +17,17 @@ class ProductListSecond extends Component
 
     public string $query = '';
     public string $cart_instance = 'sale';
+    public $brand_id = null; // Filter by brand
+
+    protected $listeners = [
+        'selectedBrandSecond' => 'brandChanged',
+    ];
+
+    public function brandChanged($brand_id)
+    {
+        $this->brand_id = $brand_id;
+        $this->resetPage();
+    }
 
     public function updatingQuery(): void
     {
@@ -81,6 +92,9 @@ class ProductListSecond extends Component
     public function render()
     {
         $products = ProductSecond::query()
+            ->when($this->brand_id, function ($q) {
+                return $q->where('brand_id', $this->brand_id);
+            })
             ->when(strlen($this->query) > 0, function ($q) {
                 $s = trim($this->query);
                 $q->where(function ($qq) use ($s) {
