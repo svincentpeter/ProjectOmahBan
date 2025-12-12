@@ -9,10 +9,18 @@ use Illuminate\Support\Facades\Gate;
 
 class BrandController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         abort_if(Gate::denies('access_products'), 403);
-        $brands = Brand::latest()->get();
+        
+        $query = Brand::query()->orderBy('name');
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $brands = $query->withCount('products')->paginate(15);
+
         return view('product::brands.index', compact('brands'));
     }
 

@@ -81,13 +81,3 @@ Route::group(['middleware' => 'auth'], function () {
     Route::patch('purchase-payments/{purchasePayment}', 'PurchasePaymentsController@update')->name('purchase-payments.update');
     Route::delete('purchase-payments/{purchasePayment}', 'PurchasePaymentsController@destroy')->name('purchase-payments.destroy');
 });
-
-// ===== TEST ROUTE - DELETE AFTER SUCCESS =====
-Route::get('purchases/second/alive', function () {
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Route Module Purchase WORKS! ✅',
-        'controller_exists' => class_exists('Modules\Purchase\Http\Controllers\PurchaseSecondController'),
-        'namespace' => 'Modules\Purchase\Http\Controllers',
-    ]);
-});

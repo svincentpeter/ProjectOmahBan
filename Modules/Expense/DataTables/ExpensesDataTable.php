@@ -19,7 +19,14 @@ class ExpensesDataTable extends DataTable
                 return format_currency($data->amount);
             })
             ->addColumn('action', function ($data) {
-                return view('expense::expenses.partials.actions', compact('data'));
+                return view('partials.datatable-actions', [
+                    'id' => $data->id,
+                    'itemName' => $data->reference,
+                    'editRoute' => route('expenses.edit', $data->id),
+                    'editPermission' => 'edit_expenses',
+                    'deleteRoute' => route('expenses.destroy', $data->id),
+                    'deletePermission' => 'delete_expenses',
+                ])->render();
             });
     }
 
@@ -76,7 +83,14 @@ class ExpensesDataTable extends DataTable
             ->columns($this->getColumns())
             ->minifiedAjax()
             ->orderBy(6)
-            ;
+            ->parameters([
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
+            ]);
     }
 
     protected function getColumns() {

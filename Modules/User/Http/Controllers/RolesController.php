@@ -10,10 +10,18 @@ use Spatie\Permission\Models\Role;
 
 class RolesController extends Controller
 {
-    public function index(RolesDataTable $dataTable) {
+    public function index(Request $request) {
         abort_if(Gate::denies('access_user_management'), 403);
 
-        return $dataTable->render('user::roles.index');
+        $query = Role::query()->orderBy('name');
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $roles = $query->withCount('users')->paginate(15);
+
+        return view('user::roles.index', compact('roles'));
     }
 
 

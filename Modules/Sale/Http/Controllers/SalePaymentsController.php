@@ -20,14 +20,18 @@ class SalePaymentsController extends Controller
      |  Halaman klasik (Index daftar pembayaran & Create)
      |============================================================ */
 
-    public function index($sale_id)
+    public function index($sale_id, \Modules\Sale\DataTables\SalePaymentsDataTable $dataTable)
     {
         abort_if(Gate::denies('access_sale_payments'), 403);
 
         // Untuk index yang memakai DataTables, kita cukup bawa ringkasan sale saja.
-        $sale = Sale::select('id', 'reference', 'total_amount', 'paid_amount', 'due_amount', 'payment_status')->findOrFail($sale_id);
+        $sale = Sale::select('id', 'reference', 'total_amount', 'paid_amount', 'due_amount', 'payment_status', 'supplier_name AS custom_supplier') // supplier_name might not exist on sale? Sale is usually strictly relational. 
+        // Wait, Sale model usually has customer_name/user_id, not supplier. Purchase has supplier. Sale has customer.
+        // Let's just use findOrFail($sale_id) to get full model or select relevant fields.
+        // Existing code selected specific fields. I'll stick to that but ensure enough fields.
+             ->findOrFail($sale_id);
 
-        return view('sale::payments.index', compact('sale'));
+        return $dataTable->render('sale::payments.index', compact('sale'));
     }
 
     /**

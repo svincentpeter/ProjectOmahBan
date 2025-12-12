@@ -9,161 +9,121 @@
     ]])
 @endsection
 
-
-
 @section('content')
     {{-- Alerts --}}
     @include('utils.alerts')
 
-    {{-- Filter Component --}}
-    @include('layouts.filter-card', [
-        'action' => route('brands.index'),
-        'title' => 'Filter Merek',
-        'icon' => 'bi bi-bookmark-star',
-        'quickFilters' => [
-            [
-                'label' => 'Semua Merek',
-                'url' => route('brands.index'),
-                'param' => 'filter',
-                'value' => 'all',
-                'icon' => 'bi bi-grid'
-            ]
-        ],
-        'filters' => []
-    ])
-
-    {{-- Main Card --}}
-    <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">
-        
-        {{-- Card Header --}}
-        <div class="p-6 border-b border-zinc-100">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h5 class="text-xl font-bold text-black dark:text-white tracking-tight flex items-center gap-2">
-                        <i class="bi bi-bookmark-star text-blue-600"></i>
-                        Merek Produk
-                    </h5>
-                    <p class="text-sm text-zinc-600 mt-1">Kelola merek ban dan velg</p>
-                </div>
-                
-                <button type="button" 
-                        data-modal-target="modal-create" 
-                        data-modal-toggle="modal-create"
-                        class="inline-flex items-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
-                    <i class="bi bi-plus-lg me-2"></i> Tambah Merek
-                </button>
+    {{-- Info Alert --}}
+    <div class="mb-4">
+        <div class="bg-blue-50 border border-blue-200 text-blue-800 px-6 py-4 rounded-xl flex items-start gap-3 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300">
+            <i class="bi bi-info-circle text-blue-600 dark:text-blue-400 text-lg mt-0.5"></i>
+            <div>
+                <p class="text-sm font-medium">
+                    <strong>Informasi:</strong> Merek digunakan untuk mengidentifikasi produsen produk. 
+                    Pastikan nama merek yang diinput sudah sesuai dengan merek asli produk.
+                </p>
             </div>
-        </div>
-
-        {{-- Info Alert --}}
-        <div class="px-6 pt-4">
-            <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-start gap-3">
-                <i class="bi bi-info-circle text-blue-600 text-lg mt-0.5"></i>
-                <div>
-                    <p class="text-sm font-medium">
-                        <strong>Informasi:</strong> Merek digunakan untuk mengidentifikasi produsen produk. 
-                        Pastikan nama merek yang diinput sudah sesuai dengan merek asli produk.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        {{-- Table Wrapper --}}
-        <div class="p-6 pt-4 overflow-x-auto">
-            <table class="w-full text-sm text-left text-slate-500 dark:text-gray-400" id="brands-table">
-                <thead class="text-xs text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100">
-                    <tr>
-                        <th scope="col" class="px-6 py-4 font-bold tracking-wider" style="width: 80px;">No.</th>
-                        <th scope="col" class="px-6 py-4 font-bold tracking-wider">Nama Merek</th>
-                        <th scope="col" class="px-6 py-4 font-bold tracking-wider text-center" style="width: 120px;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                    @forelse($brands as $brand)
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 align-middle">
-                            <span class="inline-flex items-center justify-center w-8 h-8 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
-                                {{ $loop->iteration }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 align-middle">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md">
-                                    <i class="bi bi-bookmark-star"></i>
-                                </div>
-                                <span class="font-bold text-black">{{ $brand->name }}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-center align-middle">
-                            <div class="flex items-center justify-center gap-2">
-                                <button type="button"
-                                        class="btn-edit p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                                        data-id="{{ $brand->id }}"
-                                        data-name="{{ $brand->name }}"
-                                        data-modal-target="modal-edit"
-                                        data-modal-toggle="modal-edit"
-                                        title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                
-                                <button type="button"
-                                        class="btn-delete p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        data-id="{{ $brand->id }}"
-                                        data-name="{{ $brand->name }}"
-                                        title="Hapus">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                                
-                                <form id="delete-form-{{ $brand->id }}" 
-                                      action="{{ route('brands.destroy', $brand->id) }}" 
-                                      method="POST" 
-                                      class="hidden">
-                                    @csrf
-                                    @method('DELETE')
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="3" class="px-6 py-12 text-center">
-                            <div class="flex flex-col items-center justify-center text-zinc-400">
-                                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                                    <i class="bi bi-inbox text-3xl text-slate-300"></i>
-                                </div>
-                                <p class="font-semibold text-zinc-600 mb-1">Belum ada merek</p>
-                                <small class="text-zinc-500">Klik tombol "Tambah Merek" untuk mulai menambah data</small>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
         </div>
     </div>
 
-    {{-- Include Modals from Partials --}}
+    {{-- Main Table --}}
+    <x-flowbite-table 
+        title="Merek Produk" 
+        description="Kelola merek ban dan velg"
+        icon="bi-bookmark-star"
+        :items="$brands"
+        searchPlaceholder="Cari merek..."
+    >
+        {{-- Action Buttons --}}
+        <x-slot name="actions">
+            <button type="button" 
+                    data-modal-target="modal-create" 
+                    data-modal-toggle="modal-create"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-800">
+                <i class="bi bi-plus-lg mr-2"></i> Tambah Merek
+            </button>
+        </x-slot>
+
+        {{-- Table Header --}}
+        <x-slot name="thead">
+            <tr>
+                <th scope="col" class="px-6 py-4">No</th>
+                <th scope="col" class="px-6 py-4">Nama Merek</th>
+                <th scope="col" class="px-6 py-4">Jumlah Produk</th>
+                <th scope="col" class="px-6 py-4 text-right">Aksi</th>
+            </tr>
+        </x-slot>
+
+        {{-- Table Body --}}
+        @forelse($brands as $index => $brand)
+        <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $brands->firstItem() + $index }}
+            </td>
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $brand->name }}
+            </td>
+            <td class="px-6 py-4">
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                    {{ $brand->products_count ?? 0 }} produk
+                </span>
+            </td>
+            <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-2">
+                    {{-- Edit Button --}}
+                    <button type="button" 
+                            class="btn-edit text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            data-id="{{ $brand->id }}"
+                            data-name="{{ $brand->name }}"
+                            title="Edit">
+                        <i class="bi bi-pencil-square text-lg"></i>
+                    </button>
+                    
+                    {{-- Delete Button --}}
+                    <button type="button" 
+                            class="btn-delete text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            data-id="{{ $brand->id }}"
+                            data-name="{{ $brand->name }}"
+                            title="Hapus">
+                        <i class="bi bi-trash text-lg"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+        @empty
+        <tr>
+            <td colspan="4" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center justify-center">
+                    <i class="bi bi-bookmark-x text-4xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                    <p class="font-medium">Belum ada merek</p>
+                    <p class="text-sm">Klik tombol "Tambah Merek" untuk membuat merek baru.</p>
+                </div>
+            </td>
+        </tr>
+        @endforelse
+    </x-flowbite-table>
+
+    {{-- Include Modals --}}
     @include('product::brands.partials._modal-create')
     @include('product::brands.partials._modal-edit')
 @endsection
 
-@push('page_styles')
-<style>
-    @include('includes.datatables-flowbite-css')
-</style>
-@endpush
-
 @push('page_scripts')
-@include('includes.datatables-flowbite-js')
 <script>
 $(document).ready(function() {
-    // Initialize DataTables
-    // Initialize DataTables
-    const table = $('#brands-table').DataTable({
-        columnDefs: [{ orderable: false, targets: [0, 2] }]
-    });
+    // Helper to toggle modal
+    function toggleModal(modalId, show) {
+        const modal = $('#' + modalId);
+        if (show) {
+            modal.removeClass('hidden').addClass('flex');
+            $('body').addClass('overflow-hidden');
+        } else {
+            modal.addClass('hidden').removeClass('flex');
+            $('body').removeClass('overflow-hidden');
+        }
+    }
 
-    // Handle Edit button click - populate modal
+    // Handle Edit button click
     $(document).on('click', '.btn-edit', function() {
         const id = $(this).data('id');
         const name = $(this).data('name');
@@ -172,9 +132,22 @@ $(document).ready(function() {
         $('#edit-name').val(name);
         $('#form-edit').attr('action', '{{ url("brands") }}/' + id);
         $('#edit-error').addClass('hidden').text('');
+        
+        toggleModal('modal-edit', true);
     });
 
-    // Handle Create form submit with AJAX
+    // Close modals
+    $(document).on('click', '[data-modal-hide="modal-edit"]', function() {
+        toggleModal('modal-edit', false);
+    });
+    $(document).on('click', '[data-modal-hide="modal-create"]', function() {
+        toggleModal('modal-create', false);
+    });
+    $('[data-modal-target="modal-create"]').on('click', function() {
+        toggleModal('modal-create', true);
+    });
+
+    // Handle Create form submit
     $('#form-create').on('submit', function(e) {
         e.preventDefault();
         const form = $(this);
@@ -190,14 +163,9 @@ $(document).ready(function() {
             data: form.serialize(),
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(response) {
-                // Close modal
-                const modal = FlowbiteInstances.getInstance('Modal', 'modal-create');
-                if (modal) modal.hide();
-                
-                // Reset form
+                toggleModal('modal-create', false);
                 form[0].reset();
                 
-                // Show success toast
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
@@ -208,15 +176,14 @@ $(document).ready(function() {
                     toast: true
                 });
                 
-                // Reload page to refresh data
-                setTimeout(() => location.reload(), 1000);
+                setTimeout(() => location.reload(), 1500);
             },
             error: function(xhr) {
                 const errors = xhr.responseJSON?.errors;
                 if (errors?.name) {
                     $('#create-error').removeClass('hidden').text(errors.name[0]);
                 } else {
-                    $('#create-error').removeClass('hidden').text('Terjadi kesalahan. Silakan coba lagi.');
+                    $('#create-error').removeClass('hidden').text('Terjadi kesalahan.');
                 }
             },
             complete: function() {
@@ -225,7 +192,7 @@ $(document).ready(function() {
         });
     });
 
-    // Handle Edit form submit with AJAX
+    // Handle Edit form submit
     $('#form-edit').on('submit', function(e) {
         e.preventDefault();
         const form = $(this);
@@ -241,11 +208,8 @@ $(document).ready(function() {
             data: form.serialize(),
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(response) {
-                // Close modal
-                const modal = FlowbiteInstances.getInstance('Modal', 'modal-edit');
-                if (modal) modal.hide();
+                toggleModal('modal-edit', false);
                 
-                // Show success toast
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
@@ -256,15 +220,14 @@ $(document).ready(function() {
                     toast: true
                 });
                 
-                // Reload page to refresh data
-                setTimeout(() => location.reload(), 1000);
+                setTimeout(() => location.reload(), 1500);
             },
             error: function(xhr) {
                 const errors = xhr.responseJSON?.errors;
                 if (errors?.name) {
                     $('#edit-error').removeClass('hidden').text(errors.name[0]);
                 } else {
-                    $('#edit-error').removeClass('hidden').text('Terjadi kesalahan. Silakan coba lagi.');
+                    $('#edit-error').removeClass('hidden').text('Terjadi kesalahan.');
                 }
             },
             complete: function() {
@@ -273,7 +236,7 @@ $(document).ready(function() {
         });
     });
 
-    // Delete confirmation with SweetAlert2
+    // Delete confirmation
     $(document).on('click', '.btn-delete', function() {
         const id = $(this).data('id');
         const name = $(this).data('name');
@@ -297,15 +260,27 @@ $(document).ready(function() {
                     allowOutsideClick: false,
                     didOpen: () => Swal.showLoading()
                 });
-                $('#delete-form-' + id).submit();
+                
+                $.ajax({
+                    url: "{{ url('brands') }}/" + id,
+                    type: 'POST',
+                    data: { _method: 'DELETE', _token: '{{ csrf_token() }}' },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Terhapus!',
+                            text: 'Merek berhasil dihapus.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        setTimeout(() => location.reload(), 1500);
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Gagal menghapus data.', 'error');
+                    }
+                });
             }
         });
-    });
-
-    // Reset create form when modal is closed
-    document.getElementById('modal-create')?.addEventListener('hidden.bs.modal', function() {
-        $('#form-create')[0].reset();
-        $('#create-error').addClass('hidden');
     });
 });
 </script>

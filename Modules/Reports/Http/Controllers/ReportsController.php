@@ -13,10 +13,8 @@ use Modules\Sale\Entities\SalePayment;
 use Modules\Expense\Entities\Expense;
 use Modules\Reports\Http\Requests\ProfitLossRequest;
 use Modules\Reports\Http\Requests\DailyReportRequest;
-use Modules\SalesReturn\Entities\SaleReturn;
-use Modules\SalesReturn\Entities\SaleReturnDetail;
 
-// (Opsional next phase) use Modules\Sale\Entities\SaleReturn; use Modules\Purchase\Entities\Purchase; dst.
+// Note: SaleReturn module removed - feature not implemented yet
 
 class ReportsController extends Controller
 {
@@ -146,18 +144,17 @@ class ReportsController extends Controller
     ->sum('total_hpp');
 
     // Total nominal return penjualan (nilai jual yang dikembalikan)
-$returnRevenue = (int) SaleReturn::query()
-    ->whereBetween('date', [$startDate, $endDate])
-    ->sum('total_amount'); // sesuaikan field total bila berbeda
+    // TODO: Implement when SaleReturn module is available
+    $returnRevenue = 0;
 
-// Total HPP dari barang yang diretur
-$returnCogs = (int) SaleReturnDetail::query()
-    ->whereHas('saleReturn', fn($q) => $q->whereBetween('date', [$startDate, $endDate]))
-    ->sum('hpp'); // sesuaikan field hpp bila berbeda
+    // Total HPP dari barang yang diretur
+    // TODO: Implement when SaleReturn module is available
+    $returnCogs = 0;
 
-// Sesuaikan revenue & cogs
-$revenue = max(0, $revenue - $returnRevenue);
-$cogs    = max(0, $cogs    - $returnCogs);
+    // Sesuaikan revenue & cogs (jika ada return)
+    $revenue = max(0, $revenue - $returnRevenue);
+    $cogs    = max(0, $cogs    - $returnCogs);
+
 
         // 4) Gross Profit
         $grossProfit = $revenue - $cogs;

@@ -46,6 +46,9 @@ Route::middleware('auth')->group(function () {
     Route::match(['put', 'patch'], 'sales/{sale}', [SaleController::class, 'update'])
         ->name('sales.update')
         ->middleware('can:edit_sales');
+    Route::delete('sales/{sale}', [SaleController::class, 'destroy'])
+        ->name('sales.destroy')
+        ->middleware('can:delete_sales');
 
     // ===================== Sales (Protected by can:access_sales) =====================
     Route::prefix('sales')
@@ -77,18 +80,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/sale-payments/{sale_id}/edit/{salePayment}', [SalePaymentsController::class, 'edit'])->name('sale-payments.edit');
     Route::patch('/sale-payments/update/{salePayment}', [SalePaymentsController::class, 'update'])->name('sale-payments.update');
     Route::delete('/sale-payments/destroy/{salePayment}', [SalePaymentsController::class, 'destroy'])->name('sale-payments.destroy');
-
-    // ===================== REMOVED: Duplikat prefix payment =====================
-    // HAPUS BAGIAN INI karena duplikat dengan route di atas
-    /*
-    Route::prefix('sales/{sale}/payments')
-        ->name('sale-payments.')
-        ->group(function () {
-            Route::get('/', [SalePaymentsController::class, 'index'])->name('index'); // ❌ DUPLIKAT
-            Route::get('/data', [SalePaymentsController::class, 'datatable'])->name('datatable');
-            Route::delete('/{payment}', [SalePaymentsController::class, 'destroy'])->name('destroy'); // ❌ DUPLIKAT
-        });
-    */
 
     // ===================== Laporan =====================
     Route::get('/sales/reports/profit', [ReportController::class, 'profitReport'])->name('sales.reports.profit');

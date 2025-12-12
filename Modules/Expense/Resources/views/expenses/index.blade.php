@@ -92,31 +92,31 @@
     {{ $dataTable->scripts() }}
 
     <script>
-        // Global SweetAlert Delete
-        $(document).on('click', '.btn-delete', function(e) {
-            e.preventDefault();
-            let id = $(this).data('id');
-            let name = $(this).data('name');
-            
-            Swal.fire({
-                title: 'Hapus Pengeluaran?',
-                text: "Anda yakin ingin menghapus data pengeluaran \"" + name + "\"? Aksi ini tidak dapat dibatalkan.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#EF4444',
-                cancelButtonColor: '#E5E7EB',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal',
-                customClass: {
-                    confirmButton: 'bg-red-600 text-white hover:bg-red-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2',
-                    cancelButton: 'bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2'
-                },
-                buttonsStyling: false
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $(`#delete-form-${id}`).submit();
-                }
+        $(document).ready(function() {
+            // Filter Params injection
+            $('#expenses-table').on('preXhr.dt', function(e, settings, data) {
+                // Determine quick_filter from URL or active state if possible. 
+                // The global filter-card just sets URL params for quick filters mostly.
+                // However, the DataTable relies on 'quick_filter' param in request.
+                // If the page was loaded with ?quick_filter=..., Yajra might pick it up automatically from request() in query(), 
+                // BUT for ajax reloads without page reload, we need to pass it if changed via JS.
+                // The filter-card implementation for quick filters usually just LINKS to a new URL.
+                // So for quick filters, it's a page reload.
+                // For manual filters (from, to, category), it's inputs.
+                
+                // We only need to inject the inputs:
+                data.from = $('#from').val();
+                data.to = $('#to').val();
+                data.category_id = $('#category_id').val();
             });
+
+            // Refresh table on filter change
+            $('#from, #to, #category_id').on('change', function() {
+                $('#expenses-table').DataTable().draw();
+            });
+            
+            // Note: Quick filters in filter-card are Links (High-level decision), so they reload the page.
+            // No need to handle them here unless we change them to buttons + ajax.
         });
     </script>
 @endpush

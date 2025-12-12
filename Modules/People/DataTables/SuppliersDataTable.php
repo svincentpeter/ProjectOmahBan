@@ -85,7 +85,16 @@ class SuppliersDataTable extends DataTable
 
             // Kolom action buttons
             ->addColumn('action', function ($data) {
-                return view('people::suppliers.partials.actions', compact('data'));
+                return view('partials.datatable-actions', [
+                    'id' => $data->id,
+                    'showRoute' => route('suppliers.show', $data->id),
+                    'editRoute' => route('suppliers.edit', $data->id),
+                    'deleteRoute' => route('suppliers.destroy', $data->id),
+                    'itemName' => $data->supplier_name,
+                    'showPermission' => 'show_suppliers',
+                    'editPermission' => 'edit_suppliers',
+                    'deletePermission' => 'delete_suppliers',
+                ])->render();
             })
 
             // Set kolom yang mengandung HTML (jangan di-escape)
@@ -160,6 +169,12 @@ class SuppliersDataTable extends DataTable
                 'autoWidth' => false,
                 'processing' => true,
                 'serverSide' => true,
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
             ]); 
     }
 

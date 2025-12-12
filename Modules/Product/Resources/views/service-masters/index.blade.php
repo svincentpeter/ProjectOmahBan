@@ -78,37 +78,24 @@
                 </button>
             </div>
 
-            {{-- Global Filter Component --}}
-            @include('layouts.filter-card', [
-                'action' => route('service-masters.index'),
-                'title' => 'Filter Data',
-                'icon' => 'bi bi-funnel',
-                'quickFilters' => [
-                    [
-                        'label' => 'Semua Jasa',
-                        'url' => route('service-masters.index', ['quick' => 'all']),
-                        'param' => 'quick',
-                        'value' => 'all',
-                        'icon' => 'bi bi-grid'
-                    ],
-                    [
-                        'label' => 'Aktif',
-                        'url' => route('service-masters.index', ['quick' => 'active']),
-                        'param' => 'quick',
-                        'value' => 'active',
-                        'icon' => 'bi bi-check-circle'
-                    ],
-                    [
-                        'label' => 'Nonaktif',
-                        'url' => route('service-masters.index', ['quick' => 'inactive']),
-                        'param' => 'quick',
-                        'value' => 'inactive',
-                        'icon' => 'bi bi-x-circle'
+            {{-- Filter Card --}}
+            <div class="px-6 pt-6">
+                @include('layouts.filter-card', [
+                    'action' => route('service-masters.index'),
+                    'title' => 'Filter Data Jasa',
+                    'filters' => [
+                        ['name' => 'category', 'label' => 'Kategori', 'type' => 'select', 'options' => [
+                            'service' => 'Service',
+                            'goods' => 'Goods',
+                            'custom' => 'Custom'
+                        ], 'placeholder' => 'Semua Kategori', 'icon' => 'bi bi-tags'],
+                        ['name' => 'quick', 'label' => 'Status', 'type' => 'select', 'options' => [
+                            'active' => 'Aktif',
+                            'inactive' => 'Nonaktif'
+                        ], 'placeholder' => 'Semua Status', 'icon' => 'bi bi-check-circle']
                     ]
-                ],
-                'filters' => []
-            ])
-        </div>
+                ])
+            </div>
 
         {{-- DataTable --}}
         <div class="p-6 overflow-x-auto">
@@ -123,14 +110,21 @@
 @include('product::service-masters.partials._modal-delete')
 
 @push('page_styles')
-<style>
     @include('includes.datatables-flowbite-css')
-</style>
 @endpush
 
 @push('page_scripts')
 @include('includes.datatables-flowbite-js')
 {!! $dataTable->scripts() !!}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Use jQuery selector to avoid race condition with window.LaravelDataTables
+        $('#service-masters-table').on('preXhr.dt', function ( e, settings, data ) {
+            data.category = $('select[name="category"]').val();
+            data.quick = $('select[name="quick"]').val();
+        });
+    });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
 <script>
 // Modal Helper Functions

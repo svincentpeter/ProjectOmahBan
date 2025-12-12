@@ -32,7 +32,7 @@
                         <input type="text" 
                                id="edit-name" 
                                name="name" 
-                               class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white font-medium" 
+                               class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-600 dark:border-gray-500 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white font-medium" 
                                placeholder="Nama merek..." 
                                required>
                         <p id="edit-error" class="mt-2 text-sm text-red-600 hidden"></p>

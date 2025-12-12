@@ -13,151 +13,132 @@
     {{-- Alerts --}}
     @include('utils.alerts')
 
-    {{-- Main Card --}}
-    <div class="relative bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-        {{-- Card Header & Actions --}}
-        <div class="p-6 border-b border-zinc-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    {{-- Info Alert --}}
+    <div class="mb-4">
+        <div class="bg-blue-50 border border-blue-200 text-blue-800 px-6 py-4 rounded-xl flex items-start gap-3 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300">
+            <i class="bi bi-info-circle text-blue-600 dark:text-blue-400 text-lg mt-0.5"></i>
             <div>
-                <h2 class="text-lg font-bold text-zinc-800 flex items-center gap-2">
-                    <i class="bi bi-currency-exchange text-blue-600"></i>
-                    Daftar Mata Uang
-                </h2>
-                <p class="text-sm text-zinc-500 mt-1">Kelola mata uang untuk transaksi multi-currency.</p>
-            </div>
-
-            @can('create_currencies')
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('currencies.create') }}"
-                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all shadow-sm shadow-blue-200">
-                        <i class="bi bi-plus-lg mr-2"></i>
-                        Tambah Mata Uang
-                    </a>
-                </div>
-            @endcan
-        </div>
-
-        {{-- Info Alert --}}
-        <div class="px-6 pt-6">
-            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
-                <i class="bi bi-info-circle text-blue-600 text-lg flex-shrink-0 mt-0.5"></i>
-                <div class="text-sm text-blue-800">
-                    <span class="font-bold block mb-1">Informasi</span>
-                    Mata uang digunakan untuk transaksi dengan nilai tukar berbeda. Anda dapat menambahkan, mengedit, atau
-                    menghapus mata uang sesuai kebutuhan bisnis.
-                </div>
-            </div>
-        </div>
-
-        {{-- DataTable --}}
-        <div class="p-6">
-            <div class="rounded-xl border border-zinc-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    {{ $dataTable->table(['class' => 'w-full text-sm text-left text-zinc-500'], true) }}
-                </div>
+                <p class="text-sm font-medium">
+                    <strong>Informasi:</strong> Mata uang digunakan untuk transaksi dengan nilai tukar berbeda. 
+                    Anda dapat menambahkan, mengedit, atau menghapus mata uang sesuai kebutuhan bisnis.
+                </p>
             </div>
         </div>
     </div>
+
+    {{-- Main Table --}}
+    <x-flowbite-table 
+        title="Daftar Mata Uang" 
+        description="Kelola mata uang untuk transaksi multi-currency"
+        icon="bi-currency-exchange"
+        :items="$currencies"
+        :addRoute="route('currencies.create')"
+        addLabel="Tambah Mata Uang"
+        searchPlaceholder="Cari mata uang..."
+    >
+        {{-- Table Header --}}
+        <x-slot name="thead">
+            <tr>
+                <th scope="col" class="px-6 py-4">No</th>
+                <th scope="col" class="px-6 py-4">Nama</th>
+                <th scope="col" class="px-6 py-4">Kode</th>
+                <th scope="col" class="px-6 py-4">Simbol</th>
+                <th scope="col" class="px-6 py-4">Exchange Rate</th>
+                <th scope="col" class="px-6 py-4 text-right">Aksi</th>
+            </tr>
+        </x-slot>
+
+        {{-- Table Body --}}
+        @forelse($currencies as $index => $currency)
+        <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $currencies->firstItem() + $index }}
+            </td>
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $currency->currency_name }}
+            </td>
+            <td class="px-6 py-4">
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                    {{ $currency->code }}
+                </span>
+            </td>
+            <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">
+                {{ $currency->symbol }}
+            </td>
+            <td class="px-6 py-4">
+                {{ $currency->exchange_rate ?? '-' }}
+            </td>
+            <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-2">
+                    {{-- Edit Button --}}
+                    @can('edit_currencies')
+                    <a href="{{ route('currencies.edit', $currency) }}" 
+                       class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                       title="Edit">
+                        <i class="bi bi-pencil-square text-lg"></i>
+                    </a>
+                    @endcan
+                    
+                    {{-- Delete Button --}}
+                    @can('delete_currencies')
+                    <button type="button" 
+                            class="btn-delete text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            data-id="{{ $currency->id }}"
+                            data-name="{{ $currency->currency_name }}"
+                            title="Hapus">
+                        <i class="bi bi-trash text-lg"></i>
+                    </button>
+                    
+                    <form id="delete-form-{{ $currency->id }}" action="{{ route('currencies.destroy', $currency) }}" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                    @endcan
+                </div>
+            </td>
+        </tr>
+        @empty
+        <tr>
+            <td colspan="6" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center justify-center">
+                    <i class="bi bi-currency-exchange text-4xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                    <p class="font-medium">Belum ada mata uang</p>
+                    <p class="text-sm">Klik tombol "Tambah Mata Uang" untuk membuat mata uang baru.</p>
+                </div>
+            </td>
+        </tr>
+        @endforelse
+    </x-flowbite-table>
 @endsection
 
 @push('page_scripts')
-    {{ $dataTable->scripts() }}
-
-    <script>
-        $(document).ready(function() {
-            // Delete confirmation
-            $(document).on('click', '.delete-currency', function(e) {
-                e.preventDefault();
-                const url = $(this).attr('href');
-                const name = $(this).data('name');
-
-                Swal.fire({
-                    title: 'Hapus Mata Uang?',
-                    html: `Mata uang <strong>"${name}"</strong> akan dihapus permanen.<br><small class="text-slate-500">Data yang dihapus tidak dapat dikembalikan!</small>`,
-                    icon: 'warning',
-                    iconColor: '#EF4444',
-                    showCancelButton: true,
-                    confirmButtonColor: '#EF4444',
-                    cancelButtonColor: '#E4E4E7',
-                    confirmButtonText: '<i class="bi bi-trash mr-2"></i> Ya, Hapus!',
-                    cancelButtonText: 'Batal',
-                    customClass: {
-                        confirmButton: 'swal2-confirm-btn',
-                        cancelButton: 'swal2-cancel-btn',
-                        title: 'swal2-title-custom',
-                        htmlContainer: 'swal2-html-custom',
-                        popup: 'swal2-popup-custom'
-                    },
-                    buttonsStyling: false,
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Show loading
-                        Swal.fire({
-                            title: 'Menghapus...',
-                            html: 'Mohon tunggu sebentar',
-                            allowOutsideClick: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            },
-                        });
-
-                        // Create and submit form
-                        const form = $('<form>', {
-                            'method': 'POST',
-                            'action': url
-                        });
-
-                        form.append($('<input>', {
-                            'type': 'hidden',
-                            'name': '_token',
-                            'value': '{{ csrf_token() }}'
-                        }));
-
-                        form.append($('<input>', {
-                            'type': 'hidden',
-                            'name': '_method',
-                            'value': 'DELETE'
-                        }));
-
-                        $('body').append(form);
-                        form.submit();
-                    }
-                });
+<script>
+$(document).on('click', '.btn-delete', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+    const name = $(this).data('name');
+    
+    Swal.fire({
+        title: 'Hapus Mata Uang?',
+        html: `Mata uang <strong>"${name}"</strong> akan dihapus permanen.<br><small class="text-slate-500">Data yang dihapus tidak dapat dikembalikan!</small>`,
+        icon: 'warning',
+        iconColor: '#EF4444',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Menghapus...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
             });
-
-            // Set default confirmation
-            $(document).on('click', '.set-default-currency', function(e) {
-                e.preventDefault();
-                const url = $(this).attr('href');
-                const name = $(this).data('name');
-
-                Swal.fire({
-                    title: 'Set Default?',
-                    html: `Jadikan <strong>"${name}"</strong> sebagai mata uang default?`,
-                    icon: 'question',
-                    iconColor: '#2563EB',
-                    showCancelButton: true,
-                    confirmButtonColor: '#2563EB',
-                    cancelButtonColor: '#E4E4E7',
-                    confirmButtonText: '<i class="bi bi-check-lg mr-2"></i> Ya, Set Default',
-                    cancelButtonText: 'Batal',
-                    customClass: {
-                        confirmButton: 'swal2-confirm-btn-blue',
-                        cancelButton: 'swal2-cancel-btn',
-                        title: 'swal2-title-custom',
-                        htmlContainer: 'swal2-html-custom',
-                        popup: 'swal2-popup-custom'
-                    },
-                    buttonsStyling: false,
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = url;
-                    }
-                });
-            });
-        });
-    </script>
+            $('#delete-form-' + id).submit();
+        }
+    });
+});
+</script>
 @endpush
-
-@include('includes.datatables-flowbite-css')

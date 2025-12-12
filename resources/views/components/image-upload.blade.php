@@ -51,106 +51,127 @@
 @once
 @push('page_scripts')
 <script>
-    var uploadedDocumentMap = {};
-    
-    Dropzone.options.documentDropzone = {
-        url: '{{ route("dropzone.upload") }}',
-        maxFilesize: {{ $maxSize }},
-        acceptedFiles: '.jpg, .jpeg, .png, .gif',
-        maxFiles: {{ $maxFiles }},
-        addRemoveLinks: true,
-        dictRemoveFile: '<i class="bi bi-x-circle text-danger"></i> Hapus',
-        dictMaxFilesExceeded: 'Maksimal {{ $maxFiles }} gambar',
-        dictFileTooBig: 'File terlalu besar (@{{filesize}}MB). Maks: @{{maxFilesize}}MB.',
-        dictInvalidFileType: 'Tipe file tidak diizinkan.',
-        dictDefaultMessage: 'Drop files here to upload',
-        headers: {
-            'X-CSRF-TOKEN': "{{ csrf_token() }}"
-        },
-        
-        success: function(file, response) {
-            console.log('✅ Upload berhasil:', response);
-            $('form').append('<input type="hidden" name="{{ $name }}[]" value="' + response.name + '">');
-            uploadedDocumentMap[file.name] = response.name;
-        },
-        
-        error: function(file, errorMessage) {
-            console.error('❌ Upload error:', errorMessage);
-            if (typeof errorMessage === 'object') {
-                errorMessage = 'Upload gagal. Silakan coba lagi.';
-            }
-            $(file.previewElement).find('.dz-error-message').text(errorMessage);
-        },
-        
-        removedfile: function(file) {
-            console.log('🗑️ Menghapus file:', file);
-            file.previewElement.remove();
-            
-            var name = '';
-            if (typeof file.file_name !== 'undefined') {
-                name = file.file_name;
-            } else {
-                name = uploadedDocumentMap[file.name];
-            }
-            
-            // Delete from server via AJAX
-            if (name) {
-                $.ajax({
-                    type: 'POST',
-                    url: '{{ route("dropzone.delete") }}',
-                    data: {
-                        '_token': "{{ csrf_token() }}",
-                        'filename': name
-                    },
-                    success: function(response) {
-                        console.log('✅ File berhasil dihapus dari server');
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('❌ Gagal menghapus file:', error);
-                    }
-                });
-            }
-            
-            // Remove hidden input
-            $('form').find('input[name="{{ $name }}[]"][value="' + name + '"]').remove();
-            delete uploadedDocumentMap[file.name];
-        },
-        
-        init: function() {
-            var thisDropzone = this;
-            console.log('🔄 Initializing Dropzone...');
-            
-            @if($model && method_exists($model, 'getMedia'))
-                @php
-                    $existingMedia = $model->getMedia('images');
-                @endphp
-                
-                @if($existingMedia->count() > 0)
-                    var files = {!! json_encode($existingMedia) !!};
-                    console.log('📷 Loading', files.length, 'existing image(s)');
-                    
-                    files.forEach(function(file, index) {
-                        var mockFile = {
-                            name: file.file_name,
-                            size: file.size,
-                            file_name: file.file_name,
-                            type: 'image/' + (file.extension || 'jpeg')
-                        };
-                        
-                        thisDropzone.displayExistingFile(mockFile, file.original_url);
-                        $('form').append('<input type="hidden" name="{{ $name }}[]" value="' + file.file_name + '">');
-                        uploadedDocumentMap[file.file_name] = file.file_name;
-                    });
-                    
-                    console.log('✅ Dropzone initialized with', files.length, 'file(s)');
-                @else
-                    console.log('ℹ️ No existing images found');
-                @endif
-            @else
-                console.log('ℹ️ No model provided or no media support');
-            @endif
+    document.addEventListener("DOMContentLoaded", function() {
+        // Prevent auto discovery for this specific element if it hasn't been handled globally
+        if (typeof Dropzone !== 'undefined') {
+            Dropzone.autoDiscover = false;
         }
-    };
+
+        var dropzoneId = "document-dropzone";
+        var dropzoneElement = document.getElementById(dropzoneId);
+
+        // Check if Dropzone is already attached to avoid duplicates
+        if (dropzoneElement && !dropzoneElement.dropzone) {
+            
+            var uploadedDocumentMap = {};
+            
+            var myDropzone = new Dropzone("#" + dropzoneId, {
+                url: '{{ route("dropzone.upload") }}',
+                maxFilesize: {{ $maxSize }},
+                acceptedFiles: '.jpg, .jpeg, .png, .gif',
+                maxFiles: {{ $maxFiles }},
+                addRemoveLinks: true,
+                dictRemoveFile: '<i class="bi bi-x-circle text-danger"></i> Hapus',
+                dictMaxFilesExceeded: 'Maksimal {{ $maxFiles }} gambar',
+                dictFileTooBig: 'File terlalu besar (@{{filesize}}MB). Maks: @{{maxFilesize}}MB.',
+                dictInvalidFileType: 'Tipe file tidak diizinkan.',
+                dictDefaultMessage: 'Drop files here to upload',
+                headers: {
+                    'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                },
+                
+                success: function(file, response) {
+                    console.log('✅ Upload berhasil:', response);
+                    $('form').append('<input type="hidden" name="{{ $name }}[]" value="' + response.name + '">');
+                    uploadedDocumentMap[file.name] = response.name;
+                },
+                
+                error: function(file, errorMessage) {
+                    console.error('❌ Upload error:', errorMessage);
+                    if (typeof errorMessage === 'object') {
+                        errorMessage = 'Upload gagal. Silakan coba lagi.';
+                    }
+                    $(file.previewElement).find('.dz-error-message').text(errorMessage);
+                },
+                
+                removedfile: function(file) {
+                    console.log('🗑️ Menghapus file:', file);
+                    file.previewElement.remove();
+                    
+                    var name = '';
+                    if (typeof file.file_name !== 'undefined') {
+                        name = file.file_name;
+                    } else {
+                        name = uploadedDocumentMap[file.name];
+                    }
+                    
+                    // Delete from server via AJAX
+                    if (name) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '{{ route("dropzone.delete") }}',
+                            data: {
+                                '_token': "{{ csrf_token() }}",
+                                'filename': name
+                            },
+                            success: function(response) {
+                                console.log('✅ File berhasil dihapus dari server');
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('❌ Gagal menghapus file:', error);
+                            }
+                        });
+                    }
+                    
+                    // Remove hidden input
+                    $('form').find('input[name="{{ $name }}[]"][value="' + name + '"]').remove();
+                    delete uploadedDocumentMap[file.name];
+                },
+                
+                init: function() {
+                    var thisDropzone = this;
+                    console.log('🔄 Initializing Dropzone...');
+                    
+                    @if($model && method_exists($model, 'getMedia'))
+                        @php
+                            $existingMedia = $model->getMedia('images');
+                        @endphp
+                        
+                        @if($existingMedia->count() > 0)
+                            var files = {!! json_encode($existingMedia) !!};
+                            console.log('📷 Loading', files.length, 'existing image(s)');
+                            
+                            files.forEach(function(file, index) {
+                                var mockFile = {
+                                    name: file.file_name,
+                                    size: file.size,
+                                    file_name: file.file_name,
+                                    type: 'image/' + (file.extension || 'jpeg')
+                                };
+                                
+                                thisDropzone.emit("addedfile", mockFile);
+                                thisDropzone.emit("thumbnail", mockFile, file.original_url);
+                                thisDropzone.emit("complete", mockFile);
+                                
+                                $('form').append('<input type="hidden" name="{{ $name }}[]" value="' + file.file_name + '">');
+                                uploadedDocumentMap[file.file_name] = file.file_name;
+                            });
+                            
+                            // Adjust max files count based on existing files
+                            var existingCount = files.length;
+                            thisDropzone.options.maxFiles = thisDropzone.options.maxFiles - existingCount;
+                            
+                            console.log('✅ Dropzone initialized with', files.length, 'file(s)');
+                        @else
+                            console.log('ℹ️ No existing images found');
+                        @endif
+                    @else
+                        console.log('ℹ️ No model provided or no media support');
+                    @endif
+                }
+            });
+        }
+    });
 </script>
 @endpush
 

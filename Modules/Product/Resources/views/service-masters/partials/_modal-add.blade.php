@@ -30,7 +30,7 @@
                             Nama Jasa <span class="text-red-500">*</span>
                         </label>
                         <input type="text" id="addServiceName" name="service_name" required maxlength="100"
-                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder:text-gray-400"
                                placeholder="Contoh: Pasang Ban, Balancing">
                         <p class="mt-1 text-xs text-zinc-500">
                             <i class="bi bi-info-circle me-1"></i> Nama jasa harus unik
@@ -47,7 +47,7 @@
                                 Rp
                             </span>
                             <input type="text" id="addStandardPrice" name="standard_price" required value="0" inputmode="numeric"
-                                   class="rounded-none rounded-r-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5"
+                                   class="rounded-none rounded-r-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5 placeholder:text-gray-400"
                                    placeholder="25.000">
                         </div>
                         <p class="mt-1 text-xs text-zinc-500">
@@ -75,7 +75,7 @@
                             Deskripsi <span class="text-zinc-400">(Opsional)</span>
                         </label>
                         <textarea id="addDescription" name="description" rows="2" maxlength="500"
-                                  class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                  class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400"
                                   placeholder="Deskripsi singkat tentang jasa ini"></textarea>
                         <p class="mt-1 text-xs text-zinc-500">Max 500 karakter</p>
                     </div>

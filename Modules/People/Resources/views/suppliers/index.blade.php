@@ -170,17 +170,17 @@
 
     <script>
         $(document).ready(function() {
-            const table = window.LaravelDataTables['suppliers-table'];
-            
-            // Hook into the request to add parameters
-            table.on('preXhr.dt', function ( e, settings, data ) {
+    <script>
+        $(document).ready(function() {
+            // Use jQuery selector to avoid race condition with window.LaravelDataTables
+            $('#suppliers-table').on('preXhr.dt', function ( e, settings, data ) {
                 data.city = $('#city').val();
                 data.status = $('#status').val();
             });
             
             // Handle Filter Changes
             $('#city, #status').on('change', function() {
-                table.draw();
+                $('#suppliers-table').DataTable().draw();
             });
 
             // SweetAlert2 Delete Confirmation (Delegated Event)

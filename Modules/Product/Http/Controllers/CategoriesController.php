@@ -12,10 +12,22 @@ use Modules\Product\DataTables\ProductCategoriesDataTable;
 class CategoriesController extends Controller
 {
 
-    public function index(ProductCategoriesDataTable $dataTable) {
+    public function index(Request $request) {
         abort_if(Gate::denies('access_product_categories'), 403);
 
-        return $dataTable->render('product::categories.index');
+        $query = Category::query()->orderBy('category_name');
+
+        // Search functionality
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('category_code', 'like', "%{$search}%")
+                  ->orWhere('category_name', 'like', "%{$search}%");
+            });
+        }
+
+        $categories = $query->paginate(15);
+
+        return view('product::categories.index', compact('categories'));
     }
 
 

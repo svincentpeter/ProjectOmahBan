@@ -11,20 +11,14 @@ use Modules\Product\Entities\ProductSecond;
 
 class ProductSecondController extends Controller
 {
-    public function index(Request $request)
+    public function index(\Modules\Product\DataTables\ProductSecondDataTable $dataTable)
     {
         abort_if(Gate::denies('access_products'), 403);
 
-        $query = ProductSecond::with(['category', 'brand']);
-        
-        // Filter by status if provided
-        if ($request->has('status') && in_array($request->status, ['available', 'sold'])) {
-            $query->where('status', $request->status);
-        }
-        
-        $products = $query->orderByDesc('created_at')->paginate(10);
+        // For filter dropdown
+        $brands = Brand::orderBy('name')->pluck('name', 'id');
 
-        return view('product::second.index', compact('products'));
+        return $dataTable->render('product::second.index', compact('brands'));
     }
 
     public function create()
@@ -88,6 +82,15 @@ class ProductSecondController extends Controller
         $brands = Brand::all();
 
         return view('product::second.edit', compact('product', 'categories', 'brands'));
+    }
+
+    public function show($id)
+    {
+        abort_if(Gate::denies('access_products'), 403);
+
+        $product = ProductSecond::with(['category', 'brand'])->findOrFail($id);
+
+        return view('product::second.show', compact('product'));
     }
 
     public function update(Request $request, $id)

@@ -32,6 +32,86 @@
             }
 
             // ============================
+            // DROPZONE: PRODUCT IMAGES
+            // ============================
+            var uploadedDocumentMap = {};
+            var existingFiles = @json(isset($product) ? $product->getMedia('images') : []);
+
+            var myDropzone = new Dropzone("#document-dropzone", {
+                url: '{{ route('dropzone.upload') }}',
+                maxFilesize: 2, // MB
+                acceptedFiles: '.jpg, .jpeg, .png, .gif',
+                maxFiles: 3,
+                addRemoveLinks: true,
+                dictDefaultMessage: '',
+                dictRemoveFile: '<i class="bi bi-x-circle text-red-500"></i> Hapus',
+                dictMaxFilesExceeded: 'Maksimal 3 gambar',
+                dictCancelUpload: 'Batal',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                init: function() {
+                    var dz = this;
+
+                    // Edit mode: show existing images
+                    if (existingFiles.length > 0) {
+                        existingFiles.forEach(function(file) {
+                            var mockFile = {
+                                name: file.file_name,
+                                size: file.size,
+                                accepted: true
+                            };
+
+                            dz.emit("addedfile", mockFile);
+                            dz.emit("thumbnail", mockFile, file.original_url);
+                            dz.emit("complete", mockFile);
+
+                            $('form#product-form').append(
+                                '<input type="hidden" name="document[]" value="' + file.file_name + '">'
+                            );
+
+                            uploadedDocumentMap[mockFile.name] = file.file_name;
+                        });
+
+                        dz.options.maxFiles = dz.options.maxFiles - existingFiles.length;
+                        if (dz.options.maxFiles < 0) {
+                            dz.options.maxFiles = 0;
+                        }
+                    }
+                },
+                success: function(file, response) {
+                    console.log('✅ Upload berhasil:', response);
+                    $('form#product-form').append(
+                        '<input type="hidden" name="document[]" value="' + response.name + '">'
+                    );
+                    uploadedDocumentMap[file.name] = response.name;
+                },
+                removedfile: function(file) {
+                    if (file.previewElement) {
+                        file.previewElement.remove();
+                    }
+
+                    var name = uploadedDocumentMap[file.name] || file.file_name;
+                    $('form#product-form')
+                        .find('input[name="document[]"][value="' + name + '"]')
+                        .remove();
+
+                    delete uploadedDocumentMap[file.name];
+                },
+                error: function(file, message) {
+                    console.error('❌ Upload error:', message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Upload Gagal',
+                        text: (typeof message === 'string') ?
+                            message :
+                            'Terjadi kesalahan saat upload',
+                        confirmButtonColor: '#2563EB'
+                    });
+                }
+            });
+
+            // ============================
             // MASK MONEY
             // ============================
             $('#product_cost, #product_price').maskMoney({

@@ -9,12 +9,19 @@ use Modules\Setting\Entities\Unit;
 class   UnitsController extends Controller
 {
 
-    public function index() {
-        $units = Unit::all();
+    public function index(Request $request) {
+        $query = Unit::query()->orderBy('name');
 
-        return view('setting::units.index', [
-            'units' => $units
-        ]);
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('short_name', 'like', "%{$search}%");
+            });
+        }
+
+        $units = $query->paginate(15);
+
+        return view('setting::units.index', compact('units'));
     }
 
     public function create() {

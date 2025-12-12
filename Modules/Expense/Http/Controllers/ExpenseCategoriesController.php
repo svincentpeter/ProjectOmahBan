@@ -10,10 +10,21 @@ use Modules\Expense\DataTables\ExpenseCategoriesDataTable;
 
 class ExpenseCategoriesController extends Controller
 {
-    public function index(ExpenseCategoriesDataTable $dataTable)
+    public function index(Request $request)
     {
+        $query = ExpenseCategory::query()->orderBy('category_name');
+
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('category_name', 'like', "%{$search}%")
+                  ->orWhere('category_description', 'like', "%{$search}%");
+            });
+        }
+
+        $categories = $query->withCount('expenses')->paginate(15);
         $categories_count = ExpenseCategory::count();
-        return $dataTable->render('expense::categories.index', compact('categories_count'));
+
+        return view('expense::categories.index', compact('categories', 'categories_count'));
     }
 
     public function create()

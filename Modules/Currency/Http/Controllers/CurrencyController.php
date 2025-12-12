@@ -12,10 +12,21 @@ use Modules\Currency\Entities\Currency;
 class CurrencyController extends Controller
 {
 
-    public function index(CurrencyDataTable $dataTable) {
+    public function index(Request $request) {
         abort_if(Gate::denies('access_currencies'), 403);
 
-        return $dataTable->render('currency::index');
+        $query = Currency::query()->orderBy('currency_name');
+
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('currency_name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        $currencies = $query->paginate(15);
+
+        return view('currency::index', compact('currencies'));
     }
 
 

@@ -2,17 +2,16 @@
 
 @section('title', 'Kategori Pengeluaran')
 
-@section('content')
-    {{-- Breadcrumb --}}
-    @section('breadcrumb')
-        @include('layouts.breadcrumb-flowbite', [
-            'items' => [
-                ['text' => 'Pengeluaran', 'url' => route('expenses.index')],
-                ['text' => 'Kategori', 'url' => '#', 'icon' => 'bi bi-folder2-open'],
-            ]
-        ])
-    @endsection
+@section('breadcrumb')
+    @include('layouts.breadcrumb-flowbite', [
+        'items' => [
+            ['text' => 'Pengeluaran', 'url' => route('expenses.index')],
+            ['text' => 'Kategori', 'url' => '#', 'icon' => 'bi bi-folder2-open'],
+        ]
+    ])
+@endsection
 
+@section('content')
     {{-- Stats Cards --}}
     <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         {{-- Total Kategori --}}
@@ -21,7 +20,7 @@
                 <i class="bi bi-layers-fill text-9xl"></i>
             </div>
             <div class="relative z-10 flex items-center">
-                <div class="p-3 bg-white/20 rounded-xl mr-4 backdrop-blur-sm shadow-inner icon-float">
+                <div class="p-3 bg-white/20 rounded-xl mr-4 backdrop-blur-sm shadow-inner">
                     <i class="bi bi-tag-fill text-2xl"></i>
                 </div>
                 <div>
@@ -31,7 +30,7 @@
             </div>
         </div>
 
-        {{-- Status Sistem (Static) --}}
+        {{-- Status Sistem --}}
         <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
             <div class="flex items-center">
                 <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl mr-4">
@@ -50,69 +49,111 @@
         </div>
     </div>
 
-    {{-- Main Card --}}
-    <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 shadow-sm rounded-2xl overflow-hidden">
-        {{-- Card Header --}}
-        <div class="p-6 border-b border-slate-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-700/20">
-            <div>
-                <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    <i class="bi bi-folder2-open text-blue-600"></i>
-                    Daftar Kategori
-                </h2>
-                <p class="text-sm text-slate-500 dark:text-gray-400 mt-1">Kelola kategori untuk pengelompokan pengeluaran operasional.</p>
-            </div>
+    {{-- Main Table --}}
+    <x-flowbite-table 
+        title="Daftar Kategori Pengeluaran" 
+        description="Kelola kategori untuk pengelompokan pengeluaran operasional"
+        icon="bi-folder2-open"
+        :items="$categories"
+        :addRoute="route('expense-categories.create')"
+        addLabel="Tambah Kategori"
+        searchPlaceholder="Cari kategori..."
+    >
+        {{-- Table Header --}}
+        <x-slot name="thead">
+            <tr>
+                <th scope="col" class="px-6 py-4">No</th>
+                <th scope="col" class="px-6 py-4">Nama Kategori</th>
+                <th scope="col" class="px-6 py-4">Deskripsi</th>
+                <th scope="col" class="px-6 py-4">Jumlah Pengeluaran</th>
+                <th scope="col" class="px-6 py-4 text-right">Aksi</th>
+            </tr>
+        </x-slot>
 
-            <div class="flex items-center gap-2">
-                <a href="{{ route('expense-categories.create') }}" 
-                   class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-300 shadow-lg shadow-blue-500/30 transition-all duration-200">
-                    <i class="bi bi-plus-lg mr-2"></i>
-                    Tambah Kategori
-                </a>
-            </div>
-        </div>
-
-        {{-- DataTable --}}
-        <div class="p-5">
-            {{ $dataTable->table() }}
-        </div>
-    </div>
+        {{-- Table Body --}}
+        @forelse($categories as $index => $category)
+        <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $categories->firstItem() + $index }}
+            </td>
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $category->category_name }}
+            </td>
+            <td class="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                {{ $category->category_description ?? '-' }}
+            </td>
+            <td class="px-6 py-4">
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                    {{ $category->expenses_count ?? 0 }} transaksi
+                </span>
+            </td>
+            <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-2">
+                    {{-- Edit Button --}}
+                    <a href="{{ route('expense-categories.edit', $category) }}" 
+                       class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                       title="Edit">
+                        <i class="bi bi-pencil-square text-lg"></i>
+                    </a>
+                    
+                    {{-- Delete Button --}}
+                    <button type="button" 
+                            class="btn-delete text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            data-id="{{ $category->id }}"
+                            data-name="{{ $category->category_name }}"
+                            title="Hapus">
+                        <i class="bi bi-trash text-lg"></i>
+                    </button>
+                    
+                    {{-- Hidden Delete Form --}}
+                    <form id="delete-form-{{ $category->id }}" action="{{ route('expense-categories.destroy', $category) }}" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                </div>
+            </td>
+        </tr>
+        @empty
+        <tr>
+            <td colspan="5" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center justify-center">
+                    <i class="bi bi-folder-x text-4xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                    <p class="font-medium">Belum ada kategori pengeluaran</p>
+                    <p class="text-sm">Klik tombol "Tambah Kategori" untuk membuat kategori baru.</p>
+                </div>
+            </td>
+        </tr>
+        @endforelse
+    </x-flowbite-table>
 @endsection
 
-@push('page_styles')
-    @include('includes.datatables-flowbite-css')
-@endpush
-
 @push('page_scripts')
-    @include('includes.datatables-flowbite-js')
-    {{ $dataTable->scripts() }}
-
-    <script>
-        // Global SweetAlert Delete (Reusable / Standardized)
-        $(document).on('click', '.btn-delete', function(e) {
-            e.preventDefault();
-            const id = $(this).data('id');
-            const name = $(this).data('name');
-            const form = $('#delete-form-' + id);
-            
+<script>
+$(document).on('click', '.btn-delete', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+    const name = $(this).data('name');
+    
+    Swal.fire({
+        title: 'Hapus Kategori?',
+        text: 'Kategori "' + name + '" akan dihapus permanen.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
             Swal.fire({
-                title: 'Hapus Kategori?',
-                text: "Kategori \"" + name + "\" akan dihapus permanen.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#EF4444',
-                cancelButtonColor: '#E5E7EB',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal',
-                customClass: {
-                    confirmButton: 'bg-red-600 text-white hover:bg-red-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2',
-                    cancelButton: 'bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2'
-                },
-                buttonsStyling: false
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+                title: 'Menghapus...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
             });
-        });
-    </script>
+            $('#delete-form-' + id).submit();
+        }
+    });
+});
+</script>
 @endpush

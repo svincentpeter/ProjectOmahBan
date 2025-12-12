@@ -56,18 +56,23 @@
                         <td class="text-center">
                             @if ($isAdjusted)
                                 @if ($adjAmt > 0)
-                                    <span class="badge badge-danger" title="{{ $note }}">
+                                    {{-- Harga Lebuh MURAH dari asli (Diskon) -> Merah/Pink? Atau Hijau? User minta penanda.
+                                         Biasanya di sistem POS: Diskon = Potongan = Merah (reduksi omzet) atau Hijau (promo)?
+                                         Kalau lihat logic lama badge-danger (Merah) dipakai untuk minus (-). --}}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" title="{{ $note }}">
                                         -{{ format_currency($adjAmt) }}
                                     </span>
                                 @elseif($adjAmt < 0)
-                                    <span class="badge badge-success" title="{{ $note }}">
+                                    {{-- Harga Lebih MAHAL dari asli (Markup) -> Hijau (profit lebih)?
+                                         Logic lama badge-success (Hijau) dipakai untuk plus (+). --}}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" title="{{ $note }}">
                                         +{{ format_currency(abs($adjAmt)) }}
                                     </span>
                                 @else
-                                    <span class="text-muted">—</span>
+                                    <span class="text-gray-400">—</span>
                                 @endif
                             @else
-                                <span class="text-muted">—</span>
+                                <span class="text-gray-400">—</span>
                             @endif
                         </td>
                     </tr>

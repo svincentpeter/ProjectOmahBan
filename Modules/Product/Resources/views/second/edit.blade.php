@@ -1,90 +1,49 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Edit Produk Bekas')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('products_second.index') }}">Produk Bekas</a></li>
-        <li class="breadcrumb-item active">Edit: {{ $product->name }}</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Manajemen Produk', 'url' => '#'],
+        ['text' => 'Produk Bekas', 'url' => route('products_second.index')],
+        ['text' => 'Edit Produk', 'url' => route('products_second.edit', $product->id), 'icon' => 'bi bi-pencil']
+    ]])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            {{-- Alerts --}}
-            @include('utils.alerts')
+    <div class="max-w-7xl mx-auto">
+        {{-- Alerts --}}
+        @include('utils.alerts')
 
-            <form id="product-form" action="{{ route('products_second.update', $product->id) }}" method="POST"
-                enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
+        <form id="product-form" action="{{ route('products_second.update', $product->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
 
-                {{-- Sticky Action Bar --}}
-                <div class="action-bar second-shadow-sm mb-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0 font-weight-bold">
-                                <i class="cil-pencil mr-2 text-primary"></i>
-                                Edit Produk Bekas: {{ $product->name }}
-                            </h5>
-                            <small class="text-muted">Perbarui informasi produk bekas</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('products_second.index') }}" class="btn btn-outline-secondary">
-                                <i class="cil-arrow-left mr-1"></i> Kembali
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="cil-save mr-1"></i> Simpan Perubahan
-                            </button>
-                        </div>
-                    </div>
+            {{-- Sticky Action Bar --}}
+            <div class="sticky top-[72px] z-30 mb-6 p-4 bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h5 class="flex items-center gap-2 text-lg font-bold text-slate-800">
+                        <i class="bi bi-pencil-square text-blue-600"></i>
+                        Edit Produk Bekas
+                    </h5>
+                    <p class="text-sm text-slate-500 mt-0.5">{{ $product->name }}</p>
                 </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('products_second.index') }}" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
+                        <i class="bi bi-arrow-left me-1"></i> Kembali
+                    </a>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm hover:shadow transition-all">
+                        <i class="bi bi-check-lg me-1"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </div>
 
-                {{-- Include Modern Form (edit mode: dengan $product) --}}
-                @include('product::second.partials._form', ['product' => $product])
-            </form>
-
-            {{-- Shared scripts for create & edit (Dropzone, MaskMoney, Swal, dll) --}}
-            @include('product::second.partials._scripts')
-        </div>
+            {{-- Include Modern Form (edit mode: dengan $product) --}}
+            @include('product::second.partials._form', ['product' => $product])
+        </form>
     </div>
 @endsection
 
-{{-- Section third_party_scripts & page_scripts JS lama DIHAPUS,
-    karena sudah dipindah ke partial _scripts --}}
-
-@push('page_styles')
-    <style>
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .action-bar {
-            background: white;
-            padding: 1.25rem;
-            border-radius: 10px;
-        }
-
-        .d-flex.gap-2>* {
-            margin-left: 0.5rem;
-        }
-
-        .d-flex.gap-2>*:first-child {
-            margin-left: 0;
-        }
-    </style>
+@push('page_scripts')
+    @include('product::second.partials._scripts')
 @endpush

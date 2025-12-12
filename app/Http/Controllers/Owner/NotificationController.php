@@ -44,103 +44,45 @@ class NotificationController extends Controller
 
     /** ===== Pages ===== */
 
-    public function index()
+    public function index(Request $request)
     {
-        $base = $this->scopeForCurrentUser();
+        $query = $this->scopeForCurrentUser()->orderByDesc('created_at');
 
-        $stats = [
-            'unread_count' => (clone $base)->where('is_read', false)->count(),
-            'today_count' => (clone $base)->whereDate('created_at', now()->toDateString())->count(),
-            'unreviewed_count' => (clone $base)->where('is_reviewed', false)->count(),
-            'critical_count' => (clone $base)->where('is_read', false)->where('severity', 'critical')->count(),
-        ];
-
-        return view('notifications.index', compact('stats'));
-    }
-
-    /** DataTable API */
-    public function data(Request $request)
-    {
-        $request->validate([
-            'draw' => 'nullable|integer',
-            'start' => 'nullable|integer|min:0',
-            'length' => 'nullable|integer|min:1|max:500',
-        ]);
-
-        $with = [];
-        if (method_exists(OwnerNotification::class, 'sale')) {
-            $with[] = 'sale';
+        // Search
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('message', 'like', "%{$search}%");
+            });
         }
-        if (method_exists(OwnerNotification::class, 'reviewer')) {
-            $with[] = 'reviewer';
-        }
-
-        $query = $this->scopeForCurrentUser()->when($with, fn($q) => $q->with($with))->orderByDesc('created_at');
 
         // Filters
-        if ($request->filled('is_read')) {
+        if ($request->filled('is_read') && $request->input('is_read') !== 'all') {
             $query->where('is_read', $request->boolean('is_read'));
         }
-        if ($request->filled('is_reviewed')) {
+        if ($request->filled('is_reviewed') && $request->input('is_reviewed') !== 'all') {
             $query->where('is_reviewed', $request->boolean('is_reviewed'));
         }
-        if ($request->filled('severity')) {
-            $query->where('severity', (string) $request->input('severity'));
+        if ($request->filled('severity') && $request->input('severity') !== 'all') {
+            $query->where('severity', $request->input('severity'));
         }
-        if ($request->filled('type')) {
-            $query->where('notification_type', (string) $request->input('type'));
-        }
-        if ($request->filled('fontee_status')) {
-            $query->where('fontee_status', (string) $request->input('fontee_status'));
+        if ($request->filled('type') && $request->input('type') !== 'all') {
+            $query->where('notification_type', $request->input('type'));
         }
 
-        try {
-            return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('checkbox', fn() => '')
-                ->addColumn('severity_badge', fn($row) => method_exists($row, 'getSeverityBadge') ? $row->getSeverityBadge() : e(strtoupper($row->severity ?? '-')))
-                ->addColumn('type_badge', function ($row) {
-                    $colorMap = [
-                        'manual_input_alert' => 'primary',
-                        'price_adjustment' => 'info',
-                        'discount_alert' => 'success',
-                        'high_value_transaction' => 'danger',
-                        'default' => 'secondary',
-                    ];
-                    $type = (string) ($row->notification_type ?? 'default');
-                    $color = $colorMap[$type] ?? $colorMap['default'];
-                    $label = ucfirst(str_replace('_', ' ', $type));
-                    return '<span class="badge bg-' . e($color) . '">' . e($label) . '</span>';
-                })
-                ->addColumn('created_at_ts', fn($row) => optional($row->created_at)->timestamp ?? 0)
-                ->addColumn('time_ago', fn($row) => optional($row->created_at)->diffForHumans() ?? '-')
-                ->editColumn('title', fn($row) => e(Str::limit($row->title ?? '-', 60)))
-                ->addColumn('read_status', fn($row) => $row->is_read ? '<span class="badge bg-success"><i class="cil-check-circle"></i> Dibaca</span>' : '<span class="badge bg-primary"><i class="cil-bell"></i> Baru</span>')
-                ->addColumn('reviewed_status', fn($row) => $row->is_reviewed ? '<span class="badge bg-success"><i class="cil-task"></i> Direview</span>' : '<span class="badge bg-warning"><i class="cil-clock"></i> Pending</span>')
-                ->addColumn('fontee_status_badge', function ($row) {
-                    if (!$row->fontee_message_id) {
-                        return '<span class="badge bg-secondary">-</span>';
-                    }
-                    $statusMap = [
-                        'sent' => ['color' => 'info', 'icon' => 'cil-check', 'label' => 'Sent'],
-                        'read' => ['color' => 'success', 'icon' => 'cil-check-circle', 'label' => 'Read'],
-                        'failed' => ['color' => 'danger', 'icon' => 'cil-x', 'label' => 'Failed'],
-                        'pending' => ['color' => 'warning', 'icon' => 'cil-clock', 'label' => 'Pending'],
-                    ];
-                    $s = $statusMap[$row->fontee_status] ?? $statusMap['pending'];
-                    return '<span class="badge bg-' . e($s['color']) . '" title="' . e($row->fontee_message_id) . '"><i class="' . e($s['icon']) . '"></i> ' . e($s['label']) . '</span>';
-                })
-                ->addColumn('action', function ($row) {
-                    $detailUrl = route('notifications.show', $row->id);
-                    return '<a href="' . e($detailUrl) . '" class="btn btn-outline-primary btn-sm" title="Lihat detail"><i class="cil-search"></i></a> ' . '<button type="button" class="btn btn-outline-danger btn-sm delete-notif" data-id="' . e($row->id) . '" title="Hapus"><i class="cil-trash"></i></button>';
-                })
-                ->rawColumns(['checkbox', 'severity_badge', 'type_badge', 'read_status', 'reviewed_status', 'fontee_status_badge', 'action'])
-                ->make(true);
-        } catch (\Throwable $e) {
-            Log::error('DT OwnerNotification error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return DataTables::of(OwnerNotification::query()->whereRaw('1=0'))->make(true);
-        }
+        $notifications = $query->paginate(10)->withQueryString();
+
+        $stats = [
+            'unread_count' => $this->scopeForCurrentUser()->where('is_read', false)->count(),
+            'today_count' => $this->scopeForCurrentUser()->whereDate('created_at', now()->toDateString())->count(),
+            'unreviewed_count' => $this->scopeForCurrentUser()->where('is_reviewed', false)->count(),
+            'critical_count' => $this->scopeForCurrentUser()->where('is_read', false)->where('severity', 'critical')->count(),
+        ];
+
+        return view('notifications.index', compact('notifications', 'stats'));
     }
+
+    // data() method removed as it is replaced by DataTable class
 
     /** Detail */
     public function show(OwnerNotification $notification)

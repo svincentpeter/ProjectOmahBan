@@ -13,7 +13,16 @@ class ProductDataTable extends DataTable
         return datatables()
             ->eloquent($query)
             ->addColumn('action', function ($data) {
-                return view('product::products.partials.actions', compact('data'))->render();
+                return view('partials.datatable-actions', [
+                    'id' => $data->id,
+                    'showRoute' => route('products.show', $data->id),
+                    'editRoute' => route('products.edit', $data->id),
+                    'deleteRoute' => route('products.destroy', $data->id),
+                    'itemName' => $data->product_name,
+                    'showPermission' => 'show_products',
+                    'editPermission' => 'edit_products',
+                    'deletePermission' => 'delete_products',
+                ])->render();
             })
             ->addColumn('product_price', fn($d) => format_currency($d->product_price))
             ->addColumn('product_cost', fn($d) => format_currency($d->product_cost))
@@ -62,6 +71,10 @@ class ProductDataTable extends DataTable
         if (request()->has('category_id') && request('category_id') != '') {
             $query->where('category_id', request('category_id'));
         }
+
+        if (request()->has('brand_id') && request('brand_id') != '') {
+            $query->where('brand_id', request('brand_id'));
+        }
         
         // Filter by quick filter
         if (request()->has('quick_filter') && request('quick_filter') != 'all') {
@@ -89,7 +102,13 @@ class ProductDataTable extends DataTable
             ->orderBy(0, 'asc')
             ->parameters([
                 'responsive' => true,
-                'autoWidth' => false
+                'autoWidth' => false,
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0);
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
             ]);
     }
 

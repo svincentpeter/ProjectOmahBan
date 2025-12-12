@@ -36,7 +36,57 @@ class ServiceMasterDataTable extends DataTable
                     ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Aktif</span>'
                     : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600">Nonaktif</span>';
             })
-            ->addColumn('action', fn ($d) => view('product::service-masters.partials.actions', compact('d'))->render())
+            ->addColumn('action', function ($d) {
+                // Use global action component
+                // Note: ServiceMaster has custom actions like edit modal trigger so we might need a slightly different approach 
+                // OR we adapt the global component to support standard routes if standard routes exist, OR use customActions slot.
+                // The current index.blade.php uses modals (openModal) instead of page redirection.
+                // The global partial supports standard routes. Let's see if we can adapt or if we should keep it simple.
+                // The previous code used `view('product::service-masters.partials.actions')`.
+                
+                // Let's stick to the user request: "Service buatkan juga" -> imply similar UI.
+                // Product uses 3-dot menu.
+                // Service Master uses Modals.
+                // We customize the global partial for modals? The global partial takes routes. 
+                // Or we pass `customActions` to the global partial.
+                
+                // Construct custom buttons for modals
+                $editBtn = '
+                    <li>
+                        <a href="javascript:void(0)" 
+                           class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors btn-edit"
+                           data-id="'.$d->id.'"
+                           data-name="'.$d->service_name.'"
+                           data-price="'.$d->standard_price.'"
+                           data-category="'.$d->category.'"
+                           data-description="'.$d->description.'"
+                        >
+                            <i class="bi bi-pencil-square text-amber-600 dark:text-amber-400"></i>
+                            <span>Edit</span>
+                        </a>
+                    </li>';
+                    
+                $deleteBtn = '
+                    <li>
+                        <a href="javascript:void(0)" 
+                           class="flex items-center gap-2 px-4 py-2.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-600 transition-colors btn-delete"
+                           data-id="'.$d->id.'"
+                           data-name="'.$d->service_name.'"
+                           data-price="'.$d->standard_price.'"
+                           data-category="'.$d->category.'"
+                        >
+                            <i class="bi bi-trash"></i>
+                            <span>Hapus</span>
+                        </a>
+                    </li>';
+
+                return view('partials.datatable-actions', [
+                    'id' => $d->id,
+                    'itemName' => $d->service_name,
+                    // No standard routes, pass custom actions
+                    'customActions' => $editBtn . $deleteBtn
+                ])->render();
+            })
             ->rawColumns(['standard_price', 'category', 'status_text', 'description', 'action']);
     }
 
@@ -44,16 +94,24 @@ class ServiceMasterDataTable extends DataTable
     {
         $q = $model->newQuery();
 
-        // quick filter: all|active|inactive
-        $quick = request('quick', 'all');
-        if ($quick === 'active') {
-            $q->where('status', 1);
-        } elseif ($quick === 'inactive') {
-            $q->where('status', 0);
+        // category filter
+        if (request()->has('category') && request('category') != '' && request('category') != 'all') {
+            $q->where('category', request('category'));
+        }
+
+        // status filter (quick)
+        if (request()->has('quick') && request('quick') != 'all') {
+            $quick = request('quick');
+            if ($quick === 'active') {
+                $q->where('status', 1);
+            } elseif ($quick === 'inactive') {
+                $q->where('status', 0);
+            }
         }
 
         return $q->select(['id', 'service_name', 'standard_price', 'category', 'description', 'status']);
     }
+
 
     public function html()
     {
@@ -61,8 +119,16 @@ class ServiceMasterDataTable extends DataTable
             ->setTableId('service-masters-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
+            ->orderBy(1, 'asc')
             ->parameters([
-                'order' => [[1, 'asc']],
+                'responsive' => true,
+                'autoWidth' => false,
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
             ]);
     }
 

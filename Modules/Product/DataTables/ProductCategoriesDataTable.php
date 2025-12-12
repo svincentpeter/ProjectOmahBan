@@ -29,10 +29,12 @@ class ProductCategoriesDataTable extends DataTable
             ->setTableId('categories-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->orderBy(4)
+            ->dom('rt<"p-5 flex items-center justify-between"lp>')
+            ->orderBy(0)
             ->parameters([
                 'responsive' => true,
-                'autoWidth' => false
+                'autoWidth' => false,
+                'drawCallback' => 'function() { window.scrollTo(0, 0); }'
             ]);
     }
 
