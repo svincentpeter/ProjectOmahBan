@@ -1,373 +1,198 @@
-@extends('layouts.app')
+@extends('layouts.flowbite')
 
 @section('title', 'Detail Notifikasi')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('notifications.index') }}">Notifications</a></li>
-        <li class="breadcrumb-item active">Detail</li>
-    </ol>
+    <nav class="flex mb-6" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+        <li class="inline-flex items-center">
+          <a href="{{ route('home') }}" class="inline-flex items-center text-sm font-medium text-zinc-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+            <i class="bi bi-house-door me-2"></i> Beranda
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <i class="bi bi-chevron-right text-zinc-400 mx-1 text-xs"></i>
+            <a href="{{ route('notifications.index') }}" class="ms-1 text-sm font-medium text-zinc-900 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white">Notifikasi</a>
+          </div>
+        </li>
+        <li aria-current="page">
+          <div class="flex items-center">
+             <i class="bi bi-chevron-right text-zinc-400 mx-1 text-xs"></i>
+            <span class="ms-1 text-sm font-medium text-zinc-500 md:ms-2 dark:text-gray-400">Detail #{{ $notification->id }}</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
 @endsection
 
 @section('content')
-    @php
-        // Warna severity: danger | warning | info | success | primary, dsb.
-        $sev = $notification->getSeverityColor();
-    @endphp
-
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            <div class="row">
-                {{-- ===== Main Content ===== --}}
-                <div class="col-lg-8 mb-3">
-                    <div class="card shadow-sm border-left border-4 border-{{ $sev }}">
-                        {{-- Header putih (seragam) --}}
-                        <div class="card-header bg-white py-3 border-bottom">
-                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                                <div>
-                                    <h5 class="mb-1 font-weight-bold">
-                                        <i class="cil-bell mr-2 text-primary"></i>
-                                        {{ $notification->title }}
-                                    </h5>
-                                    <small class="text-muted d-inline-flex align-items-center">
-                                        <i class="cil-clock mr-1"></i>
-                                        {{ $notification->created_at->format('d M Y H:i:s') }}
-                                        <span class="mx-1">•</span>
-                                        {{ $notification->created_at->diffForHumans() }}
-                                    </small>
-                                </div>
-                                <div class="text-nowrap">
-                                    {!! $notification->getSeverityBadge() !!}
-                                </div>
-                            </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Main Detail -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white border border-slate-100 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
+                
+                <!-- Header -->
+                <div class="px-8 py-6 border-b border-slate-50 flex justify-between items-start bg-white">
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            @php
+                                $badgeClass = match($notification->severity) {
+                                    'critical' => 'bg-red-50 text-red-600 border-red-100',
+                                    'warning' => 'bg-amber-50 text-amber-600 border-amber-100',
+                                    default => 'bg-blue-50 text-blue-600 border-blue-100'
+                                };
+                            @endphp
+                            <span class="{{ $badgeClass }} text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider">
+                                {{ $notification->severity }}
+                            </span>
+                            <span class="text-xs text-zinc-500 flex items-center font-bold">
+                                <i class="bi bi-clock me-1.5"></i> {{ $notification->created_at->format('d M Y, H:i') }}
+                            </span>
                         </div>
+                        <h1 class="text-2xl font-extrabold text-black dark:text-white leading-tight">
+                            {{ $notification->title }}
+                        </h1>
+                    </div>
+                    <div class="text-right">
+                         @if (!$notification->is_read)
+                            <span class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold bg-blue-50 text-blue-800">
+                                <span class="w-2 h-2 rounded-full bg-blue-600"></span> Belum Dibaca
+                            </span>
+                        @else
+                             <span class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold bg-green-50 text-green-800">
+                                <i class="bi bi-check-all text-lg"></i> Dibaca
+                            </span>
+                        @endif
+                    </div>
+                </div>
 
-                        <div class="card-body">
-                            {{-- Pesan --}}
-                            <h6 class="mb-2 fw-semibold">Pesan</h6>
-                            <pre class="code-block">{!! nl2br(e($notification->message)) !!}</pre> {{-- ✅ escape dulu --}}
+                <div class="p-8">
+                    <h3 class="text-xs font-extrabold text-black uppercase tracking-widest mb-4">Isi Pesan</h3>
+                    <div class="prose max-w-none text-black dark:text-gray-300">
+                        <div class="bg-zinc-50 rounded-xl p-6 text-sm leading-relaxed whitespace-pre-line font-semibold text-zinc-900 shadow-inner border border-zinc-200">
+                            {!! $notification->message !!}
+                        </div>
+                    </div>
 
-
-                            {{-- Transaksi terkait (opsional) --}}
-                            @if ($notification->sale_id && $notification->sale)
-                                <div class="alert alert-info d-flex align-items-start mt-4" role="alert">
-                                    <i class="cil-receipt mr-2 mt-1"></i>
+                    <!-- Related Transaction -->
+                    @if ($notification->sale_id && $notification->sale)
+                    <div class="mt-8">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Transaksi Terkait</h3>
+                        <a href="{{ url('/sales/' . $notification->sale_id) }}" class="group block p-4 bg-white border border-slate-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm">
+                                        <i class="bi bi-receipt text-xl"></i>
+                                    </div>
                                     <div>
-                                        <div class="fw-semibold mb-1">Transaksi Terkait</div>
-                                        <a href="{{ url('/sales/' . $notification->sale_id) }}"
-                                            class="btn btn-outline-primary btn-sm">
-                                            <i class="cil-magnifying-glass mr-1"></i>
-                                            Lihat Transaksi #{{ $notification->sale->reference ?? $notification->sale_id }}
-                                        </a>
+                                        <p class="text-sm font-bold text-slate-800 group-hover:text-blue-600">Faktur #{{ $notification->sale->reference ?? $notification->sale_id }}</p>
+                                        <p class="text-xs text-slate-500 font-medium">Lihat detail struk transaksi</p>
                                     </div>
                                 </div>
-                            @endif
-
-
-                            {{-- Aksi utama --}}
-                            <div class="mt-3 pt-3 border-top d-flex flex-wrap gap-2">
-                                <a href="{{ route('notifications.index') }}" class="btn btn-secondary">
-                                    <i class="cil-arrow-left mr-1"></i> Kembali
-                                </a>
-
-                                @if (!$notification->is_read)
-                                    <form action="{{ route('notifications.mark-as-read', $notification->id) }}"
-                                        method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="cil-check-alt mr-1"></i> Tandai Sudah Dibaca
-                                        </button>
-                                    </form>
-                                @endif
-
-                                <form action="{{ route('notifications.destroy', $notification->id) }}" method="POST"
-                                    class="d-inline" onsubmit="return confirm('Hapus notifikasi ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger">
-                                        <i class="cil-trash mr-1"></i> Hapus
-                                    </button>
-                                </form>
+                                <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                                    <i class="bi bi-arrow-right"></i>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
+                    @endif
                 </div>
 
-                {{-- ===== Sidebar ===== --}}
-                <div class="col-lg-4">
+                <!-- Footer Actions -->
+                <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                    <a href="{{ route('notifications.index') }}" class="text-sm font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-colors">
+                        <i class="bi bi-arrow-left"></i> Kembali ke daftar
+                    </a>
+                    
+                    <div class="flex gap-3">
+                        @if (!$notification->is_read)
+                            <form action="{{ route('notifications.mark-as-read', $notification->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 font-semibold rounded-xl text-sm px-5 py-2.5 focus:outline-none transition-all shadow-sm hover:shadow-md">
+                                    Tandai Dibaca
+                                </button>
+                            </form>
+                        @endif
 
-                    {{-- Info Card (existing) --}}
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-light py-3 border-bottom">
-                            <h6 class="mb-0">
-                                <i class="cil-info mr-2 text-primary"></i>
-                                Informasi
-                            </h6>
+                        <form action="{{ route('notifications.destroy', $notification->id) }}" method="POST" onsubmit="return confirm('Hapus permanen?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="text-red-600 bg-white border border-red-100 hover:bg-red-50 focus:ring-4 focus:ring-red-100 font-semibold rounded-xl text-sm px-5 py-2.5 focus:outline-none transition-all hover:border-red-200">
+                                Hapus
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Sidebar Info -->
+        <div class="space-y-6">
+            
+            <!-- Review Status Card -->
+            <div class="bg-white border border-slate-100 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6">
+                <h5 class="text-xs font-extrabold text-black uppercase tracking-widest mb-5 border-b border-slate-50 pb-3">Status Review</h5>
+                
+                @if ($notification->is_reviewed)
+                    <div class="bg-green-50 border border-green-100 rounded-xl p-5 mb-4 text-center">
+                        <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-600 mb-2">
+                            <i class="bi bi-check-lg text-xl"></i>
                         </div>
-                        <div class="card-body">
-                            <dl class="row mb-0">
-                                <dt class="col-sm-5 font-weight-semibold">Status Baca</dt>
-                                <dd class="col-sm-7 mb-2">
-                                    @if ($notification->is_read)
-                                        <span class="badge bg-secondary">
-                                            <i class="cil-check-circle mr-1"></i>Sudah Dibaca
-                                        </span>
-                                    @else
-                                        <span class="badge bg-primary">
-                                            <i class="cil-bell mr-1"></i>Belum Dibaca
-                                        </span>
-                                    @endif
-                                </dd>
-
-                                <dt class="col-sm-5 font-weight-semibold">Severity</dt>
-                                <dd class="col-sm-7 mb-2">
-                                    {!! $notification->getSeverityBadge() !!}
-                                </dd>
-
-                                <dt class="col-sm-5 font-weight-semibold">Dibuat</dt>
-                                <dd class="col-sm-7 mb-2">
-                                    <small class="text-muted">{{ $notification->created_at->format('d M Y H:i') }}</small>
-                                </dd>
-
-                                @if ($notification->is_read)
-                                    <dt class="col-sm-5 font-weight-semibold">Dibaca</dt>
-                                    <dd class="col-sm-7">
-                                        <small class="text-muted">
-                                            {{ $notification->read_at?->format('d M Y H:i') ?? '-' }}
-                                        </small>
-                                    </dd>
-                                @endif
-                            </dl>
+                        <h4 class="text-green-900 font-bold text-sm">Sudah Direview</h4>
+                        <p class="text-xs text-green-700 mt-1 font-semibold">
+                            oleh {{ $notification->reviewer->name ?? 'Unknown' }}<br>
+                            pada {{ $notification->reviewed_at?->format('d M Y, H:i') }}
+                        </p>
+                    </div>
+                    @if($notification->review_notes)
+                        <div class="text-sm text-zinc-800 italic bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-center font-medium">
+                            &ldquo;{{ $notification->review_notes }}&rdquo;
+                        </div>
+                    @endif
+                @else
+                    <div class="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-5 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div>
+                            <p class="text-amber-900 font-bold text-sm">Menunggu Review</p>
+                            <p class="text-xs text-amber-700 font-medium">Butuh tindakan supervisor.</p>
                         </div>
                     </div>
-
-                    {{-- ⭐ NEW: Review Notifikasi Card --}}
-                    @if (!$notification->is_reviewed)
-                        <div class="card shadow-sm mb-3 border-left border-4 border-primary">
-                            <div class="card-header bg-primary text-white py-3 border-bottom">
-                                <h6 class="mb-0">
-                                    <i class="cil-task mr-2"></i>
-                                    Review Notifikasi
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <form id="reviewForm" method="POST"
-                                    action="{{ route('notifications.mark-as-reviewed', $notification->id) }}">
-                                    @csrf
-
-                                    <div class="mb-3">
-                                        <label for="reviewNotes" class="form-label font-weight-semibold">
-                                            Catatan Review
-                                        </label>
-                                        <textarea class="form-control @error('review_notes') is-invalid @enderror" id="reviewNotes" name="review_notes"
-                                            rows="4" placeholder="Masukkan catatan review Anda..."></textarea>
-                                        @error('review_notes')
-                                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                                        @enderror
-                                        <small class="text-muted d-block mt-1">Maksimal 500 karakter</small>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="cil-check-alt mr-1"></i> Tandai Direview
-                                    </button>
-                                </form>
-                            </div>
+                    
+                    <form action="{{ route('notifications.mark-as-reviewed', $notification->id) }}" method="POST">
+                        @csrf
+                        <div class="mb-4">
+                            <label for="review_notes" class="block mb-2 text-xs font-bold text-black uppercase">Tambah Catatan</label>
+                            <textarea id="review_notes" name="review_notes" rows="4" class="block p-3 w-full text-sm text-zinc-900 bg-zinc-50 rounded-xl border border-zinc-300 focus:ring-blue-500 focus:border-blue-500 shadow-inner placeholder-zinc-500 font-medium" placeholder="Tulis catatan review Anda di sini..."></textarea>
                         </div>
-                    @else
-                        {{-- ✓ Status Sudah Direview --}}
-                        <div class="card shadow-sm mb-3 border-left border-4 border-success">
-                            <div class="card-header bg-success text-white py-3 border-bottom">
-                                <h6 class="mb-0">
-                                    <i class="cil-check-circle mr-2"></i>
-                                    Sudah Direview
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <dl class="row mb-0 small">
-                                    <dt class="col-sm-5 font-weight-semibold">Oleh</dt>
-                                    <dd class="col-sm-7 mb-2">
-                                        @if ($notification->reviewer)
-                                            {{ $notification->reviewer->name }}
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </dd>
+                        <button type="submit" class="w-full text-white bg-zinc-900 hover:bg-black focus:ring-4 focus:ring-zinc-200 font-bold rounded-xl text-sm px-5 py-3 focus:outline-none transition-all shadow-lg shadow-zinc-200">
+                            Kirim Review
+                        </button>
+                    </form>
+                @endif
+            </div>
 
-                                    <dt class="col-sm-5 font-weight-semibold">Tanggal</dt>
-                                    <dd class="col-sm-7 mb-2">
-                                        {{ $notification->reviewed_at?->format('d M Y H:i') ?? '-' }}
-                                    </dd>
-
-                                    @if ($notification->review_notes)
-                                        <dt class="col-sm-5 font-weight-semibold">Catatan</dt>
-                                        <dd class="col-sm-7">
-                                            <div class="bg-light p-2 rounded"
-                                                style="max-height: 150px; overflow-y: auto;">
-                                                {{ $notification->review_notes }}
-                                            </div>
-                                        </dd>
-                                    @endif
-                                </dl>
-                            </div>
+            <!-- WhatsApp / Fontee Status -->
+            @if ($notification->fontee_message_id)
+            <div class="bg-white border border-slate-100 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6">
+                <h5 class="text-xs font-extrabold text-black uppercase tracking-widest mb-5 border-b border-slate-50 pb-3">Integrasi</h5>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#25D366]/10 flex items-center justify-center text-[#25D366]">
+                            <i class="bi bi-whatsapp text-xl"></i>
                         </div>
-                    @endif
-
-                    {{-- ⭐ NEW: Fontee Status Card (jika ada) --}}
-                    @if ($notification->fontee_message_id)
-                        <div
-                            class="card shadow-sm border-left border-4 
-                            {{ $notification->fontee_status === 'failed' ? 'border-danger' : 'border-success' }}">
-                            <div class="card-header bg-light py-3 border-bottom">
-                                <h6 class="mb-0">
-                                    <i class="cil-chat-bubble mr-2 text-success"></i>
-                                    Status Fontee (WhatsApp)
-                                </h6>
-                            </div>
-                            <div class="card-body small">
-                                <dl class="row mb-0">
-                                    <dt class="col-sm-5 font-weight-semibold">Status</dt>
-                                    <dd class="col-sm-7 mb-2">
-                                        <span
-                                            class="badge bg-{{ $notification->fontee_status === 'sent'
-                                                ? 'info'
-                                                : ($notification->fontee_status === 'read'
-                                                    ? 'success'
-                                                    : ($notification->fontee_status === 'failed'
-                                                        ? 'danger'
-                                                        : 'warning')) }}">
-                                            @if ($notification->fontee_status === 'sent')
-                                                <i class="cil-check mr-1"></i>Terkirim
-                                            @elseif($notification->fontee_status === 'read')
-                                                <i class="cil-check-circle mr-1"></i>Dibaca
-                                            @elseif($notification->fontee_status === 'failed')
-                                                <i class="cil-x mr-1"></i>Gagal
-                                            @else
-                                                <i class="cil-clock mr-1"></i>Pending
-                                            @endif
-                                        </span>
-                                    </dd>
-
-                                    <dt class="col-sm-5 font-weight-semibold">Message ID</dt>
-                                    <dd class="col-sm-7 mb-2">
-                                        <code class="bg-light p-1 rounded d-inline-block" style="font-size: 11px;">
-                                            {{ substr($notification->fontee_message_id, 0, 20) }}...
-                                        </code>
-                                    </dd>
-
-                                    @if ($notification->fontee_sent_at)
-                                        <dt class="col-sm-5 font-weight-semibold">Dikirim</dt>
-                                        <dd class="col-sm-7 mb-2">
-                                            <small class="text-muted">
-                                                {{ $notification->fontee_sent_at->format('d M Y H:i:s') }}
-                                            </small>
-                                        </dd>
-                                    @endif
-
-                                    @if ($notification->fontee_error_message)
-                                        <dt class="col-sm-5 font-weight-semibold">Error</dt>
-                                        <dd class="col-sm-7">
-                                            <div class="alert alert-danger mb-0 p-2" style="font-size: 12px;">
-                                                {{ $notification->fontee_error_message }}
-                                            </div>
-                                        </dd>
-                                    @endif
-                                </dl>
-                            </div>
+                        <div>
+                            <p class="text-xs text-zinc-400 font-bold uppercase">WhatsApp</p>
+                            <p class="text-sm font-bold text-zinc-900">{{ ucfirst($notification->fontee_status ?? 'Terkirim') }}</p>
                         </div>
-                    @endif
-
+                    </div>
+                    <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                 </div>
-            </div> {{-- /row --}}
+            </div>
+            @endif
+
         </div>
     </div>
 @endsection
-
-@push('page_styles')
-    <style>
-        /* Animasi & shadow (seragam dengan halaman Jasa) */
-        .animated.fadeIn {
-            animation: fadeIn .3s ease-in
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            }
-        }
-
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .08) !important
-        }
-
-        /* Border-left util (dipakai di card utama) */
-        .border-left {
-            border-left: 4px solid !important
-        }
-
-        /* Code block untuk pesan (terbaca jelas) */
-        .code-block {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 14px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            white-space: pre-wrap;
-            word-break: break-word;
-            color: #2d3748;
-        }
-
-        /* Tipografi kecil */
-        .font-weight-semibold {
-            font-weight: 600
-        }
-
-        /* Custom style untuk form review */
-        #reviewForm .form-control {
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-        }
-
-        #reviewForm .form-control:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-        }
-
-        #reviewForm .form-control.is-invalid {
-            border-color: #dc3545;
-        }
-
-        /* Scrollable untuk review notes */
-        .scrollable-notes {
-            max-height: 120px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            border-radius: 6px;
-            padding: 8px;
-        }
-    </style>
-@endpush
-
-@push('page_scripts')
-    <script>
-        document.getElementById('reviewForm')?.addEventListener('submit', function(e) {
-            const btn = this.querySelector('button[type="submit"]');
-            const originalText = btn.innerHTML;
-
-            // Disable & loading state
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-
-            // Submit form (biarkan normal submit untuk error handling)
-            setTimeout(() => {
-                this.submit();
-            }, 300);
-        });
-    </script>
-@endpush

@@ -14,22 +14,30 @@ class ServiceMasterDataTable extends DataTable
     {
         return (new EloquentDataTable($query))
             ->addIndexColumn()
-            ->editColumn('standard_price', fn ($d) => format_currency($d->standard_price))
+            ->editColumn('standard_price', function ($d) {
+                return '<span class="font-bold text-emerald-600">' . format_currency($d->standard_price) . '</span>';
+            })
             ->editColumn('category', function ($d) {
-                $map = ['service' => 'Service', 'goods' => 'Goods', 'custom' => 'Custom'];
-                return '<span class="badge bg-light text-dark border">' . ($map[$d->category] ?? $d->category) . '</span>';
+                $map = [
+                    'service' => '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Service</span>',
+                    'goods' => '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Goods</span>',
+                    'custom' => '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">Custom</span>',
+                ];
+                return $map[$d->category] ?? $d->category;
             })
             ->editColumn('description', function ($d) {
                 if (!$d->description) {
-                    return '<span class="text-muted">-</span>';
+                    return '<span class="text-zinc-400">-</span>';
                 }
                 return e(Str::limit($d->description, 60));
             })
-            ->addColumn('status_text', fn ($d) => $d->status
-                ? '<span class="badge badge-success"><i class="cil-check-circle me-1"></i>Aktif</span>'
-                : '<span class="badge badge-warning"><i class="cil-x-circle me-1"></i>Nonaktif</span>')
+            ->addColumn('status_text', function ($d) {
+                return $d->status
+                    ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Aktif</span>'
+                    : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600">Nonaktif</span>';
+            })
             ->addColumn('action', fn ($d) => view('product::service-masters.partials.actions', compact('d'))->render())
-            ->rawColumns(['category', 'status_text', 'description', 'action']);
+            ->rawColumns(['standard_price', 'category', 'status_text', 'description', 'action']);
     }
 
     public function query(ServiceMaster $model)
@@ -52,20 +60,8 @@ class ServiceMasterDataTable extends DataTable
         return $this->builder()
             ->setTableId('service-masters-table')
             ->columns($this->getColumns())
+            ->minifiedAjax()
             ->parameters([
-                'processing' => true,
-                'serverSide' => true,
-                'responsive' => true,
-                'autoWidth'  => false,
-                'searchDelay'=> 500,
-                'language'   => [
-                    'search' => '',
-                    'searchPlaceholder' => 'Cari nama, kategori, deskripsi…',
-                ],
-                'ajax' => [
-                    'url'  => route('service-masters.index'),
-                    'data' => 'function(d){ d.quick = window._svcQuick || "all"; }',
-                ],
                 'order' => [[1, 'asc']],
             ]);
     }

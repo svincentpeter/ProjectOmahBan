@@ -1,364 +1,388 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Detail Customer')
 
-@section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('customers.index') }}">Customer</a></li>
-        <li class="breadcrumb-item active">Detail</li>
-    </ol>
-@endsection
-
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            <div class="row">
-                {{-- LEFT COLUMN: Customer Info --}}
-                <div class="col-lg-8">
-                    {{-- Customer Information Card --}}
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-white border-bottom">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                <div class="d-flex align-items-center mb-2 mb-md-0">
-                                    <i class="cil-people mr-2 text-primary" style="font-size: 1.4rem;"></i>
-                                    <div>
-                                        <h5 class="mb-0 font-weight-bold">Detail Customer</h5>
-                                        <small class="text-muted">Informasi lengkap customer</small>
-                                    </div>
-                                </div>
+    {{-- Breadcrumb --}}
+    @include('layouts.breadcrumb-flowbite', [
+        'title' => 'Detail Customer',
+        'items' => [
+            ['text' => 'Home', 'url' => route('home')],
+            ['text' => 'Customer', 'url' => route('customers.index')],
+            ['text' => 'Detail', 'url' => '#']
+        ]
+    ])
 
-                                <div class="btn-group" role="group">
-                                    @can('edit_customers')
-                                        <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-sm btn-primary">
-                                            <i class="cil-pencil mr-1"></i> Edit
-                                        </a>
-                                    @endcan
-                                    <a href="{{ route('customers.index') }}" class="btn btn-sm btn-outline-secondary">
-                                        <i class="cil-arrow-left mr-1"></i> Kembali
+    <div class="p-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- LEFT COLUMN: Customer Info & Sales History --}}
+            <div class="lg:col-span-2 space-y-6">
+                {{-- Customer Information Card --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">
+                    <div class="p-6 border-b border-zinc-100 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+                                <i class="bi bi-person-badge-fill text-xl"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-lg font-bold text-zinc-800">Detail Customer</h5>
+                                <p class="text-sm text-zinc-500">Informasi lengkap customer</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                             @can('edit_customers')
+                                <a href="{{ route('customers.edit', $customer->id) }}" class="px-3 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors flex items-center gap-2">
+                                    <i class="bi bi-pencil-fill"></i> Edit
+                                </a>
+                            @endcan
+                            <a href="{{ route('customers.index') }}" class="px-3 py-2 text-xs font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors flex items-center gap-2">
+                                <i class="bi bi-arrow-left"></i> Kembali
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {{-- Nama Customer --}}
+                            <div class="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="p-1.5 bg-white rounded-lg text-indigo-500 shadow-sm">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <label class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Nama Customer</label>
+                                </div>
+                                <div class="text-lg font-bold text-zinc-800 ps-10">
+                                    {{ $customer->customer_name }}
+                                </div>
+                            </div>
+
+                            {{-- Email --}}
+                            <div class="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="p-1.5 bg-white rounded-lg text-rose-500 shadow-sm">
+                                        <i class="bi bi-envelope-fill"></i>
+                                    </div>
+                                    <label class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Email</label>
+                                </div>
+                                <div class="text-sm text-zinc-800 ps-10">
+                                    <a href="mailto:{{ $customer->customer_email }}" class="hover:text-indigo-600 hover:underline">
+                                        {{ $customer->customer_email }}
                                     </a>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                {{-- Nama Customer --}}
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small font-weight-semibold text-muted mb-1">
-                                        <i class="cil-user mr-1"></i> Nama Customer
-                                    </label>
-                                    <div class="font-weight-bold text-dark" style="font-size: 1.1rem;">
-                                        {{ $customer->customer_name }}
-                                    </div>
-                                </div>
 
-                                {{-- Email --}}
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small font-weight-semibold text-muted mb-1">
-                                        <i class="cil-envelope-closed mr-1"></i> Email
-                                    </label>
-                                    <div class="text-dark">
-                                        <a href="mailto:{{ $customer->customer_email }}" class="text-decoration-none">
-                                            {{ $customer->customer_email }}
-                                        </a>
+                            {{-- No. Telepon --}}
+                            <div class="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="p-1.5 bg-white rounded-lg text-emerald-500 shadow-sm">
+                                        <i class="bi bi-telephone-fill"></i>
                                     </div>
+                                    <label class="text-xs font-bold text-zinc-500 uppercase tracking-wider">No. Telepon</label>
                                 </div>
-
-                                {{-- No. Telepon --}}
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small font-weight-semibold text-muted mb-1">
-                                        <i class="cil-phone mr-1"></i> No. Telepon
-                                    </label>
-                                    <div class="text-dark">
-                                        <a href="tel:{{ $customer->customer_phone }}" class="text-decoration-none">
-                                            {{ $customer->customer_phone }}
-                                        </a>
-                                    </div>
-                                </div>
-
-                                {{-- Kota --}}
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small font-weight-semibold text-muted mb-1">
-                                        <i class="cil-location-pin mr-1"></i> Kota
-                                    </label>
-                                    <div class="text-dark">
-                                        <span class="badge badge-light-info">{{ $customer->city }}</span>
-                                    </div>
-                                </div>
-
-                                {{-- Negara --}}
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small font-weight-semibold text-muted mb-1">
-                                        <i class="cil-globe-alt mr-1"></i> Negara
-                                    </label>
-                                    <div class="text-dark">
-                                        {{ $customer->country }}
-                                    </div>
-                                </div>
-
-                                {{-- Tanggal Terdaftar --}}
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label small font-weight-semibold text-muted mb-1">
-                                        <i class="cil-calendar mr-1"></i> Terdaftar
-                                    </label>
-                                    <div class="text-dark">
-                                        {{ $customer->created_at->format('d M Y, H:i') }}
-                                        <small class="text-muted">({{ $customer->created_at->diffForHumans() }})</small>
-                                    </div>
-                                </div>
-
-                                {{-- Alamat Lengkap --}}
-                                <div class="col-md-12 mb-0">
-                                    <label class="form-label small font-weight-semibold text-muted mb-1">
-                                        <i class="cil-home mr-1"></i> Alamat Lengkap
-                                    </label>
-                                    <div class="text-dark p-3 bg-light rounded">
-                                        {{ $customer->address }}
-                                    </div>
+                                <div class="text-sm text-zinc-800 ps-10">
+                                    <a href="tel:{{ $customer->customer_phone }}" class="hover:text-indigo-600 hover:underline">
+                                        {{ $customer->customer_phone }}
+                                    </a>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {{-- Sales History Card --}}
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white border-bottom">
-                            <div class="d-flex align-items-center">
-                                <i class="cil-cart mr-2 text-primary" style="font-size: 1.4rem;"></i>
-                                <div>
-                                    <h5 class="mb-0 font-weight-bold">Riwayat Penjualan</h5>
-                                    <small class="text-muted">10 transaksi terakhir dari customer ini</small>
+                            {{-- Kota --}}
+                            <div class="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="p-1.5 bg-white rounded-lg text-amber-500 shadow-sm">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                    </div>
+                                    <label class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Kota</label>
+                                </div>
+                                <div class="ps-10">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                        {{ $customer->city }}
+                                    </span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-body p-0">
-                            @if ($customer->sales->count() > 0)
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th width="5%">#</th>
-                                                <th>Tanggal</th>
-                                                <th>Reference</th>
-                                                <th>Total</th>
-                                                <th>Status</th>
-                                                <th>Pembayaran</th>
-                                                <th width="10%">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($customer->sales as $index => $sale)
-                                                <tr>
-                                                    <td class="text-center">{{ $index + 1 }}</td>
-                                                    <td>{{ $sale->date->format('d/m/Y') }}</td>
-                                                    <td>
-                                                        <strong class="text-primary">{{ $sale->reference }}</strong>
-                                                    </td>
-                                                    <td>{{ format_currency($sale->total_amount) }}</td>
-                                                    <td>
-                                                        @if ($sale->status == 'Completed')
-                                                            <span class="badge badge-info">Completed</span>
-                                                        @else
-                                                            <span class="badge badge-secondary">Pending</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if ($sale->payment_status == 'Lunas')
-                                                            <span class="badge badge-success">Lunas</span>
-                                                        @else
-                                                            <span class="badge badge-warning">Belum Lunas</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-center">
-                                                        @can('show_sales')
-                                                            <a href="{{ route('sales.show', $sale->id) }}"
-                                                                class="btn btn-sm btn-outline-primary" title="Lihat Detail">
-                                                                <i class="cil-eye"></i>
-                                                            </a>
-                                                        @endcan
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+
+                            {{-- Negara --}}
+                            <div class="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="p-1.5 bg-white rounded-lg text-cyan-500 shadow-sm">
+                                        <i class="bi bi-globe-asia-australia"></i>
+                                    </div>
+                                    <label class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Negara</label>
                                 </div>
-                            @else
-                                <div class="p-5 text-center text-muted">
-                                    <i class="cil-info" style="font-size: 2.5rem;"></i>
-                                    <p class="mt-3 mb-0">Belum ada riwayat penjualan dari customer ini.</p>
-                                    <small>Transaksi akan muncul setelah melakukan penjualan.</small>
+                                <div class="text-sm text-zinc-800 ps-10">
+                                    {{ $customer->country }}
                                 </div>
-                            @endif
+                            </div>
+
+                            {{-- Tanggal Terdaftar --}}
+                            <div class="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="p-1.5 bg-white rounded-lg text-violet-500 shadow-sm">
+                                        <i class="bi bi-calendar-check-fill"></i>
+                                    </div>
+                                    <label class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Terdaftar</label>
+                                </div>
+                                <div class="text-sm text-zinc-800 ps-10">
+                                    {{ $customer->created_at->format('d M Y, H:i') }}
+                                    <span class="text-xs text-zinc-400 block mt-1">({{ $customer->created_at->diffForHumans() }})</span>
+                                </div>
+                            </div>
+
+                            {{-- Alamat Lengkap --}}
+                            <div class="md:col-span-2 bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="p-1.5 bg-white rounded-lg text-slate-500 shadow-sm">
+                                        <i class="bi bi-house-door-fill"></i>
+                                    </div>
+                                    <label class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Alamat Lengkap</label>
+                                </div>
+                                <div class="text-sm text-zinc-700 ps-10 leading-relaxed">
+                                    {{ $customer->address }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- RIGHT COLUMN: Statistics & Actions --}}
-                <div class="col-lg-4">
-                    {{-- Statistics Card --}}
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-white border-bottom">
-                            <div class="d-flex align-items-center">
-                                <i class="cil-chart-line mr-2 text-primary" style="font-size: 1.4rem;"></i>
-                                <div>
-                                    <h5 class="mb-0 font-weight-bold">Statistik</h5>
-                                    <small class="text-muted">Ringkasan transaksi</small>
-                                </div>
+                {{-- Sales History Card --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
+                    <div class="p-6 border-b border-zinc-100">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+                                <i class="bi bi-cart-check-fill text-xl"></i>
                             </div>
-                        </div>
-                        <div class="card-body">
-                            {{-- Total Penjualan --}}
-                            <div class="mb-3 p-3 bg-light rounded">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="cil-cart text-primary" style="font-size: 1.5rem;"></i>
-                                    </div>
-                                    <div class="text-right">
-                                        <small class="text-muted d-block">Total Penjualan</small>
-                                        <h4 class="mb-0 font-weight-bold text-primary">{{ $stats['total_sales'] }}</h4>
-                                        <small class="text-muted">transaksi</small>
-                                    </div>
-                                </div>
+                            <div>
+                                <h5 class="text-lg font-bold text-zinc-800">Riwayat Penjualan</h5>
+                                <p class="text-sm text-zinc-500">10 transaksi terakhir dari customer ini</p>
                             </div>
-
-                            {{-- Total Nilai --}}
-                            <div class="mb-3 p-3 bg-light rounded">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="cil-credit-card text-success" style="font-size: 1.5rem;"></i>
-                                    </div>
-                                    <div class="text-right">
-                                        <small class="text-muted d-block">Total Nilai</small>
-                                        <h5 class="mb-0 font-weight-bold text-success">
-                                            {{ format_currency($stats['total_amount']) }}</h5>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Total Terbayar --}}
-                            <div class="mb-3 p-3 bg-light rounded">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="cil-check-circle text-info" style="font-size: 1.5rem;"></i>
-                                    </div>
-                                    <div class="text-right">
-                                        <small class="text-muted d-block">Terbayar</small>
-                                        <h6 class="mb-0 font-weight-bold text-info">
-                                            {{ format_currency($stats['total_paid']) }}</h6>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Sisa Piutang --}}
-                            <div class="mb-3 p-3 bg-light rounded">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <i class="cil-warning text-warning" style="font-size: 1.5rem;"></i>
-                                    </div>
-                                    <div class="text-right">
-                                        <small class="text-muted d-block">Sisa Piutang</small>
-                                        <h6 class="mb-0 font-weight-bold text-warning">
-                                            {{ format_currency($stats['total_due']) }}</h6>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Last Sale --}}
-                            @if ($stats['last_sale_date'])
-                                <div class="p-3 bg-light rounded">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <i class="cil-history text-muted" style="font-size: 1.5rem;"></i>
-                                        </div>
-                                        <div class="text-right">
-                                            <small class="text-muted d-block">Penjualan Terakhir</small>
-                                            <strong>{{ \Carbon\Carbon::parse($stats['last_sale_date'])->format('d M Y') }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
                         </div>
                     </div>
-
-                    {{-- Status Card --}}
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-white border-bottom">
-                            <div class="d-flex align-items-center">
-                                <i class="cil-check-circle mr-2 text-primary" style="font-size: 1.4rem;"></i>
-                                <div>
-                                    <h5 class="mb-0 font-weight-bold">Status Customer</h5>
-                                    <small class="text-muted">Status aktivitas</small>
-                                </div>
+                    
+                    <div class="p-0">
+                        @if ($customer->sales->count() > 0)
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="text-xs text-zinc-500 uppercase bg-zinc-50 border-b border-zinc-100">
+                                        <tr>
+                                            <th class="px-6 py-4 font-semibold">#</th>
+                                            <th class="px-6 py-4 font-semibold">Tanggal</th>
+                                            <th class="px-6 py-4 font-semibold">Reference</th>
+                                            <th class="px-6 py-4 font-semibold">Total</th>
+                                            <th class="px-6 py-4 font-semibold">Status</th>
+                                            <th class="px-6 py-4 font-semibold">Pembayaran</th>
+                                            <th class="px-6 py-4 font-semibold text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-zinc-100">
+                                        @foreach ($customer->sales as $index => $sale)
+                                            <tr class="bg-white hover:bg-zinc-50 transition-colors">
+                                                <td class="px-6 py-4 text-center text-zinc-500 w-12">{{ $index + 1 }}</td>
+                                                <td class="px-6 py-4 text-zinc-700">{{ $sale->date->format('d/m/Y') }}</td>
+                                                <td class="px-6 py-4">
+                                                    <span class="font-mono font-medium text-indigo-600">{{ $sale->reference }}</span>
+                                                </td>
+                                                <td class="px-6 py-4 font-medium text-zinc-800">{{ format_currency($sale->total_amount) }}</td>
+                                                <td class="px-6 py-4">
+                                                    @if ($sale->status == 'Completed')
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            Completed
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-800">
+                                                            Pending
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    @if ($sale->payment_status == 'Lunas')
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                                            Lunas
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                                            Belum Lunas
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4 text-center">
+                                                    @can('show_sales')
+                                                        <a href="{{ route('sales.show', $sale->id) }}"
+                                                            class="inline-flex items-center justify-center w-8 h-8 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors" title="Lihat Detail">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                    @endcan
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             </div>
-                        </div>
-                        <div class="card-body">
-                            @if ($customer->is_active)
-                                <div class="alert alert-success mb-0" role="alert">
-                                    <div class="d-flex align-items-start">
-                                        <i class="cil-check-circle mr-2 mt-1" style="font-size: 1.5rem;"></i>
-                                        <div>
-                                            <strong>Customer Aktif</strong>
-                                            <p class="mb-0 mt-1 small">
-                                                Customer ini memiliki transaksi dalam 6 bulan terakhir dan dianggap aktif.
-                                            </p>
-                                        </div>
-                                    </div>
+                        @else
+                            <div class="p-12 text-center text-zinc-400">
+                                <div class="inline-flex items-center justify-center p-4 bg-zinc-50 rounded-full mb-4">
+                                    <i class="bi bi-cart-x text-3xl"></i>
                                 </div>
-                            @else
-                                <div class="alert alert-warning mb-0" role="alert">
-                                    <div class="d-flex align-items-start">
-                                        <i class="cil-warning mr-2 mt-1" style="font-size: 1.5rem;"></i>
-                                        <div>
-                                            <strong>Customer Tidak Aktif</strong>
-                                            <p class="mb-0 mt-1 small">
-                                                Tidak ada transaksi dalam 6 bulan terakhir. Pertimbangkan untuk menghubungi
-                                                customer.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
+                                <h6 class="text-sm font-semibold text-zinc-600 mb-1">Belum ada riwayat penjualan</h6>
+                                <p class="text-xs">Transaksi akan muncul setelah melakukan penjualan.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- RIGHT COLUMN: Statistics & Actions --}}
+            <div class="lg:col-span-1 space-y-6">
+                {{-- Statistics Card --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">
+                    <div class="p-5 border-b border-zinc-100">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-emerald-50 rounded-xl text-emerald-600">
+                                <i class="bi bi-graph-up-arrow text-xl"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-lg font-bold text-zinc-800">Statistik</h5>
+                                <p class="text-sm text-zinc-500">Ringkasan transaksi</p>
+                            </div>
                         </div>
                     </div>
-
-                    {{-- Quick Actions --}}
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white border-bottom">
-                            <div class="d-flex align-items-center">
-                                <i class="cil-settings mr-2 text-primary" style="font-size: 1.4rem;"></i>
-                                <div>
-                                    <h5 class="mb-0 font-weight-bold">Aksi Cepat</h5>
-                                    <small class="text-muted">Opsi untuk customer ini</small>
+                    
+                    <div class="p-5 space-y-4">
+                         {{-- Total Penjualan --}}
+                         <div class="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-xl border border-indigo-100">
+                            <div class="flex justify-between items-start">
+                                <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                                    <i class="bi bi-cart-fill text-lg"></i>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-indigo-600 font-medium mb-1">Total Penjualan</p>
+                                    <h4 class="text-xl font-bold text-zinc-800">{{ $stats['total_sales'] }}</h4>
+                                    <span class="text-[10px] text-zinc-400">transaksi</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                @can('create_sales')
-                                    <a href="{{ route('sales.create', ['customer_id' => $customer->id]) }}"
-                                        class="btn btn-primary">
-                                        <i class="cil-plus mr-1"></i> Buat Penjualan Baru
-                                    </a>
-                                @endcan
 
-                                @can('edit_customers')
-                                    <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-outline-primary">
-                                        <i class="cil-pencil mr-1"></i> Edit Customer
-                                    </a>
-                                @endcan
+                        {{-- Total Nilai --}}
+                        <div class="bg-gradient-to-br from-emerald-50 to-white p-4 rounded-xl border border-emerald-100">
+                            <div class="flex justify-between items-start">
+                                <div class="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                                    <i class="bi bi-coin text-lg"></i>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-emerald-600 font-medium mb-1">Total Nilai</p>
+                                    <h4 class="text-lg font-bold text-zinc-800">{{ format_currency($stats['total_amount']) }}</h4>
+                                </div>
+                            </div>
+                        </div>
 
-                                <a href="{{ route('customers.index') }}" class="btn btn-outline-secondary">
-                                    <i class="cil-arrow-left mr-1"></i> Kembali ke Daftar
+                        {{-- Terbayar & Sisa --}}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-sky-50 p-3 rounded-xl border border-sky-100">
+                                <div class="mb-2">
+                                    <i class="bi bi-check-circle-fill text-sky-500"></i>
+                                </div>
+                                <p class="text-[10px] text-sky-600 font-bold uppercase">Terbayar</p>
+                                <p class="text-sm font-bold text-zinc-800">{{ format_currency($stats['total_paid']) }}</p>
+                            </div>
+                            
+                            <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
+                                <div class="mb-2">
+                                    <i class="bi bi-clock-history text-amber-500"></i>
+                                </div>
+                                <p class="text-[10px] text-amber-600 font-bold uppercase">Sisa Piutang</p>
+                                <p class="text-sm font-bold text-zinc-800">{{ format_currency($stats['total_due']) }}</p>
+                            </div>
+                        </div>
+
+                        {{-- Last Sale --}}
+                        @if ($stats['last_sale_date'])
+                            <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-100 flex justify-between items-center">
+                                <span class="text-xs text-zinc-500 font-medium flex items-center gap-2">
+                                    <i class="bi bi-calendar3"></i> Penjualan Terakhir
+                                </span>
+                                <span class="text-xs font-bold text-zinc-800">
+                                    {{ \Carbon\Carbon::parse($stats['last_sale_date'])->format('d M Y') }}
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Status Card --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">
+                    <div class="p-5 border-b border-zinc-100">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-slate-50 rounded-xl text-slate-600">
+                                <i class="bi bi-activity text-xl"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-lg font-bold text-zinc-800">Status</h5>
+                                <p class="text-sm text-zinc-500">Aktivitas customer</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        @if ($customer->is_active)
+                            <div class="flex items-start gap-4 p-3 bg-green-50 rounded-xl border border-green-100">
+                                <div class="mt-1">
+                                    <i class="bi bi-check-circle-fill text-green-500 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-sm font-bold text-green-900 mb-1">Customer Aktif</h6>
+                                    <p class="text-xs text-green-700 leading-relaxed">
+                                        Customer ini memiliki transaksi dalam 6 bulan terakhir.
+                                    </p>
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex items-start gap-4 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                                <div class="mt-1">
+                                    <i class="bi bi-exclamation-triangle-fill text-amber-500 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-sm font-bold text-amber-900 mb-1">Tidak Aktif</h6>
+                                    <p class="text-xs text-amber-700 leading-relaxed">
+                                        Tidak ada transaksi dalam 6 bulan terakhir.
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Quick Actions --}}
+                <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">
+                     <div class="p-5 border-b border-zinc-100">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-violet-50 rounded-xl text-violet-600">
+                                <i class="bi bi-lightning-charge-fill text-xl"></i>
+                            </div>
+                            <div>
+                                <h5 class="text-lg font-bold text-zinc-800">Aksi Cepat</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                         <div class="space-y-3">
+                            @can('create_sales')
+                                <a href="{{ route('sales.create', ['customer_id' => $customer->id]) }}"
+                                    class="w-full flex items-center justify-center px-4 py-3 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 group">
+                                    <i class="bi bi-plus-lg me-2 group-hover:scale-110 transition-transform"></i> Buat Penjualan Baru
                                 </a>
+                            @endcan
 
-                                @can('delete_customers')
-                                    <button type="button" class="btn btn-outline-danger delete-customer"
-                                        data-id="{{ $customer->id }}" data-name="{{ $customer->customer_name }}"
-                                        data-has-sales="{{ $customer->sales->count() > 0 ? 'true' : 'false' }}">
-                                        <i class="cil-trash mr-1"></i> Hapus Customer
-                                    </button>
-                                @endcan
-                            </div>
+                            @can('edit_customers')
+                                <a href="{{ route('customers.edit', $customer->id) }}" class="w-full flex items-center justify-center px-4 py-3 bg-white border border-zinc-200 text-zinc-700 text-sm font-medium rounded-xl hover:bg-zinc-50 hover:border-zinc-300 transition-all">
+                                    <i class="bi bi-pencil me-2"></i> Edit Customer
+                                </a>
+                            @endcan
+
+                            @can('delete_customers')
+                                <button type="button" class="w-full flex items-center justify-center px-4 py-3 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-xl hover:bg-red-50 hover:border-red-300 transition-all delete-customer"
+                                    data-id="{{ $customer->id }}" data-name="{{ $customer->customer_name }}"
+                                    data-has-sales="{{ $customer->sales->count() > 0 ? 'true' : 'false' }}">
+                                    <i class="bi bi-trash me-2"></i> Hapus Customer
+                                </button>
+                            @endcan
                         </div>
                     </div>
                 </div>
@@ -366,88 +390,6 @@
         </div>
     </div>
 @endsection
-
-@push('page_styles')
-    <style>
-        /* ========== Animations ========== */
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ========== Card Shadow ========== */
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* ========== Table Styling ========== */
-        .table thead th {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            color: #4f5d73;
-            padding: 12px 10px;
-            background-color: #f8f9fa !important;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .table tbody td {
-            vertical-align: middle;
-            padding: 12px 10px;
-        }
-
-        .table tbody tr:hover {
-            background-color: rgba(72, 52, 223, 0.03) !important;
-        }
-
-        /* ========== Stats Box ========== */
-        .bg-light {
-            background-color: #f8f9fa !important;
-        }
-
-        /* ========== Badge Light Variants ========== */
-        .badge-light-info {
-            background-color: #e7f3ff;
-            color: #004085;
-            padding: 0.35em 0.65em;
-            font-weight: 600;
-        }
-
-        /* ========== Alert Styling ========== */
-        .alert {
-            border-radius: 8px;
-            border: none;
-        }
-
-        /* ========== Button Spacing ========== */
-        .d-grid.gap-2>* {
-            margin-bottom: 0.5rem;
-        }
-
-        .d-grid.gap-2>*:last-child {
-            margin-bottom: 0;
-        }
-
-        /* ========== Responsive ========== */
-        @media (max-width: 768px) {
-            .card-body {
-                padding: 1rem;
-            }
-        }
-    </style>
-@endpush
 
 @push('page_scripts')
     <script>
@@ -457,35 +399,48 @@
                 e.preventDefault();
                 const id = $(this).data('id');
                 const name = $(this).data('name');
-                const hasSales = $(this).data('has-sales') === 'true';
+                const hasSales = $(this).data('has-sales') === true; // Simplified boolean check
                 const url = '{{ route('customers.destroy', ':id') }}'.replace(':id', id);
 
                 let warningText = hasSales ?
-                    `Customer <strong>"${name}"</strong> memiliki riwayat penjualan dan akan di-arsipkan (soft delete).<br><small class="text-muted">Data masih bisa dikembalikan!</small>` :
-                    `Customer <strong>"${name}"</strong> akan dihapus permanen.<br><small class="text-muted">Data tidak dapat dikembalikan!</small>`;
+                    `<div class="bg-yellow-50 p-4 rounded-lg text-left text-sm text-yellow-800 mb-4 border border-yellow-200 flex items-start gap-3">
+                        <i class="bi bi-exclamation-triangle-fill text-yellow-500 mt-0.5 text-lg"></i>
+                        <div>
+                            <span class="font-bold">Peringatan:</span> Customer ini memiliki riwayat penjualan. Data hanya akan di-arsipkan (soft delete).
+                        </div>
+                     </div>` :
+                    `<div class="bg-red-50 p-4 rounded-lg text-left text-sm text-red-800 mb-4 border border-red-200 flex items-start gap-3">
+                        <i class="bi bi-exclamation-circle-fill text-red-500 mt-0.5 text-lg"></i>
+                        <div>
+                            <span class="font-bold">Perhatian:</span> Customer ini akan dihapus secara permanen karena belum memiliki transaksi.
+                        </div>
+                     </div>`;
 
                 Swal.fire({
-                    title: 'Hapus Customer?',
-                    html: warningText,
-                    icon: 'warning',
-                    iconColor: '#e55353',
+                    title: '<span class="text-xl font-bold text-zinc-800">Hapus Customer?</span>',
+                    html: `
+                        <div class="mb-2 text-zinc-600">Anda akan menghapus data customer:</div>
+                        <div class="text-lg font-bold text-zinc-800 mb-4">${name}</div>
+                        ${warningText}
+                    `,
+                    icon: null,
                     showCancelButton: true,
-                    confirmButtonColor: '#e55353',
-                    cancelButtonColor: '#768192',
-                    confirmButtonText: '<i class="cil-trash mr-1"></i> Ya, Hapus!',
-                    cancelButtonText: '<i class="cil-x mr-1"></i> Batal',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal',
                     reverseButtons: true,
                     customClass: {
-                        confirmButton: 'btn btn-danger',
-                        cancelButton: 'btn btn-secondary'
+                        popup: 'rounded-2xl border-0 shadow-xl',
+                        confirmButton: 'px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors focus:ring-4 focus:ring-red-200',
+                        cancelButton: 'px-5 py-2.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-xl font-medium transition-colors focus:ring-4 focus:ring-zinc-100 me-3'
                     },
                     buttonsStyling: false
                 }).then((result) => {
                     if (result.isConfirmed) {
                         Swal.fire({
-                            title: 'Menghapus...',
-                            html: 'Mohon tunggu sebentar',
+                            title: '<h3 class="font-bold text-lg text-zinc-800">Menghapus...</h3>',
+                            html: '<p class="text-zinc-500 text-sm">Mohon tunggu sebentar</p>',
                             allowOutsideClick: false,
+                            showConfirmButton: false,
                             didOpen: () => {
                                 Swal.showLoading();
                             }

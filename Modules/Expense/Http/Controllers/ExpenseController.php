@@ -6,22 +6,23 @@ use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Modules\Expense\Entities\Expense;
 use Modules\Expense\Entities\ExpenseCategory;
 use Modules\Expense\Http\Requests\StoreExpenseRequest;
 use Modules\Expense\Http\Requests\UpdateExpenseRequest;
+use Modules\Expense\DataTables\ExpensesDataTable;
 
 class ExpenseController extends Controller
 {
     /**
      * List & filter pengeluaran (tanggal dari–sampai, kategori) + ringkasan total.
      */
-    public function index(Request $request)
+    public function index(ExpensesDataTable $dataTable, Request $request)
     {
-        $query = Expense::with('category');
-
-        // ========== Handle Quick Filters ==========
+        // Calculate total (reusing logic for stats)
+        $query = Expense::query();
+        
         $from = null;
         $to = null;
 
@@ -42,15 +43,12 @@ class ExpenseController extends Controller
                 $to = now()->subMonth()->endOfMonth()->toDateString();
                 break;
             case 'all':
-                // No date filter
                 break;
             default:
-                // Default: Hari ini (atau custom range dari request)
                 $from = $request->filled('from') ? $request->from : now()->toDateString();
                 $to = $request->filled('to') ? $request->to : now()->toDateString();
         }
 
-        // Apply filters
         if ($from && $request->get('quick_filter') !== 'all') {
             $query->whereDate('date', '>=', $from);
         }
@@ -63,17 +61,10 @@ class ExpenseController extends Controller
             $query->where('category_id', $request->category_id);
         }
 
-        // Sort & paginate
-        $query->latest('date')->latest('id');
-        $expenses = $query->paginate(20)->withQueryString();
-
-        // Calculate total
-        $total = (clone $query)->sum('amount');
-
-        // Categories
+        $total = $query->sum('amount');
         $categories = ExpenseCategory::orderBy('category_name')->get();
 
-        return view('expense::expenses.index', compact('expenses', 'categories', 'total', 'from', 'to'));
+        return $dataTable->render('expense::expenses.index', compact('categories', 'total', 'from', 'to'));
     }
 
     /**

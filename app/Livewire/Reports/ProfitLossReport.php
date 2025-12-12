@@ -70,9 +70,10 @@ class ProfitLossReport extends Component
             ->whereBetween('date', [$from, $to])
             ->sum('total_amount');
 
-        $revenueReturn = (int) SaleReturn::query()
-            ->whereBetween('date', [$from, $to])
-            ->sum('total_amount');
+        // $revenueReturn = (int) SaleReturn::query()
+        //     ->whereBetween('date', [$from, $to])
+        //     ->sum('total_amount');
+        $revenueReturn = 0;
 
         $this->revenue = $revenueGross - $revenueReturn;
 
@@ -80,20 +81,21 @@ class ProfitLossReport extends Component
             ->whereBetween('date', [$from, $to])
             ->sum('total_hpp');
 
-        $queryBase = SaleReturnDetail::query()
-            ->whereHas('saleReturn', fn($q) => $q->whereBetween('date', [$from, $to]));
+        // $queryBase = SaleReturnDetail::query()
+        //     ->whereHas('saleReturn', fn($q) => $q->whereBetween('date', [$from, $to]));
 
-        if (Schema::hasColumn('sale_return_details', 'hpp')) {
-            $cogsReturn = (int) $queryBase->clone()->sum('hpp');
-        } elseif (Schema::hasColumn('sale_return_details', 'total_hpp')) {
-            $cogsReturn = (int) $queryBase->clone()->sum('total_hpp');
-        } elseif (Schema::hasColumn('sale_return_details', 'cost')) {
-            $cogsReturn = (int) $queryBase->clone()->sum('cost');
-        } elseif (Schema::hasColumn('sale_return_details', 'total_cost')) {
-            $cogsReturn = (int) $queryBase->clone()->sum('total_cost');
-        } else {
-            $cogsReturn = 0;
-        }
+        // if (Schema::hasColumn('sale_return_details', 'hpp')) {
+        //     $cogsReturn = (int) $queryBase->clone()->sum('hpp');
+        // } elseif (Schema::hasColumn('sale_return_details', 'total_hpp')) {
+        //     $cogsReturn = (int) $queryBase->clone()->sum('total_hpp');
+        // } elseif (Schema::hasColumn('sale_return_details', 'cost')) {
+        //     $cogsReturn = (int) $queryBase->clone()->sum('cost');
+        // } elseif (Schema::hasColumn('sale_return_details', 'total_cost')) {
+        //     $cogsReturn = (int) $queryBase->clone()->sum('total_cost');
+        // } else {
+        //     $cogsReturn = 0;
+        // }
+        $cogsReturn = 0;
 
         $this->cogs = $cogsGross - $cogsReturn;
 

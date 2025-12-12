@@ -1,749 +1,330 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Notification Center')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item active">Notifications</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Operasional', 'url' => '#'],
+        ['text' => 'Notifikasi', 'url' => route('notifications.index'), 'icon' => 'bi bi-bell-fill']
+    ]])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
+    <!-- Stats Grid (Vibrant Gradients) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Belum Dibaca -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#filterRead').val('0').trigger('change')">
+            <div class="flex items-center justify-between z-10 relative">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium mb-1">Pesan Belum Dibaca</p>
+                    <h3 class="text-3xl font-bold">{{ $stats['unread_count'] }}</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <i class="bi bi-envelope text-2xl text-white"></i>
+                </div>
+            </div>
+            <!-- Decorative circle -->
+            <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        </div>
 
-            {{-- ===== Statistik (seragam card di halaman Jasa) ===== --}}
-            <div class="row mb-4">
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-info">
-                        <div class="stats-icon"><i class="cil-envelope-closed"></i></div>
-                        <div class="stats-content">
-                            <div class="stats-label">Belum Dibaca</div>
-                            <div class="stats-value">{{ $stats['unread_count'] }}</div>
-                            <small class="stats-subtext">Notifikasi baru</small>
-                        </div>
-                    </div>
+        <!-- Hari Ini -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-purple-200 transform transition-all hover:scale-[1.02]">
+            <div class="flex items-center justify-between z-10 relative">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium mb-1">Aktivitas Hari Ini</p>
+                    <h3 class="text-3xl font-bold">{{ $stats['today_count'] }}</h3>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-purple">
-                        <div class="stats-icon"><i class="cil-calendar"></i></div>
-                        <div class="stats-content">
-                            <div class="stats-label">Hari Ini</div>
-                            <div class="stats-value">{{ $stats['today_count'] }}</div>
-                            <small class="stats-subtext">Notifikasi masuk</small>
-                        </div>
-                    </div>
+                <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <i class="bi bi-calendar4-week text-2xl text-white"></i>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-warning">
-                        <div class="stats-icon"><i class="cil-task"></i></div>
-                        <div class="stats-content">
-                            <div class="stats-label">Belum Direview</div>
-                            <div class="stats-value">{{ $stats['unreviewed_count'] }}</div>
-                            <small class="stats-subtext">Menunggu review</small>
-                        </div>
-                    </div>
+            </div>
+             <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        </div>
+
+        <!-- Belum Direview -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#filterReviewed').val('0').trigger('change')">
+            <div class="flex items-center justify-between z-10 relative">
+                <div>
+                    <p class="text-orange-100 text-sm font-medium mb-1">Menunggu Review</p>
+                    <h3 class="text-3xl font-bold">{{ $stats['unreviewed_count'] }}</h3>
                 </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-danger">
-                        <div class="stats-icon"><i class="cil-warning"></i></div>
-                        <div class="stats-content">
-                            <div class="stats-label">Critical</div>
-                            <div class="stats-value">{{ $stats['critical_count'] }}</div>
-                            <small class="stats-subtext">Perlu perhatian</small>
-                        </div>
-                    </div>
+                <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <i class="bi bi-clipboard-check text-2xl text-white"></i>
+                </div>
+            </div>
+             <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        </div>
+
+        <!-- Critical -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 text-white shadow-lg shadow-red-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#filterSeverity').val('critical').trigger('change')">
+            <div class="flex items-center justify-between z-10 relative">
+                <div>
+                    <p class="text-red-100 text-sm font-medium mb-1">Notifikasi Penting</p>
+                    <h3 class="text-3xl font-bold">{{ $stats['critical_count'] }}</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                    <i class="bi bi-shield-exclamation text-2xl text-white"></i>
+                </div>
+            </div>
+             <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">
+        
+        {{-- Header & Filters --}}
+        <div class="p-6 border-b border-zinc-100">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h5 class="text-xl font-bold text-black dark:text-white tracking-tight">Log Aktivitas</h5>
+                    <p class="text-sm text-zinc-600 mt-1">Pantau semua notifikasi sistem secara real-time.</p>
+                </div>
+                <div>
+                    <button class="text-sm font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
+                        <i class="bi bi-download me-1"></i> Ekspor Laporan
+                    </button>
                 </div>
             </div>
 
-            {{-- ===== Kartu utama ===== --}}
-            <div class="card shadow-sm notif-card">
-                {{-- Header --}}
-                <div class="card-header bg-white py-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div>
-                            <h5 class="mb-1 font-weight-bold text-dark">
-                                <i class="cil-bell mr-2 text-primary"></i>
-                                Notification Center
-                            </h5>
-                            <small class="text-muted">Kelola notifikasi sistem & operasional</small>
-                        </div>
-                    </div>
-                </div>
+            {{-- New Global Filter Component --}}
+            @include('layouts.filter-card', [
+                'action' => route('notifications.index'),
+                'title' => 'Filter Log',
+                'icon' => 'bi bi-sliders',
+                'quickFilters' => [
+                    [
+                        'label' => 'Semua',
+                        'url' => route('notifications.index'),
+                        'param' => 'filter',
+                        'value' => 'all',
+                        'icon' => 'bi bi-grid'
+                    ],
+                    [
+                        'label' => 'Belum Dibaca',
+                        'url' => route('notifications.index', ['is_read' => '0']),
+                        'param' => 'is_read',
+                        'value' => '0',
+                        'icon' => 'bi bi-envelope'
+                    ],
+                    [
+                        'label' => 'Menunggu Review',
+                        'url' => route('notifications.index', ['is_reviewed' => '0']),
+                        'param' => 'is_reviewed',
+                        'value' => '0',
+                        'icon' => 'bi bi-clipboard-check'
+                    ],
+                    [
+                        'label' => 'Penting (Kritis)',
+                        'url' => route('notifications.index', ['severity' => 'critical']),
+                        'param' => 'severity',
+                        'value' => 'critical',
+                        'icon' => 'bi bi-exclamation-triangle'
+                    ]
+                ],
+                'filters' => [
+                    [
+                        'name' => 'is_read',
+                        'label' => 'Status Pesan',
+                        'type' => 'select',
+                        'icon' => 'bi bi-envelope',
+                        'options' => [
+                            '0' => 'Belum Dibaca',
+                            '1' => 'Sudah Dibaca'
+                        ]
+                    ],
+                    [
+                        'name' => 'is_reviewed',
+                        'label' => 'Status Review',
+                        'type' => 'select',
+                        'icon' => 'bi bi-check2-circle',
+                        'options' => [
+                            '0' => 'Menunggu Review',
+                            '1' => 'Selesai Direview'
+                        ]
+                    ],
+                    [
+                        'name' => 'severity',
+                        'label' => 'Tingkat Urgensi',
+                        'type' => 'select',
+                        'icon' => 'bi bi-shield-exclamation',
+                        'options' => [
+                            'critical' => 'Kritis/Bahaya',
+                            'warning' => 'Peringatan',
+                            'info' => 'Informasi'
+                        ]
+                    ],
+                    [
+                        'name' => 'type',
+                        'label' => 'Tipe Notifikasi',
+                        'type' => 'select',
+                        'icon' => 'bi bi-tags',
+                        'options' => [
+                            'manual_input_alert' => 'Input Manual',
+                            'price_adjustment' => 'Perubahan Harga',
+                            'discount_alert' => 'Diskon Diatas Batas'
+                        ]
+                    ]
+                ]
+            ])
+        </div>
 
-                {{-- Filter Section --}}
-                <div class="card-body py-4 border-bottom filter-section">
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="cil-bolt text-primary mr-2" style="font-size:1.3rem;"></i>
-                        <h6 class="mb-0 font-weight-bold text-dark">Filter</h6>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 filter-label">Status Baca</label>
-                            <select class="custom-select custom-select-sm filter-control" id="filterRead">
-                                <option value="">Semua</option>
-                                <option value="0">Belum Dibaca</option>
-                                <option value="1">Sudah Dibaca</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 filter-label">Status Review</label>
-                            <select class="custom-select custom-select-sm filter-control" id="filterReviewed">
-                                <option value="">Semua</option>
-                                <option value="0">Belum Direview</option>
-                                <option value="1">Sudah Direview</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 filter-label">Severity</label>
-                            <select class="custom-select custom-select-sm filter-control" id="filterSeverity">
-                                <option value="">Semua</option>
-                                <option value="critical">🚨 Critical</option>
-                                <option value="warning">⚠️ Warning</option>
-                                <option value="info">ℹ️ Info</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 filter-label">Tipe</label>
-                            <select class="custom-select custom-select-sm filter-control" id="filterType">
-                                <option value="">Semua</option>
-                                <option value="manual_input_alert">Input Manual</option>
-                                <option value="price_adjustment">Edit Harga</option>
-                                <option value="discount_alert">Diskon</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 filter-label">Fontee Status</label>
-                            <select class="custom-select custom-select-sm filter-control" id="filterFonteeStatus">
-                                <option value="">Semua</option>
-                                <option value="sent">✓ Sent</option>
-                                <option value="read">✓✓ Read</option>
-                                <option value="failed">✗ Failed</option>
-                                <option value="pending">⏳ Pending</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end mb-3">
-                            <button class="btn btn-outline-secondary btn-sm w-100" id="btnReset">
-                                <i class="cil-reload mr-1"></i> Reset
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- DataTable --}}
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <div class="datatable-wrapper">
-                            <table class="table table-hover mb-0" id="notificationsTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th width="60" class="text-center no-col">No</th>
-
-                                        {{-- Hidden raw timestamp for sorting --}}
-                                        <th style="display:none">TS</th>
-
-                                        <th width="130">Waktu</th>
-                                        <th width="90">Severity</th>
-                                        <th width="140">Tipe</th>
-                                        <th>Judul</th>
-                                        <th width="130">Status Baca</th>
-                                        <th width="140">Status Review</th>
-                                        <th width="120">Fontee</th>
-                                        <th width="150" class="text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div> {{-- /card --}}
+        <!-- Table Wrapper -->
+        <div class="p-6 pt-0 mt-2 overflow-x-auto">
+            <table class="w-full text-sm text-left text-slate-500 dark:text-gray-400" id="notificationsTable">
+                <thead class="text-xs text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100">
+                    <tr>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider">No</th>
+                         <th style="display:none">TS</th>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider">Waktu</th>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider">Tingkat</th>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider">Tipe</th>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider w-1/4">Judul</th>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider">Status</th>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider">Review</th>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider">Fontee</th>
+                         <th scope="col" class="px-6 py-4 font-bold tracking-wider text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50"></tbody>
+            </table>
         </div>
     </div>
 @endsection
 
 @push('page_styles')
+    @include('includes.datatables-flowbite-css')
     <style>
-        /* ===== Global page look khusus halaman ini ===== */
-        body {
-            background: #f5f7fb;
-        }
+    /* DataTables Premium Override */
+    .dataTables_wrapper { font-family: 'Inter', sans-serif; color: #000000; margin-top: 10px; }
 
-        .notif-card {
-            border-radius: 14px;
-        }
 
-        .animated.fadeIn {
-            animation: fadeIn .3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0)
-            }
-        }
-
-        .shadow-sm {
-            box-shadow: 0 2px 10px rgba(15, 23, 42, .08) !important;
-        }
-
-        /* ===== Stat cards (atas) ===== */
-        .stats-card {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 18px 18px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            height: 100%;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
-            transition: .3s;
-            border-left: 4px solid;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(15, 23, 42, .10);
-        }
-
-        .stats-card-purple {
-            border-left-color: #6366f1;
-        }
-
-        .stats-card-success {
-            border-left-color: #22c55e;
-        }
-
-        .stats-card-warning {
-            border-left-color: #f59e0b;
-        }
-
-        .stats-card-info {
-            border-left-color: #0ea5e9;
-        }
-
-        .stats-card-danger {
-            border-left-color: #ef4444;
-        }
-
-        .stats-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            flex-shrink: 0;
-            color: #fff;
-        }
-
-        .stats-card-info .stats-icon {
-            background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
-        }
-
-        .stats-card-purple .stats-icon {
-            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
-        }
-
-        .stats-card-warning .stats-icon {
-            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-        }
-
-        .stats-card-danger .stats-icon {
-            background: linear-gradient(135deg, #ef4444 0%, #f97373 100%);
-        }
-
-        .stats-content {
-            flex: 1;
-        }
-
-        .stats-label {
-            font-size: .8rem;
-            text-transform: uppercase;
-            font-weight: 600;
-            color: #6b7280;
-            letter-spacing: .06em;
-            margin-bottom: 4px;
-        }
-
-        .stats-value {
-            font-size: 1.9rem;
-            font-weight: 700;
-            color: #111827;
-            line-height: 1.1;
-            margin-bottom: 2px;
-        }
-
-        .stats-subtext {
-            font-size: .78rem;
-            color: #9ca3af;
-        }
-
-        /* ===== Filter section ===== */
-        .filter-section {
-            background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 70%);
-        }
-
-        .filter-label {
-            font-size: .82rem;
-            font-weight: 600;
-            color: #4b5563;
-        }
-
-        .filter-control {
-            font-size: .85rem;
-            border-radius: 8px;
-        }
-
-        /* ===== DataTables wrapper (Show entries + Search) ===== */
-        .datatable-wrapper {
-            padding: 1rem 1.25rem 1.25rem;
-        }
-
-        .dataTables_wrapper .dataTables_length label,
-        .dataTables_wrapper .dataTables_filter label {
-            font-size: .86rem;
-            color: #4b5563;
-        }
-
-        .dataTables_wrapper .dataTables_length select {
-            font-size: .85rem;
-            padding: .28rem .6rem;
-            border-radius: 8px;
-            margin: 0 .25rem;
-        }
-
-        .dataTables_wrapper .dataTables_filter input {
-            font-size: .85rem;
-            border-radius: 999px;
-            padding: .3rem .8rem;
-            border: 1px solid #d1d5db;
-        }
-
-        .dataTables_wrapper .dataTables_info {
-            font-size: .8rem;
-            color: #6b7280;
-        }
-
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-            font-size: .8rem;
-            padding: .25rem .6rem;
-        }
-
-        /* ===== Table ===== */
-        #notificationsTable {
-            font-size: .95rem; /* 👉 teks isi tabel dibesarkan */
-            color: #111827;
-        }
-
-        #notificationsTable thead th {
-            font-size: .88rem; /* 👉 header sedikit lebih besar */
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            font-weight: 600;
-            color: #6b7280;
-            padding: 14px 12px;
-            background-color: #f9fafb !important;
-            border-bottom: 2px solid #e5e7eb;
-            vertical-align: middle;
-            white-space: nowrap;
-        }
-
-        #notificationsTable tbody td {
-            padding: 12px 12px;
-            vertical-align: middle;
-            font-size: .95rem;
-            color: #000000;
-        }
-
-        #notificationsTable tbody tr {
-            transition: background-color .15s ease;
-        }
-
-        #notificationsTable tbody tr:hover {
-            background-color: #f3f4ff !important;
-        }
-
-        /* Baris unread: aksen lembut */
-        #notificationsTable tbody tr.unread {
-            background-color: #eef2ff;
-            box-shadow: inset 3px 0 0 0 #a5b4fc; /* 👉 border kiri lebih soft */
-            font-weight: 500;
-        }
-
-        .no-col {
-            width: 64px;
-        }
-
-        /* ===== Badge di tabel notifikasi (override badge-info/warning/primary/success lama) ===== */
-
-        #notificationsTable .badge {
-            border-radius: 999px;
-            font-weight: 600;
-            letter-spacing: .2px;
-            padding: 4px 10px;
-            font-size: .86rem;      /* 👉 teks badge lebih besar */
-            line-height: 1.1;
-        }
-
-        /* Info (biru muda, teks gelap) */
-        #notificationsTable .badge-info,
-        #notificationsTable .badge-soft-info {
-            background: #e0f2ff;
-            color: #0369a1;
-            border: 1px solid #bae6fd;
-        }
-
-        /* Primary / tipe "Manual input alert" (ungu pastel) */
-        #notificationsTable .badge-primary,
-        #notificationsTable .badge-soft-primary {
-            background: #e0e7ff;
-            color: #7168d3;
-            border: 1px solid #c7d2fe;
-        }
-
-        /* Warning (kuning pastel, teks coklat) */
-        #notificationsTable .badge-warning,
-        #notificationsTable .badge-soft-warning {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fde68a;
-        }
-
-        /* Success (hijau pastel) */
-        #notificationsTable .badge-success,
-        #notificationsTable .badge-soft-success {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        /* Danger (merah pastel) */
-        #notificationsTable .badge-danger,
-        #notificationsTable .badge-soft-danger {
-            background: #fee2e2;
-            color: #b91c1c;
-            border: 1px solid #fecaca;
-        }
-
-        /* Secondary / "-" */
-        #notificationsTable .badge-secondary,
-        #notificationsTable .badge-soft-secondary {
-            background: #e5e7eb;
-            color: #374151;
-            border: 1px solid #d1d5db;
-        }
-
-        /* Khusus tipe price adjustment → hijau kebiruan */
-        #notificationsTable .badge-soft-teal {
-            background: #ccfbf1;
-            color: #0f766e;
-            border: 1px solid #a5f3fc;
-        }
-
-        #notificationsTable .badge i {
-            opacity: .9;
-            margin-right: 4px;
-        }
-
-        /* ===== Responsif ===== */
-        @media (max-width: 768px) {
-            .stats-card {
-                flex-direction: row;
-                align-items: center;
-            }
-
-            #notificationsTable thead th,
-            #notificationsTable tbody td {
-                padding: 8px 6px;
-            }
-
-            .datatable-wrapper {
-                padding: .75rem;
-            }
-
-            .dataTables_wrapper .dataTables_filter {
-                text-align: left;
-                margin-top: .5rem;
-            }
-        }
-
-        /* Override badge bawaan Bootstrap di tabel notifikasi */
-#notificationsTable .badge.bg-primary {
-    background-color: #f7798e !important; /* ungu pastel */
-    border: 1px solid #e2e3e6;
-}
-
-#notificationsTable .badge.bg-success {
-    background-color: #dcfce7 !important; /* hijau pastel */
-    border: 1px solid #bbf7d0;
-}
-
-#notificationsTable .badge.bg-warning {
-    background-color: #fef3c7 !important; /* kuning pastel */
-    border: 1px solid #fde68a;
-}
-
-#notificationsTable .badge.bg-info {
-    background-color: #f7ccf4 !important; /* biru muda pastel */
-    border: 1px solid #d3d3d3;
-}
-
-    </style>
+    /* Badges */
+    .badge-soft-danger { background-color: #fee2e2; color: #dc2626; padding: 6px 10px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.025em; }
+    .badge-soft-warning { background-color: #fef3c7; color: #d97706; padding: 6px 10px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.025em; }
+    .badge-soft-info { background-color: #e0f2fe; color: #0284c7; padding: 6px 10px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.025em; }
+    .badge-soft-purple { background-color: #f3e8ff; color: #9333ea; padding: 6px 10px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.025em; }
+    .badge-soft-success { background-color: #dcfce7; color: #16a34a; padding: 6px 10px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.025em; }
+    .badge-soft-secondary { background-color: #f1f5f9; color: #64748b; padding: 6px 10px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; letter-spacing: 0.025em; }
+</style>
 @endpush
 
-
 @push('page_scripts')
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    @include('includes.datatables-flowbite-js')
     <script>
         $(function() {
-            const $tableEl = $('#notificationsTable');
+            $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
 
-            const table = $tableEl.DataTable({
-                processing: true,
-                serverSide: true,
-                deferRender: true,
+            const table = $('#notificationsTable').DataTable({
+                processing: true, serverSide: true,
                 ajax: {
-                    url: "{{ route('notifications.data') }}",
-                    type: "GET",
-                    data: function(d) {
-                        d.is_read = $('#filterRead').val();
-                        d.is_reviewed = $('#filterReviewed').val();
-                        d.severity = $('#filterSeverity').val();
-                        d.type = $('#filterType').val();
-                        d.fontee_status = $('#filterFonteeStatus').val();
-                    },
-                    error: function(xhr) {
-                        console.error('DataTables AJAX error:', xhr.status, xhr.statusText, xhr
-                            .responseText || '(no responseText)');
-                    }
+                    url: "{{ route('notifications.data') }}", type: "GET",
+                    data: function(d) { d.is_read = $('#filterRead').val(); d.is_reviewed = $('#filterReviewed').val(); d.severity = $('#filterSeverity').val(); d.type = $('#filterType').val(); }
                 },
                 columns: [
-                    { // No
-                        data: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center'
-                    },
-                    { // hidden ts
-                        data: 'created_at_ts',
-                        visible: false,
-                        searchable: false
-                    },
-                    { // waktu
-                        data: 'time_ago'
-                    },
-                    { // severity
-                        data: 'severity_badge',
-                        orderable: false,
-                        searchable: false,
+                    { data: 'DT_RowIndex', orderable: false, searchable: false, className: 'text-center font-bold text-zinc-500' },
+                    { data: 'created_at_ts', visible: false, searchable: false },
+                    { data: 'time_ago', className: 'whitespace-nowrap font-bold text-black', searchable: false },
+                    { 
+                        data: 'severity_badge', orderable: false, searchable: false,
                         render: function(data, type, row) {
-                            if (data) return data;
-                            const map = {
-                                critical: '<span class="badge badge-soft-danger">Critical</span>',
-                                warning: '<span class="badge badge-soft-warning">Warning</span>',
-                                info: '<span class="badge badge-soft-info">Info</span>',
+                            const map = { critical: '<span class="badge-soft-danger">Kritis</span>', warning: '<span class="badge-soft-warning">Peringatan</span>', info: '<span class="badge-soft-info">Info</span>' };
+                            return map[row.severity] || '<span class="badge-soft-secondary">-</span>';
+                        }
+                    },
+                    { 
+                        data: 'type_badge', orderable: false, searchable: false,
+                        render: function(data, type, row) {
+                            // Use notification_type from backend, fallback to 'type' or default
+                            const rawType = row.notification_type || row.type || 'other';
+                            
+                            const map = { 
+                                manual_input_alert: '<span class="badge-soft-purple">Input Manual</span>', 
+                                price_adjustment: '<span class="badge-soft-info">Ubah Harga</span>',
+                                discount_alert: '<span class="badge-soft-success">Diskon</span>',
+                                high_value_transaction: '<span class="badge-soft-danger">Transaksi Besar</span>' 
                             };
-                            return map[row.severity] || '<span class="badge badge-soft-secondary">-</span>';
+                            
+                            // If mapped, return map. If not, format the raw string nicely
+                            if (map[rawType]) return map[rawType];
+                            
+                            const formatted = rawType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            return `<span class="badge-soft-secondary">${formatted}</span>`;
                         }
                     },
-                    { // tipe
-                        data: 'type_badge',
-                        orderable: false,
-                        searchable: false,
+                    { data: 'title', className: 'font-extrabold text-black w-1/4' },
+                    { 
+                        data: 'read_status', orderable: false, searchable: false,
                         render: function(data, type, row) {
-                            if (data) return data;
-                            const map = {
-                                manual_input_alert: '<span class="badge badge-soft-purple">Input Manual</span>',
-                                price_adjustment: '<span class="badge badge-soft-primary">Edit Harga</span>',
-                                discount_alert: '<span class="badge badge-soft-teal">Diskon</span>',
-                            };
-                            return map[row.type] ||
-                                '<span class="badge badge-soft-secondary">Lainnya</span>';
+                            return row.is_read ? '<span class="text-green-500 text-xs font-bold"><i class="bi bi-check2-all me-1"></i>Dibaca</span>' : '<span class="text-blue-600 text-xs font-bold"><i class="bi bi-circle-fill me-1" style="font-size:6px"></i>Baru</span>';
                         }
                     },
-                    { // judul
-                        data: 'title'
+                    { 
+                        data: 'reviewed_status', orderable: false, searchable: false, 
+                        render: function(d,t,r){ return r.is_reviewed ? '<span class="badge-soft-success">Selesai</span>' : '<span class="badge-soft-warning">Menunggu</span>'; } 
                     },
-                    { // read status
-                        data: 'read_status',
-                        orderable: false,
-                        searchable: false,
-                        render: function(data, type, row) {
-                            if (data) return data;
-                            return row.is_read ?
-                                '<span class="badge badge-soft-success"><i class="cil-check-circle mr-1"></i>Dibaca</span>' :
-                                '<span class="badge badge-soft-primary"><i class="cil-bell mr-1"></i>Baru</span>';
-                        }
+                    { 
+                        data: 'fontee_status_badge', orderable: false, searchable: false,
+                        render: function(d,t,r){ return r.fontee_message_id ? '<i class="bi bi-whatsapp text-green-500"></i>' : '-'; }
                     },
-                    { // reviewed status
-                        data: 'reviewed_status',
-                        orderable: false,
-                        searchable: false,
+                    { 
+                        data: 'action', orderable: false, searchable: false,
                         render: function(data, type, row) {
-                            if (data) return data;
-                            return row.is_reviewed ?
-                                '<span class="badge badge-soft-success"><i class="cil-task mr-1"></i>Direview</span>' :
-                                '<span class="badge badge-soft-warning"><i class="cil-clock mr-1"></i>Pending</span>';
-                        }
-                    },
-                    { // fontee status
-                        data: 'fontee_status_badge',
-                        orderable: false,
-                        searchable: false,
-                        render: function(data, type, row) {
-                            if (data) return data;
-                            if (!row.fontee_message_id)
-                                return '<span class="badge badge-soft-secondary">-</span>';
-                            const map = {
-                                sent: '<span class="badge badge-soft-info"><i class="cil-check mr-1"></i>Sent</span>',
-                                read: '<span class="badge badge-soft-success"><i class="cil-check-circle mr-1"></i>Read</span>',
-                                failed: '<span class="badge badge-soft-danger"><i class="cil-x mr-1"></i>Failed</span>',
-                                pending: '<span class="badge badge-soft-warning"><i class="cil-clock mr-1"></i>Pending</span>',
-                            };
-                            return map[row.fontee_status] ||
-                                '<span class="badge badge-soft-secondary">Unknown</span>';
-                        }
-                    },
-                    { // action
-                        data: 'action',
-                        orderable: false,
-                        searchable: false,
-                        render: function(data, type, row) {
-                            if (data) return data;
                             const showUrl = "{{ url('/notifications') }}/" + row.id;
-                            return `
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="${showUrl}" class="btn btn-outline-primary" title="Detail">
-                                        <i class="cil-search"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger delete-notif"
-                                            data-id="${row.id}" title="Hapus">
-                                        <i class="cil-trash"></i>
-                                    </button>
-                                </div>`;
+                            return `<div class="flex items-center justify-center gap-2">
+                              <a href="${showUrl}" class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><i class="bi bi-eye"></i></a>
+                              <button class="delete-notif p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-id="${row.id}"><i class="bi bi-trash"></i></button>
+                            </div>`;
                         }
                     }
-                ],
-                columnDefs: [{
-                    targets: 1,
-                    visible: false,
-                    searchable: false
-                }],
-                order: [
-                    [1, 'desc']
                 ],
                 drawCallback: function() {
                     const api = this.api();
+                    
+                    // Specific Logic: Unread Highlighting
                     api.rows().every(function() {
                         const $row = $(this.node());
                         const data = this.data();
-                        const isRead = (data && (data.is_read === true || data.is_read === 1 ||
-                            data.is_read === '1'));
-                        if (!isRead) $row.addClass('unread');
-                        else $row.removeClass('unread');
+                        if (!(data.is_read)) { $row.addClass('unread'); } else { $row.removeClass('unread'); }
                     });
-                    initTooltips();
+                    
+                    // Re-bind delete buttons
                     bindDeleteButtons();
-                },
-                language: {
-                    emptyTable: "Belum ada notifikasi."
-                },
-                pageLength: 10
-            });
-
-            // Filter
-            $('#filterRead, #filterReviewed, #filterSeverity, #filterType, #filterFonteeStatus').on('change',
-                function() {
-                    table.ajax.reload();
-                });
-
-            $('#btnReset').on('click', function() {
-                $('#filterRead, #filterReviewed, #filterSeverity, #filterType, #filterFonteeStatus')
-                    .val('')
-                    .trigger('change');
-                table.ajax.reload(null, true);
-            });
-
-            // Delete
-            function bindDeleteButtons() {
-                $('.delete-notif').off('click.__notif').on('click.__notif', function() {
-                    const notifId = $(this).data('id');
-                    confirmDeleteSingle(notifId);
-                });
-            }
-
-            function confirmDeleteSingle(notifId) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Hapus?',
-                        text: 'Hapus notifikasi ini?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Ya, hapus',
-                        cancelButtonText: 'Batal'
-                    }).then((res) => {
-                        if (res.isConfirmed) deleteNotification(notifId);
-                    });
-                } else {
-                    if (confirm('Hapus notifikasi ini?')) deleteNotification(notifId);
-                }
-            }
-
-            function deleteNotification(notifId) {
-                $.ajax({
-                    url: "{{ route('notifications.destroy.api', ['notification' => '___ID___']) }}".replace(
-                        '___ID___', notifId),
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        if (response && response.success) {
-                            table.ajax.reload(null, false);
-                            showAlert('Berhasil', response.message || 'Notifikasi dihapus', 'success');
-                        } else {
-                            showAlert('Gagal', (response && response.message) || 'Tidak bisa menghapus',
-                                'error');
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Delete error:', xhr.responseText || xhr.statusText);
-                        showAlert('Error', 'Gagal menghapus notifikasi', 'error');
+                    
+                    // --- Global Styling Logic Merger ---
+                    var wrapper = $(api.table().container());
+                    // Ensure pagination buttons have consistent rounded styles
+                    wrapper.find('.paginate_button').removeClass('dt-button');
+                    
+                    // Add scroll hint if table is wider than wrapper
+                    var scrollBody = wrapper.find('.dataTables_scrollBody');
+                    if (scrollBody.length && scrollBody[0].scrollWidth > scrollBody.width()) {
+                       wrapper.addClass('has-scroll');
                     }
-                });
-            }
-
-            function initTooltips() {
-                $('[data-toggle="tooltip"]').tooltip({
-                    container: 'body'
-                });
-            }
-
-            // Initial
-            initTooltips();
-            bindDeleteButtons();
-
-            table.on('draw.dt', function() {
-                initTooltips();
-                bindDeleteButtons();
+                }
             });
-        });
 
-        function showAlert(title, message, type) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire(title, message, type);
-            } else {
-                alert(`${title}: ${message}`);
+            function bindDeleteButtons() {
+                $('.delete-notif').off('click').on('click', function() {
+                    const id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Hapus?', text: "Tindakan ini permanen.", icon: 'warning',
+                        showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus', cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                           $.ajax({ url: "{{ url('/api/notifications') }}/" + id, type: 'DELETE', success: function() { table.ajax.reload(null, false); }, error: function() { Swal.fire('Error', 'Gagal menghapus.', 'error'); } });
+                        }
+                    })
+                });
             }
-        }
+            
+            // Filter events
+            $('#filterRead, #filterReviewed, #filterSeverity, #filterType').on('change', function() { table.ajax.reload(); });
+            $('#btnReset').on('click', function() { $('#filterRead, #filterReviewed, #filterSeverity, #filterType').val('').trigger('change'); });
+        });
     </script>
 @endpush

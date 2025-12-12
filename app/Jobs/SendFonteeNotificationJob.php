@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\OwnerNotification;
-use App\Services\FonteeNotificationService;
+use App\Services\Fontee\FonteeNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique; // ✅ OPSIONAL

@@ -23,9 +23,9 @@ class UsersDataTable extends DataTable
             })
             ->addColumn('status', function ($data) {
                 if ($data->is_active == 1) {
-                    $html = '<span class="badge badge-success">Aktif</span>';
+                    $html = '<span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">Aktif</span>';
                 } else {
-                    $html = '<span class="badge badge-warning">Nonaktif</span>';
+                    $html = '<span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">Nonaktif</span>';
                 }
 
                 return $html;
@@ -33,7 +33,7 @@ class UsersDataTable extends DataTable
             ->addColumn('image', function ($data) {
                 $url = $data->getFirstMediaUrl('avatars');
 
-                return '<img src="' . $url . '" style="width:50px;height:50px;" class="img-thumbnail rounded-circle"/>';
+                return '<img src="' . $url . '" class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"/>';
             })
             // TAMBAHKAN BARIS INI
             ->rawColumns(['image', 'status', 'action', 'role']);
@@ -48,20 +48,22 @@ class UsersDataTable extends DataTable
             ->setTableId('users-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
-                                'tr' .
-                                <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
+            ->dom('<"flex flex-col md:flex-row justify-between items-center mb-4"<"flex items-center space-x-2"lB>f>rt<"flex flex-col md:flex-row justify-between items-center mt-4"ip>')
             ->orderBy(6)
             ->buttons(
                 Button::make('excel')
-                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
+                    ->text('<i class="bi bi-file-earmark-excel me-1"></i> Excel')
+                    ->addClass('text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700'),
                 Button::make('print')
-                    ->text('<i class="bi bi-printer-fill"></i> Print'),
-                Button::make('reset')
-                    ->text('<i class="bi bi-x-circle"></i> Reset'),
+                    ->text('<i class="bi bi-printer me-1"></i> Print')
+                    ->addClass('text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700'),
+
                 Button::make('reload')
-                    ->text('<i class="bi bi-arrow-repeat"></i> Reload')
+                    ->text('<i class="bi bi-arrow-repeat me-1"></i> Reload')
+                    ->addClass('text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700')
+                    ->action('function(e, dt, node, config){ dt.ajax.reload(); }')
             );
+
     }
 
     protected function getColumns() {

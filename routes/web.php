@@ -46,6 +46,7 @@ Route::prefix('notifications')
         Route::get('unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
         Route::get('latest', [NotificationController::class, 'getLatest'])->name('latest');
         Route::get('summary', [NotificationController::class, 'summary'])->name('summary');
+        Route::get('export', [NotificationController::class, 'export'])->name('export');
 
         Route::post('destroy-bulk', [NotificationController::class, 'destroyBulk'])->name('destroy-bulk');
 

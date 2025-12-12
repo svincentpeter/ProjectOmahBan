@@ -1,118 +1,169 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Stok Opname')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
-        <li class="breadcrumb-item active">Stok Opname</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite')
+@endsection
+
+@section('breadcrumb_items')
+    <li aria-current="page">
+        <div class="flex items-center">
+            <i class="bi bi-chevron-right text-zinc-400 mx-2 text-xs"></i>
+            <span class="text-sm font-bold text-zinc-900 dark:text-gray-400">Stok Opname</span>
+        </div>
+    </li>
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    {{-- HEADER SECTION --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="mb-0">
-                            <i class="bi bi-clipboard-check"></i> Daftar Stok Opname
-                        </h4>
-                        @can('create_stock_opname')
-                        <a href="{{ route('stock-opnames.create') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle"></i> Buat Stok Opname Baru
-                        </a>
-                        @endcan
-                    </div>
+    {{-- Alerts --}}
+    @include('utils.alerts')
 
-                    {{-- STATISTICS CARDS --}}
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card bg-light border-0">
-                                <div class="card-body text-center">
-                                    <h5 class="text-muted mb-1">Total Opname</h5>
-                                    <h2 class="mb-0 text-dark">{{ $stats['total'] }}</h2>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-secondary text-white border-0">
-                                <div class="card-body text-center">
-                                    <h5 class="mb-1">Draft</h5>
-                                    <h2 class="mb-0">{{ $stats['draft'] }}</h2>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-white border-0">
-                                <div class="card-body text-center">
-                                    <h5 class="mb-1">Sedang Berjalan</h5>
-                                    <h2 class="mb-0">{{ $stats['in_progress'] }}</h2>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-success text-white border-0">
-                                <div class="card-body text-center">
-                                    <h5 class="mb-1">Selesai</h5>
-                                    <h2 class="mb-0">{{ $stats['completed'] }}</h2>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- FILTER SECTION --}}
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label>Filter Status:</label>
-                            <select id="filter-status" class="form-control">
-                                <option value="">Semua Status</option>
-                                <option value="draft">Draft</option>
-                                <option value="in_progress">Sedang Berjalan</option>
-                                <option value="completed">Selesai</option>
-                                <option value="cancelled">Dibatalkan</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label>Tanggal Dari:</label>
-                            <input type="date" id="filter-date-from" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <label>Tanggal Sampai:</label>
-                            <input type="date" id="filter-date-to" class="form-control">
-                        </div>
-                    </div>
-
-                    {{-- DATATABLE --}}
-                    <div class="table-responsive">
-                        <table id="stock-opname-table" class="table table-bordered table-striped table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th width="5%">No</th>
-                                    <th>Reference</th>
-                                    <th>Tanggal Opname</th>
-                                    <th>Petugas (PIC)</th>
-                                    <th>Total Item</th>
-                                    <th>Progress</th>
-                                    <th>Status</th>
-                                    <th width="15%">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {{-- Diisi oleh DataTables AJAX --}}
-                            </tbody>
-                        </table>
-                    </div>
+    {{-- Statistics Cards --}}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        {{-- Total Opname --}}
+        <div class="relative overflow-hidden bg-gradient-to-br from-slate-500 to-slate-700 rounded-2xl p-6 text-white shadow-lg shadow-slate-200 transform transition-all hover:scale-[1.02]">
+            <div class="flex items-center gap-4 relative z-10">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
+                    <i class="bi bi-clipboard-data text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-slate-100 text-sm font-medium mb-1">Total</p>
+                    <p class="text-3xl font-bold">{{ $stats['total'] }}</p>
                 </div>
             </div>
+            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        </div>
+
+        {{-- Draft --}}
+        <div class="relative overflow-hidden bg-gradient-to-br from-zinc-400 to-zinc-600 rounded-2xl p-6 text-white shadow-lg shadow-zinc-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#status').val('draft').trigger('change');">
+            <div class="flex items-center gap-4 relative z-10">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
+                    <i class="bi bi-file-earmark-text text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-zinc-100 text-sm font-medium mb-1">Draft</p>
+                    <p class="text-3xl font-bold">{{ $stats['draft'] }}</p>
+                </div>
+            </div>
+            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        </div>
+
+        {{-- Sedang Berjalan --}}
+        <div class="relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#status').val('in_progress').trigger('change');">
+            <div class="flex items-center gap-4 relative z-10">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
+                    <i class="bi bi-arrow-repeat text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-amber-100 text-sm font-medium mb-1">Berjalan</p>
+                    <p class="text-3xl font-bold">{{ $stats['in_progress'] }}</p>
+                </div>
+            </div>
+            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        </div>
+
+        {{-- Selesai --}}
+        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg shadow-teal-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#status').val('completed').trigger('change');">
+            <div class="flex items-center gap-4 relative z-10">
+                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
+                    <i class="bi bi-check-circle text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-emerald-100 text-sm font-medium mb-1">Selesai</p>
+                    <p class="text-3xl font-bold">{{ $stats['completed'] }}</p>
+                </div>
+            </div>
+            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         </div>
     </div>
-</div>
+
+    {{-- Main Card --}}
+    <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">
+        
+        {{-- Card Header --}}
+        <div class="p-6 border-b border-zinc-100">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h5 class="text-xl font-bold text-black dark:text-white tracking-tight flex items-center gap-2">
+                        <i class="bi bi-clipboard-check text-blue-600"></i>
+                        Daftar Stok Opname
+                    </h5>
+                    <p class="text-sm text-zinc-600 mt-1">Kelola dan pantau proses stok opname</p>
+                </div>
+                
+                @can('create_stock_opname')
+                <a href="{{ route('stock-opnames.create') }}"
+                   class="inline-flex items-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
+                    <i class="bi bi-plus-lg me-2"></i> Buat Stok Opname Baru
+                </a>
+                @endcan
+            </div>
+
+            {{-- Filter Component --}}
+            @include('layouts.filter-card', [
+                'action' => route('stock-opnames.index'),
+                'title' => 'Filter Data',
+                'icon' => 'bi bi-funnel',
+                'quickFilters' => [],
+                'filters' => [
+                    [
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'type' => 'select',
+                        'options' => [
+                            'draft' => 'Draft',
+                            'in_progress' => 'Sedang Berjalan',
+                            'completed' => 'Selesai',
+                            'cancelled' => 'Dibatalkan'
+                        ]
+                    ],
+                    [
+                        'name' => 'date_from',
+                        'label' => 'Dari Tanggal',
+                        'type' => 'date',
+                    ],
+                    [
+                        'name' => 'date_to',
+                        'label' => 'Sampai Tanggal',
+                        'type' => 'date',
+                    ]
+                ]
+            ])
+        </div>
+
+        {{-- DataTable --}}
+        <div class="p-6 overflow-x-auto">
+            <table id="stock-opname-table" class="w-full text-sm text-left">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Reference</th>
+                        <th>Tanggal Opname</th>
+                        <th>Petugas (PIC)</th>
+                        <th>Total Item</th>
+                        <th>Progress</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{-- Diisi oleh DataTables AJAX --}}
+                </tbody>
+            </table>
+        </div>
+    </div>
 @endsection
 
+@push('page_styles')
+<style>
+    @include('includes.datatables-flowbite-css')
+</style>
+@endpush
+
 @push('page_scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+@include('includes.datatables-flowbite-js')
 <script>
 $(document).ready(function() {
     // Inisialisasi DataTable
@@ -122,10 +173,9 @@ $(document).ready(function() {
         ajax: {
             url: "{{ route('stock-opnames.datatable') }}",
             data: function(d) {
-                // Kirim filter ke server
-                d.status = $('#filter-status').val();
-                d.date_from = $('#filter-date-from').val();
-                d.date_to = $('#filter-date-to').val();
+                d.status = $('#status').val();
+                d.date_from = $('#date_from').val();
+                d.date_to = $('#date_to').val();
             }
         },
         columns: [
@@ -134,30 +184,36 @@ $(document).ready(function() {
                 name: 'DT_RowIndex', 
                 orderable: false, 
                 searchable: false,
-                className: 'text-center'
+                className: 'text-center font-bold text-zinc-500'
             },
             { 
                 data: 'reference', 
                 name: 'reference',
                 render: function(data, type, row) {
-                    return '<strong>' + data + '</strong>';
+                    return '<span class="font-bold text-blue-600">' + data + '</span>';
                 }
             },
             { 
                 data: 'opname_date', 
                 name: 'opname_date',
                 render: function(data) {
-                    return moment(data).format('DD/MM/YYYY');
+                    return '<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-700"><i class="bi bi-calendar3 me-1"></i>' + moment(data).format('DD MMM YYYY') + '</span>';
                 }
             },
             { 
                 data: 'pic_name', 
-                name: 'pic.name' 
+                name: 'pic.name',
+                render: function(data) {
+                    return '<span class="text-zinc-700 font-medium"><i class="bi bi-person me-1"></i>' + (data || '-') + '</span>';
+                }
             },
             { 
                 data: 'total_items', 
                 name: 'total_items',
-                className: 'text-center'
+                className: 'text-center',
+                render: function(data) {
+                    return '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700"><i class="bi bi-box-seam me-1"></i>' + data + ' Item</span>';
+                }
             },
             { 
                 data: 'completion', 
@@ -165,18 +221,16 @@ $(document).ready(function() {
                 orderable: false,
                 render: function(data, type, row) {
                     var percentage = parseFloat(data);
-                    var colorClass = percentage < 50 ? 'bg-danger' : 
-                                    percentage < 100 ? 'bg-warning' : 'bg-success';
+                    var colorClass = percentage < 50 ? 'bg-red-500' : 
+                                    percentage < 100 ? 'bg-amber-500' : 'bg-emerald-500';
                     
                     return `
-                        <div class="progress" style="height: 20px;">
-                            <div class="progress-bar ${colorClass}" 
-                                 role="progressbar" 
-                                 style="width: ${percentage}%"
-                                 aria-valuenow="${percentage}" 
-                                 aria-valuemin="0" 
-                                 aria-valuemax="100">
-                                ${percentage}%
+                        <div class="w-full">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-bold text-zinc-600">${percentage}%</span>
+                            </div>
+                            <div class="progress-tailwind">
+                                <div class="progress-tailwind-bar ${colorClass}" style="width: ${percentage}%"></div>
                             </div>
                         </div>
                     `;
@@ -186,7 +240,16 @@ $(document).ready(function() {
                 data: 'status_badge', 
                 name: 'status',
                 orderable: false,
-                className: 'text-center'
+                className: 'text-center',
+                render: function(data, type, row) {
+                    const statusMap = {
+                        'draft': '<span class="badge-draft"><i class="bi bi-file-earmark me-1"></i>Draft</span>',
+                        'in_progress': '<span class="badge-in-progress"><i class="bi bi-arrow-repeat me-1"></i>Berjalan</span>',
+                        'completed': '<span class="badge-completed"><i class="bi bi-check-circle me-1"></i>Selesai</span>',
+                        'cancelled': '<span class="badge-cancelled"><i class="bi bi-x-circle me-1"></i>Dibatalkan</span>'
+                    };
+                    return statusMap[row.status] || data;
+                }
             },
             { 
                 data: 'actions', 
@@ -196,49 +259,29 @@ $(document).ready(function() {
                 className: 'text-center'
             }
         ],
-        order: [[2, 'desc']], // Sort by opname_date descending
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-        },
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
-        dom: 'Bfrtip',
-        buttons: [
-            {
-                extend: 'excel',
-                text: '<i class="bi bi-file-excel"></i> Export Excel',
-                className: 'btn btn-success btn-sm',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 6] // Exclude progress & action columns
-                }
-            },
-            {
-                extend: 'pdf',
-                text: '<i class="bi bi-file-pdf"></i> Export PDF',
-                className: 'btn btn-danger btn-sm',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 6]
-                }
-            },
-            {
-                extend: 'print',
-                text: '<i class="bi bi-printer"></i> Print',
-                className: 'btn btn-secondary btn-sm',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 6]
-                }
-            }
-        ]
+        order: [[2, 'desc']]
     });
 
-    // Event listener untuk filter
-    $('#filter-status, #filter-date-from, #filter-date-to').on('change', function() {
+    // Event listener untuk filter (Bind to new IDs from filter-card)
+    $('#btn-filter-apply').on('click', function() {
+        table.ajax.reload();
+    });
+
+    $('#btn-filter-reset').on('click', function() {
+        // filter-card handles value clearing, wait for it
+        setTimeout(() => {
+            table.ajax.reload();
+        }, 100);
+    });
+
+    // Also refresh on change for select
+    $('#status').on('change', function() {
         table.ajax.reload();
     });
 
     // Refresh otomatis setiap 30 detik (untuk update progress)
     setInterval(function() {
-        table.ajax.reload(null, false); // false = tidak reset pagination
+        table.ajax.reload(null, false);
     }, 30000);
 });
 </script>

@@ -25,8 +25,8 @@ class PurchaseController extends Controller
     {
         abort_if(Gate::denies('access_purchases'), 403);
 
-        // Query builder
-        $query = Purchase::query()->with(['supplier', 'user']);
+        // Calculate Stats (Duplicate logic matching DataTable query for consistency)
+        $query = Purchase::query();
 
         // === FILTER BY QUICK FILTER ===
         $from = null;
@@ -53,11 +53,19 @@ class PurchaseController extends Controller
                 break;
             default:
                 // Default: Today atau custom range dari request
-                $from = $request->filled('from') ? $request->from : now()->toDateString();
-                $to = $request->filled('to') ? $request->to : now()->toDateString();
+                if (!$request->has('quick_filter') && !$request->has('from')) {
+                     // Default if needed, but keeping simple for now
+                }
+                $from = $request->filled('from') ? $request->from : null;
+                $to = $request->filled('to') ? $request->to : null;
         }
 
         // Apply date filters
+        if(!$from && $request->get('quick_filter') == 'today') {
+             $from = now()->toDateString();
+             $to = now()->toDateString();
+        }
+
         if ($from && $request->get('quick_filter') !== 'all') {
             $query->whereDate('date', '>=', $from);
         }
@@ -76,17 +84,15 @@ class PurchaseController extends Controller
         }
 
         // === CALCULATE SUMMARY ===
+        $total_purchases = $query->count();
         $total_amount = $query->sum('total_amount');
         $total_paid = $query->sum('paid_amount');
         $total_due = $query->sum('due_amount');
 
-        // Get purchases with pagination
-        $purchases = $query->latest('date')->latest('id')->paginate(20);
-
         // Get suppliers for filter dropdown
         $suppliers = Supplier::orderBy('supplier_name')->get();
 
-        return view('purchase::index', compact('purchases', 'suppliers', 'total_amount', 'total_paid', 'total_due', 'from', 'to'));
+        return $dataTable->render('purchase::baru.index', compact('suppliers', 'total_purchases', 'total_amount', 'total_paid', 'total_due', 'from', 'to'));
     }
 
     /**
@@ -99,7 +105,7 @@ class PurchaseController extends Controller
         // Clear cart sebelum create baru
         Cart::instance('purchase')->destroy();
 
-        return view('purchase::create');
+        return view('purchase::baru.create');
     }
 
     /**
@@ -107,6 +113,8 @@ class PurchaseController extends Controller
      */
     public function store(StorePurchaseRequest $request)
     {
+        $this->syncCartWithJson($request);
+
         DB::transaction(function () use ($request) {
             // Hitung payment status sederhana
             $due_amount = $request->total_amount - $request->paid_amount;
@@ -166,7 +174,7 @@ class PurchaseController extends Controller
 
         $purchase->load(['purchaseDetails.product', 'supplier', 'user']);
 
-        return view('purchase::show', compact('purchase'));
+        return view('purchase::baru.show', compact('purchase'));
     }
 
     /**
@@ -198,7 +206,7 @@ class PurchaseController extends Controller
             ]);
         }
 
-        return view('purchase::edit', compact('purchase'));
+        return view('purchase::baru.edit', compact('purchase'));
     }
 
     /**
@@ -206,6 +214,8 @@ class PurchaseController extends Controller
      */
     public function update(UpdatePurchaseRequest $request, Purchase $purchase)
     {
+        $this->syncCartWithJson($request);
+
         DB::transaction(function () use ($request, $purchase) {
             // Hitung payment status sederhana
             $due_amount = $request->total_amount - $request->paid_amount;
@@ -290,5 +300,33 @@ class PurchaseController extends Controller
 
         toast('Pembelian berhasil dihapus!', 'warning');
         return redirect()->route('purchases.index');
+    }
+
+    /**
+     * Sync Cart instance with JSON data from request (Shim for Client-Side Cart)
+     */
+    private function syncCartWithJson($request)
+    {
+        if ($request->has('cart_json') && !empty($request->cart_json)) {
+            $cart = Cart::instance('purchase');
+            $cart->destroy();
+            $items = json_decode($request->cart_json, true);
+
+            if (is_array($items)) {
+                foreach ($items as $item) {
+                    $cart->add([
+                        'id' => $item['id'],
+                        'name' => $item['name'],
+                        'qty' => $item['qty'],
+                        'price' => $item['price'],
+                        'weight' => 1,
+                        'options' => [
+                            'code' => $item['code'],
+                            'stock' => $item['stock'] ?? 0,
+                        ]
+                    ]);
+                }
+            }
+        }
     }
 }

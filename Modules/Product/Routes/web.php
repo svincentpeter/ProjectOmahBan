@@ -14,6 +14,9 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::resource('products', ProductController::class);
+    Route::get('products/search', [ProductController::class, 'search'])->name('products.search');
+    Route::get('products/count-active', [ProductController::class, 'countActive'])->name('products.count-active');
+    Route::post('products/count-by-category', [ProductController::class, 'countByCategory'])->name('products.count-by-category');
     Route::post('products/upload', [ProductController::class, 'uploadImage'])->name('products.dropzone.upload');
 
     Route::post('products/delete-image', [ProductController::class, 'deleteImage'])->name('products.dropzone.delete');

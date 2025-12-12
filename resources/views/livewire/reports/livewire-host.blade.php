@@ -1,16 +1,25 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', $title ?? 'Laporan')
 
-@section('content')
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0">{{ $title ?? 'Laporan' }}</h5>
-    @stack('page-actions')
-  </div>
+@section('breadcrumb')
+    @include('layouts.breadcrumb-flowbite', [
+        'items' => [
+            ['text' => 'Laporan', 'url' => route('reports.index')],
+            ['text' => $title ?? 'Detail', 'url' => '#', 'icon' => 'bi bi-file-earmark-text'],
+        ]
+    ])
+@endsection
 
-  <div class="card shadow-sm border-0">
-    <div class="card-body p-3">
-      @livewire($component)
+@section('content')
+    <div class="px-4 pt-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $title ?? 'Laporan' }}</h1>
+            <div class="flex items-center space-x-2">
+                @stack('page-actions')
+            </div>
+        </div>
+
+        @livewire($component)
     </div>
-  </div>
 @endsection

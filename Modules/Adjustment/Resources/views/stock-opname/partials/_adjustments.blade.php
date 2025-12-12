@@ -1,76 +1,53 @@
 {{--
-    Adjustments Partial
-    
-    Variables:
-    - $items (Collection of StockOpnameItem yang punya adjustment_id)
+    Adjustments Partial (Tailwind Version)
+    Variables: $items (Collection of StockOpnameItem with adjustment)
 --}}
 
-@if($items->count() > 0)
-    <div class="alert alert-info mb-4">
-        <i class="bi bi-info-circle"></i>
-        <strong>{{ $items->count() }} Adjustment</strong> telah dibuat untuk mengoreksi selisih stok.
-        Status adjustment dapat dilihat di halaman <a href="{{ route('adjustments.index') }}">Adjustment Management</a>.
+@if($items->isEmpty())
+    <div class="text-center py-12 text-zinc-500">
+        <i class="bi bi-file-earmark-diff text-4xl"></i>
+        <p class="mt-2">Tidak ada adjustment yang dibuat otomatis.</p>
     </div>
-
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="thead-light">
+@else
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-zinc-100">
+            <thead class="bg-zinc-50">
                 <tr>
-                    <th>Produk</th>
-                    <th class="text-center">Variance</th>
-                    <th class="text-center">Type</th>
-                    <th>Adjustment Reference</th>
-                    <th class="text-center">Status</th>
-                    <th class="text-center">Aksi</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-zinc-700 uppercase tracking-wider">Product</th>
+                    <th class="px-4 py-3 text-right text-xs font-bold text-zinc-700 uppercase tracking-wider">Adjustment</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-zinc-700 uppercase tracking-wider">Adjusted By</th>
+                    <th class="px-4 py-3 text-center text-xs font-bold text-zinc-700 uppercase tracking-wider">Adjustment ID</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="bg-white divide-y divide-zinc-100">
                 @foreach($items as $item)
-                    @if($item->adjustment)
-                        <tr>
-                            <td>
-                                <strong>{{ $item->product->product_code }}</strong><br>
-                                <small class="text-muted">{{ $item->product->product_name }}</small>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge badge-{{ $item->variance_type === 'surplus' ? 'info' : 'danger' }}">
-                                    {{ $item->variance_qty > 0 ? '+' : '' }}{{ $item->variance_qty }}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                @if($item->adjustment->type === 'addition')
-                                    <span class="badge badge-success">
-                                        <i class="bi bi-plus-circle"></i> Addition
-                                    </span>
-                                @else
-                                    <span class="badge badge-danger">
-                                        <i class="bi bi-dash-circle"></i> Subtraction
-                                    </span>
-                                @endif
-                            </td>
-                            <td>
-                                <a href="{{ route('adjustments.show', $item->adjustment_id) }}" class="font-weight-bold">
-                                    {{ $item->adjustment->reference }}
+                    <tr class="hover:bg-zinc-50">
+                        <td class="px-4 py-3 text-sm">
+                            <div class="font-medium text-zinc-900">{{ $item->product->product_name }}</div>
+                            <div class="text-xs text-zinc-500 font-mono">{{ $item->product->product_code }}</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-right font-bold">
+                            @if($item->variance_qty > 0)
+                                <span class="text-blue-600">+{{ $item->variance_qty }} (IN)</span>
+                            @elseif($item->variance_qty < 0)
+                                <span class="text-red-600">{{ $item->variance_qty }} (OUT)</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-sm text-zinc-600">
+                            System (Auto)
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm">
+                            @if($item->adjustment)
+                                <a href="{{ route('adjustments.show', $item->adjustment->id) }}" class="inline-flex items-center px-2 py-1 bg-zinc-100 text-zinc-700 rounded hover:bg-zinc-200 transition-colors text-xs font-mono">
+                                    {{ $item->adjustment->reference }} <i class="bi bi-box-arrow-up-right ms-1"></i>
                                 </a>
-                            </td>
-                            <td class="text-center">
-                                {!! $item->adjustment->status_badge !!}
-                            </td>
-                            <td class="text-center">
-                                <a href="{{ route('adjustments.show', $item->adjustment_id) }}" 
-                                   class="btn btn-sm btn-primary">
-                                    <i class="bi bi-eye"></i> Detail
-                                </a>
-                            </td>
-                        </tr>
-                    @endif
+                            @else
+                                <span class="text-zinc-400">-</span>
+                            @endif
+                        </td>
+                    </tr>
                 @endforeach
             </tbody>
         </table>
-    </div>
-@else
-    <div class="alert alert-success">
-        <i class="bi bi-check-circle"></i>
-        Tidak ada selisih yang memerlukan adjustment. Semua stok sudah cocok!
     </div>
 @endif

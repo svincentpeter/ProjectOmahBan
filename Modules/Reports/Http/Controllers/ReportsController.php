@@ -21,6 +21,14 @@ use Modules\SalesReturn\Entities\SaleReturnDetail;
 class ReportsController extends Controller
 {
     /* =========================
+     *  INDEX (Redirect to Daily)
+     * ========================= */
+    public function index()
+    {
+        return redirect()->route('reports.daily.index');
+    }
+
+    /* =========================
      *  RINGKAS / DAILY REPORT
      * ========================= */
     public function dailyIndex(Request $request)

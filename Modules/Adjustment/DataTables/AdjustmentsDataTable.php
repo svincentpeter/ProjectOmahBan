@@ -14,68 +14,73 @@ class AdjustmentsDataTable extends DataTable
         return datatables()
             ->eloquent($query)
             ->addColumn('action', function ($adjustment) {
-                return view('adjustment::partials.actions', compact('adjustment'));
+                return view('adjustment::adjustments.partials.actions', compact('adjustment'));
             })
             ->editColumn('date', function ($adjustment) {
-                return '<div class="text-center">' . '<span class="badge badge-light">' . '<i class="bi bi-calendar3"></i> ' . \Carbon\Carbon::parse($adjustment->date)->format('d M Y') . '</span>' . '</div>';
+                return '<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-700"><i class="bi bi-calendar3 me-1"></i>' . \Carbon\Carbon::parse($adjustment->date)->format('d M Y') . '</span>';
             })
             ->editColumn('reference', function ($adjustment) {
-                return '<div class="text-center">' . '<strong class="text-primary">' . e($adjustment->reference) . '</strong>' . '</div>';
+                return '<span class="font-bold text-blue-600">' . e($adjustment->reference) . '</span>';
             })
             ->addColumn('status', function ($adjustment) {
-                $badgeClass = match ($adjustment->status) {
-                    'pending' => 'warning',
-                    'approved' => 'success',
-                    'rejected' => 'danger',
-                    default => 'secondary',
+                $styles = match ($adjustment->status) {
+                    'pending' => 'bg-amber-100 text-amber-700',
+                    'approved' => 'bg-emerald-100 text-emerald-700',
+                    'rejected' => 'bg-red-100 text-red-700',
+                    default => 'bg-zinc-100 text-zinc-600',
                 };
-                return '<div class="text-center">' . '<span class="badge badge-' . $badgeClass . '">' . '<i class="bi bi-' . ($adjustment->status === 'pending' ? 'clock-history' : ($adjustment->status === 'approved' ? 'check-circle' : 'x-circle')) . '"></i> ' . ucfirst($adjustment->status) . '</span>' . '</div>';
+                $icon = match ($adjustment->status) {
+                    'pending' => 'bi-hourglass-split',
+                    'approved' => 'bi-check-circle-fill',
+                    'rejected' => 'bi-x-circle-fill',
+                    default => 'bi-circle',
+                };
+                return '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ' . $styles . '"><i class="bi ' . $icon . ' me-1"></i>' . ucfirst($adjustment->status) . '</span>';
             })
             ->addColumn('requester', function ($adjustment) {
-                return '<div class="text-center">' . '<small class="text-muted">' . '<i class="bi bi-person"></i> ' . e($adjustment->requester->name ?? '-') . '</small>' . '</div>';
+                return '<span class="text-zinc-600 text-sm font-medium"><i class="bi bi-person me-1"></i>' . e($adjustment->requester->name ?? '-') . '</span>';
             })
             ->addColumn('approver', function ($adjustment) {
                 if ($adjustment->status === 'pending') {
-                    return '<div class="text-center"><small class="text-muted font-italic">Menunggu</small></div>';
+                    return '<span class="text-zinc-400 text-sm italic">Menunggu</span>';
                 }
-                return '<div class="text-center">' . '<small class="text-success">' . '<i class="bi bi-person-check"></i> ' . e($adjustment->approver->name ?? '-') . '</small>' . '</div>';
+                return '<span class="text-emerald-600 text-sm font-medium"><i class="bi bi-person-check me-1"></i>' . e($adjustment->approver->name ?? '-') . '</span>';
             })
             ->addColumn('products_count', function ($adjustment) {
                 $count = $adjustment->adjusted_products_count ?? 0;
-                $badgeClass = $count > 5 ? 'success' : ($count > 2 ? 'info' : 'secondary');
-
-                return '<div class="text-center">' . '<span class="badge badge-' . $badgeClass . ' badge-pill">' . '<i class="bi bi-box-seam"></i> ' . $count . ' Produk' . '</span>' . '</div>';
+                $styles = $count > 5 ? 'bg-emerald-100 text-emerald-700' : ($count > 2 ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600');
+                return '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ' . $styles . '"><i class="bi bi-box-seam me-1"></i>' . $count . ' Produk</span>';
             })
             ->addColumn('types_summary', function ($adjustment) {
                 $adjustedProducts = $adjustment->adjustedProducts;
                 $addCount = $adjustedProducts->where('type', 'add')->count();
                 $subCount = $adjustedProducts->where('type', 'sub')->count();
 
-                $html = '<div class="text-center">';
+                $html = '<div class="flex items-center gap-1 flex-wrap">';
 
                 if ($addCount > 0) {
-                    $html .= '<span class="badge badge-success mr-1">';
-                    $html .= '<i class="bi bi-plus-circle"></i> ' . $addCount . ' Tambah';
+                    $html .= '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">';
+                    $html .= '<i class="bi bi-plus-circle me-1"></i>' . $addCount . ' Tambah';
                     $html .= '</span>';
                 }
 
                 if ($subCount > 0) {
-                    $html .= '<span class="badge badge-danger">';
-                    $html .= '<i class="bi bi-dash-circle"></i> ' . $subCount . ' Kurang';
+                    $html .= '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">';
+                    $html .= '<i class="bi bi-dash-circle me-1"></i>' . $subCount . ' Kurang';
                     $html .= '</span>';
                 }
 
                 $html .= '</div>';
 
-                return $html ?: '<div class="text-center"><span class="text-muted font-italic">-</span></div>';
+                return $html ?: '<span class="text-zinc-400 italic">-</span>';
             })
             ->editColumn('note', function ($adjustment) {
                 if (empty($adjustment->note)) {
-                    return '<small class="text-muted font-italic">Tidak ada catatan</small>';
+                    return '<span class="text-zinc-400 text-sm italic">Tidak ada catatan</span>';
                 }
 
                 $note = \Illuminate\Support\Str::limit($adjustment->note, 50);
-                return '<small class="text-dark">' . e($note) . '</small>';
+                return '<span class="text-zinc-700 text-sm">' . e($note) . '</span>';
             })
             ->filterColumn('status', function ($query, $keyword) {
                 $query->where('status', 'like', "%{$keyword}%");
@@ -102,6 +107,29 @@ class AdjustmentsDataTable extends DataTable
             $query->where('requester_id', auth()->id());
         }
 
+        // Apply custom filters from request
+        if (request()->filled('status')) {
+            $query->where('status', request('status'));
+        }
+
+        if (request()->filled('type')) {
+            $query->whereHas('adjustedProducts', function($q) {
+                $q->where('type', request('type'));
+            });
+        }
+
+        if (request()->filled('requester_id')) {
+            $query->where('requester_id', request('requester_id'));
+        }
+
+        if (request()->filled('date_from')) {
+            $query->whereDate('date', '>=', request('date_from'));
+        }
+
+        if (request()->filled('date_to')) {
+            $query->whereDate('date', '<=', request('date_to'));
+        }
+
         return $query;
     }
 
@@ -111,31 +139,9 @@ class AdjustmentsDataTable extends DataTable
             ->setTableId('adjustments-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom("<'row'<'col-sm-12 col-md-3'l><'col-sm-12 col-md-5'B><'col-sm-12 col-md-4'f>>" . "<'row'<'col-sm-12'tr>>" . "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>")
-            ->orderBy(0, 'desc')
             ->parameters([
-                'responsive' => true,
-                'autoWidth' => false,
-                'processing' => true,
-                'language' => [
-                    'processing' => '<div class="spinner-border text-primary" role="status"><span class="sr-only">Memuat...</span></div>',
-                    'search' => '',
-                    'searchPlaceholder' => 'Cari referensi, status, requester...',
-                    'lengthMenu' => 'Tampilkan _MENU_ data',
-                    'info' => 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
-                    'infoEmpty' => 'Tidak ada data',
-                    'infoFiltered' => '(disaring dari _MAX_ total data)',
-                    'zeroRecords' => 'Data tidak ditemukan',
-                    'emptyTable' => 'Belum ada data penyesuaian stok',
-                    'paginate' => [
-                        'first' => 'Pertama',
-                        'last' => 'Terakhir',
-                        'next' => 'Selanjutnya',
-                        'previous' => 'Sebelumnya',
-                    ],
-                ],
-            ])
-            ->buttons(Button::make('excel')->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel')->className('btn btn-success btn-sm'), Button::make('print')->text('<i class="bi bi-printer-fill"></i> Print')->className('btn btn-info btn-sm'), Button::make('reset')->text('<i class="bi bi-x-circle"></i> Reset')->className('btn btn-secondary btn-sm'), Button::make('reload')->text('<i class="bi bi-arrow-repeat"></i> Muat Ulang')->className('btn btn-warning btn-sm'));
+                'order' => [[0, 'desc']],
+            ]);
     }
 
     protected function getColumns()

@@ -25,24 +25,24 @@ class CustomersDataTable extends DataTable
             
             // Kolom Customer Name dengan link ke detail
             ->editColumn('customer_name', function ($data) {
-                return '<a href="' . route('customers.show', $data->id) . '" class="text-primary font-weight-bold">' 
+                return '<a href="' . route('customers.show', $data->id) . '" class="text-blue-600 hover:text-blue-800 font-bold hover:underline">' 
                     . e($data->customer_name) 
                     . '</a>';
             })
             
             // Format email
             ->editColumn('customer_email', function ($data) {
-                return e($data->customer_email);
+                return '<div class="text-zinc-600">' . e($data->customer_email) . '</div>';
             })
             
             // Format phone
             ->editColumn('customer_phone', function ($data) {
-                return e($data->customer_phone);
+                return '<div class="text-zinc-600 font-mono">' . e($data->customer_phone) . '</div>';
             })
             
             // Kolom City dengan badge
             ->editColumn('city', function ($data) {
-                return '<span class="badge badge-light-info">' . e($data->city) . '</span>';
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">' . e($data->city) . '</span>';
             })
             
             // Kolom total penjualan (computed column)
@@ -50,10 +50,10 @@ class CustomersDataTable extends DataTable
                 $count = $data->sales_count ?? 0;
                 
                 if ($count > 0) {
-                    return '<span class="badge badge-success">' . $count . ' transaksi</span>';
+                    return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">' . $count . ' transaksi</span>';
                 }
                 
-                return '<span class="badge badge-secondary">Belum ada</span>';
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600">Belum ada</span>';
             })
             
             // Kolom total nilai penjualan (computed column)
@@ -61,10 +61,10 @@ class CustomersDataTable extends DataTable
                 $total = $data->sales_sum_total_amount ?? 0;
                 
                 if ($total > 0) {
-                    return '<strong class="text-success">' . format_currency($total) . '</strong>';
+                    return '<strong class="text-emerald-600">' . format_currency($total) . '</strong>';
                 }
                 
-                return '<span class="text-muted">-</span>';
+                return '<span class="text-zinc-400">-</span>';
             })
             
             // Status aktif (berdasarkan transaksi 6 bulan terakhir)
@@ -74,10 +74,10 @@ class CustomersDataTable extends DataTable
                     ->exists();
                 
                 if ($hasRecentSale) {
-                    return '<span class="badge badge-success">Aktif</span>';
+                    return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Aktif</span>';
                 }
                 
-                return '<span class="badge badge-warning">Tidak Aktif</span>';
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-zinc-100 text-zinc-500">Tidak Aktif</span>';
             })
             
             // Kolom action buttons
@@ -88,6 +88,8 @@ class CustomersDataTable extends DataTable
             // Set kolom yang mengandung HTML (jangan di-escape)
             ->rawColumns([
                 'customer_name', 
+                'customer_email',
+                'customer_phone',
                 'city', 
                 'total_sales', 
                 'total_amount', 
@@ -136,7 +138,6 @@ class CustomersDataTable extends DataTable
         
         return $query;
     }
-
     /**
      * Optional method if you want to use html builder.
      *
@@ -148,45 +149,15 @@ class CustomersDataTable extends DataTable
             ->setTableId('customers-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>>" .
-                  "tr" .
-                  "<'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->orderBy(1, 'asc')
+            ->orderBy(1)
             ->selectStyleSingle()
-            ->buttons([
-                Button::make('excel')->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
-                Button::make('print')->text('<i class="bi bi-printer-fill"></i> Print'),
-                Button::make('reset')->text('<i class="bi bi-x-circle"></i> Reset'),
-                Button::make('reload')->text('<i class="bi bi-arrow-repeat"></i> Reload'),
-            ])
             ->parameters([
-                'language' => [
-                    'emptyTable' => 'Tidak ada data customer',
-                    'info' => 'Menampilkan _START_ sampai _END_ dari _TOTAL_ customer',
-                    'infoEmpty' => 'Menampilkan 0 sampai 0 dari 0 customer',
-                    'infoFiltered' => '(difilter dari _MAX_ total customer)',
-                    'lengthMenu' => 'Tampilkan _MENU_ customer',
-                    'search' => 'Cari:',
-                    'zeroRecords' => 'Tidak ditemukan data customer yang sesuai',
-                    'paginate' => [
-                        'first' => 'Pertama',
-                        'last' => 'Terakhir',
-                        'next' => 'Selanjutnya',
-                        'previous' => 'Sebelumnya',
-                    ],
-                ],
                 'responsive' => true,
                 'autoWidth' => false,
                 'processing' => true,
                 'serverSide' => true,
             ]);
     }
-
-    /**
-     * Get the dataTable columns definition.
-     *
-     * @return array
-     */
     public function getColumns(): array
     {
         return [

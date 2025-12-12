@@ -27,13 +27,21 @@ class CategoriesController extends Controller
             'category_name' => 'required'
         ]);
 
-        Category::create([
+        $category = Category::create([
             'category_code' => $request->category_code,
             'category_name' => $request->category_name,
         ]);
 
-        toast('Product Category Created!', 'success');
+        // Handle AJAX request
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori produk berhasil ditambahkan!',
+                'category' => $category
+            ]);
+        }
 
+        toast('Product Category Created!', 'success');
         return redirect()->back();
     }
 
@@ -55,13 +63,22 @@ class CategoriesController extends Controller
             'category_name' => 'required'
         ]);
 
-        Category::findOrFail($id)->update([
+        $category = Category::findOrFail($id);
+        $category->update([
             'category_code' => $request->category_code,
             'category_name' => $request->category_name,
         ]);
 
-        toast('Product Category Updated!', 'info');
+        // Handle AJAX request
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori produk berhasil diperbarui!',
+                'category' => $category
+            ]);
+        }
 
+        toast('Product Category Updated!', 'info');
         return redirect()->route('product-categories.index');
     }
 
@@ -72,13 +89,27 @@ class CategoriesController extends Controller
         $category = Category::findOrFail($id);
 
         if ($category->products()->exists()) {
+            // Handle AJAX request for error
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat menghapus karena ada produk yang menggunakan kategori ini.'
+                ], 422);
+            }
             return back()->withErrors('Can\'t delete because there are products associated with this category.');
         }
 
         $category->delete();
 
-        toast('Product Category Deleted!', 'warning');
+        // Handle AJAX request
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori produk berhasil dihapus!'
+            ]);
+        }
 
+        toast('Product Category Deleted!', 'warning');
         return redirect()->route('product-categories.index');
     }
 }

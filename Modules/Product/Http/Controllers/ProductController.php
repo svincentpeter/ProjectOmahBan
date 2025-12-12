@@ -157,6 +157,54 @@ class ProductController extends Controller
         return response()->json(['error' => 'Upload failed.'], 400);
     }
 
+
+    /**
+     * Search products for Select2 AJAX (used by Stock Opname form)
+     */
+    public function search(Request $request)
+    {
+        $query = $request->get('q', '');
+        $page = $request->get('page', 1);
+        $perPage = 15;
+
+        $products = Product::query()
+            ->where('is_active', true)
+            ->where(function ($q) use ($query) {
+                $q->where('product_code', 'like', "%{$query}%")
+                  ->orWhere('product_name', 'like', "%{$query}%");
+            })
+            ->select('id', 'product_code', 'product_name', 'product_quantity')
+            ->orderBy('product_name')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'items' => $products->items(),
+            'total_count' => $products->total(),
+            'more' => $products->hasMorePages()
+        ]);
+    }
+
+    /**
+     * Count active products (for Stock Opname scope "all")
+     */
+    public function countActive()
+    {
+        $count = Product::where('is_active', true)->count();
+        return response()->json(['count' => $count]);
+    }
+
+    /**
+     * Count products by category IDs (for Stock Opname scope "category")
+     */
+    public function countByCategory(Request $request)
+    {
+        $categoryIds = $request->input('category_ids', []);
+        $count = Product::where('is_active', true)
+            ->whereIn('category_id', $categoryIds)
+            ->count();
+        return response()->json(['count' => $count]);
+    }
+
     public function deleteImage(Request $request)
     {
         $filename = $request->input('filename');

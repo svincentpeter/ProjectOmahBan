@@ -29,20 +29,30 @@ class CurrencyDataTable extends DataTable
             ->setTableId('currency-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
-                                        'tr' .
-                                        <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->orderBy(6)
-            ->buttons(
-                Button::make('excel')
-                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
-                Button::make('print')
-                    ->text('<i class="bi bi-printer-fill"></i> Print'),
-                Button::make('reset')
-                    ->text('<i class="bi bi-x-circle"></i> Reset'),
-                Button::make('reload')
-                    ->text('<i class="bi bi-arrow-repeat"></i> Reload')
-            );
+            ->dom('rtip')
+            ->orderBy(0, 'asc')
+            ->selectStyleSingle()
+            ->parameters([
+                'responsive' => true,
+                'autoWidth' => false,
+                'processing' => true,
+                'serverSide' => true,
+                'language' => [
+                    'url' => asset('js/datatables/id.json'),
+                    'processing' => '<div class="flex items-center justify-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>',
+                    'emptyTable' => 'Belum ada data mata uang',
+                    'zeroRecords' => 'Data tidak ditemukan',
+                    'info' => 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                    'infoEmpty' => 'Menampilkan 0 sampai 0 dari 0 data',
+                    'infoFiltered' => '(disaring dari _MAX_ total data)',
+                    'paginate' => [
+                        'first' => 'Pertama',
+                        'last' => 'Terakhir',
+                        'next' => 'Selanjutnya',
+                        'previous' => 'Sebelumnya',
+                    ],
+                ],
+            ]);
     }
 
     protected function getColumns() {

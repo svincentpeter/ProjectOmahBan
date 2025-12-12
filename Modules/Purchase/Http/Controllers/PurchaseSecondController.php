@@ -12,8 +12,13 @@ use Modules\Purchase\Http\Requests\UpdatePurchaseSecondRequest;
 use Modules\Product\Entities\ProductSecond;
 use Modules\Purchase\DataTables\PurchaseSecondDataTable;
 
+
+
 class PurchaseSecondController extends Controller
 {
+    /**
+     * Display a listing of purchase seconds with filters
+     */
     /**
      * Display a listing of purchase seconds with filters
      */
@@ -21,50 +26,67 @@ class PurchaseSecondController extends Controller
     {
         abort_if(Gate::denies('access_purchases'), 403);
 
-        // ==== Filter sama seperti sebelumnya ====
-        $quickFilter = request('quick_filter', 'all');
-        $startDate = request('from');
-        $endDate = request('to');
-        $customerName = request('customer');
-        $paymentStatus = request('payment_status');
+        $query = PurchaseSecond::query();
 
-        $summaryQuery = PurchaseSecond::query();
+        // === FILTER BY QUICK FILTER ===
+        $from = null;
+        $to = null;
 
-        switch ($quickFilter) {
+        switch (request('quick_filter')) {
             case 'yesterday':
-                $summaryQuery->whereDate('date', now()->subDay());
+                $from = $to = now()->subDay()->toDateString();
                 break;
             case 'this_week':
-                $summaryQuery->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()]);
+                $from = now()->startOfWeek()->toDateString();
+                $to = now()->toDateString();
                 break;
             case 'this_month':
-                $summaryQuery->whereMonth('date', now()->month)->whereYear('date', now()->year);
+                $from = now()->startOfMonth()->toDateString();
+                $to = now()->toDateString();
                 break;
             case 'last_month':
-                $summaryQuery->whereMonth('date', now()->subMonth()->month)->whereYear('date', now()->subMonth()->year);
+                $from = now()->subMonth()->startOfMonth()->toDateString();
+                $to = now()->subMonth()->endOfMonth()->toDateString();
                 break;
+            case 'all':
+                break;
+            default:
+                $from = request('from') ? request('from') : null;
+                $to = request('to') ? request('to') : null;
         }
 
-        if ($startDate && $endDate) {
-            $summaryQuery->whereBetween('date', [$startDate, $endDate]);
+        // Apply date filters
+        if(!$from && request('quick_filter') == 'today') {
+             $from = now()->toDateString();
+             $to = now()->toDateString();
         }
 
-        if ($customerName) {
-            $summaryQuery->where('customer_name', 'like', "%{$customerName}%");
+        if ($from && request('quick_filter') !== 'all') {
+            $query->whereDate('date', '>=', $from);
+        }
+        if ($to && request('quick_filter') !== 'all') {
+            $query->whereDate('date', '<=', $to);
         }
 
-        if ($paymentStatus) {
-            $summaryQuery->where('payment_status', $paymentStatus);
+        // === FILTER BY CUSTOMER ===
+        if (request('customer')) {
+            $query->where('customer_name', 'like', '%' . request('customer') . '%');
         }
 
-        $summary = [
-            'total_purchases' => (clone $summaryQuery)->count(), // ✅ TAMBAHAN
-            'total_amount' => (clone $summaryQuery)->sum('total_amount'),
-            'total_paid' => (clone $summaryQuery)->sum('paid_amount'),
-            'total_due' => (clone $summaryQuery)->sum('due_amount'),
-        ];
+        // === FILTER BY PAYMENT STATUS ===
+        if (request('payment_status')) {
+            $query->where('payment_status', request('payment_status'));
+        }
 
-        return $dataTable->render('purchase::second.index', compact('summary'));
+        // === CALCULATE SUMMARY ===
+        $total_purchases = $query->count();
+        $total_amount = $query->sum('total_amount');
+        $total_paid = $query->sum('paid_amount');
+        $total_due = $query->sum('due_amount');
+
+        $summary = compact('total_purchases', 'total_amount', 'total_paid', 'total_due');
+
+        return $dataTable->render('purchase::second.index', compact('summary', 'from', 'to'));
     }
 
     /**
@@ -85,6 +107,9 @@ class PurchaseSecondController extends Controller
     /**
      * Store a newly created purchase second in storage
      */
+    /**
+     * Store a newly created purchase second in storage
+     */
     public function store(StorePurchaseSecondRequest $request)
     {
         abort_if(Gate::denies('create_purchases'), 403);
@@ -92,8 +117,8 @@ class PurchaseSecondController extends Controller
         DB::beginTransaction();
 
         try {
-            // Get cart from session
-            $cart = session()->get('cart_purchase_second', []);
+            // Get cart from request json
+            $cart = json_decode($request->cart_json, true);
 
             if (empty($cart)) {
                 return redirect()->back()->with('error', 'Keranjang kosong! Tambahkan produk terlebih dahulu.');
@@ -137,9 +162,6 @@ class PurchaseSecondController extends Controller
                 }
             }
 
-            // Clear cart session
-            session()->forget('cart_purchase_second');
-
             DB::commit();
 
             toast('Pembelian Bekas berhasil disimpan!', 'success');
@@ -178,20 +200,6 @@ class PurchaseSecondController extends Controller
             return redirect()->back()->with('error', 'Pembelian dengan status Completed tidak dapat diedit.');
         }
 
-        // Load cart from existing purchase details
-        $cart = [];
-        foreach ($purchaseSecond->purchaseSecondDetails as $detail) {
-            $cart[] = [
-                'id' => $detail->product_second_id,
-                'name' => $detail->product_name,
-                'code' => $detail->product_code,
-                'price' => $detail->unit_price,
-                'condition_notes' => $detail->condition_notes,
-            ];
-        }
-
-        session()->put('cart_purchase_second', $cart);
-
         // Get available second products
         $products = ProductSecond::whereIn('status', ['available', 'for_sale'])
             ->orderBy('name')
@@ -215,8 +223,8 @@ class PurchaseSecondController extends Controller
         DB::beginTransaction();
 
         try {
-            // Get cart from session
-            $cart = session()->get('cart_purchase_second', []);
+            // Get cart from request json
+            $cart = json_decode($request->cart_json, true);
 
             if (empty($cart)) {
                 return redirect()->back()->with('error', 'Keranjang kosong! Tambahkan produk terlebih dahulu.');
@@ -243,7 +251,9 @@ class PurchaseSecondController extends Controller
 
             // Create new details
             foreach ($cart as $item) {
-                $product = ProductSecond::findOrFail($item['id']);
+                // Determine product id (checking if it exists or if it's passed differently)
+                $productId = $item['id'];
+                $product = ProductSecond::findOrFail($productId);
 
                 PurchaseSecondDetail::create([
                     'purchase_second_id' => $purchaseSecond->id,
@@ -261,9 +271,6 @@ class PurchaseSecondController extends Controller
                     $product->update(['status' => 'in_stock']);
                 }
             }
-
-            // Clear cart session
-            session()->forget('cart_purchase_second');
 
             DB::commit();
 

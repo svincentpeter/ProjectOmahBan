@@ -58,7 +58,7 @@ class AdjustmentController extends Controller
         ];
 
         // Kirim $stats ke Blade
-        return $dataTable->render('adjustment::index', compact('stats'));
+        return $dataTable->render('adjustment::adjustments.index', compact('stats'));
     }
 
     /**
@@ -100,7 +100,7 @@ class AdjustmentController extends Controller
             ->addColumn('requester_name', fn($a) => $a->requester->name ?? '-')
             ->addColumn('product_count', fn($a) => $a->adjustedProducts->count() . ' produk')
             ->addColumn('status', fn($a) => $a->status)
-            ->addColumn('actions', fn($a) => view('adjustment::partials.actions', compact('a'))->render())
+            ->addColumn('actions', fn($a) => view('adjustment::adjustments.partials.actions', compact('a'))->render())
             ->rawColumns(['actions'])
             ->make(true);
     }
@@ -127,7 +127,7 @@ class AdjustmentController extends Controller
             ->orderBy('product_name')
             ->get();
 
-        return view('adjustment::create', compact('products'));
+        return view('adjustment::adjustments.create', compact('products'));
     }
 
     /**
@@ -216,7 +216,7 @@ class AdjustmentController extends Controller
 
         $adjustment->load(['adjustedProducts.product.category', 'adjustmentFiles', 'logs.user', 'requester', 'approver']);
 
-        return view('adjustment::show', compact('adjustment'));
+        return view('adjustment::adjustments.show', compact('adjustment'));
     }
 
     /**
@@ -241,7 +241,7 @@ class AdjustmentController extends Controller
 
         $adjustment->load(['adjustedProducts.product']);
 
-        return view('adjustment::edit', compact('adjustment', 'products'));
+        return view('adjustment::adjustments.edit', compact('adjustment', 'products'));
     }
 
     /**
@@ -377,7 +377,7 @@ class AdjustmentController extends Controller
             ->where('created_at', '<', now()->subDays(7))
             ->count();
 
-        return view('adjustment::approvals', compact('pendingCount', 'approvedCount', 'rejectedCount', 'urgentCount'));
+        return view('adjustment::adjustments.approvals', compact('pendingCount', 'approvedCount', 'rejectedCount', 'urgentCount'));
     }
 
     /**
@@ -398,7 +398,7 @@ class AdjustmentController extends Controller
             ->addColumn('product_count', fn($a) => $a->adjustedProducts->count())
             ->addColumn('created_at_formatted', fn($a) => optional($a->created_at)->format('d/m/Y H:i'))
             ->addColumn('actions', function ($row) {
-                return view('adjustment::partials.actions-approval', compact('row'))->render();
+                return view('adjustment::adjustments.partials.actions-approval', compact('row'))->render();
             })
             ->rawColumns(['actions'])
             ->make(true);
@@ -510,7 +510,7 @@ class AdjustmentController extends Controller
         $adjustment->load(['adjustedProducts.product.category', 'adjustmentFiles', 'requester', 'approver', 'logs.user']);
 
         try {
-            $pdf = Pdf::loadView('adjustment::pdf', compact('adjustment'))
+            $pdf = Pdf::loadView('adjustment::adjustments.pdf', compact('adjustment'))
                 ->setPaper('a4', 'portrait')
                 ->setOptions([
                     'isHtml5ParserEnabled' => true,
@@ -520,7 +520,7 @@ class AdjustmentController extends Controller
             return $pdf->download("Adjustment_{$adjustment->reference}.pdf");
         } catch (\Throwable $e) {
             Log::warning("PDF generation failed: {$e->getMessage()}");
-            return view('adjustment::pdf', compact('adjustment'));
+            return view('adjustment::adjustments.pdf', compact('adjustment'));
         }
     }
 

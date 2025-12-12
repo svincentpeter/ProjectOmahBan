@@ -14,6 +14,7 @@ use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SaleDetails;
 use Modules\Sale\Entities\SalePayment;
 use Modules\Sale\Http\Requests\StorePosSaleRequest;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PosController extends Controller
 {
@@ -383,7 +384,7 @@ class PosController extends Controller
         // 👇 DEBUG: Uncomment untuk cek apakah customer_name ada
         // dd($sale->customer_name);
 
-        $pdf = \PDF::loadView('sale::print-pos', ['sale' => $sale])
+        $pdf = Pdf::loadView('sale::sales.print-pos', ['sale' => $sale])
             ->setPaper('a6', 'landscape')
             ->setOption('margin-top', 5)
             ->setOption('margin-bottom', 5)

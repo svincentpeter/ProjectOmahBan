@@ -1,15 +1,33 @@
-@can('edit_expenses')
-    <a href="{{ route('expenses.edit', $e) }}" class="btn btn-sm btn-info">
-        <i class="bi bi-pencil"></i> Edit
+<div class="flex items-center justify-center gap-2">
+    {{-- Edit Button --}}
+    <a href="{{ route('expenses.edit', $data->id) }}" 
+       class="font-medium text-blue-600 dark:text-blue-500 hover:underline" 
+       data-tooltip-target="tooltip-edit-{{ $data->id }}">
+        <i class="bi bi-pencil-square text-lg"></i>
     </a>
-@endcan
+    <div id="tooltip-edit-{{ $data->id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+        Edit Pengeluaran
+        <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
 
-@can('delete_expenses')
-    <form action="{{ route('expenses.destroy', $e) }}" method="POST" class="d-inline"
-          onsubmit="return confirm('Hapus data ini?')">
-        @csrf @method('DELETE')
-        <button class="btn btn-sm btn-danger">
-            <i class="bi bi-trash"></i> Hapus
-        </button>
+    {{-- Delete Button --}}
+    <button type="button" 
+            class="font-medium text-red-600 dark:text-red-500 hover:underline btn-delete" 
+            data-id="{{ $data->id }}" 
+            data-name="{{ $data->reference }}"
+            data-tooltip-target="tooltip-delete-{{ $data->id }}">
+        <i class="bi bi-trash text-lg"></i>
+    </button>
+    <div id="tooltip-delete-{{ $data->id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+        Hapus Pengeluaran
+        <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
+
+    <form id="delete-form-{{ $data->id }}" 
+          action="{{ route('expenses.destroy', $data->id) }}" 
+          method="POST" 
+          class="hidden">
+        @csrf
+        @method('DELETE')
     </form>
-@endcan
+</div>

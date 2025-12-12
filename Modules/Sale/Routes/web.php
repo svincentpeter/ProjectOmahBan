@@ -53,6 +53,8 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:access_sales')
         ->group(function () {
             Route::get('/', [SaleController::class, 'index'])->name('index');
+            Route::get('/create', [SaleController::class, 'create'])->name('create');
+            Route::post('/', [SaleController::class, 'store'])->name('store');
             Route::get('/summary', [SaleController::class, 'summary'])->name('summary');
             Route::get('/{sale}/items', [SaleController::class, 'items'])->name('items');
             Route::get('/{sale}', [SaleController::class, 'show'])->name('show');

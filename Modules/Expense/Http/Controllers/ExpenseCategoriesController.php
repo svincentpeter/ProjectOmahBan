@@ -6,12 +6,14 @@ use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Modules\Expense\Entities\ExpenseCategory;
 
+use Modules\Expense\DataTables\ExpenseCategoriesDataTable;
+
 class ExpenseCategoriesController extends Controller
 {
-    public function index()
+    public function index(ExpenseCategoriesDataTable $dataTable)
     {
-        $categories = ExpenseCategory::orderBy('category_name')->paginate(20);
-        return view('expense::categories.index', compact('categories'));
+        $categories_count = ExpenseCategory::count();
+        return $dataTable->render('expense::categories.index', compact('categories_count'));
     }
 
     public function create()

@@ -1,270 +1,311 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Merek Produk')
 
 @section('breadcrumb')
-<ol class="breadcrumb border-0 m-0">
-    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('products.index') }}">Produk</a></li>
-    <li class="breadcrumb-item active">Merek</li>
-</ol>
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Manajemen Produk', 'url' => '#'],
+        ['text' => 'Merek Produk', 'url' => route('brands.index'), 'icon' => 'bi bi-bookmark-star']
+    ]])
 @endsection
 
+
+
 @section('content')
-<div class="container-fluid">
-    <div class="animated fadeIn">
-        {{-- Alerts --}}
-        @include('utils.alerts')
+    {{-- Alerts --}}
+    @include('utils.alerts')
 
-        {{-- Main Card --}}
-        <div class="card shadow-sm">
-            {{-- Card Header --}}
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
-                    <div class="mb-2 mb-md-0">
-                        <h5 class="mb-1 font-weight-bold">
-                            <i class="cil-bookmark mr-2 text-primary"></i>
-                            Merek Produk
-                        </h5>
-                        <small class="text-muted">Kelola merek ban dan velg</small>
-                    </div>
-                    
-                    <a href="{{ route('brands.create') }}" class="btn btn-primary">
-                        <i class="cil-plus mr-2"></i> Tambah Merek
-                    </a>
+    {{-- Filter Component --}}
+    @include('layouts.filter-card', [
+        'action' => route('brands.index'),
+        'title' => 'Filter Merek',
+        'icon' => 'bi bi-bookmark-star',
+        'quickFilters' => [
+            [
+                'label' => 'Semua Merek',
+                'url' => route('brands.index'),
+                'param' => 'filter',
+                'value' => 'all',
+                'icon' => 'bi bi-grid'
+            ]
+        ],
+        'filters' => []
+    ])
+
+    {{-- Main Card --}}
+    <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">
+        
+        {{-- Card Header --}}
+        <div class="p-6 border-b border-zinc-100">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h5 class="text-xl font-bold text-black dark:text-white tracking-tight flex items-center gap-2">
+                        <i class="bi bi-bookmark-star text-blue-600"></i>
+                        Merek Produk
+                    </h5>
+                    <p class="text-sm text-zinc-600 mt-1">Kelola merek ban dan velg</p>
                 </div>
+                
+                <button type="button" 
+                        data-modal-target="modal-create" 
+                        data-modal-toggle="modal-create"
+                        class="inline-flex items-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
+                    <i class="bi bi-plus-lg me-2"></i> Tambah Merek
+                </button>
             </div>
+        </div>
 
-            {{-- Info Section --}}
-            <div class="card-body border-bottom" style="background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);">
-                <div class="alert alert-info mb-0" role="alert">
-                    <div class="d-flex align-items-start">
-                        <i class="cil-info-circle mr-2 mt-1" style="font-size: 1.25rem;"></i>
-                        <div>
-                            <strong>Informasi:</strong> Merek digunakan untuk mengidentifikasi produsen produk. 
-                            Pastikan nama merek yang diinput sudah sesuai dengan merek asli produk.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Table --}}
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead style="background-color: #f8f9fa;">
-                            <tr>
-                                <th class="border-0" width="80">No.</th>
-                                <th class="border-0">Nama Merek</th>
-                                <th class="border-0 text-center" width="120">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($brands as $brand)
-                            <tr>
-                                <td class="align-middle">
-                                    <span class="badge badge-light">{{ $loop->iteration }}</span>
-                                </td>
-                                <td class="align-middle">
-                                    <div class="d-flex align-items-center">
-                                        <div class="brand-icon mr-2">
-                                            <i class="cil-bookmark"></i>
-                                        </div>
-                                        <strong>{{ $brand->name }}</strong>
-                                    </div>
-                                </td>
-                                <td class="text-center align-middle">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{{ route('brands.edit', $brand->id) }}" 
-                                           class="btn btn-outline-warning"
-                                           data-toggle="tooltip"
-                                           title="Edit">
-                                            <i class="cil-pencil"></i>
-                                        </a>
-                                        
-                                        <button type="button"
-                                                class="btn btn-outline-danger btn-delete"
-                                                data-id="{{ $brand->id }}"
-                                                data-name="{{ $brand->name }}"
-                                                data-toggle="tooltip"
-                                                title="Hapus">
-                                            <i class="cil-trash"></i>
-                                        </button>
-                                        
-                                        <form id="delete-form-{{ $brand->id }}" 
-                                              action="{{ route('brands.destroy', $brand->id) }}" 
-                                              method="POST" 
-                                              class="d-none">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="3" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="cil-inbox" style="font-size: 3rem; opacity: 0.2;"></i>
-                                        <p class="mb-0 mt-3 font-weight-semibold">Belum ada merek</p>
-                                        <small>Klik tombol "Tambah Merek" untuk mulai menambah data</small>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+        {{-- Info Alert --}}
+        <div class="px-6 pt-4">
+            <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-start gap-3">
+                <i class="bi bi-info-circle text-blue-600 text-lg mt-0.5"></i>
+                <div>
+                    <p class="text-sm font-medium">
+                        <strong>Informasi:</strong> Merek digunakan untuk mengidentifikasi produsen produk. 
+                        Pastikan nama merek yang diinput sudah sesuai dengan merek asli produk.
+                    </p>
                 </div>
             </div>
         </div>
+
+        {{-- Table Wrapper --}}
+        <div class="p-6 pt-4 overflow-x-auto">
+            <table class="w-full text-sm text-left text-slate-500 dark:text-gray-400" id="brands-table">
+                <thead class="text-xs text-slate-400 uppercase bg-slate-50/50 border-b border-slate-100">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-bold tracking-wider" style="width: 80px;">No.</th>
+                        <th scope="col" class="px-6 py-4 font-bold tracking-wider">Nama Merek</th>
+                        <th scope="col" class="px-6 py-4 font-bold tracking-wider text-center" style="width: 120px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    @forelse($brands as $brand)
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 align-middle">
+                            <span class="inline-flex items-center justify-center w-8 h-8 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">
+                                {{ $loop->iteration }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 align-middle">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md">
+                                    <i class="bi bi-bookmark-star"></i>
+                                </div>
+                                <span class="font-bold text-black">{{ $brand->name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center align-middle">
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button"
+                                        class="btn-edit p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                        data-id="{{ $brand->id }}"
+                                        data-name="{{ $brand->name }}"
+                                        data-modal-target="modal-edit"
+                                        data-modal-toggle="modal-edit"
+                                        title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                
+                                <button type="button"
+                                        class="btn-delete p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        data-id="{{ $brand->id }}"
+                                        data-name="{{ $brand->name }}"
+                                        title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                
+                                <form id="delete-form-{{ $brand->id }}" 
+                                      action="{{ route('brands.destroy', $brand->id) }}" 
+                                      method="POST" 
+                                      class="hidden">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center text-zinc-400">
+                                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                                    <i class="bi bi-inbox text-3xl text-slate-300"></i>
+                                </div>
+                                <p class="font-semibold text-zinc-600 mb-1">Belum ada merek</p>
+                                <small class="text-zinc-500">Klik tombol "Tambah Merek" untuk mulai menambah data</small>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
+
+    {{-- Include Modals from Partials --}}
+    @include('product::brands.partials._modal-create')
+    @include('product::brands.partials._modal-edit')
 @endsection
 
 @push('page_styles')
 <style>
-    /* ========== Animations ========== */
-    .animated.fadeIn {
-        animation: fadeIn 0.3s ease-in;
-    }
-    
-    @keyframes fadeIn {
-        from { 
-            opacity: 0; 
-            transform: translateY(10px); 
-        }
-        to { 
-            opacity: 1; 
-            transform: translateY(0); 
-        }
-    }
-
-    /* ========== Card Shadow ========== */
-    .shadow-sm {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-    }
-
-    /* ========== Alert Styling ========== */
-    .alert-info {
-        background-color: #e7f6fc;
-        border-color: #8ad4ee;
-        color: #115293;
-        border-radius: 8px;
-    }
-
-    /* ========== Table Styling ========== */
-    .table thead th {
-        font-size: 0.8125rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        color: #4f5d73;
-        padding: 14px 12px;
-    }
-
-    .table tbody td {
-        padding: 14px 12px;
-        font-size: 0.875rem;
-    }
-
-    .table tbody tr {
-        transition: all 0.2s ease;
-    }
-
-    .table tbody tr:hover {
-        background-color: rgba(72, 52, 223, 0.03) !important;
-    }
-
-    /* ========== Brand Icon ========== */
-    .brand-icon {
-        width: 36px;
-        height: 36px;
-        background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1rem;
-        box-shadow: 0 2px 6px rgba(72, 52, 223, 0.2);
-        flex-shrink: 0;
-    }
-
-    /* ========== Badge Styling ========== */
-    .badge {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.65rem;
-        font-weight: 600;
-    }
-
-    /* ========== Button Group ========== */
-    .btn-group .btn {
-        transition: all 0.2s ease;
-    }
-
-    .btn-group .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    /* ========== Responsive ========== */
-    @media (max-width: 768px) {
-        .table thead th,
-        .table tbody td {
-            padding: 10px 8px;
-            font-size: 0.8125rem;
-        }
-        
-        .brand-icon {
-            width: 32px;
-            height: 32px;
-            font-size: 0.875rem;
-        }
-    }
+    @include('includes.datatables-flowbite-css')
 </style>
 @endpush
 
 @push('page_scripts')
+@include('includes.datatables-flowbite-js')
 <script>
 $(document).ready(function() {
-    // Initialize tooltips
-    $('[data-toggle="tooltip"]').tooltip();
+    // Initialize DataTables
+    // Initialize DataTables
+    const table = $('#brands-table').DataTable({
+        columnDefs: [{ orderable: false, targets: [0, 2] }]
+    });
 
-    // Delete confirmation
-    $('.btn-delete').on('click', function() {
+    // Handle Edit button click - populate modal
+    $(document).on('click', '.btn-edit', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        
+        $('#edit-id').val(id);
+        $('#edit-name').val(name);
+        $('#form-edit').attr('action', '{{ url("brands") }}/' + id);
+        $('#edit-error').addClass('hidden').text('');
+    });
+
+    // Handle Create form submit with AJAX
+    $('#form-create').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        
+        submitBtn.prop('disabled', true).html('<i class="bi bi-arrow-repeat animate-spin me-1"></i> Menyimpan...');
+        $('#create-error').addClass('hidden');
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(response) {
+                // Close modal
+                const modal = FlowbiteInstances.getInstance('Modal', 'modal-create');
+                if (modal) modal.hide();
+                
+                // Reset form
+                form[0].reset();
+                
+                // Show success toast
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Merek baru berhasil ditambahkan',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true
+                });
+                
+                // Reload page to refresh data
+                setTimeout(() => location.reload(), 1000);
+            },
+            error: function(xhr) {
+                const errors = xhr.responseJSON?.errors;
+                if (errors?.name) {
+                    $('#create-error').removeClass('hidden').text(errors.name[0]);
+                } else {
+                    $('#create-error').removeClass('hidden').text('Terjadi kesalahan. Silakan coba lagi.');
+                }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // Handle Edit form submit with AJAX
+    $('#form-edit').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        
+        submitBtn.prop('disabled', true).html('<i class="bi bi-arrow-repeat animate-spin me-1"></i> Memperbarui...');
+        $('#edit-error').addClass('hidden');
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(response) {
+                // Close modal
+                const modal = FlowbiteInstances.getInstance('Modal', 'modal-edit');
+                if (modal) modal.hide();
+                
+                // Show success toast
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Merek berhasil diperbarui',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true
+                });
+                
+                // Reload page to refresh data
+                setTimeout(() => location.reload(), 1000);
+            },
+            error: function(xhr) {
+                const errors = xhr.responseJSON?.errors;
+                if (errors?.name) {
+                    $('#edit-error').removeClass('hidden').text(errors.name[0]);
+                } else {
+                    $('#edit-error').removeClass('hidden').text('Terjadi kesalahan. Silakan coba lagi.');
+                }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // Delete confirmation with SweetAlert2
+    $(document).on('click', '.btn-delete', function() {
         const id = $(this).data('id');
         const name = $(this).data('name');
         
         Swal.fire({
             title: 'Hapus Merek?',
-            html: `Merek <strong>"${name}"</strong> akan dihapus permanen.<br><small class="text-muted">Pastikan tidak ada produk yang menggunakan merek ini!</small>`,
+            html: `Merek <strong>"${name}"</strong> akan dihapus permanen.<br><small class="text-zinc-500">Pastikan tidak ada produk yang menggunakan merek ini!</small>`,
             icon: 'warning',
-            iconColor: '#e55353',
+            iconColor: '#ef4444',
             showCancelButton: true,
-            confirmButtonColor: '#e55353',
-            cancelButtonColor: '#768192',
-            confirmButtonText: '<i class="cil-trash mr-1"></i> Ya, Hapus!',
-            cancelButtonText: '<i class="cil-x mr-1"></i> Batal',
-            reverseButtons: true,
-            customClass: {
-                confirmButton: 'btn btn-danger',
-                cancelButton: 'btn btn-secondary'
-            },
-            buttonsStyling: false
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus!',
+            cancelButtonText: '<i class="bi bi-x me-1"></i> Batal',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
                 Swal.fire({
                     title: 'Menghapus...',
                     html: 'Mohon tunggu sebentar',
                     allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
+                    didOpen: () => Swal.showLoading()
                 });
-                
                 $('#delete-form-' + id).submit();
             }
         });
+    });
+
+    // Reset create form when modal is closed
+    document.getElementById('modal-create')?.addEventListener('hidden.bs.modal', function() {
+        $('#form-create')[0].reset();
+        $('#create-error').addClass('hidden');
     });
 });
 </script>

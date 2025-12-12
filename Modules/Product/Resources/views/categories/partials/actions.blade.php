@@ -1,15 +1,26 @@
-<a href="{{ route('product-categories.edit', $data->id) }}" class="btn btn-info btn-sm">
-    <i class="bi bi-pencil"></i>
-</a>
-<button id="delete" class="btn btn-danger btn-sm" onclick="
-    event.preventDefault();
-    if (confirm('Are you sure? It will delete the data permanently!')) {
-        document.getElementById('destroy{{ $data->id }}').submit();
-    }
-    ">
-    <i class="bi bi-trash"></i>
-    <form id="destroy{{ $data->id }}" class="d-none" action="{{ route('product-categories.destroy', $data->id) }}" method="POST">
+<div class="flex items-center justify-center gap-2">
+    <button type="button"
+            class="btn-edit-category p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+            data-id="{{ $data->id }}"
+            data-code="{{ $data->category_code }}"
+            data-name="{{ $data->category_name }}"
+            title="Edit">
+        <i class="bi bi-pencil"></i>
+    </button>
+    
+    <button type="button"
+            class="btn-delete-category p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            data-id="{{ $data->id }}"
+            data-name="{{ $data->category_name }}"
+            title="Hapus">
+        <i class="bi bi-trash"></i>
+    </button>
+    
+    <form id="delete-form-{{ $data->id }}" 
+          action="{{ route('product-categories.destroy', $data->id) }}" 
+          method="POST" 
+          class="hidden">
         @csrf
-        @method('delete')
+        @method('DELETE')
     </form>
-</button>
+</div>

@@ -33,10 +33,10 @@ class StorePurchaseRequest extends FormRequest
             'total_amount' => 'required|numeric|min:0',
             'paid_amount' => 'required|numeric|min:0',
 
-            'status' => 'required|string|in:Pending,Completed',
+            'status' => 'required|string|in:Pending,Completed,Ordered',
 
             // Field baru untuk UMKM
-            'payment_method' => 'required|string|in:Tunai,Transfer',
+            'payment_method' => 'required|string|in:Cash,Tunai,Transfer,Credit,Other',
             'bank_name' => 'required_if:payment_method,Transfer|nullable|string|max:100',
 
             'note' => 'nullable|string|max:1000',
@@ -60,9 +60,9 @@ class StorePurchaseRequest extends FormRequest
             'paid_amount.required' => 'Jumlah bayar wajib diisi.',
             'paid_amount.min' => 'Jumlah bayar tidak boleh negatif.',
             'status.required' => 'Status pembelian wajib dipilih.',
-            'status.in' => 'Status pembelian harus Pending atau Completed.',
+            'status.in' => 'Status pembelian harus Pending, Completed, atau Ordered.',
             'payment_method.required' => 'Metode pembayaran wajib dipilih.',
-            'payment_method.in' => 'Metode pembayaran harus Tunai atau Transfer.',
+            'payment_method.in' => 'Metode pembayaran harus Cash, Tunai, Transfer, Credit, atau Other.',
             'bank_name.required_if' => 'Nama bank wajib diisi jika metode pembayaran Transfer.',
         ];
     }

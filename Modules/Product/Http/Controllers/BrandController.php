@@ -12,7 +12,7 @@ class BrandController extends Controller
     public function index()
     {
         abort_if(Gate::denies('access_products'), 403);
-        $brands = Brand::latest()->paginate(10);
+        $brands = Brand::latest()->get();
         return view('product::brands.index', compact('brands'));
     }
 
@@ -25,9 +25,19 @@ class BrandController extends Controller
     public function store(Request $request)
     {
         abort_if(Gate::denies('create_products'), 403);
-        $request->validate(['name' => 'required|string|unique:brands,name']);
-        Brand::create(['name' => $request->name]);
         
+        $request->validate(['name' => 'required|string|unique:brands,name']);
+        $brand = Brand::create(['name' => $request->name]);
+
+        // Handle AJAX request
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Merek baru berhasil ditambahkan!',
+                'brand' => $brand
+            ]);
+        }
+
         toast('Merek Baru Berhasil Dibuat!', 'success');
         return redirect()->route('brands.index');
     }
@@ -41,8 +51,18 @@ class BrandController extends Controller
     public function update(Request $request, Brand $brand)
     {
         abort_if(Gate::denies('edit_products'), 403);
+        
         $request->validate(['name' => 'required|string|unique:brands,name,' . $brand->id]);
         $brand->update(['name' => $request->name]);
+
+        // Handle AJAX request
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Merek berhasil diperbarui!',
+                'brand' => $brand
+            ]);
+        }
 
         toast('Merek Berhasil Diperbarui!', 'success');
         return redirect()->route('brands.index');
@@ -52,6 +72,14 @@ class BrandController extends Controller
     {
         abort_if(Gate::denies('delete_products'), 403);
         $brand->delete();
+
+        // Handle AJAX request
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Merek berhasil dihapus!'
+            ]);
+        }
 
         toast('Merek Berhasil Dihapus!', 'success');
         return redirect()->route('brands.index');

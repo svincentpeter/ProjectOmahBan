@@ -52,18 +52,6 @@
 
             <div class="group relative flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md hover:border-ob-primary transition-all overflow-hidden h-full {{ $isSold ? 'opacity-60' : '' }}" 
                  wire:key="second-{{ $p->id }}">
-                
-                {{-- Quick Add Overlay (Clickable Card) --}}
-                @if(!$isSold)
-                <button type="button" 
-                        wire:click="addSecondToCart({{ $p->id }})"
-                        wire:loading.attr="disabled"
-                        wire:loading.class="cursor-wait"
-                        wire:target="addSecondToCart({{ $p->id }})"
-                        class="absolute inset-0 z-10 w-full h-full cursor-pointer focus:outline-none active:scale-[0.98] transition-transform"
-                        aria-label="Tambah {{ $p->name }}">
-                </button>
-                @endif
 
                 {{-- Sold Overlay --}}
                 @if ($isSold)
@@ -71,18 +59,6 @@
                         <span class="bg-red-500 text-white px-4 py-1.5 rounded-lg font-bold text-sm tracking-wider shadow-lg transform -rotate-6 border-2 border-white/20">TERJUAL</span>
                     </div>
                 @endif
-
-                {{-- Loading Spinner --}}
-                <div wire:loading wire:target="addSecondToCart({{ $p->id }})" 
-                     class="absolute inset-0 bg-white/80 flex items-center justify-center z-30 backdrop-blur-sm">
-                    <div class="flex flex-col items-center gap-2">
-                        <svg class="animate-spin h-8 w-8 text-ob-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span class="text-xs font-medium text-slate-600">Menambahkan...</span>
-                    </div>
-                </div>
                 
                 <div class="flex-1 p-4 flex flex-col">
                     {{-- Header --}}
@@ -122,17 +98,38 @@
                         </div>
                     </div>
 
-                    {{-- Footer --}}
-                    <div class="mt-auto pt-3 border-t border-slate-100 flex items-end justify-between">
-                         <div>
-                            <p class="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Harga</p>
-                            <p class="text-base font-bold text-ob-primary">
-                                {{ format_currency((int) $p->selling_price) }}
-                            </p>
+                    {{-- Footer with Price and Button --}}
+                    <div class="mt-auto pt-3 border-t border-slate-100">
+                        <div class="flex items-end justify-between mb-3">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Harga</p>
+                                <p class="text-base font-bold text-ob-primary">
+                                    {{ format_currency((int) $p->selling_price) }}
+                                </p>
+                            </div>
                         </div>
-                        <div class="w-8 h-8 rounded-full {{ $isSold ? 'bg-slate-200 border-slate-300 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-400 group-hover:bg-ob-primary group-hover:border-ob-primary group-hover:text-white' }} border flex items-center justify-center transition-all">
-                            <i class="bi bi-plus-lg"></i>
+                        
+                        {{-- Button Tambah --}}
+                        @if(!$isSold)
+                        <button type="button"
+                                wire:click="addSecondToCart({{ $p->id }})"
+                                onclick="showAddedStateSecond(this)"
+                                class="second-add-btn w-full py-2 px-4 rounded-xl text-sm font-bold transition-all duration-300 bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white">
+                            <span class="btn-default flex items-center justify-center gap-1.5">
+                                <i class="bi bi-plus-circle"></i>
+                                Tambah
+                            </span>
+                            <span class="btn-added hidden flex items-center justify-center gap-1.5">
+                                <i class="bi bi-check-circle-fill"></i>
+                                Masuk
+                            </span>
+                        </button>
+                        @else
+                        <div class="w-full py-2 px-4 rounded-xl text-sm font-bold bg-slate-200 text-slate-500 text-center border border-slate-300">
+                            <i class="bi bi-x-circle mr-1"></i>
+                            Tidak Tersedia
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -153,4 +150,30 @@
             {{ $products->links('pagination::simple-tailwind') }}
         </div>
     @endif
+
+    {{-- Script for button state toggle --}}
+    <script>
+    function showAddedStateSecond(btn) {
+        const defaultSpan = btn.querySelector('.btn-default');
+        const addedSpan = btn.querySelector('.btn-added');
+        
+        // Toggle visibility
+        defaultSpan.classList.add('hidden');
+        addedSpan.classList.remove('hidden');
+        
+        // Change button style to green
+        btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'border-indigo-200', 'hover:bg-indigo-600', 'hover:text-white');
+        btn.classList.add('bg-emerald-500', 'text-white', 'border-emerald-500');
+        btn.disabled = true;
+        
+        // Reset after 1.5 seconds
+        setTimeout(() => {
+            defaultSpan.classList.remove('hidden');
+            addedSpan.classList.add('hidden');
+            btn.classList.remove('bg-emerald-500', 'text-white', 'border-emerald-500');
+            btn.classList.add('bg-indigo-50', 'text-indigo-600', 'border-indigo-200', 'hover:bg-indigo-600', 'hover:text-white');
+            btn.disabled = false;
+        }, 1500);
+    }
+    </script>
 </div>

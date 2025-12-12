@@ -34,7 +34,7 @@ class   UnitsController extends Controller
             'operation_value' => $request->operation_value,
         ]);
 
-        toast('Unit Created!', 'success');
+        session()->flash('swal-success', 'Satuan berhasil dibuat!');
 
         return redirect()->route('units.index');
     }
@@ -58,7 +58,7 @@ class   UnitsController extends Controller
             'operation_value' => $request->operation_value,
         ]);
 
-        toast('Unit Updated!', 'info');
+        session()->flash('swal-success', 'Satuan berhasil diperbarui!');
 
         return redirect()->route('units.index');
     }
@@ -66,7 +66,7 @@ class   UnitsController extends Controller
     public function destroy(Unit $unit) {
         $unit->delete();
 
-        toast('Unit Deleted!', 'warning');
+        session()->flash('swal-warning', 'Satuan berhasil dihapus!');
 
         return redirect()->route('units.index');
     }
