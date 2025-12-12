@@ -11,10 +11,9 @@
     
     {{-- Tailwind CSS via CDN (User Requested) and Local CSS --}}
     <script src="https://cdn.tailwindcss.com"></script>
-    @vite(['resources/css/pos.css'])
+    @vite(['resources/css/pos.css', 'resources/js/app.js'])
     
-    {{-- Flowbite CSS --}}
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    {{-- Flowbite CSS: loaded via NPM/Vite (node_modules/flowbite) --}}
     
     {{-- Bootstrap Icons --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -160,7 +159,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 {{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/id.min.js"></script> --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+{{-- Flowbite JS: loaded via NPM/Vite (resources/js/app.js) --}}
 {{-- Select2 --}}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

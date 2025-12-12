@@ -1,458 +1,246 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Laporan Ringkasan Harian')
 
 @section('breadcrumb')
-<ol class="breadcrumb border-0 m-0">
-    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('reports.index') }}">Laporan</a></li>
-    <li class="breadcrumb-item active">Ringkasan Harian</li>
-</ol>
+    @include('layouts.breadcrumb-flowbite', [
+        'items' => [
+            ['text' => 'Laporan', 'url' => route('reports.index')],
+            ['text' => 'Ringkasan Harian', 'url' => '#', 'icon' => 'bi bi-journal-text'],
+        ]
+    ])
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <div class="animated fadeIn">
-        {{-- Filter Card --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-1 font-weight-bold">
-                            <i class="cil-filter mr-2 text-primary"></i>
-                            Filter Periode
-                        </h5>
-                        <small class="text-muted">Pilih rentang tanggal untuk melihat ringkasan</small>
-                    </div>
+    {{-- Filter Card --}}
+    @include('layouts.filter-card', [
+        'action' => url()->current(),
+        'method' => 'GET',
+        'title' => 'Filter Periode Ringkasan',
+        'icon' => 'bi bi-funnel',
+        'quickFilters' => [
+             ['label' => 'Hari Ini', 'url' => request()->fullUrlWithQuery(['from' => now()->toDateString(), 'to' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-check'],
+             ['label' => '7 Hari Terakhir', 'url' => request()->fullUrlWithQuery(['from' => now()->subDays(6)->toDateString(), 'to' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-week'],
+             ['label' => 'Bulan Ini', 'url' => request()->fullUrlWithQuery(['from' => now()->startOfMonth()->toDateString(), 'to' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-month'],
+        ],
+        'filters' => [
+            [
+                'name' => 'from',
+                'label' => 'Dari Tanggal',
+                'type' => 'date',
+                'value' => $from,
+                'required' => true
+            ],
+            [
+                'name' => 'to',
+                'label' => 'Sampai Tanggal',
+                'type' => 'date',
+                'value' => $to,
+                'required' => true
+            ],
+            [
+                'name' => 'only_paid',
+                'label' => 'Status Pembayaran',
+                'type' => 'select',
+                'value' => request('only_paid', 1),
+                'options' => [
+                    '1' => 'Hanya Transaksi Lunas',
+                    '0' => 'Semua Transaksi'
+                ]
+            ]
+        ]
+    ])
+
+    @php
+        $profitMargin = $sum['omset'] > 0 ? round(($sum['total_profit'] / $sum['omset']) * 100, 1) : 0;
+    @endphp
+
+    {{-- KPI Summary Cards --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {{-- Total Transaksi --}}
+        <div class="relative bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-receipt text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                    <i class="bi bi-list-check text-2xl"></i>
                 </div>
-            </div>
-
-            <div class="card-body">
-                <form method="GET" class="row align-items-end">
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <label for="from" class="form-label font-weight-semibold">
-                            <i class="cil-calendar mr-1 text-muted"></i> Dari Tanggal
-                        </label>
-                        <input type="date" 
-                               name="from" 
-                               id="from"
-                               value="{{ $from }}" 
-                               class="form-control">
-                    </div>
-
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <label for="to" class="form-label font-weight-semibold">
-                            <i class="cil-calendar mr-1 text-muted"></i> Sampai Tanggal
-                        </label>
-                        <input type="date" 
-                               name="to" 
-                               id="to"
-                               value="{{ $to }}" 
-                               class="form-control">
-                    </div>
-
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <label class="form-label font-weight-semibold d-block">
-                            <i class="cil-options mr-1 text-muted"></i> Filter Status
-                        </label>
-                        <div class="custom-control custom-checkbox mt-2">
-                            <input class="custom-control-input" 
-                                   type="checkbox" 
-                                   name="only_paid" 
-                                   id="only_paid" 
-                                   value="1"
-                                   {{ request('only_paid', 1) ? 'checked' : '' }}>
-                            <label class="custom-control-label" for="only_paid">
-                                Hanya Transaksi Lunas
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <i class="cil-filter mr-1"></i> Terapkan Filter
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        {{-- KPI Summary Cards --}}
-        <div class="row mb-4">
-            {{-- Total Transaksi --}}
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stats-card stats-card-purple">
-                    <div class="stats-icon">
-                        <i class="cil-list"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Total Transaksi</div>
-                        <div class="stats-value">{{ number_format($sum['trx_count']) }}</div>
-                        <div class="stats-sub">Jumlah penjualan</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Total Omset --}}
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stats-card stats-card-blue">
-                    <div class="stats-icon">
-                        <i class="cil-wallet"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Total Omset</div>
-                        <div class="stats-value">{{ format_currency($sum['omset']) }}</div>
-                        <div class="stats-sub">Pendapatan kotor</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Total HPP --}}
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stats-card stats-card-danger">
-                    <div class="stats-icon">
-                        <i class="cil-basket"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Total HPP</div>
-                        <div class="stats-value text-danger">{{ format_currency($sum['total_hpp']) }}</div>
-                        <div class="stats-sub">Harga Pokok Penjualan</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Total Profit --}}
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stats-card stats-card-success">
-                    <div class="stats-icon">
-                        <i class="cil-thumb-up"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Total Profit</div>
-                        <div class="stats-value text-success">{{ format_currency($sum['total_profit']) }}</div>
-                        @php
-                            $profitMargin = $sum['omset'] > 0 ? round(($sum['total_profit'] / $sum['omset']) * 100, 1) : 0;
-                        @endphp
-                        <div class="stats-sub">Margin: {{ $profitMargin }}%</div>
-                    </div>
+                <div>
+                    <p class="text-purple-100 text-sm font-medium mb-1 tracking-wide">Total Transaksi</p>
+                    <h3 class="text-3xl font-bold tracking-tight">{{ number_format($sum['trx_count']) }}</h3>
+                    <p class="text-xs text-purple-200 mt-1 opacity-80">Jumlah penjualan</p>
                 </div>
             </div>
         </div>
 
-        {{-- Summary Table --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 font-weight-bold">
-                    <i class="cil-chart-line mr-2 text-primary"></i>
-                    Ringkasan Keuangan
-                </h6>
+        {{-- Total Omset --}}
+        <div class="relative bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-wallet2 text-9xl"></i>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0">
-                    <tbody>
-                        <tr>
-                            <th style="width:40%">
-                                <i class="cil-list mr-2 text-purple"></i> Total Transaksi
-                            </th>
-                            <td class="text-right font-weight-bold">{{ number_format($sum['trx_count']) }} transaksi</td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <i class="cil-wallet mr-2 text-primary"></i> Total Omset
-                            </th>
-                            <td class="text-right font-weight-bold">{{ format_currency($sum['omset']) }}</td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <i class="cil-basket mr-2 text-danger"></i> Total HPP
-                            </th>
-                            <td class="text-right text-danger">({{ format_currency($sum['total_hpp']) }})</td>
-                        </tr>
-                        <tr style="background-color: #f0fdf4;">
-                            <th>
-                                <i class="cil-thumb-up mr-2 text-success"></i> Total Profit
-                            </th>
-                            <td class="text-right font-weight-bold text-success">{{ format_currency($sum['total_profit']) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                    <i class="bi bi-cash-coin text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-blue-100 text-sm font-medium mb-1 tracking-wide">Total Omset</p>
+                    <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($sum['omset']) }}</h3>
+                    <p class="text-xs text-blue-200 mt-1 opacity-80">Pendapatan kotor</p>
+                </div>
             </div>
         </div>
 
-        {{-- Payment Method Breakdown --}}
-        <div class="card shadow-sm">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 font-weight-bold">
-                    <i class="cil-credit-card mr-2 text-primary"></i>
-                    Rincian per Metode Pembayaran
-                </h6>
+        {{-- Total HPP --}}
+        <div class="relative bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-basket text-9xl"></i>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead style="background-color: #f8f9fa;">
-                            <tr>
-                                <th class="border-0">Metode Pembayaran</th>
-                                <th class="border-0 text-center">Jumlah Transaksi</th>
-                                <th class="border-0 text-right">Total Nominal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($byMethod as $m)
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="method-icon mr-2">
-                                            <i class="cil-credit-card"></i>
-                                        </div>
-                                        <strong>{{ $m->payment_method ?: 'Tidak Diketahui' }}</strong>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge badge-light">{{ number_format($m->count) }} transaksi</span>
-                                </td>
-                                <td class="text-right font-weight-bold">{{ format_currency($m->amount) }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="cil-inbox" style="font-size: 3rem; opacity: 0.2;"></i>
-                                        <p class="mb-0 mt-3">Tidak ada data transaksi</p>
-                                        <small>Coba ubah filter tanggal atau status</small>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                        </tbody>
-                        @if(count($byMethod) > 0)
-                        <tfoot style="background-color: #f8f9fa;">
-                            <tr>
-                                <th>Total</th>
-                                <th class="text-center">{{ number_format($byMethod->sum('count')) }} transaksi</th>
-                                <th class="text-right">{{ format_currency($byMethod->sum('amount')) }}</th>
-                            </tr>
-                        </tfoot>
-                        @endif
-                    </table>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                    <i class="bi bi-box-seam text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-orange-100 text-sm font-medium mb-1 tracking-wide">Total HPP</p>
+                    <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($sum['total_hpp']) }}</h3>
+                    <p class="text-xs text-orange-200 mt-1 opacity-80">Harga Pokok Penjualan</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Total Profit --}}
+        <div class="relative bg-gradient-to-br from-green-500 to-emerald-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-graph-up-arrow text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                 <div class="flex items-start justify-between">
+                     <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                        <i class="bi bi-trophy text-2xl"></i>
+                    </div>
+                    <span class="px-2.5 py-1 bg-white/20 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
+                        {{ $profitMargin }}%
+                    </span>
+                </div>
+                <div>
+                    <p class="text-green-100 text-sm font-medium mb-1 tracking-wide">Total Profit</p>
+                    <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($sum['total_profit']) }}</h3>
+                    <div class="w-full bg-black/20 rounded-full h-1.5 mt-2">
+                         <div class="h-1.5 rounded-full bg-white/80" style="width:{{ min(max(abs($profitMargin),0),100) }}%"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    {{-- Summary Table --}}
+    <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/50 dark:text-blue-400">
+                    <i class="bi bi-bar-chart-fill"></i>
+                </div>
+                Ringkasan Keuangan Detail
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50">
+                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white w-1/3 flex items-center gap-2">
+                            <i class="bi bi-list-check text-purple-600"></i> Total Transaksi
+                        </th>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
+                            {{ number_format($sum['trx_count']) }} transaksi
+                        </td>
+                    </tr>
+                    <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50">
+                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-wallet2 text-blue-600"></i> Total Omset
+                        </th>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
+                            {{ format_currency($sum['omset']) }}
+                        </td>
+                    </tr>
+                    <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50">
+                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="bi bi-basket text-red-600"></i> Total HPP
+                        </th>
+                        <td class="px-6 py-4 text-right font-bold text-red-600 dark:text-red-400">
+                            ({{ format_currency($sum['total_hpp']) }})
+                        </td>
+                    </tr>
+                    <tr class="bg-green-50/50 dark:bg-green-900/10 border-t border-green-100 dark:border-green-800">
+                        <th scope="row" class="px-6 py-5 font-bold text-green-900 dark:text-green-100 text-lg flex items-center gap-2">
+                            <i class="bi bi-trophy-fill text-green-600"></i> Total Profit
+                        </th>
+                        <td class="px-6 py-5 text-right font-bold text-green-600 dark:text-green-400 text-xl">
+                            {{ format_currency($sum['total_profit']) }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- Payment Method Breakdown --}}
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div class="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg dark:bg-indigo-900/50 dark:text-indigo-400">
+                    <i class="bi bi-credit-card-2-front"></i>
+                </div>
+                Rincian per Metode Pembayaran
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-100 dark:border-gray-600">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 font-semibold">Metode Pembayaran</th>
+                        <th scope="col" class="px-6 py-3 font-semibold text-center">Jumlah Transaksi</th>
+                        <th scope="col" class="px-6 py-3 font-semibold text-right">Total Nominal</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    @forelse($byMethod as $m)
+                    <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 rounded-lg dark:bg-gray-700 dark:text-gray-400 mr-3">
+                                    <i class="bi bi-credit-card"></i>
+                                </div>
+                                <span class="font-medium text-gray-900 dark:text-white">{{ $m->payment_method ?: 'Tidak Diketahui' }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+                                {{ number_format($m->count) }} transaksi
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
+                            {{ format_currency($m->amount) }}
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            <i class="bi bi-inbox text-4xl mb-3 block text-gray-300 dark:text-gray-600"></i>
+                            Tidak ada data transaksi. Coba ubah filter tanggal atau status.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+                @if(count($byMethod) > 0)
+                <tfoot class="bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
+                    <tr>
+                        <th scope="row" class="px-6 py-4 text-base font-bold text-gray-900 dark:text-white">Total</th>
+                        <td class="px-6 py-4 text-center text-base font-bold text-gray-900 dark:text-white">{{ number_format($byMethod->sum('count')) }} transaksi</td>
+                        <td class="px-6 py-4 text-right text-base font-bold text-blue-600 dark:text-blue-400">{{ format_currency($byMethod->sum('amount')) }}</td>
+                    </tr>
+                </tfoot>
+                @endif
+            </table>
+        </div>
+    </div>
 @endsection
-
-@push('page_styles')
-<style>
-    /* ========== Animations ========== */
-    .animated.fadeIn {
-        animation: fadeIn 0.3s ease-in;
-    }
-    
-    @keyframes fadeIn {
-        from { 
-            opacity: 0; 
-            transform: translateY(10px); 
-        }
-        to { 
-            opacity: 1; 
-            transform: translateY(0); 
-        }
-    }
-
-    /* ========== Card Shadow ========== */
-    .shadow-sm {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-    }
-
-    /* ========== Stats Cards ========== */
-    .stats-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        height: 100%;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        border-left: 4px solid;
-    }
-
-    .stats-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    }
-
-    .stats-card-purple { border-left-color: #8b5cf6; }
-    .stats-card-blue { border-left-color: #3b82f6; }
-    .stats-card-danger { border-left-color: #ef4444; }
-    .stats-card-success { border-left-color: #22c55e; }
-
-    .stats-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.75rem;
-        flex-shrink: 0;
-    }
-
-    .stats-card-purple .stats-icon {
-        background: rgba(139, 92, 246, 0.14);
-        color: #8b5cf6;
-    }
-
-    .stats-card-blue .stats-icon {
-        background: rgba(59, 130, 246, 0.14);
-        color: #3b82f6;
-    }
-
-    .stats-card-danger .stats-icon {
-        background: rgba(239, 68, 68, 0.14);
-        color: #ef4444;
-    }
-
-    .stats-card-success .stats-icon {
-        background: rgba(34, 197, 94, 0.14);
-        color: #22c55e;
-    }
-
-    .stats-content {
-        flex: 1;
-    }
-
-    .stats-label {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #6b7280;
-        margin-bottom: 8px;
-    }
-
-    .stats-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #1f2937;
-        line-height: 1.2;
-        letter-spacing: -0.02em;
-    }
-
-    .stats-sub {
-        font-size: 0.8125rem;
-        color: #6b7280;
-        margin-top: 4px;
-    }
-
-    /* ========== Method Icon ========== */
-    .method-icon {
-        width: 36px;
-        height: 36px;
-        background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1rem;
-        box-shadow: 0 2px 6px rgba(72, 52, 223, 0.2);
-        flex-shrink: 0;
-    }
-
-    /* ========== Table Styling ========== */
-    .table thead th {
-        font-size: 0.8125rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        color: #4f5d73;
-        padding: 14px 12px;
-    }
-
-    .table tbody td,
-    .table tbody th {
-        padding: 12px;
-        vertical-align: middle;
-        font-size: 0.875rem;
-    }
-
-    .table tbody tr {
-        transition: all 0.2s ease;
-    }
-
-    .table tbody tr:hover {
-        background-color: rgba(72, 52, 223, 0.03) !important;
-    }
-
-    /* ========== Badge Styling ========== */
-    .badge {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.65rem;
-        font-weight: 600;
-    }
-
-    /* ========== Custom Checkbox ========== */
-    .custom-control-label {
-        font-weight: 500;
-    }
-
-    /* ========== Color Utilities ========== */
-    .text-purple { color: #8b5cf6 !important; }
-
-    /* ========== Responsive ========== */
-    @media (max-width: 992px) {
-        .stats-value {
-            font-size: 1.25rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .stats-card {
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .table thead th,
-        .table tbody td {
-            padding: 10px 8px;
-            font-size: 0.8125rem;
-        }
-        
-        .method-icon {
-            width: 32px;
-            height: 32px;
-            font-size: 0.875rem;
-        }
-    }
-
-    /* ========== Print Styles ========== */
-    @media print {
-        .card, 
-        .card-body, 
-        .stats-card { 
-            box-shadow: none !important; 
-            page-break-inside: avoid;
-        }
-        
-        .btn, 
-        form, 
-        nav, 
-        .breadcrumb { 
-            display: none !important; 
-        }
-        
-        body, .table { 
-            font-size: 11pt; 
-        }
-        
-        @page { 
-            margin: 15mm; 
-        }
-        
-        .stats-card {
-            border: 1px solid #ddd;
-        }
-    }
-</style>
-@endpush

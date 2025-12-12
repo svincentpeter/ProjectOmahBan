@@ -1,153 +1,50 @@
-{{-- Modules/Product/Resources/views/edit.blade.php --}}
-@extends('layouts.app')
+{{-- Modules/Product/Resources/views/products/edit.blade.php --}}
+@extends('layouts.app-flowbite')
 
 @section('title', 'Edit Produk')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('products.index') }}">Produk</a></li>
-        <li class="breadcrumb-item active">Edit: {{ $product->product_name }}</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Manajemen Produk', 'url' => '#'],
+        ['text' => 'Daftar Produk', 'url' => route('products.index')],
+        ['text' => 'Edit Produk', 'url' => '#', 'icon' => 'bi bi-pencil-square']
+    ]])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            {{-- Alerts --}}
-            @include('utils.alerts')
+    {{-- Alerts --}}
+    @include('utils.alerts')
 
-            <form id="product-form" action="{{ route('products.update', $product->id) }}" method="POST"
-                enctype="multipart/form-data">
-                @csrf
-                @method('PATCH')
+    <form id="product-form" action="{{ route('products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        @method('PATCH')
 
-                {{-- Sticky Action Bar --}}
-                <div class="action-bar shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0 font-weight-bold">
-                                <i class="cil-pencil mr-2 text-primary"></i>
-                                Edit Produk: {{ $product->product_name }}
-                            </h5>
-                            <small class="text-muted">Perbarui informasi produk</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('products.index') }}" class="btn btn-outline-secondary">
-                                <i class="cil-x mr-1"></i> Batal
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="cil-save mr-1"></i> Simpan Perubahan
-                            </button>
-                        </div>
-                    </div>
+        {{-- Sticky Action Bar --}}
+        <div class="sticky top-[72px] z-50 mb-6 p-4 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700 transition-transform duration-300">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h5 class="flex items-center text-lg font-bold text-gray-900 dark:text-white">
+                        <i class="bi bi-pencil-square me-2 text-blue-600"></i>
+                         Edit Produk: {{ $product->product_name }}
+                    </h5>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Perbarui informasi produk</p>
                 </div>
-
-                {{-- Form utama (dipakai juga di Create) --}}
-                @include('product::products.partials._form')
-
-            </form>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <a href="{{ route('products.index') }}" class="w-1/2 sm:w-auto text-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700 transition-all font-medium text-sm">
+                        <i class="bi bi-x me-1"></i> Batal
+                    </a>
+                    <button type="submit" class="w-1/2 sm:w-auto text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-all font-medium text-sm shadow-md hover:shadow-lg">
+                        <i class="bi bi-check-circle me-1"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
+
+        {{-- Main Form (Shared with Create) --}}
+        @include('product::products.partials._form')
+
+    </form>
 @endsection
 
-{{-- Pakai partial script bersama (maskMoney + margin + Swal + Dropzone) --}}
+{{-- Scripts --}}
 @include('product::products.partials._scripts')
-
-@push('page_styles')
-    <style>
-        /* ========== Same styles as Create page ========== */
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .action-bar {
-            position: sticky;
-            top: 0;
-            z-index: 1020;
-            background: white;
-            padding: 1.25rem;
-            border-radius: 10px;
-            margin-bottom: 0;
-        }
-
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        .form-control-lg {
-            height: 50px;
-            font-size: 1rem;
-        }
-
-        .form-control:focus,
-        select.form-control:focus,
-        textarea.form-control:focus {
-            border-color: #4834DF;
-            box-shadow: 0 0 0 0.2rem rgba(72, 52, 223, 0.25);
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .sticky-sidebar {
-            position: sticky;
-            top: 100px;
-        }
-
-        .badge-lg {
-            font-size: 1rem;
-            padding: 0.5rem 1rem;
-        }
-
-        .alert-info {
-            background-color: #e7f6fc;
-            border-color: #8ad4ee;
-            color: #115293;
-            border-radius: 8px;
-        }
-
-        .d-flex.gap-2>* {
-            margin-left: 0.5rem;
-        }
-
-        .d-flex.gap-2>*:first-child {
-            margin-left: 0;
-        }
-
-        @media (max-width: 992px) {
-            .sticky-sidebar {
-                position: relative;
-                top: 0;
-                margin-top: 1rem;
-            }
-
-            .action-bar {
-                position: relative;
-            }
-
-            .action-bar .d-flex {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .action-bar .d-flex>div {
-                width: 100%;
-            }
-        }
-    </style>
-@endpush

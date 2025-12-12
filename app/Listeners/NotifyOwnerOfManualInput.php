@@ -23,17 +23,7 @@ class NotifyOwnerOfManualInput
 
     public function __construct(FonteeNotificationService $fonteeService)
     {
-        try {
-            if (config('fontee.enabled', false) && $this->fonteeService) {
-                $this->fonteeService->sendNotification($notification);
-            }
-        } catch (\Throwable $e) {
-            \Log::warning('Fontee send failed, internal notification recorded', [
-                'notification_id' => $notification->id ?? null,
-                'msg' => $e->getMessage(),
-            ]);
-            // jangan throw; biar owner_notifications tetap tercatat
-        }
+        $this->fonteeService = $fonteeService;
     }
 
     /**

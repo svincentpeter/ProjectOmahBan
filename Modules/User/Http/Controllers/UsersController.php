@@ -53,9 +53,10 @@ class UsersController extends Controller
             $tempFile = Upload::where('folder', $request->image)->first();
 
             if ($tempFile) {
-                $user->addMedia(Storage::path('public/temp/' . $request->image . '/' . $tempFile->filename))->toMediaCollection('avatars');
+                // Fix path: match UploadController's storage location (temp/ folder relative to storage root)
+                $user->addMedia(Storage::path('temp/' . $request->image . '/' . $tempFile->filename))->toMediaCollection('avatars');
 
-                Storage::deleteDirectory('public/temp/' . $request->image);
+                Storage::deleteDirectory('temp/' . $request->image);
                 $tempFile->delete();
             }
         }
@@ -99,9 +100,10 @@ class UsersController extends Controller
             }
 
             if ($tempFile) {
-                $user->addMedia(Storage::path('public/temp/' . $request->image . '/' . $tempFile->filename))->toMediaCollection('avatars');
+                // Fix path: match UploadController's storage location (temp/ folder relative to storage root)
+                $user->addMedia(Storage::path('temp/' . $request->image . '/' . $tempFile->filename))->toMediaCollection('avatars');
 
-                Storage::deleteDirectory('public/temp/' . $request->image);
+                Storage::deleteDirectory('temp/' . $request->image);
                 $tempFile->delete();
             }
         }

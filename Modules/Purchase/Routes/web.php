@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,7 +25,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/purchases/second/pdf/{id}', function ($id) {
         $purchaseSecond = \Modules\Purchase\Entities\PurchaseSecond::findOrFail($id);
 
-        $pdf = \PDF::loadView('purchase::second.print', [
+        $pdf = Pdf::loadView('purchase::second.print', [
             'purchase' => $purchaseSecond,
         ])->setPaper('a4');
 
@@ -61,7 +62,7 @@ Route::group(['middleware' => 'auth'], function () {
         $purchase = \Modules\Purchase\Entities\Purchase::findOrFail($id);
         $supplier = \Modules\People\Entities\Supplier::findOrFail($purchase->supplier_id);
 
-        $pdf = \PDF::loadView('purchase::print', [
+        $pdf = Pdf::loadView('purchase::baru.print', [
             'purchase' => $purchase,
             'supplier' => $supplier,
         ])->setPaper('a4');
@@ -71,6 +72,14 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Resource Routes untuk Produk Baru
     Route::resource('purchases', 'PurchaseController');
+
+    // Purchase Payments
+    Route::get('purchase-payments/{purchase_id}', 'PurchasePaymentsController@index')->name('purchase-payments.index');
+    Route::get('purchase-payments/{purchase_id}/create', 'PurchasePaymentsController@create')->name('purchase-payments.create');
+    Route::post('purchase-payments', 'PurchasePaymentsController@store')->name('purchase-payments.store');
+    Route::get('purchase-payments/{purchase_id}/{purchasePayment}/edit', 'PurchasePaymentsController@edit')->name('purchase-payments.edit');
+    Route::patch('purchase-payments/{purchasePayment}', 'PurchasePaymentsController@update')->name('purchase-payments.update');
+    Route::delete('purchase-payments/{purchasePayment}', 'PurchasePaymentsController@destroy')->name('purchase-payments.destroy');
 });
 
 // ===== TEST ROUTE - DELETE AFTER SUCCESS =====

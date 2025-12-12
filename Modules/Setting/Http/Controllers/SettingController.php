@@ -42,7 +42,7 @@ class SettingController extends Controller
             return \Modules\Setting\Entities\Setting::with('currency')->first();
         });
 
-        toast('Settings Updated!', 'info');
+        session()->flash('swal-success', 'Pengaturan berhasil disimpan!');
 
         return redirect()->route('settings.index');
     }
@@ -76,7 +76,7 @@ class SettingController extends Controller
             file_put_contents(base_path('.env'), str_replace($toReplace, $replaceWith, file_get_contents(base_path('.env'))));
             Artisan::call('cache:clear');
 
-            toast('Mail Settings Updated!', 'info');
+            session()->flash('swal-success', 'Pengaturan Email berhasil disimpan!');
         } catch (\Exception $exception) {
             Log::error($exception);
             session()->flash('settings_smtp_message', 'Something Went Wrong!');

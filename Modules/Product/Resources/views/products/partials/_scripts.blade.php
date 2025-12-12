@@ -1,9 +1,9 @@
-{{-- Modules/Product/Resources/views/partials/_scripts.blade.php --}}
+{{-- Modules/Product/Resources/views/products/partials/_scripts.blade.php --}}
 
 @section('third_party_scripts')
     <script src="{{ asset('js/dropzone.js') }}"></script>
     <script>
-        // Hindari auto discover biar nggak double attach sama komponen x-image-upload
+        // Avoid auto discover to prevent double attach with x-image-upload component
         if (window.Dropzone) {
             Dropzone.autoDiscover = false;
         }
@@ -22,7 +22,7 @@
                 if (value === null || value === undefined) return 0;
 
                 var str = value.toString();
-                // ambil hanya angka dan minus, buang Rp, titik, spasi, dll
+                // Take only digits and minus, remove Rp, dots, spaces, etc
                 str = str.replace(/[^\d\-]/g, '');
 
                 if (str === '' || str === '-') return 0;
@@ -41,11 +41,11 @@
                 precision: 0
             });
 
-            // format nilai awal
+            // Format initial values
             $('#product_cost, #product_price').maskMoney('mask');
 
             // ============================
-            // HITUNG MARGIN
+            // CALCULATE MARGIN
             // ============================
             function calculateProfit() {
                 var cost  = parseRupiah($('#product_cost').val());
@@ -60,54 +60,51 @@
 
                     $('#profitAmount').text(formattedProfit);
                     $('#profitPercentage').text(percentage + '%');
-                    $('#profitMarginAlert').fadeIn();
+                    $('#profitMarginAlert').removeClass('hidden').addClass('flex');
 
-                    // warna badge
+                    // Badge colors using Tailwind classes
+                    var badge = $('#profitPercentage');
+                    badge.removeClass('bg-red-100 text-red-800 bg-yellow-100 text-yellow-800 bg-green-100 text-green-800');
+
                     if (percentage < 10) {
-                        $('#profitPercentage')
-                            .removeClass('badge-primary badge-success badge-warning')
-                            .addClass('badge-danger');
+                        badge.addClass('bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300');
                     } else if (percentage < 30) {
-                        $('#profitPercentage')
-                            .removeClass('badge-primary badge-danger badge-success')
-                            .addClass('badge-warning');
+                        badge.addClass('bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300');
                     } else {
-                        $('#profitPercentage')
-                            .removeClass('badge-danger badge-warning')
-                            .addClass('badge-success');
+                        badge.addClass('bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300');
                     }
                 } else {
-                    $('#profitMarginAlert').fadeOut();
+                    $('#profitMarginAlert').addClass('hidden').removeClass('flex');
                 }
             }
 
-            // Update saat user mengubah harga
+            // Update when user changes price
             $('#product_cost, #product_price').on('blur change keyup', calculateProfit);
 
             @if (isset($product))
-                // Edit mode: langsung tampilkan margin awal
+                // Edit mode: show initial margin
                 calculateProfit();
             @else
-                // Create mode: default disembunyikan
-                $('#profitMarginAlert').hide();
+                // Create mode: hidden by default
+                // Already handled by hidden class in HTML
             @endif
 
             // ============================
-            // TOMBOL GENERATE KODE (hanya ada di Create, aman di Edit)
+            // GENERATE CODE BUTTON (Create mode)
             // ============================
             $('#generateCode').on('click', function () {
                 var randomNum = Math.floor(Math.random() * 9999) + 1;
                 var newCode   = 'PRD-' + randomNum.toString().padStart(4, '0');
                 $('#product_code').val(newCode);
 
-                $(this).find('i').addClass('rotating');
+                $(this).find('i').addClass('animate-spin');
                 setTimeout(() => {
-                    $(this).find('i').removeClass('rotating');
+                    $(this).find('i').removeClass('animate-spin');
                 }, 500);
             });
 
             // ============================
-            // SUBMIT FORM + VALIDASI
+            // FORM SUBMIT + VALIDATION
             // ============================
             $('#product-form').on('submit', function (e) {
                 e.preventDefault();
@@ -115,33 +112,33 @@
                 var cost  = parseRupiah($('#product_cost').val());
                 var price = parseRupiah($('#product_price').val());
 
-                // set nilai murni ke input sebelum dikirim ke server
+                // Set pure value to input before sending to server
                 $('#product_cost').val(cost);
                 $('#product_price').val(price);
 
-                // Validasi dasar
+                // Basic validation
                 if (cost <= 0 || price <= 0) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Harga Tidak Valid',
                         text: 'Modal dan harga jual harus lebih besar dari 0',
-                        confirmButtonColor: '#4834DF'
+                        confirmButtonColor: '#2563EB'
                     });
 
-                    // balikin ke format uang
+                    // Restore money format
                     $('#product_cost, #product_price').maskMoney('mask');
                     return false;
                 }
 
-                // Warning kalau rugi
+                // Warning if loss
                 if (price < cost) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Peringatan',
-                        text: 'Harga jual lebih rendah dari modal. Yakin ingin melanjutkan?',
+                        title: 'Peringatan Margin',
+                        html: 'Harga jual lebih rendah dari modal.<br>Anda berpotensi mengalami kerugian.',
                         showCancelButton: true,
-                        confirmButtonColor: '#4834DF',
-                        cancelButtonColor: '#768192',
+                        confirmButtonColor: '#2563EB',
+                        cancelButtonColor: '#6B7280',
                         confirmButtonText: 'Ya, Lanjutkan',
                         cancelButtonText: 'Batal'
                     }).then((result) => {
@@ -159,17 +156,19 @@
 
             function proceedSubmit() {
                 @if (isset($product))
-                    // EDIT MODE → konfirmasi dulu
+                    // EDIT MODE
                     Swal.fire({
                         title: 'Simpan Perubahan?',
                         html: 'Produk <strong>"{{ $product->product_name ?? '' }}"</strong> akan diperbarui',
                         icon: 'question',
                         showCancelButton: true,
-                        confirmButtonColor: '#4834DF',
-                        cancelButtonColor: '#768192',
-                        confirmButtonText: '<i class="cil-save mr-1"></i> Ya, Simpan!',
-                        cancelButtonText: '<i class="cil-x mr-1"></i> Batal',
-                        reverseButtons: true
+                        confirmButtonColor: '#2563EB',
+                        cancelButtonColor: '#6B7280',
+                        confirmButtonText: '<i class="bi bi-save me-1"></i> Ya, Simpan!',
+                        cancelButtonText: '<i class="bi bi-x me-1"></i> Batal',
+                        reverseButtons: true,
+                        background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
+                        color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
                     }).then((result) => {
                         if (result.isConfirmed) {
                             showLoadingAndSubmit();
@@ -178,7 +177,7 @@
                         }
                     });
                 @else
-                    // CREATE MODE → langsung submit
+                    // CREATE MODE
                     showLoadingAndSubmit();
                 @endif
             }
@@ -188,7 +187,8 @@
                     title: 'Menyimpan...',
                     html: 'Mohon tunggu sebentar',
                     allowOutsideClick: false,
-                    didOpen: () => {
+                    showConfirmButton: false,
+                    willOpen: () => {
                         Swal.showLoading();
                     }
                 });
@@ -196,9 +196,8 @@
                 $('#product-form')[0].submit();
             }
 
-            // Auto-focus dan tooltip
+            // Auto-focus logic
             $('#product_name').focus();
-            $('[data-toggle="tooltip"]').tooltip();
         });
     </script>
 @endpush

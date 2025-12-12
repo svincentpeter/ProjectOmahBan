@@ -1,415 +1,203 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Tambah Mata Uang')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Beranda</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('currencies.index') }}">Mata Uang</a></li>
-        <li class="breadcrumb-item active">Tambah Mata Uang</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', [
+        'title' => 'Tambah Mata Uang',
+        'items' => [
+            ['text' => 'Home', 'url' => route('home')],
+            ['text' => 'Mata Uang', 'url' => route('currencies.index')],
+            ['text' => 'Tambah', 'url' => '#'],
+        ],
+    ])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            {{-- Alerts --}}
-            @include('utils.alerts')
+    {{-- Alerts --}}
+    @include('utils.alerts')
 
-            <form action="{{ route('currencies.store') }}" method="POST" autocomplete="off" id="currency-form">
-                @csrf
+    <form action="{{ route('currencies.store') }}" method="POST" autocomplete="off" id="currency-form">
+        @csrf
 
-                {{-- Sticky Action Bar --}}
-                <div class="action-bar shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center">
+        {{-- Form Layout --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {{-- Left Column: Form Fields --}}
+            <div class="lg:col-span-2 space-y-6">
+                {{-- Card --}}
+                <div class="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden p-6">
+                    <div class="border-b border-zinc-100 pb-4 mb-6">
+                        <h2 class="text-lg font-bold text-zinc-800 flex items-center gap-2">
+                            <i class="bi bi-plus-circle text-blue-600"></i>
+                            Informasi Mata Uang
+                        </h2>
+                        <p class="text-sm text-zinc-500 mt-1">Isi detail mata uang baru yang akan ditambahkan.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {{-- Name --}}
+                        <div class="col-span-2">
+                            <label for="currency_name" class="block text-sm font-medium text-zinc-700 mb-2">
+                                Nama Mata Uang <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                                    <i class="bi bi-cursor-text"></i>
+                                </span>
+                                <input type="text" id="currency_name" name="currency_name"
+                                    class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block @error('currency_name') border-red-500 @enderror"
+                                    placeholder="Contoh: Rupiah Indonesia" value="{{ old('currency_name') }}" required>
+                            </div>
+                            @error('currency_name')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Code --}}
                         <div>
-                            <h5 class="mb-0 font-weight-bold">
-                                <i class="cil-dollar mr-2 text-primary"></i>
-                                Tambah Mata Uang Baru
-                            </h5>
-                            <small class="text-muted">Konfigurasi mata uang untuk sistem</small>
+                            <label for="code" class="block text-sm font-medium text-zinc-700 mb-2">
+                                Kode (ISO 4217) <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                                    <i class="bi bi-upc-scan"></i>
+                                </span>
+                                <input type="text" id="code" name="code"
+                                    class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block uppercase @error('code') border-red-500 @enderror"
+                                    placeholder="IDR" value="{{ old('code') }}" maxlength="3" required>
+                            </div>
+                            <p class="mt-1 text-xs text-zinc-500">Maksimal 3 karakter (ex: IDR, USD)</p>
+                            @error('code')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('currencies.index') }}" class="btn btn-outline-secondary">
-                                <i class="cil-x mr-1"></i> Batal
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="cil-check-circle mr-1"></i> Simpan Mata Uang
-                            </button>
+
+                        {{-- Symbol --}}
+                        <div>
+                            <label for="symbol" class="block text-sm font-medium text-zinc-700 mb-2">
+                                Simbol <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                                    <i class="bi bi-currency-exchange"></i>
+                                </span>
+                                <input type="text" id="symbol" name="symbol"
+                                    class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block @error('symbol') border-red-500 @enderror"
+                                    placeholder="Rp" value="{{ old('symbol', 'Rp') }}" required>
+                            </div>
+                            @error('symbol')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Thousand Separator --}}
+                        <div>
+                            <label for="thousand_separator" class="block text-sm font-medium text-zinc-700 mb-2">
+                                Pemisah Ribuan <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                                    <i class="bi bi-grid-3x3"></i>
+                                </span>
+                                <select id="thousand_separator" name="thousand_separator"
+                                    class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block @error('thousand_separator') border-red-500 @enderror"
+                                    required>
+                                    <option value="." {{ old('thousand_separator', '.') == '.' ? 'selected' : '' }}>Titik (.)</option>
+                                    <option value="," {{ old('thousand_separator') == ',' ? 'selected' : '' }}>Koma (,)</option>
+                                    <option value=" " {{ old('thousand_separator') == ' ' ? 'selected' : '' }}>Spasi ( )</option>
+                                </select>
+                            </div>
+                            @error('thousand_separator')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Decimal Separator --}}
+                        <div>
+                            <label for="decimal_separator" class="block text-sm font-medium text-zinc-700 mb-2">
+                                Pemisah Desimal <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                                    <i class="bi bi-dot"></i>
+                                </span>
+                                <select id="decimal_separator" name="decimal_separator"
+                                    class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block @error('decimal_separator') border-red-500 @enderror"
+                                    required>
+                                    <option value="," {{ old('decimal_separator', ',') == ',' ? 'selected' : '' }}>Koma (,)</option>
+                                    <option value="." {{ old('decimal_separator') == '.' ? 'selected' : '' }}>Titik (.)</option>
+                                </select>
+                            </div>
+                            @error('decimal_separator')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                     {{-- Format Info Alert --}}
+                     <div class="mt-6 p-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50 flex items-start gap-3" role="alert">
+                        <i class="bi bi-info-circle flex-shrink-0 text-lg"></i>
+                        <div>
+                            <span class="font-medium block">Format Tampilan Sistem</span>
+                            Sistem menggunakan format standar: <span class="font-bold">Rp 100.000</span> (Tanpa desimal, dengan pemisah ribuan sesuai konfigurasi).
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="row mt-4">
-                    {{-- Left Column: Form --}}
-                    <div class="col-lg-7">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-white py-3 border-bottom">
-                                <h6 class="mb-0 font-weight-bold">
-                                    <i class="cil-info mr-2 text-primary"></i>
-                                    Informasi Mata Uang
-                                </h6>
-                            </div>
-                            <div class="card-body p-4">
-                                <div class="row">
-                                    {{-- Currency Name --}}
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <label for="currency_name" class="form-label font-weight-semibold">
-                                                <i class="cil-money mr-1 text-muted"></i> Nama Mata Uang
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" id="currency_name" name="currency_name"
-                                                class="form-control form-control-lg @error('currency_name') is-invalid @enderror"
-                                                value="{{ old('currency_name') }}" placeholder="Contoh: Rupiah Indonesia"
-                                                required>
-                                            @error('currency_name')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                <i class="cil-lightbulb mr-1"></i>
-                                                Nama lengkap mata uang
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    {{-- Code --}}
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="code" class="form-label font-weight-semibold">
-                                                <i class="cil-code mr-1 text-muted"></i> Kode (ISO 4217)
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" id="code" name="code"
-                                                class="form-control form-control-lg text-uppercase @error('code') is-invalid @enderror"
-                                                value="{{ old('code') }}" placeholder="IDR" maxlength="3" required>
-                                            @error('code')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                <i class="cil-info mr-1"></i>
-                                                3 karakter (IDR, USD, EUR)
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    {{-- Symbol --}}
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="symbol" class="form-label font-weight-semibold">
-                                                <i class="cil-badge mr-1 text-muted"></i> Simbol
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" id="symbol" name="symbol"
-                                                class="form-control form-control-lg @error('symbol') is-invalid @enderror"
-                                                value="{{ old('symbol', 'Rp') }}" placeholder="Rp" required>
-                                            @error('symbol')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                <i class="cil-info mr-1"></i>
-                                                Simbol tampilan (Rp, $, €)
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    {{-- Thousand Separator --}}
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="thousand_separator" class="form-label font-weight-semibold">
-                                                <i class="cil-options mr-1 text-muted"></i> Pemisah Ribuan
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <select id="thousand_separator" name="thousand_separator"
-                                                class="form-control form-control-lg @error('thousand_separator') is-invalid @enderror"
-                                                required>
-                                                <option value="."
-                                                    {{ old('thousand_separator', '.') == '.' ? 'selected' : '' }}>Titik (.)
-                                                </option>
-                                                <option value=","
-                                                    {{ old('thousand_separator') == ',' ? 'selected' : '' }}>Koma (,)
-                                                </option>
-                                                <option value=" "
-                                                    {{ old('thousand_separator') == ' ' ? 'selected' : '' }}>Spasi ( )
-                                                </option>
-                                            </select>
-                                            @error('thousand_separator')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                <i class="cil-info mr-1"></i>
-                                                Format: 1.000 atau 1,000
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    {{-- Decimal Separator --}}
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="decimal_separator" class="form-label font-weight-semibold">
-                                                <i class="cil-options mr-1 text-muted"></i> Pemisah Desimal
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <select id="decimal_separator" name="decimal_separator"
-                                                class="form-control form-control-lg @error('decimal_separator') is-invalid @enderror"
-                                                required>
-                                                <option value=","
-                                                    {{ old('decimal_separator', ',') == ',' ? 'selected' : '' }}>Koma (,)
-                                                </option>
-                                                <option value="."
-                                                    {{ old('decimal_separator') == '.' ? 'selected' : '' }}>Titik (.)
-                                                </option>
-                                            </select>
-                                            @error('decimal_separator')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                <i class="cil-ban mr-1"></i>
-                                                Tidak ditampilkan (0 desimal)
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {{-- Format Info Alert --}}
-                                <div class="alert alert-info mt-3" role="alert">
-                                    <div class="d-flex align-items-start">
-                                        <i class="cil-info mr-2 mt-1" style="font-size: 1.25rem;"></i>
-                                        <div>
-                                            <strong>Format Tampilan Sistem</strong>
-                                            <p class="mb-0">
-                                                Sistem menggunakan format standar: <strong class="text-primary">Rp
-                                                    100.000</strong>
-                                                <br>
-                                                <small>Tanpa desimal, dengan pemisah ribuan sesuai konfigurasi</small>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            {{-- Right Column: Preview & Actions --}}
+            <div class="lg:col-span-1 space-y-6">
+                 {{-- Actions --}}
+                 <div class="bg-white border border-zinc-200 shadow-sm rounded-2xl overflow-hidden p-6 sticky top-24">
+                    <div class="border-b border-zinc-100 pb-4 mb-4">
+                        <h2 class="text-lg font-bold text-zinc-800">Aksi</h2>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <button type="submit" class="w-full px-4 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all shadow-sm">
+                            <i class="bi bi-check-lg mr-2"></i> Simpan Mata Uang
+                        </button>
+                        <a href="{{ route('currencies.index') }}" class="w-full px-4 py-2.5 bg-zinc-100 text-zinc-700 font-medium rounded-xl hover:bg-zinc-200 focus:ring-4 focus:ring-zinc-100 transition-all text-center">
+                            Batal
+                        </a>
                     </div>
 
-                    {{-- Right Column: Preview --}}
-                    <div class="col-lg-5">
-                        <div class="card shadow-sm sticky-sidebar">
-                            <div class="card-header bg-white py-3 border-bottom">
-                                <h6 class="mb-0 font-weight-bold">
-                                    <i class="cil-screen-desktop mr-2 text-primary"></i>
-                                    Preview Format
-                                </h6>
+                    <hr class="my-6 border-zinc-100">
+
+                    {{-- Preview Section --}}
+                    <div>
+                        <h3 class="text-sm font-bold text-zinc-700 mb-3 uppercase tracking-wider">Preview Format</h3>
+                        <div class="bg-zinc-50 border border-zinc-200 rounded-xl p-6 text-center mb-4">
+                            <span class="block text-xs text-zinc-500 mb-1 uppercase tracking-wide font-bold">Contoh Tampilan</span>
+                            <div class="text-2xl font-black text-blue-600" id="formatPreview">
+                                Rp 100.000
                             </div>
-                            <div class="card-body p-4">
-                                <div class="preview-container">
-                                    <div class="preview-label">Contoh Tampilan:</div>
-                                    <div class="preview-display" id="formatPreview">
-                                        Rp 100.000
-                                    </div>
+                        </div>
 
-                                    <hr class="my-4">
-
-                                    <div class="preview-details">
-                                        <div class="detail-item">
-                                            <span class="detail-label">Mata Uang:</span>
-                                            <span class="detail-value" id="previewName">-</span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <span class="detail-label">Kode:</span>
-                                            <span class="detail-value" id="previewCode">-</span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <span class="detail-label">Simbol:</span>
-                                            <span class="detail-value" id="previewSymbol">-</span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <span class="detail-label">Pemisah Ribuan:</span>
-                                            <span class="detail-value" id="previewThousand">-</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="alert alert-warning mt-4" role="alert">
-                                    <small>
-                                        <i class="cil-warning mr-1"></i>
-                                        <strong>Catatan:</strong> Desimal tidak ditampilkan di UI untuk menjaga konsistensi
-                                        format mata uang Indonesia.
-                                    </small>
-                                </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between py-2 border-b border-zinc-100">
+                                <span class="text-zinc-500">Mata Uang</span>
+                                <span class="font-semibold text-zinc-800 text-right" id="previewName">-</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-zinc-100">
+                                <span class="text-zinc-500">Kode</span>
+                                <span class="font-semibold text-zinc-800 font-mono" id="previewCode">-</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-zinc-100">
+                                <span class="text-zinc-500">Simbol</span>
+                                <span class="font-semibold text-zinc-800" id="previewSymbol">-</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-zinc-100">
+                                <span class="text-zinc-500">Pemisah Ribuan</span>
+                                <span class="font-semibold text-zinc-800" id="previewThousand">-</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 @endsection
-
-@push('page_styles')
-    <style>
-        /* ========== Animations ========== */
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ========== Sticky Action Bar ========== */
-        .action-bar {
-            position: sticky;
-            top: 0;
-            z-index: 1020;
-            background: white;
-            padding: 1.25rem;
-            border-radius: 10px;
-            margin-bottom: 0;
-        }
-
-        /* ========== Card Shadow ========== */
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* ========== Form Enhancements ========== */
-        .form-control-lg {
-            height: 50px;
-            font-size: 1rem;
-        }
-
-        .form-control:focus,
-        select.form-control:focus {
-            border-color: #4834DF;
-            box-shadow: 0 0 0 0.2rem rgba(72, 52, 223, 0.25);
-        }
-
-        /* ========== Preview Container ========== */
-        .preview-container {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-radius: 10px;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .preview-label {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-bottom: 1rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .preview-display {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #4834DF;
-            padding: 1.5rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(72, 52, 223, 0.1);
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
-        }
-
-        .preview-display:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(72, 52, 223, 0.15);
-        }
-
-        /* ========== Preview Details ========== */
-        .preview-details {
-            margin-top: 1rem;
-        }
-
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .detail-item:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: #6c757d;
-            font-size: 0.875rem;
-        }
-
-        .detail-value {
-            font-weight: 600;
-            color: #212529;
-            font-size: 0.875rem;
-        }
-
-        /* ========== Sticky Sidebar ========== */
-        .sticky-sidebar {
-            position: sticky;
-            top: 100px;
-        }
-
-        /* ========== Alert Styling ========== */
-        .alert-info {
-            background-color: #e7f6fc;
-            border-color: #8ad4ee;
-            color: #115293;
-            border-radius: 8px;
-        }
-
-        .alert-warning {
-            background-color: #fff3cd;
-            border-color: #ffc107;
-            color: #856404;
-            border-radius: 8px;
-        }
-
-        /* ========== Button Gap ========== */
-        .d-flex.gap-2>* {
-            margin-left: 0.5rem;
-        }
-
-        .d-flex.gap-2>*:first-child {
-            margin-left: 0;
-        }
-
-        /* ========== Responsive ========== */
-        @media (max-width: 992px) {
-            .sticky-sidebar {
-                position: relative;
-                top: 0;
-                margin-top: 1rem;
-            }
-
-            .action-bar {
-                position: relative;
-            }
-
-            .action-bar .d-flex {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .action-bar .d-flex>div {
-                width: 100%;
-            }
-
-            .preview-display {
-                font-size: 2rem;
-            }
-        }
-    </style>
-@endpush
 
 @push('page_scripts')
     <script>
@@ -466,7 +254,7 @@
             // Initialize preview
             updatePreview();
 
-            // Form Validation
+            // Form Validation and Submission
             $('#currency-form').on('submit', function(e) {
                 const name = $('#currency_name').val().trim();
                 const code = $('#code').val().trim();
@@ -478,7 +266,11 @@
                         icon: 'error',
                         title: 'Data Tidak Lengkap',
                         text: 'Mohon lengkapi semua field yang wajib diisi',
-                        confirmButtonColor: '#4834DF'
+                        confirmButtonColor: '#2563EB',
+                        customClass: {
+                            confirmButton: 'swal2-confirm-btn-blue',
+                            popup: 'swal2-popup-custom'
+                        }
                     });
                     return false;
                 }
@@ -489,7 +281,11 @@
                         icon: 'error',
                         title: 'Kode Tidak Valid',
                         text: 'Kode mata uang harus 3 karakter (ISO 4217)',
-                        confirmButtonColor: '#4834DF'
+                        confirmButtonColor: '#2563EB',
+                        customClass: {
+                            confirmButton: 'swal2-confirm-btn-blue',
+                            popup: 'swal2-popup-custom'
+                        }
                     });
                     $('#code').focus();
                     return false;

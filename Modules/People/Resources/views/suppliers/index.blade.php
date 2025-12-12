@@ -1,449 +1,239 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
-@section('title', 'Data Supplier')
+@section('title', 'Daftar Supplier')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item active">Supplier</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', [
+        'title' => 'Supplier',
+        'items' => [
+            ['text' => 'Home', 'url' => route('home')],
+            ['text' => 'Supplier', 'url' => '#']
+        ]
+    ])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-
-            {{-- ===== Statistik Cards ===== --}}
-            <div class="row mb-4">
-                {{-- Total Supplier --}}
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-purple">
-                        <div class="stats-icon">
-                            <i class="cil-people"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-label">Total Supplier</div>
-                            <div class="stats-value">
-                                {{ \Modules\People\Entities\Supplier::count() }}
-                            </div>
-                        </div>
-                    </div>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Total Supplier -->
+        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="flex justify-between items-start z-10 relative">
+                <div>
+                    <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Supplier</p>
+                    <h3 class="text-2xl font-black text-blue-600">{{ \Modules\People\Entities\Supplier::count() }}</h3>
                 </div>
-
-                {{-- Supplier Aktif --}}
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-success">
-                        <div class="stats-icon">
-                            <i class="cil-check-circle"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-label">Supplier Aktif</div>
-                            <div class="stats-value">
-                                {{ \Modules\People\Entities\Supplier::whereHas('purchases', function ($q) {
-                                    $q->where('date', '>=', now()->subMonths(6));
-                                })->count() }}
-                            </div>
-                        </div>
-                    </div>
+                <div class="p-2.5 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-110 transition-transform">
+                    <i class="bi bi-people text-xl"></i>
                 </div>
+            </div>
+            <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors z-0"></div>
+        </div>
 
-                {{-- Total Kota --}}
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-info">
-                        <div class="stats-icon">
-                            <i class="cil-location-pin"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-label">Total Kota</div>
-                            <div class="stats-value">
-                                {{ \Modules\People\Entities\Supplier::distinct('city')->count('city') }}
-                            </div>
-                        </div>
-                    </div>
+        <!-- Supplier Aktif -->
+        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="flex justify-between items-start z-10 relative">
+                <div>
+                    <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Supplier Aktif</p>
+                    <h3 class="text-2xl font-black text-emerald-600">
+                        {{ \Modules\People\Entities\Supplier::whereHas('purchases', function ($q) {
+                            $q->where('date', '>=', now()->subMonths(6));
+                        })->count() }}
+                    </h3>
                 </div>
+                <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-110 transition-transform">
+                    <i class="bi bi-check-circle text-xl"></i>
+                </div>
+            </div>
+            <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:bg-emerald-100 transition-colors z-0"></div>
+        </div>
 
-                {{-- Total Pembelian --}}
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-warning">
-                        <div class="stats-icon">
-                            <i class="cil-cart"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-label">Total Transaksi</div>
-                            <div class="stats-value">
-                                {{ \Modules\Purchase\Entities\Purchase::count() }}
-                            </div>
-                        </div>
-                    </div>
+        <!-- Total Kota -->
+        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="flex justify-between items-start z-10 relative">
+                <div>
+                    <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Jangkauan Kota</p>
+                    <h3 class="text-2xl font-black text-violet-600">
+                        {{ \Modules\People\Entities\Supplier::distinct('city')->count('city') }}
+                    </h3>
+                </div>
+                <div class="p-2.5 bg-violet-50 text-violet-600 rounded-xl group-hover:scale-110 transition-transform">
+                    <i class="bi bi-geo-alt text-xl"></i>
+                </div>
+            </div>
+            <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-violet-50 rounded-full group-hover:bg-violet-100 transition-colors z-0"></div>
+        </div>
+
+        <!-- Total Transaksi -->
+        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div class="flex justify-between items-start z-10 relative">
+                <div>
+                    <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Transaksi</p>
+                    <h3 class="text-2xl font-black text-amber-500">
+                        {{ \Modules\Purchase\Entities\Purchase::count() }}
+                    </h3>
+                </div>
+                <div class="p-2.5 bg-amber-50 text-amber-500 rounded-xl group-hover:scale-110 transition-transform">
+                    <i class="bi bi-cart-check text-xl"></i>
+                </div>
+            </div>
+            <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-amber-50 rounded-full group-hover:bg-amber-100 transition-colors z-0"></div>
+        </div>
+    </div>
+
+    <!-- Filter & Table Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">
+            {{-- Header & Toolbar --}}
+            <div class="p-5 border-b border-zinc-100">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h5 class="text-lg font-bold text-zinc-800 flex items-center">
+                        <i class="bi bi-people-fill text-blue-600 me-2"></i>
+                        Daftar Supplier
+                    </h5>
+                    <p class="text-sm text-zinc-500 mt-1">Kelola data mitra pemasok untuk inventaris toko</p>
+                </div>
+                <div>
+                    @can('create_suppliers')
+                    <a href="{{ route('suppliers.create') }}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all shadow-sm hover:shadow-md">
+                        <i class="bi bi-plus-lg me-2"></i> Tambah Supplier
+                    </a>
+                    @endcan
                 </div>
             </div>
 
-            {{-- ===== Main Card ===== --}}
-            <div class="card shadow-sm">
-                {{-- Card Header --}}
-                <div class="card-header bg-white py-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap">
-                        <div class="mb-2 mb-md-0">
-                            <h5 class="mb-1 font-weight-bold">
-                                <i class="cil-people mr-2 text-primary"></i>
-                                Daftar Supplier
-                            </h5>
-                            <small class="text-muted">Kelola data supplier untuk pembelian stok</small>
-                        </div>
+            {{-- Filter Section --}}
+            {{-- Filter Section --}}
+            @include('layouts.filter-card', [
+                'action' => route('suppliers.index'),
+                'title' => 'Filter Data',
+                'icon' => 'bi bi-funnel',
+                'quickFilters' => [
+                     [
+                        'label' => 'Semua', 
+                        'value' => '', 
+                        'param' => 'status', 
+                        'url' => request()->fullUrlWithQuery(['status' => '']),
+                        'icon' => 'bi bi-grid'
+                     ],
+                     [
+                        'label' => 'Aktif', 
+                        'value' => 'active', 
+                        'param' => 'status', 
+                        'url' => request()->fullUrlWithQuery(['status' => 'active']),
+                        'icon' => 'bi bi-check-circle'
+                     ],
+                     [
+                        'label' => 'Tidak Aktif', 
+                        'value' => 'inactive', 
+                        'param' => 'status', 
+                        'url' => request()->fullUrlWithQuery(['status' => 'inactive']),
+                        'icon' => 'bi bi-x-circle'
+                     ],
+                ],
+                'filters' => [
+                    [
+                        'name' => 'city',
+                        'label' => 'Kota',
+                        'type' => 'select',
+                        'options' => collect(\Modules\People\Entities\Supplier::getUniqueCities())->mapWithKeys(fn($item) => [$item => $item])->toArray()
+                    ],
+                    [
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'type' => 'select',
+                        'options' => [
+                            'active' => 'Aktif (Ada Transaksi)',
+                            'inactive' => 'Tidak Aktif'
+                        ]
+                    ]
+                ]
+            ])
+        </div>
+        </div>
 
-                        <div class="btn-group" role="group">
-                            @can('create_suppliers')
-                                <a href="{{ route('suppliers.create') }}" class="btn btn-primary">
-                                    <i class="cil-plus mr-2"></i> Tambah Supplier
-                                </a>
-                            @endcan
-                        </div>
-                    </div>
-                </div>
-
-                {{-- ===== Filter Section ===== --}}
-                <div class="card-body py-4 border-bottom"
-                    style="background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);">
-                    <div class="filter-container">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="cil-bolt text-primary mr-2" style="font-size: 1.25rem;"></i>
-                            <h6 class="mb-0 font-weight-bold text-dark">Filter Data</h6>
-                        </div>
-
-                        {{-- Filter Form --}}
-                        <div class="row">
-                            {{-- Filter by City --}}
-                            <div class="col-lg-4 col-md-6 mb-3">
-                                <label class="form-label small font-weight-semibold text-dark mb-2">
-                                    <i class="cil-location-pin mr-1 text-muted"></i> Kota
-                                </label>
-                                <select id="filter-city" class="form-control">
-                                    <option value="">Semua Kota</option>
-                                    @foreach (\Modules\People\Entities\Supplier::getUniqueCities() as $city)
-                                        <option value="{{ $city }}">{{ $city }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Filter by Status --}}
-                            <div class="col-lg-4 col-md-6 mb-3">
-                                <label class="form-label small font-weight-semibold text-dark mb-2">
-                                    <i class="cil-check mr-1 text-muted"></i> Status
-                                </label>
-                                <select id="filter-status" class="form-control">
-                                    <option value="">Semua Status</option>
-                                    <option value="active">Aktif</option>
-                                    <option value="inactive">Tidak Aktif</option>
-                                </select>
-                            </div>
-
-                            {{-- Action Buttons --}}
-                            <div class="col-lg-4 col-md-12 mb-3">
-                                <label class="form-label small font-weight-semibold text-dark mb-2">
-                                    <i class="cil-settings mr-1 text-muted"></i> Aksi
-                                </label>
-                                <div class="btn-group w-100" role="group">
-                                    <button type="button" id="reset-filter" class="btn btn-outline-secondary">
-                                        <i class="cil-reload mr-1"></i> Reset Filter
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- ===== DataTable Section ===== --}}
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <div class="datatable-wrapper">
-                            {{ $dataTable->table(['class' => 'table table-hover mb-0', 'id' => 'suppliers-table']) }}
-                        </div>
-                    </div>
-                </div>
-
-            </div> {{-- end card --}}
-        </div> {{-- end animated --}}
-    </div> {{-- end container --}}
+        <!-- DataTable -->
+        <div class="p-0">
+            <div class="overflow-x-auto">
+                {{ $dataTable->table(['class' => 'w-full text-sm text-left text-zinc-500 dark:text-zinc-400', 'id' => 'suppliers-table'], true) }}
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('page_styles')
-    <style>
-        /* ========== Animations ========== */
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ========== Card Shadow ========== */
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* ========== Statistics Cards ========== */
-        .stats-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            height: 100%;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border-left: 4px solid;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-        }
-
-        .stats-card-purple {
-            border-left-color: #4834DF;
-        }
-
-        .stats-card-success {
-            border-left-color: #2eb85c;
-        }
-
-        .stats-card-warning {
-            border-left-color: #f9b115;
-        }
-
-        .stats-card-info {
-            border-left-color: #39f;
-        }
-
-        .stats-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            flex-shrink: 0;
-        }
-
-        .stats-card-purple .stats-icon {
-            background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
-            color: white;
-        }
-
-        .stats-card-success .stats-icon {
-            background: linear-gradient(135deg, #2eb85c 0%, #51d88a 100%);
-            color: white;
-        }
-
-        .stats-card-warning .stats-icon {
-            background: linear-gradient(135deg, #f9b115 0%, #ffc451 100%);
-            color: white;
-        }
-
-        .stats-card-info .stats-icon {
-            background: linear-gradient(135deg, #39f 0%, #5dadec 100%);
-            color: white;
-        }
-
-        .stats-content {
-            flex: 1;
-        }
-
-        .stats-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: 600;
-            color: #6c757d;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .stats-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #2d3748;
-            line-height: 1;
-        }
-
-        /* ========== DataTable Styling ========== */
-        .datatable-wrapper {
-            padding: 1rem;
-        }
-
-        #suppliers-table thead th {
-            font-size: 0.8125rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            color: #4f5d73;
-            padding: 14px 12px;
-            background-color: #f8f9fa !important;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        #suppliers-table tbody td {
-            padding: 14px 12px;
-            vertical-align: middle;
-            font-size: 0.875rem;
-        }
-
-        #suppliers-table tbody tr {
-            transition: all 0.2s ease;
-        }
-
-        #suppliers-table tbody tr:hover {
-            background-color: rgba(72, 52, 223, 0.03) !important;
-        }
-
-        /* ========== Responsive ========== */
-        @media (max-width: 768px) {
-            .stats-card {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .datatable-wrapper {
-                padding: 0.5rem;
-            }
-        }
-
-        /* ========== Dropdown Actions Styling ========== */
-        .btn-ghost-primary {
-            color: #4834DF;
-            background-color: transparent;
-            border: none;
-        }
-
-        .btn-ghost-primary:hover {
-            background-color: rgba(72, 52, 223, 0.1);
-            color: #4834DF;
-        }
-
-        .dropdown-menu {
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            padding: 0.5rem 0;
-        }
-
-        .dropdown-item {
-            padding: 0.6rem 1.25rem;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-
-        .dropdown-item:hover {
-            background-color: #f8f9fa;
-            padding-left: 1.5rem;
-        }
-
-        .dropdown-item i {
-            width: 20px;
-            display: inline-block;
-        }
-
-        .dropdown-divider {
-            margin: 0.5rem 0;
-        }
-    </style>
+    @include('includes.datatables-flowbite-css')
 @endpush
 
 @push('page_scripts')
+    @include('includes.datatables-flowbite-js')
     {{ $dataTable->scripts() }}
 
     <script>
         $(document).ready(function() {
-            // Filter by City
-            $('#filter-city').on('change', function() {
-                window.LaravelDataTables['suppliers-table'].ajax.url(
-                    '{{ route('suppliers.index') }}?city=' + $(this).val()
-                ).load();
+            const table = window.LaravelDataTables['suppliers-table'];
+            
+            // Hook into the request to add parameters
+            table.on('preXhr.dt', function ( e, settings, data ) {
+                data.city = $('#city').val();
+                data.status = $('#status').val();
+            });
+            
+            // Handle Filter Changes
+            $('#city, #status').on('change', function() {
+                table.draw();
             });
 
-            // Filter by Status
-            $('#filter-status').on('change', function() {
-                const city = $('#filter-city').val();
-                const status = $(this).val();
-                window.LaravelDataTables['suppliers-table'].ajax.url(
-                    '{{ route('suppliers.index') }}?city=' + city + '&status=' + status
-                ).load();
-            });
-
-            // Reset Filter
-            $('#reset-filter').on('click', function() {
-                $('#filter-city').val('');
-                $('#filter-status').val('');
-                window.LaravelDataTables['suppliers-table'].ajax.url('{{ route('suppliers.index') }}')
-                    .load();
-            });
-
-            // Konfirmasi Hapus Supplier
+            // SweetAlert2 Delete Confirmation (Delegated Event)
             $(document).on('click', '.delete-supplier', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
                 const name = $(this).data('name');
-                const hasPurchases = $(this).data('has-purchases');
+                const hasPurchases = $(this).data('has-purchases'); // boolean string 'true'/'false'
                 const url = '{{ route('suppliers.destroy', ':id') }}'.replace(':id', id);
 
-                let warningText = hasPurchases ?
-                    `Supplier <strong>"${name}"</strong> memiliki riwayat pembelian dan akan di-arsipkan (soft delete).<br><small class="text-muted">Data masih bisa dikembalikan!</small>` :
-                    `Supplier <strong>"${name}"</strong> akan dihapus permanen.<br><small class="text-muted">Data tidak dapat dikembalikan!</small>`;
+                // Customize message based on purchase history
+                let warningTitle = 'Hapus Supplier?';
+                let warningText = `Anda akan menghapus data supplier <strong>"${name}"</strong>.`;
+                let warningIcon = 'warning'; 
+
+                if (hasPurchases === 'true') {
+                    warningText += `<br><br><span class="text-orange-600 font-bold"><i class="bi bi-archive me-1"></i> Perhatian:</span> Supplier ini memiliki riwayat transaksi. Data akan diarsipkan (Soft Delete) demi integritas data.`;
+                } else {
+                    warningText += `<br><br><span class="text-red-600 font-bold"><i class="bi bi-exclamation-triangle me-1"></i> Peringatan:</span> Tindakan ini bersifat permanen dan tidak dapat dibatalkan!`;
+                }
 
                 Swal.fire({
-                    title: 'Hapus Supplier?',
+                    title: warningTitle,
                     html: warningText,
-                    icon: 'warning',
-                    iconColor: '#e55353',
+                    icon: warningIcon,
                     showCancelButton: true,
-                    confirmButtonColor: '#e55353',
-                    cancelButtonColor: '#768192',
-                    confirmButtonText: '<i class="cil-trash mr-1"></i> Ya, Hapus!',
-                    cancelButtonText: '<i class="cil-x mr-1"></i> Batal',
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus',
+                    cancelButtonText: 'Batal',
                     reverseButtons: true,
-                    customClass: {
-                        confirmButton: 'btn btn-danger',
-                        cancelButton: 'btn btn-secondary'
-                    },
-                    buttonsStyling: false
+                    focusCancel: true
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        // Show loading state
                         Swal.fire({
-                            title: 'Menghapus...',
-                            html: 'Mohon tunggu sebentar',
+                            title: 'Memproses...',
+                            text: 'Mohon tunggu sebentar',
                             allowOutsideClick: false,
                             didOpen: () => {
                                 Swal.showLoading();
                             }
                         });
 
+                        // Create and submit form
                         const form = $('<form>', {
                             method: 'POST',
                             action: url
                         });
-
-                        form.append($('<input>', {
-                            type: 'hidden',
-                            name: '_token',
-                            value: '{{ csrf_token() }}'
-                        }));
-
-                        form.append($('<input>', {
-                            type: 'hidden',
-                            name: '_method',
-                            value: 'DELETE'
-                        }));
-
+                        
+                        form.append($('<input>', { type: 'hidden', name: '_token', value: '{{ csrf_token() }}' }));
+                        form.append($('<input>', { type: 'hidden', name: '_method', value: 'DELETE' }));
+                        
                         $('body').append(form);
                         form.submit();
                     }

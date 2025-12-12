@@ -26,7 +26,7 @@ class ServiceList extends Component
         $service = ServiceMaster::find($serviceId);
 
         if (!$service) {
-            $this->dispatch('swal:error', 'Jasa tidak ditemukan!');
+            $this->dispatch('swal-error', 'Jasa tidak ditemukan!');
             return;
         }
 
@@ -36,7 +36,7 @@ class ServiceList extends Component
         });
 
         if ($existingItem->isNotEmpty()) {
-            $this->dispatch('swal:warning', 'Jasa sudah ada di keranjang.');
+            $this->dispatch('swal-warning', 'Jasa sudah ada di keranjang.');
             return;
         }
 
@@ -67,7 +67,7 @@ class ServiceList extends Component
         $this->dispatch('cartUpdated');
 
         // ✅ Dispatch success message
-        $this->dispatch('swal:success', "Jasa '{$service->service_name}' berhasil ditambahkan ke keranjang.");
+        $this->dispatch('swal-success', "Jasa '{$service->service_name}' berhasil ditambahkan ke keranjang.");
     }
 
     public function render()

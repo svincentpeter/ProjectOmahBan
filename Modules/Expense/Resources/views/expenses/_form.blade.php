@@ -1,397 +1,225 @@
 @csrf
 
-<div class="card-body">
-    {{-- Row 1: Date, Category, Amount --}}
-    <div class="form-row">
-        {{-- Tanggal --}}
-        <div class="col-lg-4">
-            <div class="form-group">
-                <label class="font-weight-bold mb-1">
-                    <i class="cil-calendar mr-1 text-primary"></i>
-                    Tanggal <span class="text-danger">*</span>
+<div class="space-y-8">
+    
+    {{-- Section: Nominal --}}
+    <div class="bg-blue-50/50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800/50">
+        <label for="amount" class="block mb-3 text-sm font-semibold text-blue-900 dark:text-blue-100 uppercase tracking-wider">
+            Nominal Pengeluaran <span class="text-red-500">*</span>
+        </label>
+        <div class="relative">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
+                <span class="text-blue-600 font-bold text-lg">Rp</span>
+            </div>
+            <input type="text" id="amount" name="amount"
+                class="bg-white border border-blue-200 text-blue-800 text-2xl font-bold rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full ps-12 p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white js-money transition-all"
+                value="{{ number_format((int) old('amount', $expense->amount ?? 0), 0, ',', '.') }}"
+                placeholder="0" required autofocus>
+        </div>
+        @error('amount')
+            <p class="mt-2 text-sm text-red-600 font-medium"><i class="bi bi-x-circle mr-1"></i>{{ $message }}</p>
+        @enderror
+    </div>
+
+    {{-- Section: Detail Transaksi --}}
+    <div>
+        <h6 class="text-gray-900 dark:text-gray-100 font-bold mb-4 flex items-center">
+            <span class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-2 text-gray-500">
+                <i class="bi bi-receipt"></i>
+            </span>
+            Detail Transaksi
+        </h6>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- Tanggal --}}
+            <div>
+                <label for="date" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Tanggal Transaksi <span class="text-red-500">*</span>
                 </label>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-light">
-                            <i class="cil-calendar"></i>
-                        </span>
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                        <i class="bi bi-calendar-event text-gray-400"></i>
                     </div>
-                    <input type="date" name="date" class="form-control @error('date') is-invalid @enderror"
+                    <input type="date" name="date" id="date" 
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
                         value="{{ old('date', optional($expense->date ?? null)->toDateString() ?? now()->toDateString()) }}"
                         required>
-                    @error('date')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
+                @error('date')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
-        </div>
-
-        {{-- Kategori --}}
-        <div class="col-lg-4">
-            <div class="form-group">
-                <label class="font-weight-bold mb-1">
-                    <i class="cil-tag mr-1 text-success"></i>
-                    Kategori <span class="text-danger">*</span>
+    
+            {{-- Kategori --}}
+            <div>
+                <label for="category_id" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Kategori Pengeluaran <span class="text-red-500">*</span>
                 </label>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-light">
-                            <i class="cil-tag"></i>
-                        </span>
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                        <i class="bi bi-tag text-gray-400"></i>
                     </div>
-                    <select name="category_id" class="form-control @error('category_id') is-invalid @enderror" required>
-                        <option value="" disabled
-                            {{ old('category_id', $expense->category_id ?? null) ? '' : 'selected' }}>
-                            Pilih Kategori
-                        </option>
+                    <select name="category_id" id="category_id" 
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors" required>
+                        <option value="" disabled {{ old('category_id', $expense->category_id ?? null) ? '' : 'selected' }}>Pilih Kategori</option>
                         @foreach ($categories as $cat)
                             <option value="{{ $cat->id }}" @selected(old('category_id', $expense->category_id ?? null) == $cat->id)>
                                 {{ $cat->category_name }}
                             </option>
                         @endforeach
                     </select>
-                    @error('category_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
-
-                @if (($categories ?? collect())->isEmpty())
-                    <small class="form-text text-muted">
-                        <i class="cil-warning mr-1"></i>
-                        Belum ada kategori.
-                        @if (Route::has('expense-categories.create'))
-                            <a href="{{ route('expense-categories.create') }}" target="_blank">Tambah di sini</a>
-                        @endif
-                    </small>
-                @endif
+                @error('category_id')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
-        </div>
 
-        {{-- Nominal --}}
-        <div class="col-lg-4">
-            <div class="form-group">
-                <label class="font-weight-bold mb-1">
-                    <i class="cil-dollar mr-1 text-warning"></i>
-                    Nominal (Rp) <span class="text-danger">*</span>
+            {{-- Deskripsi (Full Width) --}}
+            <div class="md:col-span-2">
+                <label for="details" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Keterangan / Keperluan <span class="text-red-500">*</span>
                 </label>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-light">Rp</span>
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                        <i class="bi bi-fonts text-gray-400"></i>
                     </div>
-                    <input type="text" id="amount" name="amount"
-                        class="form-control js-money @error('amount') is-invalid @enderror"
-                        value="{{ number_format((int) old('amount', $expense->amount ?? 0), 0, ',', '.') }}"
-                        placeholder="0" required>
-                    @error('amount')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                <small class="form-text text-muted">
-                    <i class="cil-info mr-1"></i>
-                    Format: 1.000.000 (otomatis)
-                </small>
-            </div>
-        </div>
-    </div>
-
-    {{-- Row 2: Description --}}
-    <div class="form-row">
-        <div class="col-12">
-            <div class="form-group">
-                <label class="font-weight-bold mb-1">
-                    <i class="cil-notes mr-1 text-info"></i>
-                    Deskripsi <span class="text-danger">*</span>
-                </label>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-light">
-                            <i class="cil-notes"></i>
-                        </span>
-                    </div>
-                    <input type="text" name="details" class="form-control @error('details') is-invalid @enderror"
-                        placeholder="Contoh: Beli Bensin Motor Operasional"
+                    <input type="text" name="details" id="details" 
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                        placeholder="Contoh: Pembelian Alat Tulis Kantor"
                         value="{{ old('details', $expense->details ?? null) }}" required>
-                    @error('details')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Row 3: Payment Method & Bank --}}
-    <div class="form-row">
-        {{-- Payment Method --}}
-        <div class="col-lg-6">
-            <div class="form-group">
-                <label class="font-weight-bold mb-2 d-block">
-                    <i class="cil-credit-card mr-1"></i>
-                    Metode Pembayaran <span class="text-danger">*</span>
-                </label>
-                @php $pm = old('payment_method', $expense->payment_method ?? 'Tunai'); @endphp
-
-                {{-- Radio Button Group dengan Card Style --}}
-                <div class="payment-method-group d-flex">
-                    {{-- Option: Tunai --}}
-                    <label class="payment-option {{ $pm === 'Tunai' ? 'active' : '' }}" for="pm_cash">
-                        <input class="payment-radio" type="radio" name="payment_method" id="pm_cash" value="Tunai"
-                            @checked($pm === 'Tunai')>
-                        <div class="payment-content">
-                            <i class="cil-wallet payment-icon"></i>
-                            <span class="payment-label">Tunai</span>
-                        </div>
-                    </label>
-
-                    {{-- Option: Transfer --}}
-                    <label class="payment-option {{ $pm === 'Transfer' ? 'active' : '' }}" for="pm_transfer">
-                        <input class="payment-radio" type="radio" name="payment_method" id="pm_transfer"
-                            value="Transfer" @checked($pm === 'Transfer')>
-                        <div class="payment-content">
-                            <i class="cil-bank payment-icon"></i>
-                            <span class="payment-label">Transfer</span>
-                        </div>
-                    </label>
-                </div>
-
-                @error('payment_method')
-                    <div class="text-danger small mt-2">{{ $message }}</div>
+                @error('details')
+                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
         </div>
+    </div>
 
-        {{-- Bank Name --}}
-        <div class="col-lg-6">
-            <div class="form-group">
-                <label class="font-weight-bold mb-2">
-                    <i class="cil-bank mr-1"></i>
-                    Bank
-                    <span class="badge badge-secondary badge-sm">Jika Transfer</span>
+    <hr class="border-gray-200 dark:border-gray-700">
+
+    {{-- Section: Pembayaran --}}
+    <div>
+        <h6 class="text-gray-900 dark:text-gray-100 font-bold mb-4 flex items-center">
+            <span class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-2 text-gray-500">
+                <i class="bi bi-wallet2"></i>
+            </span>
+            Metode Pembayaran
+        </h6>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- Payment Method Selection --}}
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Pilih Metode <span class="text-red-500">*</span>
                 </label>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text bg-light">
-                            <i class="cil-institution"></i>
-                        </span>
+                @php $pm = old('payment_method', $expense->payment_method ?? 'Tunai'); @endphp
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="payment_method" id="pm_cash" value="Tunai" class="peer sr-only" @checked($pm === 'Tunai')>
+                        <div class="p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 peer-checked:border-blue-600 peer-checked:bg-blue-50/50 transition-all text-center h-full flex flex-col items-center justify-center gap-2">
+                            <i class="bi bi-cash-stack text-2xl text-gray-500 peer-checked:text-blue-600"></i>
+                            <span class="text-sm font-medium text-gray-700 peer-checked:text-blue-700">Tunai</span>
+                        </div>
+                        <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
+                            <i class="bi bi-check-circle-fill text-blue-600"></i>
+                        </div>
+                    </label>
+    
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="payment_method" id="pm_transfer" value="Transfer" class="peer sr-only" @checked($pm === 'Transfer')>
+                        <div class="p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 peer-checked:border-blue-600 peer-checked:bg-blue-50/50 transition-all text-center h-full flex flex-col items-center justify-center gap-2">
+                            <i class="bi bi-bank2 text-2xl text-gray-500 peer-checked:text-blue-600"></i>
+                            <span class="text-sm font-medium text-gray-700 peer-checked:text-blue-700">Transfer</span>
+                        </div>
+                        <div class="absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition-opacity">
+                            <i class="bi bi-check-circle-fill text-blue-600"></i>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            {{-- Bank Details (Conditional) --}}
+            <div>
+                <label for="bank_name" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Akun Bank <span class="text-xs font-normal text-gray-500">(Jika Transfer)</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                        <i class="bi bi-credit-card-2-front text-gray-400"></i>
                     </div>
-                    <input type="text" name="bank_name"
-                        class="form-control @error('bank_name') is-invalid @enderror"
-                        placeholder="Mandiri / BCA / BRI / BNI"
+                    <input type="text" name="bank_name" id="bank_name"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:text-gray-400 transition-colors"
+                        placeholder="Nama Bank / E-Wallet"
                         value="{{ old('bank_name', $expense->bank_name ?? null) }}">
-                    @error('bank_name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
-                <small class="form-text text-muted">
-                    <i class="cil-info mr-1"></i>
-                    Otomatis disabled jika pilih Tunai
-                </small>
             </div>
         </div>
     </div>
+    
+    <hr class="border-gray-200 dark:border-gray-700">
 
+    {{-- Section: Attachment --}}
+    <div>
+        <h6 class="text-gray-900 dark:text-gray-100 font-bold mb-4 flex items-center">
+            <span class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-2 text-gray-500">
+                <i class="bi bi-paperclip"></i>
+            </span>
+            Lampiran
+        </h6>
+        
+        <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 border border-dashed border-gray-300 dark:border-gray-600">
+            <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300" for="attachment">
+                Upload Nota / Bukti Valid <span class="text-xs font-normal text-gray-500">(Opsional)</span>
+            </label>
+            
+            <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" 
+                id="attachment" name="attachment" type="file" accept="image/*,application/pdf">
+            <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                <i class="bi bi-info-circle"></i> Format yang didukung: JPG, PNG, PDF (Maks. 2MB)
+            </div>
+            
+            @error('attachment')
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+            @enderror
 
-    {{-- Row 4: Attachment --}}
-    <div class="form-row">
-        <div class="col-lg-6">
-            <div class="form-group">
-                <label class="font-weight-bold mb-1">
-                    <i class="cil-paperclip mr-1 text-dark"></i>
-                    Lampiran Nota
-                    <span class="badge badge-secondary">Opsional</span>
-                </label>
-                <div class="custom-file">
-                    <input type="file" name="attachment"
-                        class="custom-file-input @error('attachment') is-invalid @enderror" id="attachment"
-                        accept="image/*,application/pdf">
-                    <label class="custom-file-label" for="attachment">Pilih file...</label>
-                    @error('attachment')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                @isset($expense->attachment_path)
-                    <div class="mt-2 p-2 bg-light rounded">
-                        <small class="text-muted">
-                            <i class="cil-file mr-1"></i>
-                            File saat ini: <strong>{{ basename($expense->attachment_path) }}</strong>
-                        </small>
+            @isset($expense->attachment_path)
+                <div class="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center gap-3 shadow-sm">
+                    <div class="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center text-blue-600">
+                        <i class="bi bi-file-earmark-text text-xl"></i>
                     </div>
-                @endisset
-
-                <small class="form-text text-muted">
-                    <i class="cil-info mr-1"></i>
-                    Format: JPG, PNG, atau PDF (max 2MB)
-                </small>
-            </div>
+                    <div class="flex-1 min-w-0">
+                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 block">File Terlampir</span>
+                        <a href="{{ Storage::url($expense->attachment_path) }}" target="_blank" class="text-xs text-blue-600 hover:text-blue-700 hover:underline truncate block">
+                            {{ basename($expense->attachment_path) }}
+                        </a>
+                    </div>
+                    <a href="{{ Storage::url($expense->attachment_path) }}" target="_blank" class="text-gray-400 hover:text-gray-600 p-2">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+            @endisset
         </div>
+    </div>
+
+    {{-- Actions --}}
+    <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <a href="{{ url()->previous() ?: route('expenses.index') }}" class="w-full sm:w-auto text-center px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-all">
+            <i class="bi bi-arrow-left mr-2"></i> Batal
+        </a>
+        <button type="submit" class="w-full sm:w-auto text-center px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl focus:ring-4 focus:ring-blue-300 shadow-sm shadow-blue-500/30 transition-all">
+            <i class="bi bi-check-lg mr-2"></i> Simpan Pengeluaran
+        </button>
     </div>
 </div>
 
-{{-- Card Footer: Actions --}}
-<div class="card-footer bg-light d-flex justify-content-between">
-    <a href="{{ url()->previous() ?: route('expenses.index') }}" class="btn btn-secondary">
-        <i class="cil-arrow-left mr-1"></i> Batal
-    </a>
-    <button type="submit" class="btn btn-primary">
-        <i class="cil-save mr-1"></i> Simpan Pengeluaran
-    </button>
-</div>
-
-{{-- Styles --}}
-@push('page_styles')
-    <style>
-        /* ========== Input Group Styling ========== */
-        .input-group-text {
-            background-color: #f0f3f5;
-            border-right: 0;
-            min-width: 45px;
-            justify-content: center;
-        }
-
-        .input-group .form-control {
-            border-left: 0;
-        }
-
-        .input-group .form-control:focus {
-            border-color: #8ad4ee;
-            box-shadow: none;
-        }
-
-        .input-group:focus-within .input-group-text {
-            border-color: #8ad4ee;
-            background-color: #e7f6fc;
-        }
-
-        /* ========== Payment Method Radio Buttons ========== */
-        .payment-method-group {
-            gap: 12px;
-        }
-
-        .payment-option {
-            flex: 1;
-            position: relative;
-            cursor: pointer;
-            margin: 0;
-            transition: all 0.3s ease;
-        }
-
-        .payment-radio {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .payment-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 16px 12px;
-            border: 2px solid #d8dbe0;
-            border-radius: 8px;
-            background-color: #fff;
-            transition: all 0.3s ease;
-            min-height: 80px;
-        }
-
-        .payment-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-            color: #768192;
-            transition: all 0.3s ease;
-        }
-
-        .payment-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #4f5d73;
-            transition: all 0.3s ease;
-        }
-
-        /* Hover State */
-        .payment-option:hover .payment-content {
-            border-color: #8ad4ee;
-            background-color: #f8fcff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .payment-option:hover .payment-icon {
-            color: #2eb85c;
-            transform: scale(1.1);
-        }
-
-        /* Active/Checked State */
-        .payment-option.active .payment-content,
-        .payment-radio:checked~.payment-content {
-            border-color: #321fdb;
-            background-color: #e7e9fd;
-            box-shadow: 0 4px 12px rgba(50, 31, 219, 0.15);
-        }
-
-        .payment-option.active .payment-icon,
-        .payment-radio:checked~.payment-content .payment-icon {
-            color: #321fdb;
-            transform: scale(1.15);
-        }
-
-        .payment-option.active .payment-label,
-        .payment-radio:checked~.payment-content .payment-label {
-            color: #321fdb;
-            font-weight: 600;
-        }
-
-        /* Focus State (Accessibility) */
-        .payment-radio:focus~.payment-content {
-            outline: 2px solid #321fdb;
-            outline-offset: 2px;
-        }
-
-        /* ========== Custom File Input ========== */
-        .custom-file-label::after {
-            content: "Browse";
-        }
-
-        /* ========== Badge Adjustment ========== */
-        .badge-sm {
-            font-size: 0.7rem;
-            padding: 0.25rem 0.5rem;
-            vertical-align: middle;
-        }
-
-        /* ========== Responsive ========== */
-        @media (max-width: 768px) {
-            .payment-method-group {
-                flex-direction: column;
-            }
-
-            .payment-content {
-                flex-direction: row;
-                justify-content: flex-start;
-                padding: 12px 16px;
-                min-height: auto;
-            }
-
-            .payment-icon {
-                margin-bottom: 0;
-                margin-right: 12px;
-                font-size: 20px;
-            }
-        }
-    </style>
-@endpush
-
-
-{{-- Scripts: AutoNumeric & Form Logic --}}
+{{-- Scripts --}}
 @once
     @push('page_scripts')
         <script src="https://cdn.jsdelivr.net/npm/autonumeric@4"></script>
         <script>
-            (function() {
-                'use strict';
-
-                // ========== AutoNumeric Configuration ==========
+            document.addEventListener('DOMContentLoaded', function() {
+                // ========== AutoNumeric ==========
                 const AN_OPTS = {
                     decimalPlaces: 0,
                     digitGroupSeparator: '.',
@@ -402,100 +230,50 @@
                     currencySymbolPlacement: 'p'
                 };
 
-                function stripMoney(value) {
-                    return parseInt(String(value || '').replace(/[^\d\-]/g, '')) || 0;
-                }
+                document.querySelectorAll('.js-money').forEach(el => {
+                    if (!el._an) el._an = new AutoNumeric(el, AN_OPTS);
+                });
 
-                function initAutoNumeric(scope) {
-                    (scope || document).querySelectorAll('input.js-money').forEach(function(el) {
-                        if (el._an) return; // Already initialized
-                        el._an = new AutoNumeric(el, AN_OPTS);
+                // Unmask on submit
+                document.querySelectorAll('form').forEach(form => {
+                    form.addEventListener('submit', function() {
+                        const amountInput = this.querySelector('#amount');
+                        if (amountInput && amountInput._an) {
+                            amountInput.value = amountInput._an.getNumber();
+                        }
                     });
-                }
+                });
 
-                function bindUnmaskOnSubmit(scope) {
-                    (scope || document).querySelectorAll('form').forEach(function(form) {
-                        if (form._anBound || !form.querySelector('input.js-money')) return;
-                        form._anBound = true;
+                // ========== Bank Toggle Logic ==========
+                function toggleBankInput() {
+                    const cashRadio = document.getElementById('pm_cash');
+                    const transferRadio = document.getElementById('pm_transfer');
+                    const bankInput = document.getElementById('bank_name');
 
-                        form.addEventListener('submit', function() {
-                            form.querySelectorAll('input.js-money').forEach(function(input) {
-                                input.value = input._an ? input._an.getNumber() : stripMoney(input
-                                    .value);
-                            });
-                        });
-                    });
-                }
+                    if (!bankInput || !cashRadio || !transferRadio) return;
 
-                // ========== Bank Input Toggle Logic ==========
-                function toggleBankInput(form) {
-                    const bankInput = form.querySelector('input[name="bank_name"]');
-                    const cashRadio = form.querySelector('#pm_cash');
-                    const transferRadio = form.querySelector('#pm_transfer');
-
-                    // Payment option labels (untuk styling)
-                    const cashOption = form.querySelector('label[for="pm_cash"]');
-                    const transferOption = form.querySelector('label[for="pm_transfer"]');
-
-                    if (!bankInput) return;
-
-                    function updateBankState() {
-                        const isTransfer = transferRadio && transferRadio.checked;
-
-                        // Disable/Enable bank input
+                    function updateState() {
+                        const isTransfer = transferRadio.checked;
                         bankInput.disabled = !isTransfer;
-
                         if (!isTransfer) {
                             bankInput.value = '';
-                            bankInput.classList.remove('is-invalid');
-                        }
-
-                        // Update active class for payment options
-                        if (cashOption) {
-                            cashOption.classList.toggle('active', !isTransfer);
-                        }
-                        if (transferOption) {
-                            transferOption.classList.toggle('active', isTransfer);
-                        }
-
-                        // Visual feedback for bank input
-                        const inputGroup = bankInput.closest('.input-group');
-                        if (inputGroup) {
-                            const prepend = inputGroup.querySelector('.input-group-prepend');
-                            if (prepend) {
-                                prepend.style.opacity = isTransfer ? '1' : '0.5';
+                            bankInput.classList.remove('border-red-500'); // Clean invalid state if exists
+                        } else {
+                            // Optional: Focus if just switched
+                            if (document.activeElement === transferRadio) {
+                                bankInput.focus();
                             }
                         }
                     }
 
-                    [cashRadio, transferRadio].forEach(function(radio) {
-                        if (radio) radio.addEventListener('change', updateBankState);
-                    });
-
-                    updateBankState(); // Initial state
+                    cashRadio.addEventListener('change', updateState);
+                    transferRadio.addEventListener('change', updateState);
+                    
+                    updateState(); // Initial run
                 }
 
-                // ========== Custom File Input Label ==========
-                function initFileInputLabel() {
-                    document.querySelectorAll('.custom-file-input').forEach(function(input) {
-                        input.addEventListener('change', function(e) {
-                            const fileName = e.target.files[0] ? e.target.files[0].name : 'Pilih file...';
-                            const label = input.nextElementSibling;
-                            if (label) label.textContent = fileName;
-                        });
-                    });
-                }
-
-                // ========== Initialize All ==========
-                document.addEventListener('DOMContentLoaded', function() {
-                    initAutoNumeric();
-                    bindUnmaskOnSubmit();
-                    document.querySelectorAll('form').forEach(toggleBankInput);
-                    initFileInputLabel();
-                });
-
-            })
-            ();
+                toggleBankInput();
+            });
         </script>
     @endpush
 @endonce

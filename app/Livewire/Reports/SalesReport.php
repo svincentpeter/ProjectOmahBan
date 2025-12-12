@@ -35,21 +35,34 @@ class SalesReport extends Component
     }
 
     public function render() {
-        $sales = Sale::whereDate('date', '>=', $this->start_date)
+        $query = Sale::query()
+            ->whereDate('date', '>=', $this->start_date)
             ->whereDate('date', '<=', $this->end_date)
-            ->when($this->customer_id, function ($query) {
-                return $query->where('customer_id', $this->customer_id);
+            ->when($this->customer_id, function ($q) {
+                return $q->where('customer_id', $this->customer_id);
             })
-            ->when($this->sale_status, function ($query) {
-                return $query->where('status', $this->sale_status);
+            ->when($this->sale_status, function ($q) {
+                return $q->where('status', $this->sale_status);
             })
-            ->when($this->payment_status, function ($query) {
-                return $query->where('payment_status', $this->payment_status);
-            })
-            ->orderBy('date', 'desc')->paginate(10);
+            ->when($this->payment_status, function ($q) {
+                return $q->where('payment_status', $this->payment_status);
+            });
+
+        // Clone for summary to avoid resetting pagination
+        $summaryQuery = clone $query;
+        $totalOmset = $summaryQuery->sum('total_amount');
+        $totalPaid  = $summaryQuery->sum('paid_amount');
+        $totalDue   = $summaryQuery->sum('due_amount');
+        $count      = $summaryQuery->count();
+
+        $sales = $query->orderBy('date', 'desc')->paginate(10);
 
         return view('livewire.reports.sales-report', [
-            'sales' => $sales
+            'sales'      => $sales,
+            'totalOmset' => $totalOmset,
+            'totalPaid'  => $totalPaid,
+            'totalDue'   => $totalDue,
+            'totalCount' => $count
         ]);
     }
 

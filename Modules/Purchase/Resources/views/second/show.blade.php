@@ -1,378 +1,283 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
-@section('title', 'Detail Pembelian Produk Bekas')
-
-@section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('purchases.second.index') }}">Pembelian Bekas</a></li>
-        <li class="breadcrumb-item active">Detail</li>
-    </ol>
-@endsection
+@section('title', 'Detail Pembelian Stok Bekas')
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            {{-- Action Buttons --}}
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="btn-group" role="group">
-                        <a href="{{ route('purchases.second.index') }}" class="btn btn-secondary">
-                            <i class="cil-arrow-left mr-2"></i> Kembali
-                        </a>
-                        @can('edit_purchases')
-                            @if ($purchaseSecond->status == 'Pending')
-                                <a href="{{ route('purchases.second.edit', $purchaseSecond) }}" class="btn btn-warning">
-                                    <i class="cil-pencil mr-2"></i> Edit
-                                </a>
-                            @endif
-                        @endcan
-                        <a href="{{ route('purchases.second.pdf', $purchaseSecond->id) }}" target="_blank" class="btn btn-info">
-                            <i class="cil-print mr-2"></i> Print/PDF
-                        </a>
-                        @can('delete_purchases')
-                            <button type="button" class="btn btn-danger" id="delete-purchase"
-                                data-id="{{ $purchaseSecond->id }}"
-                                data-reference="{{ $purchaseSecond->reference }}">
-                                <i class="cil-trash mr-2"></i> Hapus
-                            </button>
-                        @endcan
-                    </div>
+    {{-- Breadcrumb --}}
+    @include('layouts.breadcrumb-flowbite', [
+        'items' => [
+            ['text' => 'Pembelian Bekas', 'url' => route('purchases.second.index')],
+            ['text' => 'Detail Pembelian', 'url' => '#'],
+        ],
+    ])
+
+    {{-- Action Buttons --}}
+    <div class="mb-6 flex space-x-2">
+        <a href="{{ route('purchases.second.index') }}"
+            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all text-sm font-medium">
+            <i class="bi bi-arrow-left mr-1"></i> Kembali
+        </a>
+        @can('edit_purchases')
+            @if ($purchaseSecond->status == 'Pending')
+                <a href="{{ route('purchases.second.edit', $purchaseSecond) }}"
+                    class="px-4 py-2 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 transition-all text-sm font-medium">
+                    <i class="bi bi-pencil mr-1"></i> Edit
+                </a>
+            @endif
+        @endcan
+        <a href="{{ route('purchases.second.pdf', $purchaseSecond->id) }}" target="_blank"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm font-medium">
+            <i class="bi bi-printer mr-1"></i> Print/PDF
+        </a>
+        @can('delete_purchases')
+            <button type="button" id="delete-purchase" data-id="{{ $purchaseSecond->id }}"
+                data-reference="{{ $purchaseSecond->reference }}"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all text-sm font-medium">
+                <i class="bi bi-trash mr-1"></i> Hapus
+            </button>
+        @endcan
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- LEFT: Purchase Information --}}
+        <div class="lg:col-span-2 space-y-6">
+            {{-- Purchase Header Card --}}
+            <div class="bg-white rounded-lg shadow-sm dark:bg-gray-800">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-purple-600 rounded-t-lg">
+                    <h5 class="text-xl font-bold text-white flex items-center">
+                        <i class="bi bi-file-earmark-text mr-2"></i>
+                        {{ $purchaseSecond->reference }}
+                    </h5>
                 </div>
-            </div>
-
-            <div class="row">
-                {{-- LEFT: Purchase Information --}}
-                <div class="col-lg-8 mb-4">
-                    {{-- Purchase Header Card --}}
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0">
-                                <i class="cil-file-pdf mr-2"></i>
-                                {{ $purchaseSecond->reference }}
-                            </h5>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Tanggal</label>
+                            <div class="text-base font-semibold text-gray-900 dark:text-white mt-1">
+                                {{ $purchaseSecond->date->format('d F Y') }}
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="text-muted small font-weight-semibold mb-1">Tanggal</label>
-                                    <div class="font-weight-bold">
-                                        {{ $purchaseSecond->date->format('d F Y') }}
-                                    </div>
-                                </div>
 
-                                <div class="col-md-6 mb-3">
-                                    <label class="text-muted small font-weight-semibold mb-1">Reference</label>
-                                    <div class="font-weight-bold text-primary">
-                                        {{ $purchaseSecond->reference }}
-                                    </div>
-                                </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Reference</label>
+                            <div class="text-base font-bold text-purple-600 dark:text-purple-400 mt-1">
+                                {{ $purchaseSecond->reference }}
+                            </div>
+                        </div>
 
-                                <div class="col-md-6 mb-3">
-                                    <label class="text-muted small font-weight-semibold mb-1">Customer</label>
-                                    <div class="font-weight-bold">
-                                        {{ $purchaseSecond->customer_name }}
-                                        @if ($purchaseSecond->customer_phone)
-                                            <br>
-                                            <small class="text-muted">
-                                                <i class="cil-phone mr-1"></i>
-                                                {{ $purchaseSecond->customer_phone }}
-                                            </small>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="text-muted small font-weight-semibold mb-1">Status</label>
-                                    <div>
-                                        @if ($purchaseSecond->status == 'Completed')
-                                            <span class="badge badge-info badge-lg">
-                                                <i class="cil-check-circle mr-1"></i> Completed
-                                            </span>
-                                        @else
-                                            <span class="badge badge-secondary badge-lg">
-                                                <i class="cil-clock mr-1"></i> Pending
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="text-muted small font-weight-semibold mb-1">Metode Pembayaran</label>
-                                    <div class="font-weight-bold">
-                                        <i class="cil-wallet mr-1"></i>
-                                        {{ $purchaseSecond->payment_method }}
-                                        @if ($purchaseSecond->payment_method == 'Transfer' && $purchaseSecond->bank_name)
-                                            <br>
-                                            <small class="text-muted">Bank: {{ $purchaseSecond->bank_name }}</small>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label class="text-muted small font-weight-semibold mb-1">Status Pembayaran</label>
-                                    <div>
-                                        @if ($purchaseSecond->payment_status == 'Lunas')
-                                            <span class="badge badge-success badge-lg">
-                                                <i class="cil-check mr-1"></i> Lunas
-                                            </span>
-                                        @else
-                                            <span class="badge badge-warning badge-lg">
-                                                <i class="cil-warning mr-1"></i> Belum Lunas
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                @if ($purchaseSecond->note)
-                                    <div class="col-12">
-                                        <label class="text-muted small font-weight-semibold mb-1">Catatan</label>
-                                        <div class="alert alert-light mb-0">
-                                            <i class="cil-notes mr-1"></i>
-                                            {{ $purchaseSecond->note }}
-                                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Customer</label>
+                            <div class="text-base font-semibold text-gray-900 dark:text-white mt-1">
+                                {{ $purchaseSecond->customer_name }}
+                                @if ($purchaseSecond->customer_phone)
+                                    <div class="text-sm font-normal text-gray-500 dark:text-gray-400 flex items-center mt-0.5">
+                                        <i class="bi bi-telephone mr-1"></i> {{ $purchaseSecond->customer_phone }}
                                     </div>
                                 @endif
                             </div>
                         </div>
-                    </div>
 
-                    {{-- Products Table Card --}}
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white border-bottom">
-                            <h6 class="mb-0 font-weight-bold text-dark">
-                                <i class="cil-basket mr-2 text-primary"></i>
-                                Daftar Produk Bekas
-                            </h6>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th width="5%">#</th>
-                                            <th>Produk</th>
-                                            <th>Kode</th>
-                                            <th>Kondisi</th>
-                                            <th width="15%" class="text-right">Harga Beli</th>
-                                            <th width="15%" class="text-right">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($purchaseSecond->purchaseSecondDetails as $detail)
-                                            <tr>
-                                                <td class="text-center">{{ $loop->iteration }}</td>
-                                                <td>
-                                                    <strong>{{ $detail->product_name }}</strong>
-                                                </td>
-                                                <td>
-                                                    <code class="text-dark">{{ $detail->product_code }}</code>
-                                                </td>
-                                                <td>
-                                                    <small class="text-muted">
-                                                        {{ $detail->condition_notes ?: '-' }}
-                                                    </small>
-                                                </td>
-                                                <td class="text-right">
-                                                    {{ rupiah($detail->unit_price) }}
-                                                </td>
-                                                <td class="text-right font-weight-bold text-primary">
-                                                    {{ rupiah($detail->sub_total) }}
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Status</label>
+                            <div class="mt-1">
+                                @include('purchase::second.partials.status', ['data' => $purchaseSecond])
                             </div>
                         </div>
+
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Metode Pembayaran</label>
+                            <div class="text-base font-semibold text-gray-900 dark:text-white mt-1">
+                                <i class="bi bi-wallet2 mr-1"></i> {{ $purchaseSecond->payment_method }}
+                                @if ($purchaseSecond->payment_method == 'Transfer' && $purchaseSecond->bank_name)
+                                    <div class="text-sm font-normal text-gray-500 dark:text-gray-400 mt-0.5">
+                                        Bank: {{ $purchaseSecond->bank_name }}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Status Pembayaran</label>
+                            <div class="mt-1">
+                                @include('purchase::second.partials.payment-status', ['data' => $purchaseSecond])
+                            </div>
+                        </div>
+
+                        @if ($purchaseSecond->note)
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">Catatan</label>
+                                <div class="mt-1 p-3 bg-gray-50 rounded-lg text-sm text-gray-700 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                    <i class="bi bi-sticky mr-1 text-yellow-500"></i> {{ $purchaseSecond->note }}
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
+            </div>
 
-                {{-- RIGHT: Payment Summary & Info --}}
-                <div class="col-lg-4 mb-4">
-                    {{-- Payment Summary Card --}}
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0">
-                                <i class="cil-calculator mr-2"></i>
-                                Ringkasan Pembayaran
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            {{-- Total Amount --}}
-                            <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
-                                <span class="font-weight-semibold">Total Pembelian:</span>
-                                <span class="h5 mb-0 font-weight-bold text-primary">
-                                    {{ rupiah($purchaseSecond->total_amount) }}
-                                </span>
-                            </div>
+            {{-- Products Table Card --}}
+            <div class="bg-white rounded-lg shadow-sm dark:bg-gray-800">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h6 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+                        <i class="bi bi-box-seam mr-2 text-purple-600"></i>
+                        Daftar Produk Bekas
+                    </h6>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">#</th>
+                                <th scope="col" class="px-6 py-3">Produk</th>
+                                <th scope="col" class="px-6 py-3">Kode</th>
+                                <th scope="col" class="px-6 py-3">Kondisi</th>
+                                <th scope="col" class="px-6 py-3 text-right">Harga Beli</th>
+                                <th scope="col" class="px-6 py-3 text-right">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($purchaseSecond->purchaseSecondDetails as $detail)
+                                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                    <td class="px-6 py-4 text-center">{{ $loop->iteration }}</td>
+                                    <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                        {{ $detail->product_name }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+                                            {{ $detail->product_code }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ $detail->condition_notes ?: '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        {{ rupiah($detail->unit_price) }}
+                                    </td>
+                                    <td class="px-6 py-4 text-right font-bold text-purple-600 dark:text-purple-400">
+                                        {{ rupiah($detail->sub_total) }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-                            {{-- Paid Amount --}}
-                            <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
-                                <span class="font-weight-semibold">Terbayar:</span>
-                                <span class="h5 mb-0 font-weight-bold text-success">
-                                    {{ rupiah($purchaseSecond->paid_amount) }}
-                                </span>
-                            </div>
+        {{-- RIGHT: Payment Summary & Info --}}
+        <div class="space-y-6">
+            {{-- Payment Summary Card --}}
+            <div class="bg-white rounded-lg shadow-sm dark:bg-gray-800">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-gray-700/50">
+                    <h6 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+                        <i class="bi bi-cash-stack mr-2 text-green-600"></i>
+                        Ringkasan Pembayaran
+                    </h6>
+                </div>
+                <div class="p-6 space-y-4">
+                    {{-- Total Amount --}}
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700">
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pembelian</span>
+                        <span class="text-lg font-bold text-purple-600 dark:text-purple-400">
+                            {{ rupiah($purchaseSecond->total_amount) }}
+                        </span>
+                    </div>
 
-                            {{-- Due Amount --}}
-                            <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
-                                <span class="font-weight-semibold">Sisa Hutang:</span>
-                                <span class="h5 mb-0 font-weight-bold {{ $purchaseSecond->due_amount > 0 ? 'text-danger' : 'text-muted' }}">
-                                    {{ rupiah($purchaseSecond->due_amount) }}
-                                </span>
-                            </div>
+                    {{-- Paid Amount --}}
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700">
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Terbayar</span>
+                        <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                            {{ rupiah($purchaseSecond->paid_amount) }}
+                        </span>
+                    </div>
 
-                            {{-- Payment Status Alert --}}
-                            <div class="alert {{ $purchaseSecond->payment_status == 'Lunas' ? 'alert-success' : 'alert-warning' }} mb-0">
-                                <strong>Status Pembayaran:</strong>
-                                <br>
-                                <span class="h6 mb-0">
-                                    @if ($purchaseSecond->payment_status == 'Lunas')
-                                        <i class="cil-check-circle mr-1"></i> Lunas
-                                    @else
-                                        <i class="cil-warning mr-1"></i> Belum Lunas
-                                    @endif
-                                </span>
+                    {{-- Due Amount --}}
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-700">
+                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Sisa Hutang</span>
+                        <span class="text-lg font-bold {{ $purchaseSecond->due_amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500' }}">
+                            {{ rupiah($purchaseSecond->due_amount) }}
+                        </span>
+                    </div>
+
+                    {{-- Payment Status --}}
+                    <div class="pt-2">
+                        <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Status Pembayaran</span>
+                        @if ($purchaseSecond->payment_status == 'Lunas')
+                            <div class="p-3 bg-green-100 text-green-800 rounded-lg flex items-center justify-center font-bold">
+                                <i class="bi bi-check-circle-fill mr-2"></i> Lunas
                             </div>
+                        @else
+                            <div class="p-3 bg-yellow-100 text-yellow-800 rounded-lg flex items-center justify-center font-bold">
+                                <i class="bi bi-exclamation-triangle-fill mr-2"></i> Belum Lunas
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Additional Information Card --}}
+            <div class="bg-white rounded-lg shadow-sm dark:bg-gray-800">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h6 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+                        <i class="bi bi-info-circle mr-2 text-blue-600"></i>
+                        Informasi Tambahan
+                    </h6>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                            <i class="bi bi-person mr-1"></i> Diinput Oleh
+                        </label>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                            {{ $purchaseSecond->user->name ?? 'System' }}
                         </div>
                     </div>
 
-                    {{-- Additional Information Card --}}
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white border-bottom">
-                            <h6 class="mb-0 font-weight-bold text-dark">
-                                <i class="cil-info mr-2 text-primary"></i>
-                                Informasi Tambahan
-                            </h6>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                            <i class="bi bi-calendar-event mr-1"></i> Dibuat Pada
+                        </label>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                            {{ $purchaseSecond->created_at->format('d F Y, H:i') }} WIB
                         </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="text-muted small font-weight-semibold mb-1">
-                                    <i class="cil-user mr-1"></i> Diinput Oleh
-                                </label>
-                                <div class="font-weight-bold">
-                                    {{ $purchaseSecond->user->name ?? 'System' }}
-                                </div>
-                            </div>
+                        <div class="text-xs text-gray-500 mt-0.5">
+                            {{ $purchaseSecond->created_at->diffForHumans() }}
+                        </div>
+                    </div>
 
-                            <div class="mb-3">
-                                <label class="text-muted small font-weight-semibold mb-1">
-                                    <i class="cil-calendar mr-1"></i> Dibuat Pada
-                                </label>
-                                <div>
-                                    {{ $purchaseSecond->created_at->format('d F Y, H:i') }} WIB
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ $purchaseSecond->created_at->diffForHumans() }}
-                                    </small>
-                                </div>
+                    @if ($purchaseSecond->updated_at != $purchaseSecond->created_at)
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                <i class="bi bi-pencil-square mr-1"></i> Terakhir Diupdate
+                            </label>
+                            <div class="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                                {{ $purchaseSecond->updated_at->format('d F Y, H:i') }} WIB
                             </div>
-
-                            @if ($purchaseSecond->updated_at != $purchaseSecond->created_at)
-                                <div class="mb-3">
-                                    <label class="text-muted small font-weight-semibold mb-1">
-                                        <i class="cil-pencil mr-1"></i> Terakhir Diupdate
-                                    </label>
-                                    <div>
-                                        {{ $purchaseSecond->updated_at->format('d F Y, H:i') }} WIB
-                                        <br>
-                                        <small class="text-muted">
-                                            {{ $purchaseSecond->updated_at->diffForHumans() }}
-                                        </small>
-                                    </div>
-                                </div>
-                            @endif
-
-                            <div>
-                                <label class="text-muted small font-weight-semibold mb-1">
-                                    <i class="cil-layers mr-1"></i> Total Item
-                                </label>
-                                <div class="font-weight-bold">
-                                    {{ $purchaseSecond->purchaseSecondDetails->count() }} Item
-                                </div>
+                            <div class="text-xs text-gray-500 mt-0.5">
+                                {{ $purchaseSecond->updated_at->diffForHumans() }}
                             </div>
+                        </div>
+                    @endif
+
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                            <i class="bi bi-layers mr-1"></i> Total Item
+                        </label>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                            {{ $purchaseSecond->purchaseSecondDetails->count() }} Item
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- Delete Form (Hidden) --}}
+    <form id="delete-form" action="" method="POST" class="hidden">
+        @csrf
+        @method('DELETE')
+    </form>
 @endsection
-
-@push('page_styles')
-    <style>
-        /* ========== Animations ========== */
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ========== Card Shadows ========== */
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* ========== Badge Sizes ========== */
-        .badge-lg {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
-        }
-
-        /* ========== Table Styling ========== */
-        .table thead th {
-            font-size: 0.8125rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            color: #4f5d73;
-            padding: 12px;
-            background-color: #f8f9fa !important;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .table tbody td {
-            padding: 12px;
-            vertical-align: middle;
-            font-size: 0.875rem;
-        }
-
-        .table tbody tr:hover {
-            background-color: rgba(72, 52, 223, 0.03);
-        }
-
-        /* ========== Info Labels ========== */
-        .text-muted.small {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* ========== Alert Styling ========== */
-        .alert {
-            border-radius: 8px;
-        }
-
-        /* ========== Responsive ========== */
-        @media (max-width: 992px) {
-            .col-lg-8,
-            .col-lg-4 {
-                margin-bottom: 1rem;
-            }
-        }
-    </style>
-@endpush
 
 @push('page_scripts')
     <script>
@@ -381,53 +286,21 @@
             $('#delete-purchase').click(function() {
                 const id = $(this).data('id');
                 const reference = $(this).data('reference');
-                const url = '{{ route('purchases.second.destroy', ':id') }}'.replace(':id', id);
+                const url = "{{ route('purchases.second.destroy', ':id') }}".replace(':id', id);
 
                 Swal.fire({
                     title: 'Hapus Pembelian Bekas?',
-                    html: `Pembelian <strong>"${reference}"</strong> akan dihapus permanen.<br><small class="text-muted">Data yang dihapus tidak dapat dikembalikan!</small>`,
+                    text: `Apakah Anda yakin ingin menghapus data "${reference}"? Data yang dihapus tidak dapat dikembalikan.`,
                     icon: 'warning',
-                    iconColor: '#e55353',
                     showCancelButton: true,
-                    confirmButtonColor: '#e55353',
-                    cancelButtonColor: '#768192',
-                    confirmButtonText: '<i class="cil-trash mr-1"></i> Ya, Hapus!',
-                    cancelButtonText: '<i class="cil-x mr-1"></i> Batal',
-                    reverseButtons: true,
-                    customClass: {
-                        confirmButton: 'btn btn-danger',
-                        cancelButton: 'btn btn-secondary'
-                    },
-                    buttonsStyling: false
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Swal.fire({
-                            title: 'Menghapus...',
-                            html: 'Mohon tunggu sebentar',
-                            allowOutsideClick: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
-
-                        const form = $('<form>', {
-                            'method': 'POST',
-                            'action': url
-                        });
-
-                        form.append($('<input>', {
-                            'type': 'hidden',
-                            'name': '_token',
-                            'value': '{{ csrf_token() }}'
-                        }));
-
-                        form.append($('<input>', {
-                            'type': 'hidden',
-                            'name': '_method',
-                            'value': 'DELETE'
-                        }));
-
-                        $('body').append(form);
+                        const form = document.getElementById('delete-form');
+                        form.action = url;
                         form.submit();
                     }
                 });

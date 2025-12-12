@@ -13,86 +13,80 @@ class SalesDataTable extends DataTable
     {
         return datatables()
             ->eloquent($query)
-
-            // Tombol expand (row detail)
             ->addColumn('row_detail', function ($s) {
                 $id = (int) $s->id;
                 $url = route('sales.items', ['sale' => $id]);
-                return '<button type="button" class="btn btn-sm btn-primary btn-expand" data-url="' . $url . '"><i class="bi bi-chevron-down"></i></button>';
+                return '<button type="button" class="btn-expand text-gray-500 hover:text-blue-600 transition-colors" data-url="' . $url . '"><i class="bi bi-chevron-down"></i></button>';
             })
-
-            // Tanggal
-            ->editColumn('date', fn($s) => Carbon::parse($s->date)->locale('id')->translatedFormat('d M Y'))
-
-            // Status & Payment status pakai partials
-            ->addColumn('status', fn($s) => view('sale::partials.status', ['data' => $s]))
-            ->addColumn('payment_status', fn($s) => view('sale::partials.payment-status', ['data' => $s]))
-
-            // Uang
-            ->addColumn('total_amount', fn($s) => format_currency((int) $s->total_amount))
-            ->addColumn('paid_amount', fn($s) => format_currency((int) $s->paid_amount))
-            ->addColumn('due_amount', fn($s) => format_currency((int) $s->due_amount))
-
-            // Profit (pakai subtotal_profit jika ada, fallback hitung dari HPP)
-            ->addColumn('total_profit', function ($s) {
-                $profit = $s->saleDetails->sum(function ($d) {
-                    if (isset($d->subtotal_profit)) {
-                        return (int) $d->subtotal_profit;
-                    }
-                    $qty = (int) ($d->quantity ?? 0);
-                    $sub = (int) ($d->sub_total ?? 0);
-                    $hpp = (int) ($d->hpp ?? 0);
-                    return $sub - $hpp * $qty;
-                });
-                return format_currency((int) $profit);
+            // KOMBINASI: Ref + Date + Badges (Manual/Discount)
+            ->editColumn('reference', function ($s) {
+                $date = Carbon::parse($s->date)->locale('id')->translatedFormat('d M Y');
+                $ref = '<div class="text-sm font-bold text-gray-900 dark:text-white">' . $s->reference . '</div>';
+                $dateHtml = '<div class="text-xs text-gray-500 mt-0.5">' . $date . '</div>';
+                
+                // Indicators
+                $badges = '';
+                if ((int) $s->has_manual_input === 1) {
+                    $badges .= '<span class="inline-flex mr-1 text-[10px] bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded border border-yellow-200" title="Ada item manual input"><i class="bi bi-pencil-square mr-1"></i>Manual</span>';
+                }
+                if ((int) $s->has_price_adjustment === 1) {
+                    $badges .= '<span class="inline-flex text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded border border-blue-200" title="Ada perubahan harga/diskon"><i class="bi bi-tag-fill mr-1"></i>Adj</span>';
+                }
+                
+                return '<div class="flex flex-col">' . $ref . $dateHtml . ($badges ? '<div class="mt-1 flex flex-wrap gap-1">' . $badges . '</div>' : '') . '</div>';
             })
+            // KOMBINASI: Status & Payment Status
+            ->addColumn('status_col', function ($s) {
+                $orderStatus = view('sale::partials.status', ['data' => $s])->render();
+                $payStatus = view('sale::partials.payment-status', ['data' => $s])->render();
+                return '<div class="flex flex-col gap-1.5 items-start justify-center h-full">' . $orderStatus . $payStatus . '</div>';
+            })
+            // KOMBINASI: Total + Sisa Tagihan + Profit (Tooltip)
+            ->editColumn('total_amount', function ($s) {
+                $total = format_currency((int) $s->total_amount);
+                $due = (int) $s->due_amount;
+                $profit = format_currency((int) $s->total_profit);
+                
+                $html = '<div class="font-bold text-gray-900 dark:text-white">' . $total . '</div>';
+                
+                if ($due > 0) {
+                    $html .= '<div class="text-xs text-red-500 font-medium mt-0.5" title="Belum Dibayar">Kurang: ' . format_currency($due) . '</div>';
+                } else {
+                    $html .= '<div class="text-xs text-emerald-500 font-medium mt-0.5"><i class="bi bi-check-all"></i> Lunas</div>';
+                }
 
-            // Kasir
-            ->addColumn('kasir', fn($s) => $s->user->name ?? '—')
-
-            // Metode bayar terakhir (null-safe)
-            ->addColumn('payment_method', function ($s) {
-                $last = $s->salePayments->first(); // sudah diurut desc di with()
+                // Profit info (Small/Tooltip)
+                $html .= '<div class="text-[10px] text-gray-400 mt-1" title="Profit Transaksi">Profit: ' . $profit . '</div>';
+                
+                return $html;
+            })
+            // KOMBINASI: Kasir + Metode Bayar
+            ->addColumn('cashier_info', function ($s) {
+                $user = $s->user->name ?? '—';
+                $last = $s->salePayments->first(); // sorted desc
                 $method = $last?->payment_method ?? ($s->payment_method ?? '-');
                 $bank = $last?->bank_name ?? $s->bank_name;
-                return $bank ? "{$method} ({$bank})" : $method;
+                $paymentText = $bank ? "{$method} ({$bank})" : $method;
+                
+                return '<div class="flex flex-col">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-[120px]" title="' . $user . '">' . $user . '</span>
+                    <span class="text-xs text-gray-500 mt-0.5 truncate max-w-[120px]" title="' . $paymentText . '"><i class="bi bi-wallet2 mr-1"></i>' . $paymentText . '</span>
+                </div>';
             })
-
-            // Indikator Input Manual
-            ->addColumn('input_manual', function ($s) {
-                if ((int) $s->has_manual_input === 1) {
-                    $cnt = (int) ($s->manual_input_count ?? 0);
-                    return '<span class="badge badge-warning">' . $cnt . ' item manual</span>';
-                }
-                return '<span class="text-muted">—</span>';
-            })
-
-            // Ringkasan Diskon / Edit Harga
-            ->addColumn('price_adjustment', function ($s) {
-                if ((int) $s->has_price_adjustment !== 1) {
-                    return '<span class="badge badge-secondary badge-sm">-</span>';
-                }
-
-                $totalAdjustment = $s->saleDetails->where('is_price_adjusted', 1)->sum('price_adjustment_amount');
-
-                $itemCount = $s->adjusted_items_count ?? $s->saleDetails->where('is_price_adjusted', 1)->count();
-
-                if ($totalAdjustment > 0) {
-                    return '<span class="badge badge-warning badge-sm" title="' . $itemCount . ' item dengan diskon"><i class="bi bi-tag-fill"></i> Rp ' . number_format($totalAdjustment, 0, ',', '.') . '</span>';
-                } elseif ($totalAdjustment < 0) {
-                    return '<span class="badge badge-success badge-sm" title="' . $itemCount . ' item dengan kenaikan harga"><i class="bi bi-arrow-up-circle"></i> +Rp ' . number_format(abs($totalAdjustment), 0, ',', '.') . '</span>';
-                }
-                return '<span class="badge badge-secondary badge-sm">-</span>';
-            })
-
-            // Aksi
+            
             ->addColumn('action', fn($s) => view('sale::partials.actions', ['data' => $s]))
-
-            ->rawColumns(['row_detail', 'status', 'payment_status', 'input_manual', 'price_adjustment', 'action'])
-
-            // FILTER robust: dukung top-level & nested d.filter.*
+            
+            ->rawColumns(['row_detail', 'reference', 'status_col', 'total_amount', 'cashier_info', 'action'])
+            
+            // ... filters ... (Keep existing filter logic, ensure column names match search/filter requirements)
             ->filter(function ($q) {
-                $f = request('filter', []);
+                // ... same filter logic ...
+                // Just ensuring the logic is preserved. 
+                // Since I am replacing the method, I must include the filter logic too.
+                // RE-INLINE THE FILTER LOGIC HERE TO BE SAFE AS I AM REPLACING dataTable()
+                 $f = request('filter', []);
+                \Illuminate\Support\Facades\Log::info('Datatable Filter:', (array)$f);
+
                 $get = function ($key, $default = null) use ($f) {
                     return $f[$key] ?? request($key, $default);
                 };
@@ -117,7 +111,12 @@ class SalesDataTable extends DataTable
                     return;
                 }
 
-                // Preset
+                // Preset logic ... (copy from original)
+                // Actually I should verify if I can just reference original code or if I need to copy paste content.
+                // The tool `replace_file_content` replaces a BLOCK. If I replace dataTable() I must provide full body.
+                // The original logic was long.
+                
+                // Let's copy the specific preset logic from previous read.
                 if (!empty($preset)) {
                     $now = Carbon::now();
                     switch ($preset) {
@@ -140,13 +139,18 @@ class SalesDataTable extends DataTable
                     }
                 }
 
-                // Bulan spesifik (YYYY-MM)
                 if (!empty($bulan) && strpos($bulan, '-') !== false) {
                     [$y, $m] = explode('-', $bulan);
                     $q->whereYear('date', (int) $y)->whereMonth('date', (int) $m);
                 }
             });
     }
+
+    // ... query() method is same ...
+
+    // ... html() method is same ...
+
+
 
     public function query(Sale $model)
     {
@@ -190,7 +194,7 @@ class SalesDataTable extends DataTable
                 },
             ]);
 
-        return $q->select('id', 'reference', 'date', 'status', 'total_amount', 'paid_amount', 'due_amount', 'payment_status', 'payment_method', 'bank_name', 'user_id', 'has_price_adjustment', 'has_manual_input', 'manual_input_count');
+        return $q->select('id', 'reference', 'date', 'status', 'total_amount', 'paid_amount', 'due_amount', 'total_profit', 'total_hpp', 'payment_status', 'payment_method', 'bank_name', 'user_id', 'has_price_adjustment', 'has_manual_input', 'manual_input_count');
     }
 
     public function html()
@@ -198,49 +202,31 @@ class SalesDataTable extends DataTable
         return $this->builder()
             ->setTableId('sales-table')
             ->columns($this->getColumns())
-
-            // SAFE: kembalikan object; d.filter diisi dari UI
-            ->minifiedAjax('', null, [
-                'data' => /** @lang JavaScript */ 'function (d) {
-                    var f = {
-                        preset: $("#filter_preset").val() || "",
-                        bulan:  $("#filter_bulan").val()   || "",
-                        dari:   $("#filter_dari").val()    || "",
-                        sampai: $("#filter_sampai").val()  || "",
-                        has_adjustment: $("#filter_has_adjustment").length && $("#filter_has_adjustment").is(":checked") ? 1 : "",
-                        has_manual:     $("#filter_has_manual").length     && $("#filter_has_manual").is(":checked")     ? 1 : ""
-                    };
-                    return $.extend({}, d || {}, { filter: f });
-                }',
-            ])
-            ->parameters([
-                'language' => ['url' => 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/id.json'],
-                'processing' => true,
-                'serverSide' => true,
-                'responsive' => true,
-                'autoWidth' => false,
-                'order' => [[2, 'desc']], // index 2 = kolom "Tanggal"
-            ]);
+            ->minifiedAjax() // AJAX handled by global config & preXhr in view
+            // No custom parameters needed, handled by global config
+            ->orderBy(2, 'desc'); // Order by Date desc
     }
 
     protected function getColumns()
     {
         return [
-            Column::computed('row_detail')->title('')->exportable(false)->printable(false)->width(32)->className('text-center align-middle'),
-            Column::make('reference')->title('Ref')->className('text-center align-middle'),
-            Column::make('date')->title('Tanggal')->className('text-center align-middle'),
-
-            Column::computed('status')->title('Status')->className('text-center align-middle'),
-            Column::computed('total_amount')->title('Total')->className('text-center align-middle'),
-            Column::computed('total_profit')->title('Profit')->className('text-center align-middle'),
-            Column::computed('paid_amount')->title('Dibayar')->className('text-center align-middle'),
-            Column::computed('due_amount')->title('Kurang')->className('text-center align-middle'),
-            Column::computed('payment_status')->title('Status Bayar')->className('text-center align-middle'),
-            Column::computed('payment_method')->title('Pembayaran')->className('text-center align-middle'),
-
-            Column::computed('kasir')->title('Kasir')->className('text-center align-middle'),
-            Column::computed('input_manual')->title('Input Manual')->className('text-center align-middle'),
-            Column::computed('price_adjustment')->title('Diskon')->className('text-center align-middle'),
+            Column::computed('row_detail')->title('')->exportable(false)->printable(false)->width(24)->className('text-center align-middle pr-0'),
+            
+            Column::make('reference')
+                ->title('Transaksi')
+                ->className('align-top min-w-[150px]'),
+                
+            Column::computed('total_amount') // Financials (Total, Due, Profit)
+                ->title('Nilai Transaksi')
+                ->className('text-right align-top min-w-[120px]'),
+                
+            Column::computed('status_col') // Merged Statuses
+                ->title('Status')
+                ->className('align-top min-w-[100px]'),
+                
+            Column::computed('cashier_info') // Kasir & Method
+                ->title('Kasir & Info')
+                ->className('align-top min-w-[120px]'),
 
             Column::computed('action')->title('Aksi')->exportable(false)->printable(false)->className('text-center align-middle'),
         ];

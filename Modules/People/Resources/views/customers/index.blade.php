@@ -1,404 +1,241 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Daftar Customer')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item active">Customer</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', [
+        'title' => 'Customer',
+        'items' => [
+            ['text' => 'Home', 'url' => route('home')],
+            ['text' => 'Customer', 'url' => '#']
+        ]
+    ])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            {{-- Statistics Cards --}}
-            <div class="row mb-4">
-                {{-- Total Customer --}}
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-purple">
-                        <div class="stats-icon">
-                            <i class="cil-people"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-label">Total Customer</div>
-                            <div class="stats-value">
-                                {{ \Modules\People\Entities\Customer::count() }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    {{-- Statistics Cards --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {{-- Total Customer --}}
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-zinc-200 flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="relative z-10">
+                <p class="text-sm font-medium text-zinc-500 mb-1">Total Customer</p>
+                <h3 class="text-2xl font-bold text-zinc-800">
+                    {{ \Modules\People\Entities\Customer::count() }}
+                </h3>
+            </div>
+            <div class="p-3 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors">
+                <i class="bi bi-people text-indigo-600 text-xl"></i>
+            </div>
+        </div>
 
-                {{-- Customer Aktif --}}
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-success">
-                        <div class="stats-icon">
-                            <i class="cil-check-circle"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-label">Customer Aktif</div>
-                            <div class="stats-value">
-                                @php
-                                    try {
-                                        $activeCustomers = \Modules\People\Entities\Customer::whereHas('sales', function($q) { 
-                                            $q->where('date', '>=', now()->subMonths(6)); 
-                                        })->count();
-                                    } catch (\Exception $e) {
-                                        \Log::error('Error counting active customers: ' . $e->getMessage());
-                                        $activeCustomers = 0;
-                                    }
-                                @endphp
-                                {{ $activeCustomers }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        {{-- Customer Aktif --}}
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-zinc-200 flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="relative z-10">
+                <p class="text-sm font-medium text-zinc-500 mb-1">Customer Aktif</p>
+                <h3 class="text-2xl font-bold text-zinc-800">
+                    @php
+                        try {
+                            $activeCustomers = \Modules\People\Entities\Customer::whereHas('sales', function($q) { 
+                                $q->where('date', '>=', now()->subMonths(6)); 
+                            })->count();
+                        } catch (\Throwable $e) {
+                            \Log::error('Error counting active customers: ' . $e->getMessage());
+                            $activeCustomers = 0;
+                        }
+                    @endphp
+                    {{ $activeCustomers }}
+                </h3>
+                <p class="text-xs text-emerald-600 mt-1 flex items-center">
+                    <i class="bi bi-activity me-1"></i> In last 6 months
+                </p>
+            </div>
+            <div class="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
+                <i class="bi bi-person-check text-emerald-600 text-xl"></i>
+            </div>
+        </div>
 
-                {{-- Total Kota --}}
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-info">
-                        <div class="stats-icon">
-                            <i class="cil-location-pin"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-label">Total Kota</div>
-                            <div class="stats-value">
-                                {{ \Modules\People\Entities\Customer::distinct('city')->count('city') }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        {{-- Total Kota --}}
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-zinc-200 flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="relative z-10">
+                <p class="text-sm font-medium text-zinc-500 mb-1">Total Kota</p>
+                <h3 class="text-2xl font-bold text-zinc-800">
+                    {{ \Modules\People\Entities\Customer::distinct('city')->count('city') }}
+                </h3>
+            </div>
+            <div class="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+                <i class="bi bi-geo-alt text-blue-600 text-xl"></i>
+            </div>
+        </div>
 
-                {{-- Total Transaksi --}}
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="stats-card stats-card-warning">
-                        <div class="stats-icon">
-                            <i class="cil-cart"></i>
-                        </div>
-                        <div class="stats-content">
-                            <div class="stats-label">Total Transaksi</div>
-                            <div class="stats-value">
-                                @php
-                                    try {
-                                        $totalSales = \Modules\Sale\Entities\Sale::count();
-                                    } catch (\Exception $e) {
-                                        \Log::error('Error counting sales: ' . $e->getMessage());
-                                        $totalSales = 0;
-                                    }
-                                @endphp
-                                {{ $totalSales }}
-                            </div>
-                        </div>
-                    </div>
+        {{-- Total Transaksi --}}
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-zinc-200 flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="relative z-10">
+                <p class="text-sm font-medium text-zinc-500 mb-1">Total Transaksi</p>
+                <h3 class="text-2xl font-bold text-zinc-800">
+                        @php
+                        try {
+                            $totalSales = \Modules\Sale\Entities\Sale::count();
+                        } catch (\Throwable $e) {
+                            $totalSales = 0;
+                        }
+                    @endphp
+                    {{ $totalSales }}
+                </h3>
+            </div>
+            <div class="p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition-colors">
+                <i class="bi bi-cart text-amber-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Main Card --}}
+    <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">
+        {{-- Header & Toolbar --}}
+        <div class="p-5 border-b border-zinc-100">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h5 class="text-lg font-bold text-zinc-800 flex items-center">
+                        <i class="bi bi-people-fill text-indigo-600 me-2"></i>
+                        Daftar Customer
+                    </h5>
+                    <p class="text-sm text-zinc-500 mt-1">Kelola data customer untuk transaksi penjualan</p>
+                </div>
+                <div>
+                    @can('create_customers')
+                    <a href="{{ route('customers.create') }}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm hover:shadow-md">
+                        <i class="bi bi-plus-lg me-2"></i> Tambah Customer
+                    </a>
+                    @endcan
                 </div>
             </div>
 
-            {{-- Main Card --}}
-            <div class="card shadow-sm">
-                {{-- Card Header --}}
-                <div class="card-header bg-white py-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap">
-                        <div class="mb-2 mb-md-0">
-                            <h5 class="mb-1 font-weight-bold">
-                                <i class="cil-people mr-2 text-primary"></i>
-                                Daftar Customer
-                            </h5>
-                            <small class="text-muted">Kelola data customer untuk transaksi penjualan</small>
-                        </div>
+            {{-- Filter Section --}}
+            {{-- Filter Section --}}
+            @include('layouts.filter-card', [
+                'action' => route('customers.index'),
+                'title' => 'Filter Data',
+                'icon' => 'bi bi-funnel',
+                'quickFilters' => [
+                     [
+                        'label' => 'Semua', 
+                        'value' => '', 
+                        'param' => 'status', 
+                        'url' => request()->fullUrlWithQuery(['status' => '']),
+                        'icon' => 'bi bi-grid'
+                     ],
+                     [
+                        'label' => 'Aktif', 
+                        'value' => 'active', 
+                        'param' => 'status', 
+                        'url' => request()->fullUrlWithQuery(['status' => 'active']),
+                        'icon' => 'bi bi-check-circle'
+                     ],
+                     [
+                        'label' => 'Tidak Aktif', 
+                        'value' => 'inactive', 
+                        'param' => 'status', 
+                        'url' => request()->fullUrlWithQuery(['status' => 'inactive']),
+                        'icon' => 'bi bi-x-circle'
+                     ],
+                ],
+                'filters' => [
+                    [
+                        'name' => 'city',
+                        'label' => 'Kota',
+                        'type' => 'select',
+                        'options' => \Modules\People\Entities\Customer::distinct('city')->pluck('city')->mapWithKeys(fn($item) => [$item => $item])->toArray()
+                    ],
+                    [
+                        'name' => 'status',
+                        'label' => 'Status',
+                        'type' => 'select',
+                        'options' => [
+                            'active' => 'Aktif (Ada Order)',
+                            'inactive' => 'Tidak Aktif'
+                        ]
+                    ]
+                ]
+            ])
+        </div>
+        </div>
 
-                        <div class="btn-group" role="group">
-                            @can('create_customers')
-                                <a href="{{ route('customers.create') }}" class="btn btn-primary">
-                                    <i class="cil-plus mr-2"></i> Tambah Customer
-                                </a>
-                            @endcan
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Filter Section --}}
-                <div class="card-body py-4 border-bottom" 
-                    style="background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);">
-                    <div class="filter-container">
-                        <div class="d-flex align-items-center mb-3">
-                            <i class="cil-bolt text-primary mr-2" style="font-size: 1.25rem;"></i>
-                            <h6 class="mb-0 font-weight-bold text-dark">Filter Data</h6>
-                        </div>
-
-                        {{-- Filter Form --}}
-                        <form method="GET" action="{{ route('customers.index') }}">
-                            <div class="row">
-                                {{-- Filter by City --}}
-                                <div class="col-lg-4 col-md-6 mb-3">
-                                    <label class="form-label small font-weight-semibold text-dark mb-2">
-                                        <i class="cil-location-pin mr-1 text-muted"></i> Kota
-                                    </label>
-                                    <select name="city" id="filter-city" class="form-control">
-                                        <option value="">Semua Kota</option>
-                                        @php
-                                            $cities = \Modules\People\Entities\Customer::distinct('city')
-                                                ->pluck('city')
-                                                ->filter()
-                                                ->sort();
-                                        @endphp
-                                        @foreach($cities as $city)
-                                            <option value="{{ $city }}" {{ request('city') == $city ? 'selected' : '' }}>
-                                                {{ $city }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                {{-- Filter by Status --}}
-                                <div class="col-lg-4 col-md-6 mb-3">
-                                    <label class="form-label small font-weight-semibold text-dark mb-2">
-                                        <i class="cil-check mr-1 text-muted"></i> Status
-                                    </label>
-                                    <select name="status" id="filter-status" class="form-control">
-                                        <option value="">Semua Status</option>
-                                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>
-                                            Aktif
-                                        </option>
-                                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>
-                                            Tidak Aktif
-                                        </option>
-                                    </select>
-                                </div>
-
-                                {{-- Action Buttons --}}
-                                <div class="col-lg-4 col-md-12 mb-3">
-                                    <label class="form-label small font-weight-semibold text-dark mb-2">
-                                        <i class="cil-settings mr-1 text-muted"></i> Aksi
-                                    </label>
-                                    <div class="btn-group w-100" role="group">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="cil-filter mr-1"></i> Terapkan
-                                        </button>
-                                        <a href="{{ route('customers.index') }}" class="btn btn-outline-secondary">
-                                            <i class="cil-reload mr-1"></i> Reset
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                {{-- Table --}}
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <div class="datatable-wrapper">
-                            {!! $dataTable->table(['class' => 'table table-hover mb-0', 'id' => 'customers-table']) !!}
-                        </div>
-                    </div>
-                </div>
-            </div> {{-- end .card --}}
-        </div> {{-- end .animated --}}
-    </div> {{-- end .container-fluid --}}
+        {{-- DataTable --}}
+        <div class="p-0">
+            <div class="overflow-x-auto">
+                {{ $dataTable->table(['class' => 'w-full text-sm text-left text-zinc-500 dark:text-zinc-400', 'id' => 'customers-table'], true) }}
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('page_styles')
-    <style>
-        /* ========== Animations ========== */
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
+@include('includes.datatables-flowbite-css')
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f9fafb;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ========== Card Shadow ========== */
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* ========== Statistics Cards ========== */
-        .stats-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            height: 100%;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border-left: 4px solid;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-        }
-
-        .stats-card-purple {
-            border-left-color: #4834DF;
-        }
-
-        .stats-card-success {
-            border-left-color: #2eb85c;
-        }
-
-        .stats-card-warning {
-            border-left-color: #f9b115;
-        }
-
-        .stats-card-info {
-            border-left-color: #39f;
-        }
-
-        .stats-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            flex-shrink: 0;
-        }
-
-        .stats-card-purple .stats-icon {
-            background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
-            color: white;
-        }
-
-        .stats-card-success .stats-icon {
-            background: linear-gradient(135deg, #2eb85c 0%, #51d88a 100%);
-            color: white;
-        }
-
-        .stats-card-warning .stats-icon {
-            background: linear-gradient(135deg, #f9b115 0%, #ffc451 100%);
-            color: white;
-        }
-
-        .stats-card-info .stats-icon {
-            background: linear-gradient(135deg, #39f 0%, #5dadec 100%);
-            color: white;
-        }
-
-        .stats-content {
-            flex: 1;
-        }
-
-        .stats-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: 600;
-            color: #6c757d;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .stats-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #2d3748;
-            line-height: 1;
-        }
-
-        /* ========== DataTable Wrapper ========== */
-        .datatable-wrapper {
-            padding: 1rem;
-        }
-
-        /* ========== DataTable Styling ========== */
-        #customers-table thead th {
-            font-size: 0.8125rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            color: #4f5d73;
-            padding: 14px 12px;
-            background-color: #f8f9fa !important;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        #customers-table tbody td {
-            padding: 14px 12px;
-            vertical-align: middle;
+        .dataTables_wrapper .dataTables_info {
+            padding: 1rem 1.5rem;
+            color: #71717a;
             font-size: 0.875rem;
-        }
-
-        #customers-table tbody tr {
-            transition: all 0.2s ease;
-        }
-
-        #customers-table tbody tr:hover {
-            background-color: rgba(72, 52, 223, 0.03) !important;
-        }
-
-        /* ========== Badge Styling ========== */
-        .badge-light-info {
-            background-color: #e7f3ff;
-            color: #004085;
-            padding: 0.35em 0.65em;
-            font-weight: 600;
-        }
-
-        /* ========== Responsive ========== */
-        @media (max-width: 768px) {
-            .stats-card {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .datatable-wrapper {
-                padding: 0.5rem;
-            }
         }
     </style>
 @endpush
 
 @push('page_scripts')
-    {{-- Script DataTables --}}
-    {!! $dataTable->scripts() !!}
+    @include('includes.datatables-flowbite-js')
+    {{ $dataTable->scripts() }}
 
     <script>
         $(document).ready(function() {
+            const table = window.LaravelDataTables['customers-table'];
+            
+            // Hook into the request to add parameters
+            table.on('preXhr.dt', function ( e, settings, data ) {
+                data.city = $('#city').val();
+                data.status = $('#status').val();
+            });
+            
+            // Handle Filter Changes
+            $('#city, #status').on('change', function() {
+                table.draw();
+            });
+
             // Delete confirmation
             $(document).on('click', '.delete-customer', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
                 const name = $(this).data('name');
-                const hasSales = $(this).data('has-sales') === 'true';
+                const hasSales = $(this).data('has-sales') === true; // Note: data attr is parsed carefully
                 const url = '{{ route('customers.destroy', ':id') }}'.replace(':id', id);
 
                 let warningText = hasSales 
-                    ? `Customer <strong>"${name}"</strong> memiliki riwayat penjualan dan akan di-arsipkan (soft delete).<br><small class="text-muted">Data masih bisa dikembalikan!</small>`
-                    : `Customer <strong>"${name}"</strong> akan dihapus permanen.<br><small class="text-muted">Data tidak dapat dikembalikan!</small>`;
+                    ? `Customer <strong class="text-zinc-800">"${name}"</strong> memiliki riwayat penjualan dan akan di-arsipkan (soft delete).<br><span class="text-xs text-zinc-500">Data masih bisa dikembalikan!</span>`
+                    : `Customer <strong class="text-zinc-800">"${name}"</strong> akan dihapus permanen.<br><span class="text-xs text-red-500">Data tidak dapat dikembalikan!</span>`;
 
                 Swal.fire({
                     title: 'Hapus Customer?',
                     html: warningText,
                     icon: 'warning',
-                    iconColor: '#e55353',
                     showCancelButton: true,
-                    confirmButtonColor: '#e55353',
-                    cancelButtonColor: '#768192',
-                    confirmButtonText: '<i class="cil-trash mr-1"></i> Ya, Hapus!',
-                    cancelButtonText: '<i class="cil-x mr-1"></i> Batal',
+                    confirmButtonColor: '#EF4444',
+                    cancelButtonColor: '#E5E7EB',
+                    confirmButtonText: '<i class="bi bi-trash me-2"></i> Ya, Hapus!',
+                    cancelButtonText: '<span class="text-zinc-700">Batal</span>',
                     reverseButtons: true,
                     customClass: {
-                        confirmButton: 'btn btn-danger',
-                        cancelButton: 'btn btn-secondary'
-                    },
-                    buttonsStyling: false
+                        confirmButton: 'font-bold rounded-xl px-5 py-2.5',
+                        cancelButton: 'font-medium rounded-xl px-5 py-2.5',
+                        popup: 'rounded-2xl font-sans'
+                    }
                 }).then((result) => {
                     if (result.isConfirmed) {
                         Swal.fire({
                             title: 'Menghapus...',
-                            html: 'Mohon tunggu sebentar',
+                            text: 'Mohon tunggu sebentar',
                             allowOutsideClick: false,
                             didOpen: () => {
                                 Swal.showLoading();
@@ -426,11 +263,6 @@
                         form.submit();
                     }
                 });
-            });
-
-            // Tooltip (jika butuh)
-            $('body').tooltip({
-                selector: '[data-toggle="tooltip"]'
             });
         });
     </script>

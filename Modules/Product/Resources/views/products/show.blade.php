@@ -3,11 +3,11 @@
 @section('title', 'Detail Produk')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('products.index') }}">Produk</a></li>
-        <li class="breadcrumb-item active">{{ $product->product_name }}</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Manajemen Produk', 'url' => '#'],
+        ['text' => 'Daftar Produk', 'url' => route('products.index')],
+        ['text' => 'Detail Produk', 'url' => '#', 'icon' => 'bi bi-eye']
+    ]])
 @endsection
 
 @section('content')

@@ -1,410 +1,253 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Pengaturan Sistem')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item active">Pengaturan</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Pengaturan', 'url' => '#'],
+        ['text' => 'Umum', 'url' => '#']
+    ]])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            {{-- Page Header --}}
-            <div class="mb-4">
-                <h3 class="mb-1 font-weight-bold">
-                    <i class="cil-settings mr-2 text-primary"></i>
-                    Pengaturan Sistem
-                </h3>
-                <p class="text-muted mb-0">Kelola informasi dasar perusahaan dan konfigurasi sistem</p>
+    {{-- Alerts --}}
+    @include('utils.alerts')
+
+    {{-- Header Banner --}}
+    <div class="mb-6 p-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+        <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                    <i class="bi bi-gear-wide-connected text-3xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold tracking-tight">Pengaturan Sistem</h3>
+                    <p class="text-blue-100 mt-1 opacity-90">Kelola informasi dasar perusahaan dan konfigurasi utama aplikasi.</p>
+                </div>
             </div>
-
-            <div class="row">
-                {{-- Main Settings Form --}}
-                <div class="col-12 col-xl-8 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white py-3 border-bottom">
-                            <h6 class="mb-0 font-weight-bold">
-                                <i class="cil-building mr-2 text-primary"></i>
-                                Informasi Perusahaan
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            {{-- Error Messages --}}
-                            @if ($errors->any())
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <div class="d-flex align-items-start">
-                                        <i class="cil-warning mr-2 mt-1" style="font-size: 1.25rem;"></i>
-                                        <div class="flex-grow-1">
-                                            <strong>Periksa kembali input Anda:</strong>
-                                            <ul class="mb-0 mt-2">
-                                                @foreach ($errors->all() as $err)
-                                                    <li>{{ $err }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-                            {{-- Form --}}
-                            <form action="{{ route('settings.update') }}" method="POST" autocomplete="off">
-                                @csrf
-                                @method('PUT')
-
-                                <div class="row">
-                                    {{-- Company Name --}}
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label font-weight-semibold" for="company_name">
-                                            <i class="cil-building mr-1 text-muted"></i> Nama Perusahaan
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text" id="company_name" name="company_name"
-                                            class="form-control @error('company_name') is-invalid @enderror"
-                                            value="{{ old('company_name', $settings->company_name) }}" required>
-                                        @error('company_name')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    {{-- Company Email --}}
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label font-weight-semibold" for="company_email">
-                                            <i class="cil-envelope-closed mr-1 text-muted"></i> Email Perusahaan
-                                            <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="email" id="company_email" name="company_email"
-                                            class="form-control @error('company_email') is-invalid @enderror"
-                                            value="{{ old('company_email', $settings->company_email) }}" required>
-                                        @error('company_email')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    {{-- Company Phone --}}
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label font-weight-semibold" for="company_phone">
-                                            <i class="cil-phone mr-1 text-muted"></i> Telepon Perusahaan
-                                        </label>
-                                        <input type="text" id="company_phone" name="company_phone"
-                                            class="form-control @error('company_phone') is-invalid @enderror"
-                                            value="{{ old('company_phone', $settings->company_phone) }}">
-                                        @error('company_phone')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    {{-- Notification Email --}}
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label font-weight-semibold" for="notification_email">
-                                            <i class="cil-bell mr-1 text-muted"></i> Email Notifikasi
-                                        </label>
-                                        <input type="email" id="notification_email" name="notification_email"
-                                            class="form-control @error('notification_email') is-invalid @enderror"
-                                            value="{{ old('notification_email', $settings->notification_email) }}">
-                                        @error('notification_email')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    {{-- Company Address --}}
-                                    <div class="col-12 mb-3">
-                                        <label class="form-label font-weight-semibold" for="company_address">
-                                            <i class="cil-location-pin mr-1 text-muted"></i> Alamat Perusahaan
-                                        </label>
-                                        <textarea id="company_address" name="company_address" rows="3"
-                                            class="form-control @error('company_address') is-invalid @enderror">{{ old('company_address', $settings->company_address) }}</textarea>
-                                        @error('company_address')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    {{-- Currency Settings --}}
-                                    <div class="col-12 mb-3">
-                                        <hr class="my-4">
-                                        <h6 class="mb-3 font-weight-bold">
-                                            <i class="cil-dollar mr-2 text-primary"></i>
-                                            Pengaturan Mata Uang
-                                        </h6>
-                                    </div>
-
-                                    {{-- Default Currency --}}
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label font-weight-semibold" for="default_currency_id">
-                                            <i class="cil-wallet mr-1 text-muted"></i> Mata Uang Default
-                                        </label>
-                                        <select id="default_currency_id" class="form-control" disabled>
-                                            @foreach (\Modules\Currency\Entities\Currency::query()->orderBy('currency_name')->get() as $currency)
-                                                <option value="{{ $currency->id }}"
-                                                    {{ old('default_currency_id', $settings->default_currency_id) == $currency->id ? 'selected' : '' }}>
-                                                    {{ $currency->currency_name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        <input type="hidden" name="default_currency_id"
-                                            value="{{ old('default_currency_id', $settings->default_currency_id) }}">
-                                        <small class="form-text text-muted">
-                                            <i class="cil-lock-locked mr-1"></i>
-                                            Dikunci untuk konsistensi sistem. Format: <strong>Rp 100.000</strong>
-                                        </small>
-                                    </div>
-
-                                    {{-- Currency Position --}}
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label font-weight-semibold" for="default_currency_position">
-                                            <i class="cil-arrows-vertical mr-1 text-muted"></i> Posisi Simbol
-                                        </label>
-                                        <select id="default_currency_position" class="form-control" disabled>
-                                            <option selected>Prefix (Rp 100.000)</option>
-                                        </select>
-                                        <input type="hidden" name="default_currency_position" value="prefix">
-                                        <small class="form-text text-muted">
-                                            <i class="cil-lock-locked mr-1"></i>
-                                            Dikunci agar format tetap konsisten
-                                        </small>
-                                    </div>
-                                </div>
-
-                                {{-- Action Buttons --}}
-                                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                                    <a href="{{ route('settings.index') }}" class="btn btn-outline-secondary">
-                                        <i class="cil-x mr-1"></i> Batal
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="cil-save mr-1"></i> Simpan Pengaturan
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Info Sidebar --}}
-                <div class="col-12 col-xl-4">
-                    {{-- Currency Format Info --}}
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-white py-3 border-bottom">
-                            <h6 class="mb-0 font-weight-bold">
-                                <i class="cil-info mr-2 text-primary"></i>
-                                Format Mata Uang
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="info-list">
-                                <div class="info-item">
-                                    <i class="cil-dollar text-primary"></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Simbol</div>
-                                        <div class="info-value">Rp</div>
-                                    </div>
-                                </div>
-
-                                <div class="info-item">
-                                    <i class="cil-arrow-right text-primary"></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Posisi</div>
-                                        <div class="info-value">Prefix (di depan)</div>
-                                    </div>
-                                </div>
-
-                                <div class="info-item">
-                                    <i class="cil-list text-primary"></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Pemisah Ribuan</div>
-                                        <div class="info-value">. (titik)</div>
-                                    </div>
-                                </div>
-
-                                <div class="info-item">
-                                    <i class="cil-blur-circular text-primary"></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Desimal</div>
-                                        <div class="info-value">Tidak ditampilkan (0)</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="alert alert-light mt-3 mb-0" role="alert">
-                                <strong>Penggunaan di Blade:</strong>
-                                <div class="mt-2">
-                                    <code class="d-block mb-1">@{{ format_currency(100000) }}</code>
-                                    <code class="d-block mb-1">@{{ money(100000) }}</code>
-                                </div>
-                                <div class="mt-2">
-                                    <i class="cil-arrow-right mr-1"></i>
-                                    <strong>Rp 100.000</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Tips Card --}}
-                    <div class="card shadow-sm border-primary">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start">
-                                <div class="tips-icon mr-3">
-                                    <i class="cil-lightbulb"></i>
-                                </div>
-                                <div>
-                                    <h6 class="font-weight-bold mb-2">Tips</h6>
-                                    <p class="text-muted mb-0" style="font-size: 0.875rem;">
-                                        Pastikan informasi perusahaan selalu update agar muncul dengan benar
-                                        di invoice, laporan, dan dokumen lainnya.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div>
+                <button type="submit" form="settings-form" class="text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm focus:ring-4 focus:ring-white/20 font-semibold rounded-xl text-sm px-6 py-3 transition-all shadow-lg border border-white/30">
+                    <i class="bi bi-check-circle-fill me-2"></i>Simpan Perubahan
+                </button>
             </div>
         </div>
     </div>
+
+    <form id="settings-form" action="{{ route('settings.update') }}" method="POST" autocomplete="off">
+        @csrf
+        @method('PATCH')
+        
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            
+            {{-- Main Column --}}
+            <div class="xl:col-span-2 space-y-6">
+                
+                {{-- Company Info Card --}}
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-gray-700 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-100 dark:border-gray-700 bg-slate-50/50 dark:bg-gray-800/50 flex items-center gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
+                            <i class="bi bi-building-fill text-blue-600 text-lg"></i>
+                        </div>
+                        <h5 class="font-bold text-lg text-slate-800 dark:text-white">Informasi Perusahaan</h5>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {{-- Company Name --}}
+                            <div class="col-span-1 md:col-span-2">
+                                <label for="company_name" class="block mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    Nama Perusahaan <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                                        <i class="bi bi-building text-slate-500 dark:text-slate-400"></i>
+                                    </div>
+                                    <input type="text" id="company_name" name="company_name" 
+                                        value="{{ old('company_name', $settings->company_name) }}"
+                                        class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-all shadow-sm" 
+                                        placeholder="Contoh: PT. Omah Ban Indonesia" required>
+                                </div>
+                                @error('company_name')
+                                    <p class="mt-2 text-sm text-red-600"><i class="bi bi-exclamation-circle me-1"></i>{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- Company Email --}}
+                            <div>
+                                <label for="company_email" class="block mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    Email Perusahaan <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                                        <i class="bi bi-envelope text-slate-500 dark:text-slate-400"></i>
+                                    </div>
+                                    <input type="email" id="company_email" name="company_email" 
+                                        value="{{ old('company_email', $settings->company_email) }}"
+                                        class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-all shadow-sm" 
+                                        placeholder="name@company.com" required>
+                                </div>
+                                @error('company_email')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- Company Phone --}}
+                            <div>
+                                <label for="company_phone" class="block mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    Telepon Perusahaan <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                                        <i class="bi bi-telephone text-slate-500 dark:text-slate-400"></i>
+                                    </div>
+                                    <input type="text" id="company_phone" name="company_phone" 
+                                        value="{{ old('company_phone', $settings->company_phone) }}"
+                                        class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-all shadow-sm" 
+                                        placeholder="08123456789" required>
+                                </div>
+                                @error('company_phone')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            {{-- Address --}}
+                            <div class="col-span-1 md:col-span-2">
+                                <label for="company_address" class="block mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    Alamat Lengkap <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                     <div class="absolute top-3 start-0 flex items-start ps-3.5 pointer-events-none">
+                                        <i class="bi bi-geo-alt text-slate-500 dark:text-slate-400"></i>
+                                    </div>
+                                    <textarea id="company_address" name="company_address" rows="3" 
+                                        class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-all shadow-sm"
+                                        placeholder="Alamat lengkap perusahaan..." required>{{ old('company_address', $settings->company_address) }}</textarea>
+                                </div>
+                                @error('company_address')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Notification Settings --}}
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-gray-700 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-100 dark:border-gray-700 bg-slate-50/50 dark:bg-gray-800/50 flex items-center gap-3">
+                         <div class="p-2 bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300 rounded-lg">
+                            <i class="bi bi-bell"></i>
+                        </div>
+                        <h5 class="font-bold text-lg text-slate-800 dark:text-white">Pengaturan Notifikasi</h5>
+                    </div>
+                    <div class="p-6">
+                        <div>
+                            <label for="notification_email" class="block mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                Email Penerima Notifikasi
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                                    <i class="bi bi-envelope-at text-slate-500 dark:text-slate-400"></i>
+                                </div>
+                                <input type="email" id="notification_email" name="notification_email" 
+                                    value="{{ old('notification_email', $settings->notification_email) }}"
+                                    class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-all shadow-sm" 
+                                    placeholder="notifikasi@company.com">
+                            </div>
+                            <p class="mt-2 text-xs text-slate-500"><i class="bi bi-info-circle me-1"></i>Email ini akan digunakan untuk menerima notifikasi sistem penting.</p>
+                             @error('notification_email')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            {{-- Side Column --}}
+            <div class="xl:col-span-1 space-y-6">
+                
+                {{-- Currency Settings --}}
+               <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-gray-700 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-slate-100 dark:border-gray-700 bg-slate-50/50 dark:bg-gray-800/50 flex items-center gap-3">
+                         <div class="p-2 bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300 rounded-lg">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                        <h5 class="font-bold text-lg text-slate-800 dark:text-white">Mata Uang</h5>
+                    </div>
+                    
+                    <div class="p-6 space-y-4">
+                         {{-- Default Currency --}}
+                         <div>
+                            <label class="block mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                Mata Uang Default
+                            </label>
+                            <select id="default_currency_id" class="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400" disabled>
+                                @foreach (\Modules\Currency\Entities\Currency::query()->orderBy('currency_name')->get() as $currency)
+                                    <option value="{{ $currency->id }}"
+                                        {{ old('default_currency_id', $settings->default_currency_id) == $currency->id ? 'selected' : '' }}>
+                                        {{ $currency->currency_name }} ({{ $currency->symbol }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="default_currency_id" value="{{ old('default_currency_id', $settings->default_currency_id) }}">
+                         </div>
+
+                        {{-- Currency Position --}}
+                        <div>
+                             <label class="block mb-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                Posisi Simbol
+                            </label>
+                            <select class="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400" disabled>
+                                <option selected>Prefix (Rp 100.000)</option>
+                            </select>
+                             <input type="hidden" name="default_currency_position" value="prefix">
+                        </div>
+
+                         <div class="p-4 rounded-xl bg-orange-50 border border-orange-100 text-orange-800 dark:bg-gray-700 dark:border-gray-600 dark:text-orange-300 text-sm">
+                            <div class="flex items-start gap-2">
+                                <i class="bi bi-lock-fill mt-0.5"></i>
+                                <div>
+                                    <span class="font-bold block">Pengaturan Terkunci</span>
+                                    Untuk menjaga konsistensi data finansial, pengaturan mata uang tidak dapat diubah sembarangan.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Preview Card --}}
+                 <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-xl text-white overflow-hidden relative">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <i class="bi bi-receipt text-9xl"></i>
+                    </div>
+                    <div class="p-6 relative z-10">
+                        <h5 class="text-lg font-bold mb-4 flex items-center gap-2">
+                            <i class="bi bi-eye"></i> Preview Format
+                        </h5>
+                        
+                        <div class="space-y-4 font-mono text-sm">
+                            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                                <span class="text-slate-400">Nominal</span>
+                                <span class="font-bold text-green-400">Rp 150.000</span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                                <span class="text-slate-400">Diskon</span>
+                                <span class="font-bold text-red-400">-Rp 10.000</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2">
+                                <span class="text-slate-300 font-bold">Total</span>
+                                <span class="font-bold text-xl text-white">Rp 140.000</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-slate-700 text-xs text-slate-400">
+                            *Format ini akan diterapkan pada seluruh sistem (Invoice, POS, Laporan).
+                        </div>
+                    </div>
+                 </div>
+
+            </div>
+        </div>
+    </form>
 @endsection
-
-@push('page_styles')
-    <style>
-        /* ========== Animations ========== */
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @@keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ========== Card Shadow ========== */
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* ========== Form Enhancements ========== */
-        .form-control {
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            border-color: #4834DF;
-            box-shadow: 0 0 0 0.2rem rgba(72, 52, 223, 0.25);
-        }
-
-        .form-control:disabled {
-            background-color: #f8f9fa;
-            cursor: not-allowed;
-        }
-
-        /* ========== Info List ========== */
-        .info-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .info-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .info-item:hover {
-            background: #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .info-item>i {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            flex-shrink: 0;
-        }
-
-        .info-content {
-            flex: 1;
-            margin-left: 0.75rem;
-        }
-
-        .info-label {
-            font-size: 0.8125rem;
-            color: #6c757d;
-            font-weight: 500;
-        }
-
-        .info-value {
-            font-size: 0.9375rem;
-            color: #1f2937;
-            font-weight: 700;
-            margin-top: 0.125rem;
-        }
-
-        /* ========== Tips Icon ========== */
-        .tips-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(72, 52, 223, 0.25);
-        }
-
-        /* ========== Alert Styling ========== */
-        .alert-light {
-            background-color: #f8f9fa;
-            border-color: #e9ecef;
-        }
-
-        .alert-light code {
-            background-color: #ffffff;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            border: 1px solid #e9ecef;
-            font-size: 0.8125rem;
-        }
-
-        /* ========== Border Primary Card ========== */
-        .border-primary {
-            border-left: 4px solid #4834DF !important;
-        }
-
-        /* ========== Responsive ========== */
-        @@media (max-width: 768px) {
-            .tips-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 1.25rem;
-            }
-
-            .info-item {
-                padding: 0.5rem;
-            }
-
-            .info-item>i {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
-            }
-        }
-    </style>
-@endpush

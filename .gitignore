@@ -1,9 +1,103 @@
-node_modules
-vendor/
-/storage/*.key
-/public/storage
-/vendor/
-/node_modules/
-/.phpunit.cache
-/.fleet
+# ========================================
+# Laravel Framework - .gitignore
+# ========================================
+
+# ----------------
+# Dependencies
+# ----------------
+/node_modules
+/vendor
+
+# ----------------
+# Environment
+# ----------------
 .env
+.env.backup
+.env.production
+
+# ----------------
+# IDE & Editor Files
+# ----------------
+/.idea
+/.vscode
+/.fleet
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# ----------------
+# Laravel Storage & Cache
+# ----------------
+/storage/*.key
+/storage/app/*
+!/storage/app/.gitignore
+!/storage/app/public
+/storage/app/public/*
+!/storage/app/public/.gitignore
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/testing/*
+!/storage/framework/testing/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/debugbar/*
+!/storage/debugbar/.gitignore
+
+# ----------------
+# Public Storage Symlink
+# ----------------
+/public/storage
+/public/hot
+
+# ----------------
+# Bootstrap Cache
+# ----------------
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+# ----------------
+# Build Files (Vite/Mix)
+# ----------------
+/public/build
+/public/mix-manifest.json
+/.vite
+
+# ----------------
+# Testing
+# ----------------
+/.phpunit.cache
+/.phpunit.result.cache
+/coverage
+
+# ----------------
+# Misc
+# ----------------
+npm-debug.log
+yarn-error.log
+
+# ----------------
+# OS Generated Files
+# ----------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ----------------
+# Composer
+# ----------------
+composer.phar
+
+# ----------------
+# Docker (optional - uncomment if needed)
+# ----------------
+# /.docker
+# docker-compose.override.yml

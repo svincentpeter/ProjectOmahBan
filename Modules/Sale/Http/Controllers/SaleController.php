@@ -18,13 +18,15 @@ use Illuminate\Support\Str;
 use Modules\Sale\Http\Requests\UpdateSaleRequest;
 use Illuminate\Support\Carbon;
 use Modules\Product\Entities\ServiceMaster;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Modules\Setting\Entities\Setting;
 
 class SaleController extends Controller
 {
     public function index(SalesDataTable $dataTable)
     {
         abort_if(Gate::denies('access_sales'), 403);
-        return $dataTable->render('sale::index');
+        return $dataTable->render('sale::sales.index');
     }
 
     /**
@@ -74,7 +76,7 @@ class SaleController extends Controller
         // pastikan mulai bersih
         Cart::instance('sale')->destroy();
         session()->forget('editing_sale_id');
-        return view('sale::create');
+        return view('sale::sales.create');
     }
 
     /**
@@ -211,7 +213,7 @@ class SaleController extends Controller
             'saleDetails.adjuster', // Relasi ke User via adjusted_by
         ]);
 
-        return view('sale::show', compact('sale'));
+        return view('sale::sales.show', compact('sale'));
     }
 
     /**
@@ -251,7 +253,7 @@ class SaleController extends Controller
             }
         }
 
-        return view('sale::edit', compact('sale'));
+        return view('sale::sales.edit', compact('sale'));
     }
 
     /**
@@ -634,7 +636,7 @@ class SaleController extends Controller
             'address' => $sale->customer->address ?? '-',
         ];
 
-        $pdf = PDF::loadView('sale::sales.print-a4', [
+        $pdf = Pdf::loadView('sale::sales.print', [
             'sale' => $sale,
             'customer' => $customerInfo, // ⭐ PASS CUSTOMER INFO
             'settings' => $settings,
@@ -796,6 +798,9 @@ class SaleController extends Controller
         }
 
         // ====== HITUNG SUMMARY ======
+        \Illuminate\Support\Facades\Log::info('Sale Summary Filter:', request('filter', []));
+        \Illuminate\Support\Facades\Log::info('Sale Summary SQL:', [$q->toSql(), $q->getBindings()]);
+
         $stats = $q
             ->selectRaw(
                 '

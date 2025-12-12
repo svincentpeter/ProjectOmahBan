@@ -1,249 +1,232 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Counting - ' . $stockOpname->reference)
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('stock-opnames.index') }}">Stock Opname</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('stock-opnames.show', $stockOpname->id) }}">{{ $stockOpname->reference }}</a></li>
-        <li class="breadcrumb-item active">Counting</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite')
+@endsection
+
+@section('breadcrumb_items')
+    <li>
+        <div class="flex items-center">
+            <i class="bi bi-chevron-right text-zinc-400 mx-2 text-xs"></i>
+            <a href="{{ route('stock-opnames.index') }}" class="text-sm font-medium text-zinc-500 hover:text-blue-600">Stock Opname</a>
+        </div>
+    </li>
+    <li>
+        <div class="flex items-center">
+            <i class="bi bi-chevron-right text-zinc-400 mx-2 text-xs"></i>
+            <a href="{{ route('stock-opnames.show', $stockOpname->id) }}" class="text-sm font-medium text-zinc-500 hover:text-blue-600">{{ $stockOpname->reference }}</a>
+        </div>
+    </li>
+    <li aria-current="page">
+        <div class="flex items-center">
+            <i class="bi bi-chevron-right text-zinc-400 mx-2 text-xs"></i>
+            <span class="text-sm font-bold text-zinc-900">Counting</span>
+        </div>
+    </li>
 @endsection
 
 @section('content')
-<div class="container-fluid">
     {{-- HEADER CARD: INFO & PROGRESS --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-gradient-primary text-white">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h4 class="mb-1">
+    <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 mb-6 overflow-hidden">
+        <div class="p-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h4 class="text-2xl font-bold flex items-center gap-2">
                         <i class="bi bi-calculator"></i> {{ $stockOpname->reference }}
                     </h4>
-                    <small>
-                        <i class="bi bi-calendar3"></i> {{ $stockOpname->opname_date->format('d/m/Y') }}
-                        &nbsp;|&nbsp;
-                        <i class="bi bi-person"></i> PIC: {{ $stockOpname->pic->name }}
-                    </small>
+                    <p class="text-indigo-100 text-sm mt-1 flex items-center gap-3">
+                        <span><i class="bi bi-calendar3 me-1"></i> {{ $stockOpname->opname_date->format('d/m/Y') }}</span>
+                        <span><i class="bi bi-person me-1"></i> PIC: {{ $stockOpname->pic->name }}</span>
+                    </p>
                 </div>
-                <div class="col-md-6 text-md-right">
-                    <h5 class="mb-1">Progress Penghitungan</h5>
-                    <div class="progress bg-white" style="height: 30px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
-                             role="progressbar" 
-                             style="width: {{ $stockOpname->completion_percentage }}%"
-                             id="progress-bar">
-                            <strong id="progress-text">{{ $stockOpname->completion_percentage }}%</strong>
+                <div class="text-right md:min-w-[280px]">
+                    <h5 class="text-sm font-semibold text-indigo-100 mb-2">Progress Penghitungan</h5>
+                    <div class="w-full bg-white/30 rounded-full h-8 mb-2 overflow-hidden">
+                        <div class="h-full bg-white rounded-full transition-all flex items-center justify-center text-indigo-700 font-bold text-sm animate-pulse" 
+                             id="progress-bar" 
+                             style="width: {{ $stockOpname->completion_percentage }}%">
+                            <span id="progress-text">{{ $stockOpname->completion_percentage }}%</span>
                         </div>
                     </div>
-                    <small class="text-white-50 mt-1 d-block">
+                    <p class="text-indigo-100 text-xs">
                         <span id="counted-items">{{ $stockOpname->items->whereNotNull('actual_qty')->count() }}</span> 
                         dari 
                         <span id="total-items">{{ $stockOpname->items->count() }}</span> 
                         item telah dihitung
-                    </small>
+                    </p>
                 </div>
             </div>
         </div>
 
-        <div class="card-body bg-light">
-            {{-- QUICK STATS --}}
-            <div class="row text-center">
-                <div class="col-md-3">
-                    <div class="card border-left-primary shadow-sm h-100">
-                        <div class="card-body py-3">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Item</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stockOpname->items->count() }}</div>
-                        </div>
-                    </div>
+        {{-- QUICK STATS --}}
+        <div class="p-6 bg-gradient-to-b from-slate-50 to-white">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white border-l-4 border-blue-500 rounded-xl p-4 shadow-sm">
+                    <p class="text-xs uppercase text-zinc-500 font-semibold">Total Item</p>
+                    <p class="text-2xl font-bold text-black">{{ $stockOpname->items->count() }}</p>
                 </div>
-                <div class="col-md-3">
-                    <div class="card border-left-success shadow-sm h-100">
-                        <div class="card-body py-3">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Sudah Dihitung</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="stat-counted">
-                                {{ $stockOpname->items->whereNotNull('actual_qty')->count() }}
-                            </div>
-                        </div>
-                    </div>
+                <div class="bg-white border-l-4 border-emerald-500 rounded-xl p-4 shadow-sm">
+                    <p class="text-xs uppercase text-zinc-500 font-semibold">Sudah Dihitung</p>
+                    <p class="text-2xl font-bold text-emerald-600" id="stat-counted">{{ $stockOpname->items->whereNotNull('actual_qty')->count() }}</p>
                 </div>
-                <div class="col-md-3">
-                    <div class="card border-left-warning shadow-sm h-100">
-                        <div class="card-body py-3">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Belum Dihitung</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="stat-pending">
-                                {{ $stockOpname->items->whereNull('actual_qty')->count() }}
-                            </div>
-                        </div>
-                    </div>
+                <div class="bg-white border-l-4 border-amber-500 rounded-xl p-4 shadow-sm">
+                    <p class="text-xs uppercase text-zinc-500 font-semibold">Belum Dihitung</p>
+                    <p class="text-2xl font-bold text-amber-600" id="stat-pending">{{ $stockOpname->items->whereNull('actual_qty')->count() }}</p>
                 </div>
-                <div class="col-md-3">
-                    <div class="card border-left-danger shadow-sm h-100">
-                        <div class="card-body py-3">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Ada Selisih</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="stat-variance">
-                                {{ $stockOpname->items->whereNotNull('actual_qty')->filter(fn($i) => $i->variance_qty != 0)->count() }}
-                            </div>
-                        </div>
-                    </div>
+                <div class="bg-white border-l-4 border-red-500 rounded-xl p-4 shadow-sm">
+                    <p class="text-xs uppercase text-zinc-500 font-semibold">Ada Selisih</p>
+                    <p class="text-2xl font-bold text-red-600" id="stat-variance">{{ $stockOpname->items->whereNotNull('actual_qty')->filter(fn($i) => $i->variance_qty != 0)->count() }}</p>
                 </div>
             </div>
         </div>
     </div>
 
     {{-- FILTER & SEARCH CARD --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text bg-white">
-                                <i class="bi bi-search"></i>
-                            </span>
-                        </div>
-                        <input type="text" 
-                               class="form-control border-left-0" 
-                               id="search-product" 
-                               placeholder="Cari kode/nama produk...">
-                    </div>
-                </div>
+    <div class="bg-white border border-slate-100 rounded-2xl shadow-md mb-6 p-5">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div class="md:col-span-4">
+                <label class="block mb-1.5 text-xs font-bold text-zinc-600">
+                    <i class="bi bi-search me-1"></i> Cari Produk
+                </label>
+                <input type="text" 
+                       id="search-product" 
+                       placeholder="Cari kode/nama produk..."
+                       class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm font-medium">
+            </div>
 
-                <div class="col-md-3">
-                    <select class="form-control" id="filter-variance">
-                        <option value="all">Semua Item</option>
-                        <option value="pending">Belum Dihitung</option>
-                        <option value="counted">Sudah Dihitung</option>
-                        <option value="match">Cocok (No Variance)</option>
-                        <option value="surplus">Surplus (Lebih)</option>
-                        <option value="shortage">Shortage (Kurang)</option>
-                    </select>
-                </div>
+            <div class="md:col-span-3">
+                <label class="block mb-1.5 text-xs font-bold text-zinc-600">
+                    <i class="bi bi-funnel me-1"></i> Filter Status
+                </label>
+                <select id="filter-variance" class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm font-medium">
+                    <option value="all">Semua Item</option>
+                    <option value="pending">Belum Dihitung</option>
+                    <option value="counted">Sudah Dihitung</option>
+                    <option value="match">Cocok (No Variance)</option>
+                    <option value="surplus">Surplus (Lebih)</option>
+                    <option value="shortage">Shortage (Kurang)</option>
+                </select>
+            </div>
 
-                <div class="col-md-3">
-                    <select class="form-control" id="filter-category">
-                        <option value="">Semua Kategori</option>
-                        @foreach($stockOpname->items->pluck('product.category')->unique('id') as $category)
-                            <option value="{{ $category->id }}">{{ $category->category_name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+            <div class="md:col-span-3">
+                <label class="block mb-1.5 text-xs font-bold text-zinc-600">
+                    <i class="bi bi-collection me-1"></i> Kategori
+                </label>
+                <select id="filter-category" class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm font-medium">
+                    <option value="">Semua Kategori</option>
+                    @foreach($stockOpname->items->pluck('product.category')->unique('id') as $category)
+                        <option value="{{ $category->id }}">{{ $category->category_name }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-secondary btn-block" id="reset-filters">
-                        <i class="bi bi-x-circle"></i> Reset
-                    </button>
-                </div>
+            <div class="md:col-span-2">
+                <button type="button" id="reset-filters" class="w-full text-zinc-700 bg-white border border-zinc-300 hover:bg-zinc-50 font-bold rounded-xl text-sm px-4 py-2.5 focus:outline-none transition-all shadow-sm">
+                    <i class="bi bi-x-circle me-1"></i> Reset
+                </button>
             </div>
         </div>
     </div>
 
     {{-- PRODUCTS GRID --}}
     <div id="products-grid">
-        <div class="row" id="product-cards">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="product-cards">
             @forelse($stockOpname->items as $item)
                 @include('adjustment::stock-opname.partials._counting-card', ['item' => $item])
             @empty
-                <div class="col-12">
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle"></i> Tidak ada item untuk dihitung.
+                <div class="col-span-full">
+                    <div class="bg-amber-50 border-l-4 border-amber-500 rounded-xl p-4 text-amber-700">
+                        <i class="bi bi-exclamation-triangle me-2"></i> Tidak ada item untuk dihitung.
                     </div>
                 </div>
             @endforelse
         </div>
     </div>
 
-    {{-- FLOATING ACTION BUTTON --}}
-    <div class="floating-actions">
+    {{-- FLOATING ACTION BUTTONS --}}
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col md:flex-row gap-3">
         <button type="button" 
-                class="btn btn-lg btn-success shadow-lg" 
                 id="complete-btn"
-                data-toggle="tooltip"
-                title="Selesaikan Opname">
-            <i class="bi bi-check-circle-fill"></i> Selesaikan
+                class="inline-flex items-center justify-center px-6 py-3 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg hover:bg-emerald-700 transition-all hover:scale-105">
+            <i class="bi bi-check-circle-fill me-2"></i> Selesaikan
         </button>
 
-        <button type="button" 
-                class="btn btn-lg btn-secondary shadow-lg ml-2" 
-                onclick="window.location.href='{{ route('stock-opnames.show', $stockOpname->id) }}'"
-                data-toggle="tooltip"
-                title="Simpan & Keluar">
-            <i class="bi bi-save"></i> Simpan & Keluar
-        </button>
+        <a href="{{ route('stock-opnames.show', $stockOpname->id) }}"
+           class="inline-flex items-center justify-center px-6 py-3 bg-zinc-600 text-white font-bold rounded-2xl shadow-lg hover:bg-zinc-700 transition-all hover:scale-105">
+            <i class="bi bi-save me-2"></i> Simpan & Keluar
+        </a>
     </div>
-</div>
 
 {{-- MODAL: INPUT ACTUAL QTY --}}
-<div class="modal fade" id="countModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-calculator"></i> Input Hasil Hitungan Fisik
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+<div id="countModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" id="modalBackdrop"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 z-10">
+        <div class="p-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+            <h5 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="bi bi-calculator"></i> Input Hasil Hitungan Fisik
+            </h5>
+            <button type="button" id="closeModal" class="absolute top-4 right-4 text-white/80 hover:text-white">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-zinc-50 rounded-xl p-4 mb-4">
+                <h6 class="font-bold text-black mb-2" id="modal-product-name"></h6>
+                <div class="flex justify-between text-sm">
+                    <span class="text-zinc-500">Kode:</span>
+                    <strong class="text-black" id="modal-product-code"></strong>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-zinc-500">Stok Sistem:</span>
+                    <strong class="text-blue-600" id="modal-system-qty"></strong>
+                </div>
             </div>
-            <div class="modal-body">
-                <div class="product-info mb-3 p-3 bg-light rounded">
-                    <h6 class="mb-2" id="modal-product-name"></h6>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted">Kode:</span>
-                        <strong id="modal-product-code"></strong>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted">Stok Sistem:</span>
-                        <strong class="text-primary" id="modal-system-qty"></strong>
-                    </div>
+
+            <form id="count-form">
+                <input type="hidden" id="item-id" name="item_id">
+
+                <div class="mb-4">
+                    <label for="actual_qty" class="block mb-2 text-sm font-bold text-zinc-700">
+                        Hasil Hitungan Fisik <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" 
+                           id="actual_qty" 
+                           name="actual_qty" 
+                           min="0" 
+                           step="1" 
+                           required 
+                           class="w-full text-center text-3xl font-bold border-2 border-zinc-200 rounded-xl p-4 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-zinc-500 mt-1">
+                        <i class="bi bi-info-circle me-1"></i> Masukkan jumlah produk yang Anda hitung secara fisik
+                    </p>
                 </div>
 
-                <form id="count-form">
-                    <input type="hidden" id="item-id" name="item_id">
+                <div class="mb-4">
+                    <label for="variance_reason" class="block mb-2 text-sm font-bold text-zinc-700">
+                        Alasan Selisih (Jika Ada)
+                    </label>
+                    <textarea id="variance_reason" 
+                              name="variance_reason" 
+                              rows="2" 
+                              placeholder="Contoh: Produk rusak 2 unit, hilang 1 unit"
+                              class="w-full border border-zinc-300 rounded-xl p-3 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
 
-                    <div class="form-group">
-                        <label for="actual_qty" class="font-weight-bold">
-                            Hasil Hitungan Fisik <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" 
-                               class="form-control form-control-lg count-input text-center" 
-                               id="actual_qty" 
-                               name="actual_qty" 
-                               min="0" 
-                               step="1" 
-                               required 
-                               autofocus>
-                        <small class="form-text text-muted">
-                            <i class="bi bi-info-circle"></i> Masukkan jumlah produk yang Anda hitung secara fisik
-                        </small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="variance_reason">Alasan Selisih (Jika Ada)</label>
-                        <textarea class="form-control" 
-                                  id="variance_reason" 
-                                  name="variance_reason" 
-                                  rows="2" 
-                                  placeholder="Contoh: Produk rusak 2 unit, hilang 1 unit"></textarea>
-                    </div>
-
-                    {{-- VARIANCE PREVIEW --}}
-                    <div class="alert d-none" id="variance-preview">
-                        <strong>Selisih:</strong> 
-                        <span id="variance-value"></span>
-                        <span id="variance-type-badge"></span>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="bi bi-x-circle"></i> Batal
-                </button>
-                <button type="button" class="btn btn-primary" id="save-count-btn">
-                    <i class="bi bi-check-circle"></i> Simpan
-                </button>
-            </div>
+                {{-- VARIANCE PREVIEW --}}
+                <div class="hidden rounded-xl p-4 mb-4" id="variance-preview"></div>
+            </form>
+        </div>
+        
+        <div class="p-5 border-t border-zinc-100 flex justify-end gap-3 bg-zinc-50 rounded-b-2xl">
+            <button type="button" id="cancelModalBtn" class="px-5 py-2.5 bg-white border border-zinc-300 text-zinc-700 font-medium rounded-xl hover:bg-zinc-50 transition-all">
+                <i class="bi bi-x-circle me-1"></i> Batal
+            </button>
+            <button type="button" id="save-count-btn" class="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-all">
+                <i class="bi bi-check-circle me-1"></i> Simpan
+            </button>
         </div>
     </div>
 </div>
@@ -251,97 +234,36 @@
 
 @push('page_styles')
 <style>
-    .border-left-primary { border-left: 4px solid #4e73df; }
-    .border-left-success { border-left: 4px solid #1cc88a; }
-    .border-left-warning { border-left: 4px solid #f6c23e; }
-    .border-left-danger { border-left: 4px solid #e74a3b; }
-
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
     /* Product Card */
     .product-card {
         transition: all 0.3s ease;
-        border: 2px solid #e3e6f0;
         cursor: pointer;
-        min-height: 280px;
     }
-
     .product-card:hover {
-        border-color: #4e73df;
-        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
-        transform: translateY(-5px);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15);
     }
-
     .product-card.counted {
-        background: linear-gradient(to bottom, #f0fff4 0%, #ffffff 100%);
-        border-color: #1cc88a;
+        background: linear-gradient(to bottom, #f0fdf4 0%, #ffffff 100%);
+        border-color: #10b981;
     }
-
     .product-card.variance-shortage {
-        background: linear-gradient(to bottom, #fff5f5 0%, #ffffff 100%);
-        border-left: 5px solid #e74a3b;
+        background: linear-gradient(to bottom, #fef2f2 0%, #ffffff 100%);
+        border-left: 4px solid #ef4444;
     }
-
     .product-card.variance-surplus {
-        background: linear-gradient(to bottom, #f0f9ff 0%, #ffffff 100%);
-        border-left: 5px solid #36b9cc;
+        background: linear-gradient(to bottom, #eff6ff 0%, #ffffff 100%);
+        border-left: 4px solid #3b82f6;
     }
-
     .product-card.variance-match {
-        background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
-        border-left: 5px solid #1cc88a;
+        background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+        border-left: 4px solid #10b981;
     }
 
-    /* Count Input */
-    .count-input {
-        font-size: 1.5rem;
-        font-weight: 700;
-        border: 2px solid #dee2e6;
-        border-radius: 0.5rem;
-    }
-
-    .count-input:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
-    }
-
-    /* Floating Actions */
-    .floating-actions {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 1000;
-    }
-
-    /* Badges */
-    .badge-xl {
-        font-size: 1rem;
-        padding: 0.5rem 1rem;
-    }
-
-    /* Skeleton Loading (optional) */
-    .skeleton {
-        animation: skeleton-loading 1s linear infinite alternate;
-    }
-
-    @keyframes skeleton-loading {
-        0% { background-color: hsl(200, 20%, 80%); }
-        100% { background-color: hsl(200, 20%, 95%); }
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 768px) {
-        .floating-actions {
-            bottom: 15px;
-            right: 15px;
-        }
-        
-        .floating-actions .btn {
-            display: block;
-            margin-bottom: 10px;
-        }
+    /* Progress bar animation */
+    @keyframes progressPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
     }
 </style>
 @endpush
@@ -351,6 +273,22 @@
 $(document).ready(function() {
     let currentItem = null;
     let systemQty = 0;
+
+    // ================================================
+    // MODAL FUNCTIONS
+    // ================================================
+    function openModal() {
+        $('#countModal').removeClass('hidden').addClass('flex');
+        document.body.classList.add('overflow-hidden');
+        setTimeout(() => $('#actual_qty').focus().select(), 100);
+    }
+
+    function closeModal() {
+        $('#countModal').removeClass('flex').addClass('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    $('#modalBackdrop, #closeModal, #cancelModalBtn').on('click', closeModal);
 
     // ================================================
     // OPEN COUNT MODAL
@@ -364,64 +302,43 @@ $(document).ready(function() {
 
         currentItem = itemId;
 
-        // Populate modal
         $('#item-id').val(itemId);
         $('#modal-product-name').text(productName);
         $('#modal-product-code').text(productCode);
         $('#modal-system-qty').text(systemQty + ' unit');
         
-        // Set current value jika sudah pernah dihitung
         if (currentActual !== null && currentActual !== '') {
             $('#actual_qty').val(currentActual);
             calculateVariance();
         } else {
             $('#actual_qty').val('');
-            $('#variance-preview').addClass('d-none');
+            $('#variance-preview').addClass('hidden');
         }
 
-        // Open modal
-        $('#countModal').modal('show');
-        
-        // Focus input setelah modal muncul
-        setTimeout(() => {
-            $('#actual_qty').focus().select();
-        }, 500);
+        openModal();
     });
 
     // ================================================
     // CALCULATE VARIANCE ON INPUT
     // ================================================
-    $('#actual_qty').on('input', function() {
-        calculateVariance();
-    });
+    $('#actual_qty').on('input', calculateVariance);
 
     function calculateVariance() {
         const actualQty = parseInt($('#actual_qty').val()) || 0;
         const variance = actualQty - systemQty;
+        const $preview = $('#variance-preview');
+
+        $preview.removeClass('hidden bg-emerald-50 bg-blue-50 bg-red-50 text-emerald-700 text-blue-700 text-red-700');
 
         if (variance === 0) {
-            $('#variance-preview')
-                .removeClass('d-none alert-danger alert-info alert-success')
-                .addClass('alert-success')
-                .html(`
-                    <strong>✓ Cocok!</strong> Tidak ada selisih.
-                `);
+            $preview.addClass('bg-emerald-50 text-emerald-700')
+                .html('<strong>✓ Cocok!</strong> Tidak ada selisih.');
         } else if (variance > 0) {
-            $('#variance-preview')
-                .removeClass('d-none alert-danger alert-success')
-                .addClass('alert-info')
-                .html(`
-                    <strong>Surplus:</strong> 
-                    <span class="text-info">+${variance} unit (Lebih dari sistem)</span>
-                `);
+            $preview.addClass('bg-blue-50 text-blue-700')
+                .html(`<strong>Surplus:</strong> +${variance} unit (Lebih dari sistem)`);
         } else {
-            $('#variance-preview')
-                .removeClass('d-none alert-info alert-success')
-                .addClass('alert-danger')
-                .html(`
-                    <strong>Shortage:</strong> 
-                    <span class="text-danger">${variance} unit (Kurang dari sistem)</span>
-                `);
+            $preview.addClass('bg-red-50 text-red-700')
+                .html(`<strong>Shortage:</strong> ${variance} unit (Kurang dari sistem)`);
         }
     }
 
@@ -438,17 +355,15 @@ $(document).ready(function() {
                 icon: 'warning',
                 title: 'Input Tidak Valid',
                 text: 'Masukkan jumlah hasil hitungan fisik!',
-                confirmButtonColor: '#4e73df'
+                confirmButtonColor: '#2563eb'
             });
             return;
         }
 
-        // Show loading
         const $btn = $(this);
         const originalText = $btn.html();
-        $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Menyimpan...');
+        $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split animate-spin"></i> Menyimpan...');
 
-        // AJAX Save
         $.ajax({
             url: `/stock-opnames/items/${itemId}/update-count`,
             method: 'POST',
@@ -459,16 +374,10 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success) {
-                    // Update card UI
                     updateCardUI(itemId, actualQty, response.variance, response.variance_type);
-
-                    // Update stats
                     updateStats(response.completion);
+                    closeModal();
 
-                    // Close modal
-                    $('#countModal').modal('hide');
-
-                    // Toast success
                     Swal.fire({
                         icon: 'success',
                         title: 'Tersimpan!',
@@ -479,7 +388,6 @@ $(document).ready(function() {
                         toast: true
                     });
 
-                    // Reset form
                     $('#count-form')[0].reset();
                 } else {
                     throw new Error(response.message || 'Gagal menyimpan');
@@ -490,7 +398,7 @@ $(document).ready(function() {
                     icon: 'error',
                     title: 'Error!',
                     text: xhr.responseJSON?.message || 'Terjadi kesalahan saat menyimpan',
-                    confirmButtonColor: '#e74a3b'
+                    confirmButtonColor: '#ef4444'
                 });
             },
             complete: function() {
@@ -505,31 +413,28 @@ $(document).ready(function() {
     function updateCardUI(itemId, actualQty, variance, varianceType) {
         const $card = $(`.product-card[data-item-id="${itemId}"]`);
         
-        // Update actual qty display
         $card.find('.actual-qty-display').text(actualQty);
         $card.data('actual-qty', actualQty);
 
-        // Update variance display
         let varianceBadge = '';
         $card.removeClass('counted variance-shortage variance-surplus variance-match');
         
         if (varianceType === 'match') {
-            varianceBadge = '<span class="badge badge-success">Cocok ✓</span>';
+            varianceBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">Cocok ✓</span>';
             $card.addClass('counted variance-match');
         } else if (varianceType === 'surplus') {
-            varianceBadge = `<span class="badge badge-info">+${variance} (Lebih)</span>`;
+            varianceBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">+${variance} (Lebih)</span>`;
             $card.addClass('counted variance-surplus');
         } else if (varianceType === 'shortage') {
-            varianceBadge = `<span class="badge badge-danger">${variance} (Kurang)</span>`;
+            varianceBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">${variance} (Kurang)</span>`;
             $card.addClass('counted variance-shortage');
         }
 
         $card.find('.variance-display').html(varianceBadge);
 
-        // Add checkmark icon
         if (!$card.find('.counted-icon').length) {
-            $card.find('.card-header').append(
-                '<i class="bi bi-check-circle-fill text-success counted-icon" style="font-size: 1.5rem; position: absolute; top: 10px; right: 10px;"></i>'
+            $card.find('.product-card-header').append(
+                '<i class="bi bi-check-circle-fill text-emerald-500 absolute top-3 right-3 text-xl"></i>'
             );
         }
     }
@@ -538,11 +443,9 @@ $(document).ready(function() {
     // UPDATE STATS & PROGRESS BAR
     // ================================================
     function updateStats(completionPercentage) {
-        // Update progress bar
         $('#progress-bar').css('width', completionPercentage + '%');
         $('#progress-text').text(completionPercentage + '%');
 
-        // Recalculate stats from DOM
         const totalItems = $('.product-card').length;
         const countedItems = $('.product-card.counted').length;
         const pendingItems = totalItems - countedItems;
@@ -553,16 +456,15 @@ $(document).ready(function() {
         $('#stat-pending').text(pendingItems);
         $('#stat-variance').text(varianceItems);
 
-        // Auto-enable complete button jika 100%
         if (completionPercentage >= 100) {
-            $('#complete-btn').removeClass('disabled').prop('disabled', false);
+            $('#complete-btn').removeClass('opacity-50 cursor-not-allowed').prop('disabled', false);
             
             Swal.fire({
                 icon: 'success',
                 title: '🎉 Semua Item Telah Dihitung!',
                 text: 'Klik tombol "Selesaikan" untuk menyelesaikan stock opname.',
                 confirmButtonText: 'OK',
-                confirmButtonColor: '#1cc88a'
+                confirmButtonColor: '#10b981'
             });
         }
     }
@@ -570,14 +472,8 @@ $(document).ready(function() {
     // ================================================
     // FILTER & SEARCH
     // ================================================
-    $('#search-product').on('keyup', function() {
-        const searchTerm = $(this).val().toLowerCase();
-        filterProducts();
-    });
-
-    $('#filter-variance, #filter-category').on('change', function() {
-        filterProducts();
-    });
+    $('#search-product').on('keyup', filterProducts);
+    $('#filter-variance, #filter-category').on('change', filterProducts);
 
     $('#reset-filters').on('click', function() {
         $('#search-product').val('');
@@ -593,8 +489,8 @@ $(document).ready(function() {
 
         $('.product-card').each(function() {
             const $card = $(this);
-            const productName = $card.data('product-name').toLowerCase();
-            const productCode = $card.data('product-code').toLowerCase();
+            const productName = ($card.data('product-name') || '').toLowerCase();
+            const productCode = ($card.data('product-code') || '').toLowerCase();
             const varianceType = $card.hasClass('variance-match') ? 'match' :
                                 $card.hasClass('variance-surplus') ? 'surplus' :
                                 $card.hasClass('variance-shortage') ? 'shortage' :
@@ -603,12 +499,10 @@ $(document).ready(function() {
 
             let showCard = true;
 
-            // Search filter
             if (searchTerm && !productName.includes(searchTerm) && !productCode.includes(searchTerm)) {
                 showCard = false;
             }
 
-            // Variance filter
             if (varianceFilter !== 'all') {
                 if (varianceFilter === 'counted' && !$card.hasClass('counted')) {
                     showCard = false;
@@ -619,12 +513,11 @@ $(document).ready(function() {
                 }
             }
 
-            // Category filter
             if (categoryFilter && categoryId != categoryFilter) {
                 showCard = false;
             }
 
-            $card.closest('.col-md-4').toggle(showCard);
+            $card.toggle(showCard);
         });
     }
 
@@ -639,7 +532,7 @@ $(document).ready(function() {
                 icon: 'warning',
                 title: 'Belum Selesai',
                 text: `Masih ada ${uncountedItems} item yang belum dihitung!`,
-                confirmButtonColor: '#f6c23e'
+                confirmButtonColor: '#f59e0b'
             });
             return;
         }
@@ -647,21 +540,27 @@ $(document).ready(function() {
         Swal.fire({
             title: 'Selesaikan Stock Opname?',
             html: `
-                <p>Setelah diselesaikan:</p>
-                <ul class="text-left">
-                    <li>Sistem akan membuat <strong>Adjustment</strong> untuk selisih</li>
-                    <li>Data tidak bisa diubah lagi</li>
-                    <li>Status berubah menjadi <strong>COMPLETED</strong></li>
+                <p class="text-left text-zinc-600">Setelah diselesaikan:</p>
+                <ul class="text-left text-sm text-zinc-600 mt-2 space-y-1">
+                    <li>• Sistem akan membuat <strong>Adjustment</strong> untuk selisih</li>
+                    <li>• Data tidak bisa diubah lagi</li>
+                    <li>• Status berubah menjadi <strong>COMPLETED</strong></li>
                 </ul>
             `,
             icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#1cc88a',
-            cancelButtonColor: '#6c757d',
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
             confirmButtonText: 'Ya, Selesaikan!',
-            cancelButtonText: 'Batal'
+            cancelButtonText: 'Batal',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Memproses...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
                 window.location.href = '{{ route("stock-opnames.complete", $stockOpname->id) }}';
             }
         });
@@ -671,21 +570,14 @@ $(document).ready(function() {
     // KEYBOARD SHORTCUTS
     // ================================================
     $(document).on('keydown', '#actual_qty', function(e) {
-        // Enter = Save
         if (e.key === 'Enter') {
             e.preventDefault();
             $('#save-count-btn').click();
         }
-        // Esc = Close modal
         if (e.key === 'Escape') {
-            $('#countModal').modal('hide');
+            closeModal();
         }
     });
-
-    // ================================================
-    // TOOLTIP INIT
-    // ================================================
-    $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
 @endpush

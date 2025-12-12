@@ -24,7 +24,50 @@ class ExpensesDataTable extends DataTable
     }
 
     public function query(Expense $model) {
-        return $model->newQuery()->with('category');
+        $query = $model->newQuery()->with('category');
+
+        // Apply filters
+        $request = request();
+        $from = null;
+        $to = null;
+
+        // Determine date range based on quick_filter
+        switch ($request->get('quick_filter')) {
+            case 'yesterday':
+                $from = $to = now()->subDay()->toDateString();
+                break;
+            case 'this_week':
+                $from = now()->startOfWeek()->toDateString();
+                $to = now()->toDateString();
+                break;
+            case 'this_month':
+                $from = now()->startOfMonth()->toDateString();
+                $to = now()->toDateString();
+                break;
+            case 'last_month':
+                $from = now()->subMonth()->startOfMonth()->toDateString();
+                $to = now()->subMonth()->endOfMonth()->toDateString();
+                break;
+            case 'all':
+                break;
+            default:
+                $from = $request->filled('from') ? $request->from : now()->toDateString();
+                $to = $request->filled('to') ? $request->to : now()->toDateString();
+        }
+
+        if ($from && $request->get('quick_filter') !== 'all') {
+            $query->whereDate('date', '>=', $from);
+        }
+
+        if ($to && $request->get('quick_filter') !== 'all') {
+            $query->whereDate('date', '<=', $to);
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        return $query;
     }
 
     public function html() {
@@ -32,20 +75,8 @@ class ExpensesDataTable extends DataTable
             ->setTableId('expenses-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
-                                'tr' .
-                                <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
             ->orderBy(6)
-            ->buttons(
-                Button::make('excel')
-                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
-                Button::make('print')
-                    ->text('<i class="bi bi-printer-fill"></i> Print'),
-                Button::make('reset')
-                    ->text('<i class="bi bi-x-circle"></i> Reset'),
-                Button::make('reload')
-                    ->text('<i class="bi bi-arrow-repeat"></i> Reload')
-            );
+            ;
     }
 
     protected function getColumns() {

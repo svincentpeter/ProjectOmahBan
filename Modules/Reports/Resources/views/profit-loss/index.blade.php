@@ -1,508 +1,243 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Laporan Laba Rugi')
 
 @section('breadcrumb')
-<ol class="breadcrumb border-0 m-0">
-    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('reports.index') }}">Laporan</a></li>
-    <li class="breadcrumb-item active">Laba Rugi</li>
-</ol>
+    @include('layouts.breadcrumb-flowbite', [
+        'items' => [
+            ['text' => 'Laporan', 'url' => route('reports.index')],
+            ['text' => 'Laba Rugi', 'url' => '#', 'icon' => 'bi bi-graph-up-arrow'],
+        ]
+    ])
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <div class="animated fadeIn">
-        {{-- Filter Card --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-1 font-weight-bold">
-                            <i class="cil-calendar mr-2 text-primary"></i>
-                            Filter Periode
-                        </h5>
-                        <small class="text-muted">Pilih rentang tanggal untuk melihat laporan</small>
-                    </div>
-                </div>
-            </div>
+    {{-- Filter Card --}}
+    @include('layouts.filter-card', [
+        'action' => route('reports.profit_loss.generate'),
+        'method' => 'POST',
+        'title' => 'Filter Periode Laporan',
+        'icon' => 'bi bi-calendar-range',
+        'quickFilters' => [
+             ['label' => 'Hari Ini', 'url' => route('reports.profit_loss.index', ['start_date' => now()->toDateString(), 'end_date' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-event'],
+             ['label' => '7 Hari Terakhir', 'url' => route('reports.profit_loss.index', ['start_date' => now()->subDays(6)->toDateString(), 'end_date' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-week'],
+             ['label' => 'Bulan Ini', 'url' => route('reports.profit_loss.index', ['start_date' => now()->startOfMonth()->toDateString(), 'end_date' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-month'],
+             ['label' => 'Bulan Lalu', 'url' => route('reports.profit_loss.index', ['start_date' => now()->subMonthNoOverflow()->startOfMonth()->toDateString(), 'end_date' => now()->subMonthNoOverflow()->endOfMonth()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-minus'],
+        ],
+        'filters' => [
+            [
+                'name' => 'start_date',
+                'label' => 'Tanggal Awal',
+                'type' => 'date',
+                'value' => old('start_date', $startDate ?? date('Y-m-d')),
+                'required' => true
+            ],
+            [
+                'name' => 'end_date',
+                'label' => 'Tanggal Akhir',
+                'type' => 'date',
+                'value' => old('end_date', $endDate ?? date('Y-m-d')),
+                'required' => true
+            ]
+        ]
+    ])
 
-            <div class="card-body">
-                <form action="{{ route('reports.profit_loss.generate') }}" method="POST">
-                    @csrf
-                    
-                    <div class="row">
-                        {{-- Tanggal Awal --}}
-                        <div class="col-lg-3 col-md-6 mb-3">
-                            <label for="start_date" class="form-label font-weight-semibold">
-                                <i class="cil-calendar mr-1 text-muted"></i> Tanggal Awal
-                            </label>
-                            <input type="date" 
-                                   id="start_date" 
-                                   name="start_date"
-                                   value="{{ old('start_date', $startDate) }}"
-                                   class="form-control @error('start_date') is-invalid @enderror" 
-                                   required>
-                            @error('start_date')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+    @if (!empty($generated))
+    @php
+        $gpMargin = ($revenue ?? 0) > 0 ? round(($grossProfit / max($revenue,1)) * 100, 1) : 0;
+        $npMargin = ($revenue ?? 0) > 0 ? round(($netProfit   / max($revenue,1)) * 100, 1) : 0;
+        $gpPos    = ($grossProfit ?? 0) >= 0;
+        $npPos    = ($netProfit   ?? 0) >= 0;
+    @endphp
 
-                        {{-- Tanggal Akhir --}}
-                        <div class="col-lg-3 col-md-6 mb-3">
-                            <label for="end_date" class="form-label font-weight-semibold">
-                                <i class="cil-calendar mr-1 text-muted"></i> Tanggal Akhir
-                            </label>
-                            <input type="date" 
-                                   id="end_date" 
-                                   name="end_date"
-                                   value="{{ old('end_date', $endDate) }}"
-                                   class="form-control @error('end_date') is-invalid @enderror" 
-                                   required>
-                            @error('end_date')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        {{-- Action Buttons --}}
-                        <div class="col-lg-6 col-md-12 mb-3">
-                            <label class="form-label font-weight-semibold d-block">&nbsp;</label>
-                            <div class="btn-group w-100" role="group">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="cil-chart mr-1"></i> Tampilkan Laporan
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
-                                    <i class="cil-print mr-1"></i> Cetak
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Quick Preset Buttons --}}
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="quick-filters">
-                                <a href="{{ route('reports.profit_loss.index', ['start_date' => now()->toDateString(), 'end_date' => now()->toDateString()]) }}" 
-                                   class="filter-pill">
-                                    <i class="cil-calendar-check"></i>
-                                    <span>Hari Ini</span>
-                                </a>
-
-                                <a href="{{ route('reports.profit_loss.index', ['start_date' => now()->subDays(6)->toDateString(), 'end_date' => now()->toDateString()]) }}" 
-                                   class="filter-pill">
-                                    <i class="cil-calendar"></i>
-                                    <span>7 Hari Terakhir</span>
-                                </a>
-
-                                <a href="{{ route('reports.profit_loss.index', ['start_date' => now()->startOfMonth()->toDateString(), 'end_date' => now()->toDateString()]) }}" 
-                                   class="filter-pill">
-                                    <i class="cil-calendar"></i>
-                                    <span>Bulan Ini</span>
-                                </a>
-
-                                <a href="{{ route('reports.profit_loss.index', ['start_date' => now()->subMonthNoOverflow()->startOfMonth()->toDateString(), 'end_date' => now()->subMonthNoOverflow()->endOfMonth()->toDateString()]) }}" 
-                                   class="filter-pill">
-                                    <i class="cil-calendar"></i>
-                                    <span>Bulan Lalu</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+    {{-- Report Header --}}
+    <div class="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-file-earmark-spreadsheet text-blue-600"></i>
+                Laporan Laba Rugi
+            </h2>
+            <div class="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <span class="flex items-center">
+                    <i class="bi bi-calendar-range mr-1.5"></i>
+                    {{ \Carbon\Carbon::parse($startDate)->locale('id')->isoFormat('D MMM Y') }} – {{ \Carbon\Carbon::parse($endDate)->locale('id')->isoFormat('D MMM Y') }}
+                </span>
             </div>
         </div>
-
-        @if (!empty($generated))
-        @php
-            $gpMargin = ($revenue ?? 0) > 0 ? round(($grossProfit / max($revenue,1)) * 100, 1) : 0;
-            $npMargin = ($revenue ?? 0) > 0 ? round(($netProfit   / max($revenue,1)) * 100, 1) : 0;
-            $gpPos    = ($grossProfit ?? 0) >= 0;
-            $npPos    = ($netProfit   ?? 0) >= 0;
-        @endphp
-
-        {{-- Report Header --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="mb-1 font-weight-bold">Laporan Laba Rugi</h4>
-                        <p class="text-muted mb-0">
-                            <i class="cil-calendar mr-1"></i>
-                            Periode: {{ \Carbon\Carbon::parse($startDate)->translatedFormat('d M Y') }}
-                            – {{ \Carbon\Carbon::parse($endDate)->translatedFormat('d M Y') }}
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <small class="text-muted d-block">Generated at</small>
-                        <strong>{{ now()->translatedFormat('d M Y, H:i') }}</strong>
-                    </div>
-                </div>
-            </div>
+        <div class="text-right">
+            <button onclick="window.print()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-all shadow-sm">
+                <i class="bi bi-printer mr-2"></i> Cetak Laporan
+            </button>
         </div>
-
-        {{-- KPI Cards Row 1: Revenue, COGS, Gross Profit --}}
-        <div class="row mb-4">
-            {{-- Revenue --}}
-            <div class="col-lg-4 col-md-6 mb-3">
-                <div class="stats-card stats-card-blue">
-                    <div class="stats-icon">
-                        <i class="cil-wallet"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Pendapatan (Revenue)</div>
-                        <div class="stats-value">{{ format_currency($revenue) }}</div>
-                        <div class="stats-sub">Total penjualan produk</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- COGS --}}
-            <div class="col-lg-4 col-md-6 mb-3">
-                <div class="stats-card stats-card-danger">
-                    <div class="stats-icon">
-                        <i class="cil-basket"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-label">HPP / COGS</div>
-                        <div class="stats-value text-danger">( {{ format_currency($cogs) }} )</div>
-                        <div class="stats-sub">Harga Pokok Penjualan</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Gross Profit --}}
-            <div class="col-lg-4 col-md-6 mb-3">
-                <div class="stats-card stats-card-teal">
-                    <div class="stats-icon">
-                        <i class="cil-graph"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Laba Kotor</div>
-                        <div class="stats-value {{ $gpPos ? 'text-success' : 'text-danger' }}">
-                            {{ format_currency($grossProfit) }}
-                        </div>
-                        <div class="stats-sub">
-                            Margin Kotor: <strong>{{ $gpMargin }}%</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- KPI Cards Row 2: Operating Expenses, Net Profit --}}
-        <div class="row mb-4">
-            {{-- Operating Expenses --}}
-            <div class="col-lg-4 col-md-6 mb-3">
-                <div class="stats-card stats-card-warning">
-                    <div class="stats-icon">
-                        <i class="cil-building"></i>
-                    </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Beban Operasional</div>
-                        <div class="stats-value text-warning">( {{ format_currency($operatingExpenses) }} )</div>
-                        <div class="stats-sub">Biaya operasional usaha</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Net Profit --}}
-            <div class="col-lg-8 col-md-6 mb-3">
-                <div class="stats-card stats-card-success">
-                    <div class="stats-icon">
-                        <i class="cil-thumb-up"></i>
-                    </div>
-                    <div class="stats-content w-100">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
-                            <div class="stats-label mb-0">Laba Bersih Sebelum Pajak</div>
-                            <span class="badge badge-light">Net Margin: {{ $npMargin }}%</span>
-                        </div>
-                        <div class="stats-value {{ $npPos ? 'text-success' : 'text-danger' }} mb-2">
-                            {{ format_currency($netProfit) }}
-                        </div>
-                        
-                        {{-- Progress Bar --}}
-                        <div class="progress" style="height: 8px; border-radius: 6px;">
-                            <div class="progress-bar {{ $npPos ? 'bg-success' : 'bg-danger' }}"
-                                 role="progressbar"
-                                 style="width: {{ min(max(abs($npMargin),0),100) }}%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Summary Table --}}
-        <div class="card shadow-sm">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 font-weight-bold">
-                    <i class="cil-list mr-2 text-primary"></i>
-                    Ringkasan Perhitungan
-                </h6>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0">
-                    <tbody>
-                        <tr>
-                            <th class="summary-label">
-                                <i class="cil-wallet mr-2 text-primary"></i> Pendapatan (Revenue)
-                            </th>
-                            <td class="text-right font-weight-bold">{{ format_currency($revenue) }}</td>
-                        </tr>
-                        <tr>
-                            <th class="summary-label">
-                                <i class="cil-basket mr-2 text-danger"></i> Harga Pokok Penjualan (HPP / COGS)
-                            </th>
-                            <td class="text-right text-danger">({{ format_currency($cogs) }})</td>
-                        </tr>
-                        <tr style="background-color: #f8f9fa;">
-                            <th class="summary-label">
-                                <i class="cil-graph mr-2" style="color: #14b8a6;"></i> Laba Kotor (Gross Profit)
-                            </th>
-                            <td class="text-right font-weight-bold {{ $gpPos ? 'text-success' : 'text-danger' }}">
-                                {{ format_currency($grossProfit) }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th class="summary-label">
-                                <i class="cil-building mr-2 text-warning"></i> Beban Operasional
-                            </th>
-                            <td class="text-right text-warning">({{ format_currency($operatingExpenses) }})</td>
-                        </tr>
-                        <tr style="background-color: #f8f9fa;">
-                            <th class="summary-label">
-                                <i class="cil-thumb-up mr-2 text-success"></i> Laba Bersih Sebelum Pajak
-                            </th>
-                            <td class="text-right font-weight-bold {{ $npPos ? 'text-success' : 'text-danger' }}">
-                                {{ format_currency($netProfit) }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        @endif
     </div>
-</div>
+
+    {{-- KPI Cards Row 1: High Level --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {{-- Revenue --}}
+        <div class="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-wallet2 text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                    <i class="bi bi-cash text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-blue-100 text-sm font-medium mb-1 tracking-wide">Total Pendapatan</p>
+                    <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($revenue) }}</h3>
+                    <p class="text-xs text-blue-200 mt-1 opacity-80">Dari penjualan produk</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- COGS --}}
+        <div class="relative bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-basket text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                    <i class="bi bi-box-seam text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-rose-100 text-sm font-medium mb-1 tracking-wide">HPP / COGS</p>
+                    <h3 class="text-2xl font-bold tracking-tight">({{ format_currency($cogs) }})</h3>
+                    <p class="text-xs text-rose-200 mt-1 opacity-80">Harga pokok penjualan</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Gross Profit --}}
+        <div class="relative bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-graph-up text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-start justify-between">
+                     <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                        <i class="bi bi-layers-half text-2xl"></i>
+                    </div>
+                    <span class="px-2.5 py-1 bg-white/20 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
+                        {{ $gpMargin }}%
+                    </span>
+                </div>
+                <div>
+                    <p class="text-teal-100 text-sm font-medium mb-1 tracking-wide">Laba Kotor</p>
+                    <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($grossProfit) }}</h3>
+                    <div class="w-full bg-black/20 rounded-full h-1.5 mt-2">
+                         <div class="h-1.5 rounded-full bg-white/80" style="width:{{ min(max(abs($gpMargin),0),100) }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- KPI Cards Row 2: OpEx & Net Profit --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {{-- Operating Expenses --}}
+        <div class="relative bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-building text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                 <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                    <i class="bi bi-shop text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-orange-100 text-sm font-medium mb-1 tracking-wide">Beban Operasional</p>
+                    <h3 class="text-2xl font-bold tracking-tight">({{ format_currency($operatingExpenses) }})</h3>
+                    <p class="text-xs text-orange-200 mt-1 opacity-80">Biaya gaji, listrik, sewa, dll</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Net Profit --}}
+        <div class="md:col-span-2 relative bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.01] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                <i class="bi bi-trophy text-9xl"></i>
+            </div>
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 h-full">
+                <div class="flex-1">
+                     <div class="flex items-center gap-4 mb-2">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-inner hidden md:flex">
+                            <i class="bi bi-piggy-bank text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-green-100 text-sm font-medium tracking-wide">Laba Bersih Sebelum Pajak</p>
+                            <h3 class="text-3xl font-bold tracking-tight mt-1">{{ format_currency($netProfit) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10 md:min-w-[200px]">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-green-100 text-xs">Net Margin</span>
+                        <span class="text-white font-bold">{{ $npMargin }}%</span>
+                    </div>
+                    <div class="w-full bg-black/20 rounded-full h-2">
+                         <div class="h-2 rounded-full bg-white shadow-sm" style="width: {{ min(max(abs($npMargin),0),100) }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Summary Table --}}
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/50 dark:text-blue-400">
+                    <i class="bi bi-list-check"></i>
+                </div>
+                Ringkasan Perhitungan Detail
+            </h3>
+        </div>
+        <div class="relative overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white w-1/2 flex items-center gap-2">
+                            <i class="bi bi-plus-lg text-blue-500"></i> Pendapatan (Revenue)
+                        </th>
+                        <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
+                            {{ format_currency($revenue) }}
+                        </td>
+                    </tr>
+                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white w-1/2 flex items-center gap-2">
+                            <i class="bi bi-dash-lg text-red-500"></i> Harga Pokok Penjualan (HPP / COGS)
+                        </th>
+                        <td class="px-6 py-4 text-right font-bold text-red-600 dark:text-red-400">
+                            ({{ format_currency($cogs) }})
+                        </td>
+                    </tr>
+                    <tr class="bg-teal-50/50 dark:bg-teal-900/10 border-t border-b border-teal-100 dark:border-teal-800/30">
+                        <th scope="row" class="px-6 py-4 font-bold text-teal-800 dark:text-teal-300 flex items-center gap-2">
+                            <i class="bi bi-pause-fill rotate-90 text-teal-600"></i> Laba Kotor (Gross Profit)
+                        </th>
+                        <td class="px-6 py-4 text-right font-bold {{ $gpPos ? 'text-teal-700 dark:text-teal-400' : 'text-red-600 dark:text-red-400' }}">
+                            {{ format_currency($grossProfit) }}
+                        </td>
+                    </tr>
+                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white w-1/2 flex items-center gap-2">
+                            <i class="bi bi-dash-lg text-orange-500"></i> Beban Operasional
+                        </th>
+                        <td class="px-6 py-4 text-right font-bold text-orange-600 dark:text-orange-400">
+                            ({{ format_currency($operatingExpenses) }})
+                        </td>
+                    </tr>
+                    <tr class="bg-green-50/80 dark:bg-green-900/20 border-t border-green-200 dark:border-green-800">
+                        <th scope="row" class="px-6 py-5 font-bold text-green-900 dark:text-green-100 text-lg flex items-center gap-2">
+                            <i class="bi bi-check-lg text-green-600"></i> Laba Bersih Sebelum Pajak
+                        </th>
+                        <td class="px-6 py-5 text-right font-bold {{ $npPos ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }} text-xl">
+                            {{ format_currency($netProfit) }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
 @endsection
-
-@push('page_styles')
-<style>
-    /* ========== Animations ========== */
-    .animated.fadeIn {
-        animation: fadeIn 0.3s ease-in;
-    }
-    
-    @keyframes fadeIn {
-        from { 
-            opacity: 0; 
-            transform: translateY(10px); 
-        }
-        to { 
-            opacity: 1; 
-            transform: translateY(0); 
-        }
-    }
-
-    /* ========== Card Shadow ========== */
-    .shadow-sm {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-    }
-
-    /* ========== Stats Cards ========== */
-    .stats-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        height: 100%;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        border-left: 4px solid;
-    }
-
-    .stats-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    }
-
-    .stats-card-blue { border-left-color: #3b82f6; }
-    .stats-card-danger { border-left-color: #ef4444; }
-    .stats-card-teal { border-left-color: #14b8a6; }
-    .stats-card-warning { border-left-color: #f59e0b; }
-    .stats-card-success { border-left-color: #22c55e; }
-
-    .stats-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.75rem;
-        flex-shrink: 0;
-    }
-
-    .stats-card-blue .stats-icon {
-        background: rgba(59, 130, 246, 0.14);
-        color: #3b82f6;
-    }
-
-    .stats-card-danger .stats-icon {
-        background: rgba(239, 68, 68, 0.14);
-        color: #ef4444;
-    }
-
-    .stats-card-teal .stats-icon {
-        background: rgba(20, 184, 166, 0.14);
-        color: #14b8a6;
-    }
-
-    .stats-card-warning .stats-icon {
-        background: rgba(245, 158, 11, 0.22);
-        color: #f59e0b;
-    }
-
-    .stats-card-success .stats-icon {
-        background: rgba(34, 197, 94, 0.14);
-        color: #22c55e;
-    }
-
-    .stats-content {
-        flex: 1;
-    }
-
-    .stats-label {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #6b7280;
-        margin-bottom: 8px;
-    }
-
-    .stats-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #1f2937;
-        line-height: 1.2;
-        letter-spacing: -0.02em;
-    }
-
-    .stats-sub {
-        font-size: 0.8125rem;
-        color: #6b7280;
-        margin-top: 4px;
-    }
-
-    /* ========== Quick Filter Pills ========== */
-    .quick-filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .filter-pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 10px 20px;
-        background: white;
-        border: 2px solid #e0e0e0;
-        border-radius: 25px;
-        color: #4f5d73;
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-    }
-
-    .filter-pill i {
-        margin-right: 8px;
-        font-size: 1rem;
-    }
-
-    .filter-pill:hover {
-        border-color: #4834DF;
-        color: #4834DF;
-        background: #f8f7ff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(72, 52, 223, 0.15);
-        text-decoration: none;
-    }
-
-    /* ========== Summary Table ========== */
-    .summary-label {
-        width: 60%;
-        font-weight: 600;
-        font-size: 0.9375rem;
-        padding: 14px 16px;
-    }
-
-    .table tbody tr {
-        transition: all 0.2s ease;
-    }
-
-    .table tbody tr:hover {
-        background-color: rgba(72, 52, 223, 0.02) !important;
-    }
-
-    /* ========== Responsive ========== */
-    @media (max-width: 992px) {
-        .stats-value {
-            font-size: 1.25rem;
-        }
-        
-        .quick-filters {
-            flex-direction: column;
-        }
-        
-        .filter-pill {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .stats-card {
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .summary-label {
-            width: auto;
-        }
-    }
-
-    /* ========== Print Styles ========== */
-    @media print {
-        .card, 
-        .card-body, 
-        .stats-card { 
-            box-shadow: none !important; 
-            page-break-inside: avoid;
-        }
-        
-        .btn, 
-        form:first-of-type, 
-        nav, 
-        .breadcrumb, 
-        .btn-group,
-        .quick-filters,
-        .filter-pill { 
-            display: none !important; 
-        }
-        
-        body, .table { 
-            font-size: 11pt; 
-        }
-        
-        @page { 
-            margin: 15mm; 
-        }
-        
-        .stats-card {
-            border: 1px solid #ddd;
-        }
-    }
-</style>
-@endpush

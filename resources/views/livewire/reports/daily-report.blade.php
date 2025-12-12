@@ -1,467 +1,305 @@
 <div wire:key="daily-root">
-    {{-- Page Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="mb-1 font-weight-bold">
-                <i class="cil-chart-line mr-2 text-primary"></i>
-                Laporan Kas Harian
+    {{-- Filter Card (Styled to match layouts.filter-card) --}}
+    <div class="mb-6 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/50 dark:text-blue-400">
+                    <i class="bi bi-funnel-fill"></i>
+                </div>
+                Filter Laporan Kas Harian
             </h3>
-            <p class="text-muted mb-0">Real-time daily cash flow monitoring</p>
         </div>
-        <div class="btn-group" role="group">
-            <button type="button" wire:click="exportCsv" class="btn btn-outline-primary">
-                <i class="cil-cloud-download mr-1"></i> Export
-            </button>
-            <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
-                <i class="cil-print mr-1"></i> Cetak
-            </button>
-        </div>
-    </div>
-
-    {{-- Filter Card --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white py-3 border-bottom">
-            <h6 class="mb-0 font-weight-bold">
-                <i class="cil-filter mr-2 text-primary"></i>
-                Filter Laporan
-            </h6>
-        </div>
-        <div class="card-body">
-            <form wire:submit.prevent>
-                <div class="row">
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <label class="form-label font-weight-semibold">
-                            <i class="cil-calendar mr-1 text-muted"></i> Tanggal
-                        </label>
-                        <input wire:model.debounce.500ms="date" 
-                               type="date" 
-                               class="form-control">
+        
+        <form wire:submit.prevent>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        <i class="bi bi-calendar-event mr-1.5 text-blue-600"></i> Tanggal
+                    </label>
+                    <div class="relative">
+                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="bi bi-calendar-date text-gray-500 dark:text-gray-400"></i>
+                        </div>
+                        <input wire:model.debounce.500ms="date" type="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors">
                     </div>
+                </div>
 
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <label class="form-label font-weight-semibold">
-                            <i class="cil-user mr-1 text-muted"></i> Kasir
-                        </label>
-                        <select wire:model="cashierId" class="form-control">
-                            <option value="">Semua Kasir</option>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        <i class="bi bi-person mr-1.5 text-blue-600"></i> Kasir
+                    </label>
+                     <div class="relative">
+                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="bi bi-person-badge text-gray-500 dark:text-gray-400"></i>
+                        </div>
+                        <select wire:model="cashierId" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors">
+                            <option value="">— Semua Kasir —</option>
                             @foreach($this->cashiers as $c)
                             <option value="{{ $c->id }}">{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
+                </div>
 
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <label class="form-label font-weight-semibold">
-                            <i class="cil-credit-card mr-1 text-muted"></i> Metode Pembayaran
-                        </label>
-                        <select wire:model="paymentMethod" class="form-control">
-                            <option value="">Semua</option>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        <i class="bi bi-credit-card mr-1.5 text-blue-600"></i> Metode Pembayaran
+                    </label>
+                     <div class="relative">
+                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="bi bi-wallet2 text-gray-500 dark:text-gray-400"></i>
+                        </div>
+                        <select wire:model="paymentMethod" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors">
+                            <option value="">— Semua Metode —</option>
                             @foreach($this->methodOptions as $m)
                             <option value="{{ $m }}">{{ $m }}</option>
                             @endforeach
                         </select>
                     </div>
+                </div>
 
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <label class="form-label font-weight-semibold">
-                            <i class="cil-bank mr-1 text-muted"></i> Bank (Opsional)
-                        </label>
-                        <input wire:model.debounce.500ms="bankName" 
-                               type="text" 
-                               class="form-control" 
-                               placeholder="e.g., BCA, QRIS...">
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        <i class="bi bi-bank mr-1.5 text-blue-600"></i> Bank (Opsional)
+                    </label>
+                     <div class="relative">
+                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="bi bi-bank2 text-gray-500 dark:text-gray-400"></i>
+                        </div>
+                        <input wire:model.debounce.500ms="bankName" type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors" placeholder="e.g., BCA, QRIS...">
                     </div>
                 </div>
-            </form>
+            </div>
 
             {{-- Loading Indicator --}}
-            <div wire:loading.flex class="align-items-center mt-3 text-primary">
-                <div class="spinner-border spinner-border-sm mr-2" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-                <span>Memuat ulang data laporan...</span>
+            <div wire:loading.flex class="flex items-center mt-4 p-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400" role="alert">
+                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="font-medium">Memuat ulang data laporan...</span>
             </div>
-        </div>
+        </form>
     </div>
 
     {{-- Net Income Card --}}
-    <div class="card shadow-sm mb-4 overflow-hidden">
-        <div class="card-body text-center py-5" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
-            <h6 class="text-uppercase text-muted mb-2" style="letter-spacing: 1px;">Income Bersih Hari Ini</h6>
-            <div class="net-income-display mb-3">
-                <span class="gradient-text">{{ format_currency($incomeBersih) }}</span>
-            </div>
-            <div class="income-breakdown">
-                <span class="badge badge-primary px-3 py-2 mr-2">
-                    <i class="cil-arrow-top mr-1"></i> Omzet: {{ format_currency($omzet) }}
-                </span>
-                <span class="badge badge-danger px-3 py-2">
-                    <i class="cil-arrow-bottom mr-1"></i> Pengeluaran: {{ format_currency($pengeluaran) }}
-                </span>
-            </div>
+    <div class="relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg mb-8 group transition-all hover:scale-[1.01] hover:shadow-xl">
+        <div class="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-green-100 to-transparent dark:from-green-900/20 opacity-50"></div>
+        <div class="absolute -bottom-8 -right-8 text-9xl text-green-50 dark:text-green-900/10 opacity-50 rotate-12 pointer-events-none">
+            <i class="bi bi-cash-stack"></i>
         </div>
-    </div>
-
-    {{-- Tabbed Report Panel --}}
-    <div class="card shadow-sm">
-        {{-- Nav Tabs --}}
-        <div class="card-header bg-white border-bottom p-0">
-            <ul class="nav nav-tabs nav-tabs-modern border-0" id="reportTab" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active" 
-                       id="summary-tab" 
-                       data-toggle="tab" 
-                       href="#summary-pane" 
-                       role="tab" 
-                       aria-controls="summary-pane" 
-                       aria-selected="true">
-                        <i class="cil-grid mr-2"></i>Ringkasan Penerimaan
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" 
-                       id="transactions-tab" 
-                       data-toggle="tab" 
-                       href="#transactions-pane" 
-                       role="tab" 
-                       aria-controls="transactions-pane" 
-                       aria-selected="false">
-                        <i class="cil-receipt mr-2"></i>Detail Transaksi
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        {{-- Tab Content --}}
-        <div class="card-body p-0">
-            <div class="tab-content" id="reportTabContent">
-                {{-- Summary Tab --}}
-                <div class="tab-pane fade show active" 
-                     id="summary-pane" 
-                     role="tabpanel" 
-                     aria-labelledby="summary-tab">
-                    <div class="table-responsive">
-                        @php
-                            $sumTotal = $ringkasanPembayaran->sum('total_amount');
-                            $sumTrx   = $ringkasanPembayaran->sum('trx_count');
-                        @endphp
-                        <table class="table table-hover mb-0">
-                            <thead style="background-color: #f8f9fa;">
-                                <tr>
-                                    <th class="border-0">Metode Pembayaran</th>
-                                    <th class="border-0">Bank</th>
-                                    <th class="border-0 text-center">Jumlah Transaksi</th>
-                                    <th class="border-0 text-right">Total Nominal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($ringkasanPembayaran as $row)
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="payment-icon mr-2">
-                                                <i class="cil-credit-card"></i>
-                                            </div>
-                                            <strong>{{ $row->payment_method }}</strong>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-light">
-                                            {{ $row->bank_name ?? '-' }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge badge-primary">{{ $row->trx_count }}</span>
-                                    </td>
-                                    <td class="text-right font-weight-bold">
-                                        {{ format_currency($row->total_amount) }}
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="4" class="text-center py-5">
-                                        <div class="text-muted">
-                                            <i class="cil-inbox" style="font-size: 3rem; opacity: 0.2;"></i>
-                                            <p class="mb-0 mt-3">Tidak ada data penerimaan</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                            @if(count($ringkasanPembayaran) > 0)
-                            <tfoot style="background-color: #f8f9fa;">
-                                <tr>
-                                    <td colspan="2" class="font-weight-bold">TOTAL</td>
-                                    <td class="text-center font-weight-bold">{{ $sumTrx }}</td>
-                                    <td class="text-right font-weight-bold text-primary">
-                                        {{ format_currency($sumTotal) }}
-                                    </td>
-                                </tr>
-                            </tfoot>
-                            @endif
-                        </table>
+        
+        <div class="p-8 text-center relative z-10">
+            <h6 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 dark:text-gray-400 flex items-center justify-center gap-2">
+                <i class="bi bi-wallet-fill text-green-500"></i> Income Bersih Hari Ini
+            </h6>
+            <div class="mb-8 scale-100 group-hover:scale-110 transition-transform duration-500">
+                <span class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500 animate-gradient-x drop-shadow-sm">
+                    {{ format_currency($incomeBersih) }}
+                </span>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-center gap-4 sm:gap-8">
+                <div class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-200">
+                         <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-blue-500 dark:text-blue-400 uppercase tracking-wide font-semibold">Omset</div>
+                        <div class="text-lg font-bold">{{ format_currency($omzet) }}</div>
                     </div>
                 </div>
 
-                {{-- Transactions Tab --}}
-                <div class="tab-pane fade" 
-                     id="transactions-pane" 
-                     role="tabpanel" 
-                     aria-labelledby="transactions-tab">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead style="background-color: #f8f9fa;">
-                                <tr>
-                                    <th class="border-0">Tanggal & Waktu</th>
-                                    <th class="border-0">Nomor Referensi</th>
-                                    <th class="border-0">Kasir</th>
-                                    <th class="border-0 text-center">Status</th>
-                                    <th class="border-0 text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($transaksi as $s)
-                                <tr>
-                                    <td>
-                                        <div class="font-weight-semibold">
-                                            {{ \Illuminate\Support\Carbon::parse($s->date)->format('d/m/Y') }}
-                                        </div>
-                                        <small class="text-muted">
-                                            {{ \Illuminate\Support\Carbon::parse($s->date)->format('H:i') }}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-light">{{ $s->reference }}</span>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="user-avatar-sm mr-2">
-                                                <i class="cil-user"></i>
-                                            </div>
-                                            {{ $s->user->name ?? '-' }}
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        @php
-                                            $status = $s->payment_status ?? $s->status;
-                                            $isPaid = $status === 'Paid';
-                                        @endphp
-                                        <span class="badge {{ $isPaid ? 'badge-success' : 'badge-secondary' }}">
-                                            @if($isPaid)
-                                                <i class="cil-check-circle mr-1"></i> Lunas
-                                            @else
-                                                <i class="cil-clock mr-1"></i> {{ $status }}
-                                            @endif
-                                        </span>
-                                    </td>
-                                    <td class="text-right font-weight-bold">
-                                        {{ format_currency($s->total_amount) }}
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center py-5">
-                                        <div class="text-muted">
-                                            <i class="cil-inbox" style="font-size: 3rem; opacity: 0.2;"></i>
-                                            <p class="mb-0 mt-3">Tidak ada transaksi</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                <div class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-800">
+                    <div class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-800 flex items-center justify-center text-red-600 dark:text-red-200">
+                         <i class="bi bi-graph-down-arrow"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-red-500 dark:text-red-400 uppercase tracking-wide font-semibold">Pengeluaran</div>
+                        <div class="text-lg font-bold">{{ format_currency($pengeluaran) }}</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- Tabs --}}
+    <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500 dark:text-gray-400" id="reportTab" data-tabs-toggle="#reportTabContent" role="tablist">
+            <li class="mr-2" role="presentation">
+                <button class="inline-flex items-center p-4 border-b-2 rounded-t-lg group hover:text-blue-600 hover:border-blue-600 dark:hover:text-blue-500 transition-colors" id="summary-tab" data-tabs-target="#summary-pane" type="button" role="tab" aria-controls="summary-pane" aria-selected="false">
+                    <i class="bi bi-pie-chart-fill mr-2 text-lg"></i>
+                    Ringkasan Penerimaan
+                </button>
+            </li>
+            <li class="mr-2" role="presentation">
+                <button class="inline-flex items-center p-4 border-b-2 rounded-t-lg group hover:text-blue-600 hover:border-blue-600 dark:hover:text-blue-500 transition-colors" id="transactions-tab" data-tabs-target="#transactions-pane" type="button" role="tab" aria-controls="transactions-pane" aria-selected="false">
+                    <i class="bi bi-journal-text mr-2 text-lg"></i>
+                    Detail Transaksi
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    {{-- Tab Content --}}
+    <div id="reportTabContent">
+        {{-- Summary Tab --}}
+        <div class="hidden p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700" id="summary-pane" role="tabpanel" aria-labelledby="summary-tab">
+            <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <i class="bi bi-wallet2 text-blue-600"></i> Rincian per Metode Pembayaran
+            </h4>
+            <div class="relative overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 font-bold rounded-tl-xl">Metode Pembayaran</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Bank</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-center">Jumlah Transaksi</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-right rounded-tr-xl">Total Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @forelse($ringkasanPembayaran as $row)
+                        <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                <DIV class="flex items-center">
+                                    <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mr-3 dark:bg-indigo-900/30 dark:text-indigo-400">
+                                        <i class="bi bi-credit-card-2-front"></i>
+                                    </div>
+                                    <span class="text-base">{{ $row->payment_method }}</span>
+                                </DIV>
+                            </td>
+                            <td class="px-6 py-4">
+                                @if($row->bank_name)
+                                    <span class="bg-gray-100 text-gray-800 text-xs font-bold px-2.5 py-1 rounded dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                                        {{ $row->bank_name }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 italic text-xs">—</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                                    {{ $row->trx_count }} Transaksi
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white text-base">
+                                {{ format_currency($row->total_amount) }}
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 dark:bg-gray-700">
+                                        <i class="bi bi-inbox text-3xl text-gray-400 dark:text-gray-500"></i>
+                                    </div>
+                                    <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">Tidak ada data penerimaan.</p>
+                                    <p class="text-sm text-gray-500">Belum ada transaksi pembayaran untuk periode ini.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                    @if(count($ringkasanPembayaran) > 0)
+                    <tfoot class="bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 font-bold text-gray-900 dark:text-white">
+                        <tr>
+                            <td colspan="2" class="px-6 py-4 text-right text-base rounded-bl-xl">TOTAL KESELURUHAN</td>
+                            <td class="px-6 py-4 text-center text-base">{{ $ringkasanPembayaran->sum('trx_count') }}</td>
+                            <td class="px-6 py-4 text-right text-blue-600 dark:text-blue-400 text-lg rounded-br-xl">{{ format_currency($ringkasanPembayaran->sum('total_amount')) }}</td>
+                        </tr>
+                    </tfoot>
+                    @endif
+                </table>
+            </div>
+        </div>
+
+        {{-- Transactions Tab --}}
+        <div class="hidden p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700" id="transactions-pane" role="tabpanel" aria-labelledby="transactions-tab">
+            <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <i class="bi bi-list-columns-reverse text-blue-600"></i> Log Transaksi Masuk
+            </h4>
+            <div class="relative overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 font-bold rounded-tl-xl">Waktu Transaksi</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Ref No.</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Kasir</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-center">Status</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-right rounded-tr-xl">Total Harga</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        @forelse($transaksi as $s)
+                        <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-gray-900 dark:text-white">
+                                        {{ \Illuminate\Support\Carbon::parse($s->date)->translatedFormat('d M Y') }}
+                                    </span>
+                                    <span class="text-xs text-gray-500 flex items-center gap-1">
+                                        <i class="bi bi-clock"></i> {{ \Illuminate\Support\Carbon::parse($s->date)->format('H:i') }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="bg-gray-100 text-gray-700 text-xs font-mono font-medium px-2.5 py-1 rounded border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                    #{{ $s->reference }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-2 text-xs dark:bg-indigo-900 dark:text-indigo-300">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ $s->user->name ?? 'System' }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                @php
+                                    $status = $s->payment_status ?? $s->status;
+                                    $isPaid = $status === 'Paid';
+                                @endphp
+                                @if($isPaid)
+                                    <span class="inline-flex items-center bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-800">
+                                        <i class="bi bi-check-circle-fill mr-1.5"></i> Lunas
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-bold px-2.5 py-1 rounded-full dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 sticky-status-badge">
+                                        <i class="bi bi-hourglass-split mr-1.5"></i> {{ $status }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <span class="font-bold text-gray-900 dark:text-white">
+                                    {{ format_currency($s->total_amount) }}
+                                </span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                 <div class="flex flex-col items-center justify-center">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 dark:bg-gray-700">
+                                        <i class="bi bi-journal-x text-3xl text-gray-400 dark:text-gray-500"></i>
+                                    </div>
+                                    <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">Tidak ada data transaksi.</p>
+                                    <p class="text-sm text-gray-500">Coba ubah filter tanggal atau kriteria pencarian.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    {{-- Flowbite Tabs JS Helper (Re-init for Livewire if needed, usually Flowbite handles this with data attributes) --}}
+    <script>
+        document.addEventListener('livewire:load', function () {
+            // Re-init flowbite if components need it after livewire update
+            // initFlowbite(); 
+        });
+    </script>
 </div>
-
-{{-- Styles --}}
-<style>
-    /* ========== Card Shadow ========== */
-    .shadow-sm {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-    }
-
-    /* ========== Net Income Display ========== */
-    .net-income-display {
-        font-size: clamp(2.5rem, 8vw, 4rem);
-        font-weight: 800;
-        line-height: 1.1;
-    }
-
-    .gradient-text {
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .income-breakdown .badge {
-        font-size: 0.875rem;
-        font-weight: 600;
-    }
-
-    /* ========== Modern Tabs ========== */
-    .nav-tabs-modern {
-        padding: 0 1rem;
-    }
-
-    .nav-tabs-modern .nav-link {
-        border: none;
-        border-bottom: 3px solid transparent;
-        color: #6c757d;
-        font-weight: 600;
-        padding: 1rem 1.5rem;
-        transition: all 0.3s ease;
-    }
-
-    .nav-tabs-modern .nav-link:hover {
-        color: #4834DF;
-        background-color: rgba(72, 52, 223, 0.05);
-    }
-
-    .nav-tabs-modern .nav-link.active {
-        color: #4834DF;
-        border-bottom-color: #4834DF;
-        background-color: transparent;
-    }
-
-    /* ========== Payment Icon ========== */
-    .payment-icon {
-        width: 36px;
-        height: 36px;
-        background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1rem;
-        box-shadow: 0 2px 6px rgba(72, 52, 223, 0.2);
-        flex-shrink: 0;
-    }
-
-    /* ========== User Avatar ========== */
-    .user-avatar-sm {
-        width: 28px;
-        height: 28px;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 0.75rem;
-        flex-shrink: 0;
-    }
-
-    /* ========== Table Styling ========== */
-    .table thead th {
-        font-size: 0.8125rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        color: #4f5d73;
-        padding: 14px 12px;
-    }
-
-    .table tbody td {
-        padding: 12px;
-        vertical-align: middle;
-        font-size: 0.875rem;
-    }
-
-    .table tbody tr {
-        transition: all 0.2s ease;
-    }
-
-    .table tbody tr:hover {
-        background-color: rgba(72, 52, 223, 0.03) !important;
-    }
-
-    .table tfoot td {
-        font-size: 0.9375rem;
-        padding: 14px 12px;
-    }
-
-    /* ========== Badge Styling ========== */
-    .badge {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.65rem;
-        font-weight: 600;
-    }
-
-    /* ========== Loading Spinner ========== */
-    .spinner-border-sm {
-        width: 1rem;
-        height: 1rem;
-        border-width: 0.15em;
-    }
-
-    /* ========== Responsive ========== */
-    @media (max-width: 768px) {
-        .net-income-display {
-            font-size: 2rem;
-        }
-
-        .income-breakdown {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .nav-tabs-modern .nav-link {
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        .table thead th,
-        .table tbody td {
-            padding: 10px 8px;
-            font-size: 0.8125rem;
-        }
-
-        .payment-icon,
-        .user-avatar-sm {
-            width: 28px;
-            height: 28px;
-            font-size: 0.875rem;
-        }
-    }
-
-    /* ========== Print Styles ========== */
-    @media print {
-        body {
-            background: #fff !important;
-        }
-
-        .btn,
-        .btn-group,
-        .card-header:has(.nav-tabs),
-        nav,
-        .sidebar {
-            display: none !important;
-        }
-
-        .card,
-        .shadow-sm {
-            box-shadow: none !important;
-            border: 1px solid #ddd !important;
-        }
-
-        .tab-content > .tab-pane {
-            display: block !important;
-            opacity: 1 !important;
-        }
-
-        .net-income-display {
-            font-size: 2rem;
-        }
-
-        @page {
-            margin: 15mm;
-        }
-    }
-</style>

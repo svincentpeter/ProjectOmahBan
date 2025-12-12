@@ -1,16 +1,18 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Sales Report')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item active">Sales Report</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', [
+        'items' => [
+            ['text' => 'Laporan', 'url' => route('reports.index')],
+            ['text' => 'Laporan Penjualan', 'url' => '#', 'icon' => 'bi bi-file-earmark-bar-graph'],
+        ]
+    ])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
+    <div class="px-4 pt-6">
         <livewire:reports.sales-report :customers="\Modules\People\Entities\Customer::all()"/>
     </div>
 @endsection

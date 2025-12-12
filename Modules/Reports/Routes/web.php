@@ -12,6 +12,9 @@ Route::middleware(['web', 'auth', 'can:access_reports'])
     ->prefix('reports')
     ->name('reports.')
     ->group(function () {
+        // Index (Redirect to Daily)
+        Route::get('/', [ReportsController::class, 'index'])->name('index');
+
         // Laporan Kas Harian
         Route::get('/daily', function () {
             return view('livewire.reports.livewire-host', [

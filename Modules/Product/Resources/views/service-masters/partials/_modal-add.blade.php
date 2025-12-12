@@ -1,283 +1,98 @@
 {{-- 
-    Modal: Tambah Jasa Baru
-    Konsisten, 1 ID saja di seluruh sistem!
+    Modal: Tambah Jasa Baru (Flowbite)
 --}}
 
-<div class="modal fade" id="addServiceModal" tabindex="-1" aria-labelledby="addServiceLabel" aria-hidden="true">
-    <div class="modal-dialog modal-md modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-sm">
-
-            {{-- MODAL HEADER --}}
-            <div class="modal-header border-bottom">
-                <h5 class="modal-title" id="addServiceLabel">
-                    <i class="cil-plus mr-2 text-primary"></i>
-                    <span class="font-weight-bold">Tambah Jasa Baru</span>
-                </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
-                    <span aria-hidden="true">&times;</span>
+<div id="modal-add-service" tabindex="-1" aria-hidden="true" 
+     class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-md max-h-full">
+        <div class="relative bg-white rounded-2xl shadow-xl dark:bg-gray-700">
+            
+            {{-- Modal Header --}}
+            <div class="flex items-center justify-between p-5 border-b rounded-t dark:border-gray-600 bg-gradient-to-r from-blue-600 to-indigo-600">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="bi bi-plus-circle"></i>
+                    Tambah Jasa Baru
+                </h3>
+                <button type="button" onclick="closeModal('modal-add-service')"
+                        class="text-white/80 hover:text-white hover:bg-white/20 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center transition-all">
+                    <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-
-            {{-- MODAL BODY --}}
-            <form action="{{ route('service-masters.store') }}" method="POST" id="formAddService"
-                class="form-validation">
+            
+            {{-- Modal Body --}}
+            <form id="formAddService" action="{{ route('service-masters.store') }}" method="POST">
                 @csrf
-                <div class="modal-body">
-
-                    {{-- FIELD: Nama Jasa --}}
-                    <div class="mb-3">
-                        <label for="addServiceName" class="form-label small font-weight-semibold">
-                            Nama Jasa <span class="text-danger">*</span>
+                <div class="p-5 space-y-4">
+                    
+                    {{-- Nama Jasa --}}
+                    <div>
+                        <label for="addServiceName" class="block mb-1.5 text-sm font-bold text-zinc-700">
+                            Nama Jasa <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" class="form-control @error('service_name') is-invalid @enderror"
-                            id="addServiceName" name="service_name"
-                            placeholder="Contoh: Pasang Ban, Balancing, Nitrogen" required maxlength="100" autofocus>
-                        @error('service_name')
-                            <div class="invalid-feedback d-block">
-                                <i class="cil-x-circle mr-1"></i>{{ $message }}
-                            </div>
-                        @enderror
-                        <small class="form-text text-muted d-block mt-1">
-                            <i class="cil-info mr-1"></i>
-                            Nama jasa harus unik dan tidak boleh duplikat
-                        </small>
+                        <input type="text" id="addServiceName" name="service_name" required maxlength="100"
+                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                               placeholder="Contoh: Pasang Ban, Balancing">
+                        <p class="mt-1 text-xs text-zinc-500">
+                            <i class="bi bi-info-circle me-1"></i> Nama jasa harus unik
+                        </p>
                     </div>
-
-                    {{-- FIELD: Harga Standar --}}
-                    <div class="mb-3">
-                        <label for="addStandardPrice" class="form-label small font-weight-semibold">
-                            Harga Standar (Rp) <span class="text-danger">*</span>
+                    
+                    {{-- Harga Standar --}}
+                    <div>
+                        <label for="addStandardPrice" class="block mb-1.5 text-sm font-bold text-zinc-700">
+                            Harga Standar (Rp) <span class="text-red-500">*</span>
                         </label>
-                        <div class="input-group input-group-flat">
-                            <span class="input-group-text bg-light"><strong>Rp</strong></span>
-                            <input type="text" class="form-control @error('standard_price') is-invalid @enderror"
-                                id="addStandardPrice" name="standard_price" placeholder="25.000" inputmode="numeric"
-                                required value="0">
-                            @error('standard_price')
-                                <div class="invalid-feedback d-block">
-                                    <i class="cil-x-circle mr-1"></i>{{ $message }}
-                                </div>
-                            @enderror
+                        <div class="flex">
+                            <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg font-bold">
+                                Rp
+                            </span>
+                            <input type="text" id="addStandardPrice" name="standard_price" required value="0" inputmode="numeric"
+                                   class="rounded-none rounded-r-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5"
+                                   placeholder="25.000">
                         </div>
-                        <small class="form-text text-muted d-block mt-1">
-                            <i class="cil-info mr-1"></i>
-                            Masukkan 0 jika ini jasa custom (harga flexible)
-                        </small>
+                        <p class="mt-1 text-xs text-zinc-500">
+                            <i class="bi bi-info-circle me-1"></i> Masukkan 0 jika harga flexible
+                        </p>
                     </div>
-
-                    {{-- FIELD: Kategori --}}
-                    <div class="mb-3">
-                        <label for="addCategory" class="form-label small font-weight-semibold">
-                            Kategori <span class="text-danger">*</span>
+                    
+                    {{-- Kategori --}}
+                    <div>
+                        <label for="addCategory" class="block mb-1.5 text-sm font-bold text-zinc-700">
+                            Kategori <span class="text-red-500">*</span>
                         </label>
-                        <select class="form-control form-select @error('category') is-invalid @enderror"
-                            id="addCategory" name="category" required>
+                        <select id="addCategory" name="category" required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                             <option value="">-- Pilih Kategori --</option>
                             <option value="service">Service (Jasa)</option>
                             <option value="goods">Goods (Barang)</option>
                             <option value="custom">Custom (Khusus)</option>
                         </select>
-                        @error('category')
-                            <div class="invalid-feedback d-block">
-                                <i class="cil-x-circle mr-1"></i>{{ $message }}
-                            </div>
-                        @enderror
                     </div>
-
-                    {{-- FIELD: Deskripsi --}}
-                    <div class="mb-1">
-                        <label for="addDescription" class="form-label small font-weight-semibold">
-                            Deskripsi <span class="text-muted">(Opsional)</span>
+                    
+                    {{-- Deskripsi --}}
+                    <div>
+                        <label for="addDescription" class="block mb-1.5 text-sm font-bold text-zinc-700">
+                            Deskripsi <span class="text-zinc-400">(Opsional)</span>
                         </label>
-                        <textarea class="form-control @error('description') is-invalid @enderror" id="addDescription" name="description"
-                            rows="3" maxlength="500"
-                            placeholder="Deskripsi singkat tentang jasa ini. Contoh: Pemasangan ban baru dengan quality check"></textarea>
-                        <small class="form-text text-muted d-block mt-1">
-                            <i class="cil-info mr-1"></i>
-                            Max 500 karakter
-                        </small>
-                        @error('description')
-                            <div class="invalid-feedback d-block">
-                                <i class="cil-x-circle mr-1"></i>{{ $message }}
-                            </div>
-                        @enderror
+                        <textarea id="addDescription" name="description" rows="2" maxlength="500"
+                                  class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Deskripsi singkat tentang jasa ini"></textarea>
+                        <p class="mt-1 text-xs text-zinc-500">Max 500 karakter</p>
                     </div>
                 </div>
-
-                {{-- MODAL FOOTER --}}
-                <div class="modal-footer border-top bg-light">
-                    <button type="button" class="btn btn-light border" data-dismiss="modal">
-                        <i class="cil-x mr-1"></i>
-                        Batal
+                
+                {{-- Modal Footer --}}
+                <div class="flex items-center justify-end gap-2 p-5 border-t border-gray-200 rounded-b bg-gray-50">
+                    <button type="button" onclick="closeModal('modal-add-service')"
+                            class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 transition-all">
+                        <i class="bi bi-x me-1"></i> Batal
                     </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="cil-save mr-1"></i>
-                        Simpan Jasa
+                    <button type="submit" 
+                            class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-all">
+                        <i class="bi bi-check-lg me-1"></i> Simpan Jasa
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-@push('page_scripts')
-    {{-- AutoNumeric CDN --}}
-    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js"></script>
-    <script>
-        // Opsi IDR: titik pemisah ribuan, koma desimal, tanpa desimal, min 0
-        const AN_OPS_IDR_INT = {
-            digitGroupSeparator: '.',
-            decimalCharacter: ',',
-            decimalPlaces: 0,
-            minimumValue: '0',
-            maximumValue: '999999999',
-            modifyValueOnWheel: false,
-            unformatOnSubmit: false, // kita handle manual karena pakai AJAX FormData
-        };
-
-        let anAddPrice;
-        $(function() {
-            // Init AutoNumeric untuk field harga
-            anAddPrice = new AutoNumeric('#addStandardPrice', AN_OPS_IDR_INT);
-        });
-    </script>
-@endpush
-
-@push('page_scripts')
-    <script>
-        $(function() {
-            // Validasi user-side sebelum AJAX
-            $('#formAddService').on('submit', function(e) {
-                try {
-                    const anEl = AutoNumeric.getAutoNumericElement('#addStandardPrice');
-                    if (anEl) {
-                        // getNumericString() = "25000" meski tampilan "25.000"
-                        $('#addStandardPrice').val(anEl.getNumericString());
-                    }
-                } catch (err) {
-                    console.warn('AutoNumeric not initialized:', err);
-                }
-
-                const serviceName = $('#addServiceName').val().trim();
-                const category = $('#addCategory').val();
-
-                if (!serviceName) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Validasi Error',
-                        text: 'Nama jasa harus diisi',
-                        icon: 'warning'
-                    });
-                    $('#addServiceName').focus();
-                    return false;
-                }
-                if (!category) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Validasi Error',
-                        text: 'Kategori harus dipilih',
-                        icon: 'warning'
-                    });
-                    $('#addCategory').focus();
-                    return false;
-                }
-            });
-
-            // Reset form ketika modal ditutup
-            $('#addServiceModal').on('hidden.bs.modal', function() {
-                $('#formAddService')[0].reset();
-                $('.invalid-feedback').hide();
-                $('.is-invalid').removeClass('is-invalid');
-            });
-        });
-    </script>
-@endpush
-
-@push('page_styles')
-    <style>
-        .form-control,
-        .form-select {
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            font-size: 0.875rem;
-            transition: .2s;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #4834DF;
-            box-shadow: 0 0 0 0.2rem rgba(72, 52, 223, .15);
-        }
-
-        .form-control.is-invalid,
-        .form-select.is-invalid {
-            border-color: #dc3545;
-        }
-
-        .form-control.is-invalid:focus,
-        .form-select.is-invalid:focus {
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, .25);
-        }
-
-        .input-group-text {
-            border: 1px solid #ddd;
-            border-right: none;
-        }
-
-        .input-group .form-control {
-            border-left: none;
-        }
-
-        .input-group .form-control:focus {
-            z-index: 3;
-        }
-
-        .form-label {
-            color: #4f5d73;
-            margin-bottom: 0.5rem;
-        }
-
-        .font-weight-semibold {
-            font-weight: 600;
-        }
-
-        .invalid-feedback {
-            display: none;
-            width: 100%;
-            margin-top: 0.25rem;
-            font-size: 0.875rem;
-            color: #dc3545;
-        }
-
-        .modal-header {
-            background: #f8f9fa;
-            padding: 1.25rem;
-        }
-
-        .modal-footer {
-            padding: 1rem 1.25rem;
-        }
-
-        .btn {
-            border-radius: 6px;
-            font-weight: 500;
-            transition: .2s;
-        }
-
-        .btn-light {
-            background: #f8f9fa;
-            border-color: #ddd;
-            color: #4f5d73;
-        }
-
-        .btn-light:hover {
-            background: #e9ecef;
-            border-color: #ccc;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(72, 52, 223, .3);
-        }
-    </style>
-@endpush

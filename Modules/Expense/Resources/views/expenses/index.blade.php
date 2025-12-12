@@ -1,397 +1,123 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Pengeluaran Harian')
 
-@section('breadcrumb')
-<ol class="breadcrumb border-0 m-0">
-    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-    <li class="breadcrumb-item active">Pengeluaran Harian</li>
-</ol>
-@endsection
-
 @section('content')
-<div class="container-fluid">
-    <div class="animated fadeIn">
-        {{-- Success/Error Alert --}}
-        @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="cil-check-circle mr-2"></i>{{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
-            </button>
-        </div>
-        @endif
+    {{-- Breadcrumb --}}
+    @section('breadcrumb')
+        @include('layouts.breadcrumb-flowbite', [
+            'items' => [
+                ['text' => 'Pengeluaran', 'url' => route('expenses.index')],
+                ['text' => 'Buku Pengeluaran', 'url' => '#', 'icon' => 'bi bi-wallet2'],
+            ]
+        ])
+    @endsection
 
-        {{-- Main Card --}}
-        <div class="card shadow-sm">
-            {{-- Card Header --}}
-            <div class="card-header bg-white py-3">
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
-                    <div class="mb-2 mb-md-0">
-                        <h5 class="mb-1 font-weight-bold">
-                            <i class="cil-list mr-2 text-primary"></i>
-                            Pengeluaran Harian
-                        </h5>
-                        <small class="text-muted">Kelola dan monitor pengeluaran operasional</small>
-                    </div>
-                    
-                    @can('create_expenses')
-                    <a href="{{ route('expenses.create') }}" 
-                       class="btn btn-primary">
-                        <i class="cil-plus mr-2"></i> Tambah Pengeluaran
-                    </a>
-                    @endcan
-                </div>
+    {{-- Stats Cards --}}
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20 group-hover:opacity-30 transition-opacity">
+                <i class="bi bi-wallet2 text-9xl"></i>
             </div>
-
-            {{-- Quick Filters --}}
-            <div class="card-body border-bottom" style="background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);">
-                <div class="filter-container">
-                    {{-- Quick Filter Title --}}
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="cil-bolt text-primary mr-2" style="font-size: 1.25rem;"></i>
-                        <h6 class="mb-0 font-weight-bold text-dark">Filter Cepat</h6>
-                    </div>
-
-                    {{-- Quick Filter Pills --}}
-                    <div class="quick-filters mb-3">
-                        <a href="{{ route('expenses.index', ['from' => now()->toDateString(), 'to' => now()->toDateString()]) }}" 
-                           class="filter-pill {{ (!request()->has('quick_filter') && request('from') == now()->toDateString()) || (!request()->filled('from')) ? 'active' : '' }}">
-                            <i class="cil-calendar"></i>
-                            <span>Hari Ini</span>
-                        </a>
-
-                        <a href="{{ route('expenses.index', ['quick_filter' => 'yesterday']) }}" 
-                           class="filter-pill {{ request('quick_filter') == 'yesterday' ? 'active' : '' }}">
-                            <i class="cil-calendar"></i>
-                            <span>Kemarin</span>
-                        </a>
-
-                        <a href="{{ route('expenses.index', ['quick_filter' => 'this_week']) }}" 
-                           class="filter-pill {{ request('quick_filter') == 'this_week' ? 'active' : '' }}">
-                            <i class="cil-calendar"></i>
-                            <span>Minggu Ini</span>
-                        </a>
-
-                        <a href="{{ route('expenses.index', ['quick_filter' => 'this_month']) }}" 
-                           class="filter-pill {{ request('quick_filter') == 'this_month' ? 'active' : '' }}">
-                            <i class="cil-calendar"></i>
-                            <span>Bulan Ini</span>
-                        </a>
-
-                        <a href="{{ route('expenses.index', ['quick_filter' => 'last_month']) }}" 
-                           class="filter-pill {{ request('quick_filter') == 'last_month' ? 'active' : '' }}">
-                            <i class="cil-calendar"></i>
-                            <span>Bulan Lalu</span>
-                        </a>
-
-                        <a href="{{ route('expenses.index', ['quick_filter' => 'all']) }}" 
-                           class="filter-pill {{ request('quick_filter') == 'all' ? 'active' : '' }}">
-                            <i class="cil-infinite"></i>
-                            <span>Semua</span>
-                        </a>
-
-                        <button type="button" 
-                                class="filter-pill filter-pill-custom" 
-                                id="customFilterToggle">
-                            <i class="cil-settings"></i>
-                            <span>Custom</span>
-                        </button>
-                    </div>
-
-                    {{-- Advanced Filter (Collapsed by default) --}}
-                    <div id="advancedFilter" class="advanced-filter" style="display: none;">
-                        <form method="GET" action="{{ route('expenses.index') }}" class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label small font-weight-semibold mb-1">Dari Tanggal</label>
-                                <input type="date" 
-                                       name="from" 
-                                       class="form-control" 
-                                       value="{{ $from ?? now()->toDateString() }}">
-                            </div>
-
-                            <div class="col-md-3">
-                                <label class="form-label small font-weight-semibold mb-1">Sampai Tanggal</label>
-                                <input type="date" 
-                                       name="to" 
-                                       class="form-control" 
-                                       value="{{ $to ?? now()->toDateString() }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label small font-weight-semibold mb-1">Kategori</label>
-                                <select name="category_id" class="form-control">
-                                    <option value="">Semua Kategori</option>
-                                    @foreach($categories as $cat)
-                                    <option value="{{ $cat->id }}" @selected(request('category_id') == $cat->id)>
-                                        {{ $cat->category_name }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="cil-filter mr-2"></i> Terapkan
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 icon-float shadow-inner">
+                    <i class="bi bi-currency-dollar text-2xl"></i>
                 </div>
-            </div>
-
-            {{-- Summary Stats --}}
-            <div class="card-body py-3" style="background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);">
-                <div class="row align-items-center text-white">
-                    <div class="col-md-8">
-                        <div class="d-flex align-items-center">
-                            <div class="summary-icon mr-3">
-                                <i class="cil-chart-pie" style="font-size: 2.5rem; opacity: 0.9;"></i>
-                            </div>
-                            <div>
-                                <small class="d-block" style="opacity: 0.8;">Total Pengeluaran</small>
-                                <h3 class="mb-0 font-weight-bold">
-                                    Rp {{ number_format($total, 0, ',', '.') }}
-                                </h3>
-                                @if($from && $to)
-                                <small style="opacity: 0.9;">
-                                    <i class="cil-calendar mr-1"></i>
-                                    {{ \Carbon\Carbon::parse($from)->format('d M Y') }} - 
-                                    {{ \Carbon\Carbon::parse($to)->format('d M Y') }}
-                                </small>
-                                @endif
-                            </div>
+                <div>
+                    <p class="text-blue-100 text-sm font-medium mb-1 tracking-wide">Total Pengeluaran</p>
+                    <h3 class="text-2xl font-bold tracking-tight">Rp {{ number_format($total, 0, ',', '.') }}</h3>
+                    @if($from && $to)
+                        <div class="inline-flex items-center mt-2 px-2 py-1 bg-white/10 rounded-lg text-xs text-blue-50">
+                            <i class="bi bi-calendar-range mr-1.5"></i>
+                            {{ \Carbon\Carbon::parse($from)->format('d M') }} - {{ \Carbon\Carbon::parse($to)->format('d M Y') }}
                         </div>
-                    </div>
-                    <div class="col-md-4 text-md-right mt-3 mt-md-0">
-                        <small class="d-block" style="opacity: 0.8;">Total Transaksi</small>
-                        <h4 class="mb-0 font-weight-bold">{{ $expenses->total() }} item</h4>
-                    </div>
+                    @endif
                 </div>
             </div>
-
-            {{-- Table --}}
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead style="background-color: #f8f9fa;">
-                            <tr>
-                                <th width="100" class="border-0">Tanggal</th>
-                                <th width="100" class="border-0">Ref</th>
-                                <th width="150" class="border-0">Kategori</th>
-                                <th class="border-0">Deskripsi</th>
-                                <th width="100" class="border-0">Metode</th>
-                                <th width="120" class="border-0">Bank</th>
-                                <th width="150" class="text-right border-0">Nominal (Rp)</th>
-                                <th width="100" class="text-center border-0">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($expenses as $e)
-                            <tr>
-                                <td>
-                                    <small class="text-muted">
-                                        <i class="cil-calendar mr-1"></i>
-                                        {{ $e->date->format('d/m/Y') }}
-                                    </small>
-                                </td>
-                                <td>
-                                    <span class="badge badge-secondary">{{ $e->reference }}</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="mr-2" style="width: 28px; height: 28px; background: #4834DF; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="cil-tag text-white" style="font-size: 0.75rem;"></i>
-                                        </div>
-                                        <span class="font-weight-semibold">
-                                            {{ $e->category->category_name ?? '-' }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>{{ $e->details }}</td>
-                                <td>
-                                    @if($e->payment_method === 'Tunai')
-                                    <span class="badge badge-success">
-                                        <i class="cil-wallet mr-1"></i> Tunai
-                                    </span>
-                                    @else
-                                    <span class="badge badge-info">
-                                        <i class="cil-bank mr-1"></i> Transfer
-                                    </span>
-                                    @endif
-                                </td>
-                                <td><small class="text-muted">{{ $e->bank_name ?? '-' }}</small></td>
-                                <td class="text-right">
-                                    <strong class="text-danger">{{ number_format($e->amount, 0, ',', '.') }}</strong>
-                                </td>
-                                <td class="text-center">
-                                    @include('expense::expenses.partials.actions', ['e' => $e])
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="8" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="cil-inbox" style="font-size: 3rem; opacity: 0.2;"></i>
-                                        <p class="mb-0 mt-3">Belum ada data pengeluaran</p>
-                                        <small>Klik tombol "Tambah Pengeluaran" untuk mulai mencatat</small>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {{-- Pagination --}}
-            @if($expenses->hasPages())
-            <div class="card-footer bg-white">
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">
-                        Menampilkan {{ $expenses->firstItem() }} - {{ $expenses->lastItem() }} 
-                        dari {{ $expenses->total() }} transaksi
-                    </small>
-                    {{ $expenses->links() }}
-                </div>
-            </div>
-            @endif
         </div>
     </div>
-</div>
+
+    {{-- Filter Card --}}
+    @include('layouts.filter-card', [
+        'action' => route('expenses.index'),
+        'title' => 'Filter Data Pengeluaran',
+        'icon' => 'bi bi-funnel',
+        'quickFilters' => [
+            ['label' => 'Hari Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'today'])), 'param' => 'quick_filter', 'value' => 'today', 'icon' => 'bi bi-clock'],
+            ['label' => 'Kemarin', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'yesterday'])), 'param' => 'quick_filter', 'value' => 'yesterday', 'icon' => 'bi bi-clock-history'],
+            ['label' => 'Minggu Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'this_week'])), 'param' => 'quick_filter', 'value' => 'this_week', 'icon' => 'bi bi-calendar-week'],
+            ['label' => 'Bulan Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'this_month'])), 'param' => 'quick_filter', 'value' => 'this_month', 'icon' => 'bi bi-calendar-month'],
+            ['label' => 'Semua', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'all'])), 'param' => 'quick_filter', 'value' => 'all', 'icon' => 'bi bi-collection'],
+        ],
+        'filters' => [
+            ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => $from ?? request('from')],
+            ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => $to ?? request('to')],
+            ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => $categories->pluck('category_name', 'id')->toArray(), 'placeholder' => 'Semua Kategori', 'value' => request('category_id')],
+        ]
+    ])
+
+    {{-- Main Card --}}
+    <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 shadow-sm rounded-2xl overflow-hidden mt-6">
+        <div class="p-6 border-b border-slate-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-700/20">
+            <div>
+                <h5 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-wallet2 text-blue-600"></i>
+                    Daftar Pengeluaran
+                </h5>
+                <p class="text-sm text-slate-500 dark:text-gray-400 mt-1">Kelola dan monitor pengeluaran operasional bisnis.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="{{ route('expenses.create') }}" 
+                   class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-300 shadow-lg shadow-blue-500/30 transition-all duration-200">
+                    <i class="bi bi-plus-lg mr-2"></i>
+                    Tambah Pengeluaran
+                </a>
+            </div>
+        </div>
+
+        {{-- DataTable --}}
+        <div class="p-5">
+            {{ $dataTable->table() }}
+        </div>
+    </div>
 @endsection
 
 @push('page_styles')
-<style>
-    /* ========== Quick Filter Pills ========== */
-    .quick-filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .filter-pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 10px 20px;
-        background: white;
-        border: 2px solid #e0e0e0;
-        border-radius: 25px;
-        color: #4f5d73;
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        white-space: nowrap;
-    }
-
-    .filter-pill i {
-        margin-right: 8px;
-        font-size: 1rem;
-    }
-
-    .filter-pill:hover {
-        border-color: #4834DF;
-        color: #4834DF;
-        background: #f8f7ff;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(72, 52, 223, 0.15);
-        text-decoration: none;
-    }
-
-    .filter-pill.active {
-        background: linear-gradient(135deg, #4834DF 0%, #686DE0 100%);
-        border-color: #4834DF;
-        color: white;
-        box-shadow: 0 4px 15px rgba(72, 52, 223, 0.3);
-    }
-
-    .filter-pill.active:hover {
-        background: linear-gradient(135deg, #3d2bb8 0%, #5a5fc9 100%);
-        color: white;
-    }
-
-    .filter-pill-custom {
-        background: white;
-        border-color: #d0d0d0;
-    }
-
-    .filter-pill-custom:hover {
-        border-color: #a0a0a0;
-        background: #f5f5f5;
-        color: #333;
-    }
-
-    /* ========== Advanced Filter ========== */
-    .advanced-filter {
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 2px dashed #e0e0e0;
-        animation: slideDown 0.3s ease-out;
-    }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* ========== Table Enhancements ========== */
-    .table thead th {
-        font-size: 0.8125rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        color: #4f5d73;
-        padding: 12px 16px;
-    }
-
-    .table tbody td {
-        padding: 14px 16px;
-        vertical-align: middle;
-        font-size: 0.875rem;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: rgba(72, 52, 223, 0.03);
-    }
-
-    /* ========== Responsive ========== */
-    @media (max-width: 768px) {
-        .quick-filters {
-            flex-direction: column;
-        }
-
-        .filter-pill {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    /* ========== Card Shadow ========== */
-    .shadow-sm {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-    }
-</style>
+    @include('includes.datatables-flowbite-css')
 @endpush
 
 @push('page_scripts')
-<script>
-$(document).ready(function() {
-    // Auto-hide alerts
-    setTimeout(() => $('.alert').fadeOut('slow'), 3000);
+    @include('includes.datatables-flowbite-js')
+    {{ $dataTable->scripts() }}
 
-    // Toggle custom filter form
-    $('#customFilterToggle').on('click', function() {
-        $('#advancedFilter').slideToggle(300);
-        $(this).toggleClass('active');
-    });
-});
-</script>
+    <script>
+        // Global SweetAlert Delete
+        $(document).on('click', '.btn-delete', function(e) {
+            e.preventDefault();
+            let id = $(this).data('id');
+            let name = $(this).data('name');
+            
+            Swal.fire({
+                title: 'Hapus Pengeluaran?',
+                text: "Anda yakin ingin menghapus data pengeluaran \"" + name + "\"? Aksi ini tidak dapat dibatalkan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#E5E7EB',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    confirmButton: 'bg-red-600 text-white hover:bg-red-700 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2',
+                    cancelButton: 'bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $(`#delete-form-${id}`).submit();
+                }
+            });
+        });
+    </script>
 @endpush
+

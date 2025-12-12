@@ -1,348 +1,217 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Tambah Satuan')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Beranda</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('units.index') }}">Satuan</a></li>
-        <li class="breadcrumb-item active">Tambah Satuan</li>
-    </ol>
+    <nav class="flex" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="{{ route('home') }}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
+                    <i class="bi bi-house-door-fill mr-2"></i>
+                    Home
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="bi bi-chevron-right text-gray-400"></i>
+                    <a href="{{ route('units.index') }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">Satuan</a>
+                </div>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <i class="bi bi-chevron-right text-gray-400"></i>
+                    <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Tambah</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            {{-- Alerts --}}
-            @include('utils.alerts')
+<div class="px-4 pt-6">
+    @include('utils.alerts')
 
-            <form action="{{ route('units.store') }}" method="POST" autocomplete="off" id="unit-form">
-                @csrf
-
-                {{-- Sticky Action Bar --}}
-                <div class="action-bar shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0 font-weight-bold">
-                                <i class="cil-plus mr-2 text-primary"></i>
-                                Tambah Satuan Baru
-                            </h5>
-                            <small class="text-muted">Buat satuan unit baru untuk produk</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('units.index') }}" class="btn btn-outline-secondary">
-                                <i class="cil-x mr-1"></i> Batal
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="cil-check-circle mr-1"></i> Simpan Satuan
-                            </button>
-                        </div>
-                    </div>
+    <form action="{{ route('units.store') }}" method="POST" autocomplete="off" id="unit-form">
+        @csrf
+        
+        {{-- Sticky Action Bar --}}
+        <div class="sticky top-0 z-40 mb-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                        <i class="bi bi-plus-circle mr-2 text-blue-600"></i>Tambah Satuan Baru
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Buat satuan unit baru untuk produk</p>
                 </div>
-
-                {{-- Main Card --}}
-                <div class="row mt-4">
-                    <div class="col-lg-8 offset-lg-2">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-white py-3 border-bottom">
-                                <h6 class="mb-0 font-weight-bold">
-                                    <i class="cil-info mr-2 text-primary"></i>
-                                    Detail Satuan
-                                </h6>
-                            </div>
-                            <div class="card-body p-4">
-                                <div class="row">
-                                    {{-- Unit Name --}}
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="name" class="form-label font-weight-semibold">
-                                                <i class="cil-tag mr-1 text-muted"></i> Nama Satuan
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" id="name" name="name"
-                                                class="form-control form-control-lg @error('name') is-invalid @enderror"
-                                                value="{{ old('name') }}" placeholder="Contoh: Buah, Pcs, Set" required>
-                                            @error('name')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                <i class="cil-lightbulb mr-1"></i>
-                                                Nama lengkap satuan
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    {{-- Short Name --}}
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="short_name" class="form-label font-weight-semibold">
-                                                <i class="cil-text-size mr-1 text-muted"></i> Singkatan
-                                                <span class="text-danger">*</span>
-                                            </label>
-                                            <input type="text" id="short_name" name="short_name"
-                                                class="form-control form-control-lg @error('short_name') is-invalid @enderror"
-                                                value="{{ old('short_name') }}" placeholder="Contoh: pcs, set, kg"
-                                                maxlength="10" required>
-                                            @error('short_name')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                <i class="cil-info mr-1"></i>
-                                                Maksimal 10 karakter
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    {{-- Note --}}
-                                    <div class="col-12">
-                                        <div class="form-group mb-0">
-                                            <label for="note" class="form-label font-weight-semibold">
-                                                <i class="cil-notes mr-1 text-muted"></i> Keterangan
-                                                <span class="text-muted">(Opsional)</span>
-                                            </label>
-                                            <textarea id="note" name="note" rows="3" class="form-control @error('note') is-invalid @enderror"
-                                                placeholder="Tambahkan keterangan atau deskripsi satuan...">{{ old('note') }}</textarea>
-                                            @error('note')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                            <small class="form-text text-muted">
-                                                <i class="cil-info mr-1"></i>
-                                                Informasi tambahan tentang satuan ini
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Card Footer with Examples --}}
-                            <div class="card-footer bg-light">
-                                <div class="examples-section">
-                                    <strong class="d-block mb-2">
-                                        <i class="cil-lightbulb text-warning mr-1"></i>
-                                        Contoh Satuan:
-                                    </strong>
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="example-item">
-                                                <strong>Pcs</strong>
-                                                <small class="text-muted d-block">Pieces (untuk barang satuan)</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="example-item">
-                                                <strong>Set</strong>
-                                                <small class="text-muted d-block">Set (untuk paket produk)</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="example-item">
-                                                <strong>Kg</strong>
-                                                <small class="text-muted d-block">Kilogram (untuk berat)</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex space-x-2">
+                    <a href="{{ route('units.index') }}" class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+                        Batal
+                    </a>
+                    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                        <i class="bi bi-check-circle mr-1"></i> Simpan Satuan
+                    </button>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2">
+                <div class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 sm:p-6 dark:bg-gray-800">
+                    <div class="flex items-center mb-4 border-b pb-4 dark:border-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                            <i class="bi bi-file-text mr-2 text-primary"></i>Detail Satuan
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {{-- Unit Name --}}
+                        <div>
+                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                <i class="bi bi-tag mr-1 text-gray-500"></i> Nama Satuan <span class="text-red-600">*</span>
+                            </label>
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" 
+                                placeholder="Contoh: Buah, Pcs, Set"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('name') border-red-500 @enderror" required>
+                             @error('name')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Nama lengkap satuan</p>
+                        </div>
+
+                        {{-- Short Name --}}
+                        <div>
+                            <label for="short_name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                <i class="bi bi-fonts mr-1 text-gray-500"></i> Singkatan <span class="text-red-600">*</span>
+                            </label>
+                            <input type="text" id="short_name" name="short_name" value="{{ old('short_name') }}" 
+                                placeholder="Contoh: pcs, set, kg" maxlength="10"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('short_name') border-red-500 @enderror" required>
+                            <div class="flex justify-between items-center mt-1">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Maksimal 10 karakter</p>
+                                <span id="char-counter" class="text-xs text-gray-500 dark:text-gray-400">0/10</span>
+                            </div>
+                             @error('short_name')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Note --}}
+                        <div class="md:col-span-2">
+                            <label for="note" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                <i class="bi bi-sticky mr-1 text-gray-500"></i> Keterangan <span class="text-gray-400">(Opsional)</span>
+                            </label>
+                            <textarea id="note" name="note" rows="3" 
+                                placeholder="Tambahkan keterangan atau deskripsi satuan..."
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('note') border-red-500 @enderror">{{ old('note') }}</textarea>
+                             @error('note')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                {{-- Examples Card --}}
+                <div class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <h4 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white flex items-center">
+                        <i class="bi bi-lightbulb text-yellow-400 mr-2"></i> Contoh Satuan
+                    </h4>
+                    <ul class="space-y-4">
+                         <li class="p-3 bg-gray-50 rounded-lg border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-blue-600 dark:text-blue-400">Pcs</span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Pieces (untuk barang satuan)</p>
+                        </li>
+                         <li class="p-3 bg-gray-50 rounded-lg border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-blue-600 dark:text-blue-400">Set</span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Set (untuk paket produk)</p>
+                        </li>
+                         <li class="p-3 bg-gray-50 rounded-lg border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-blue-600 dark:text-blue-400">Kg</span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Kilogram (untuk berat)</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 @endsection
 
-@push('page_styles')
-    <style>
-        /* ========== Animations ========== */
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const shortNameInput = document.getElementById('short_name');
+        const charCounter = document.getElementById('char-counter');
+        const maxLength = 10;
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
+        // Auto-focus first input
+        document.getElementById('name').focus();
+
+        // Char counter
+        shortNameInput.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            charCounter.textContent = `${currentLength}/${maxLength}`;
+            
+            if (currentLength >= maxLength) {
+                charCounter.classList.add('text-red-600', 'font-bold');
+            } else {
+                charCounter.classList.remove('text-red-600', 'font-bold');
             }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ========== Sticky Action Bar ========== */
-        .action-bar {
-            position: sticky;
-            top: 0;
-            z-index: 1020;
-            background: white;
-            padding: 1.25rem;
-            border-radius: 10px;
-            margin-bottom: 0;
-        }
-
-        /* ========== Card Shadow ========== */
-        .shadow-sm {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* ========== Form Enhancements ========== */
-        .form-control-lg {
-            height: 50px;
-            font-size: 1rem;
-        }
-
-        .form-control:focus,
-        textarea.form-control:focus {
-            border-color: #4834DF;
-            box-shadow: 0 0 0 0.2rem rgba(72, 52, 223, 0.25);
-        }
-
-        textarea.form-control {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        /* ========== Examples Section ========== */
-        .examples-section {
-            font-size: 0.875rem;
-        }
-
-        .example-item {
-            padding: 0.75rem;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
-            margin-bottom: 0.5rem;
-        }
-
-        .example-item strong {
-            color: #4834DF;
-            font-size: 0.9375rem;
-        }
-
-        /* ========== Button Gap ========== */
-        .d-flex.gap-2>* {
-            margin-left: 0.5rem;
-        }
-
-        .d-flex.gap-2>*:first-child {
-            margin-left: 0;
-        }
-
-        /* ========== Character Counter ========== */
-        .char-counter {
-            font-size: 0.75rem;
-            color: #6c757d;
-            text-align: right;
-            margin-top: 0.25rem;
-        }
-
-        .char-counter.warning {
-            color: #ffc107;
-        }
-
-        .char-counter.danger {
-            color: #dc3545;
-        }
-
-        /* ========== Responsive ========== */
-        @media (max-width: 992px) {
-            .action-bar {
-                position: relative;
-            }
-
-            .action-bar .d-flex {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .action-bar .d-flex>div {
-                width: 100%;
-            }
-
-            .col-lg-8.offset-lg-2 {
-                margin-left: 0;
-            }
-        }
-    </style>
-@endpush
-
-@push('page_scripts')
-    <script>
-        $(document).ready(function() {
-            // Character counter for short_name
-            const shortNameInput = $('#short_name');
-            const maxLength = 10;
-
-            // Create counter element
-            $('<div class="char-counter"></div>').insertAfter(shortNameInput.next('.form-text'));
-            const counter = shortNameInput.parent().find('.char-counter');
-
-            function updateCounter() {
-                const length = shortNameInput.val().length;
-                const remaining = maxLength - length;
-                counter.text(`${length}/${maxLength} karakter`);
-
-                if (remaining <= 2) {
-                    counter.addClass('danger').removeClass('warning');
-                } else if (remaining <= 5) {
-                    counter.addClass('warning').removeClass('danger');
-                } else {
-                    counter.removeClass('warning danger');
-                }
-            }
-
-            shortNameInput.on('input', updateCounter);
-            updateCounter();
-
-            // Auto uppercase short_name
-            shortNameInput.on('input', function() {
-                // Optional: Auto lowercase for consistency
-                // $(this).val($(this).val().toLowerCase());
-            });
-
-            // Form Validation
-            $('#unit-form').on('submit', function(e) {
-                const name = $('#name').val().trim();
-                const shortName = $('#short_name').val().trim();
-
-                if (!name || !shortName) {
-                    e.preventDefault();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Data Tidak Lengkap',
-                        text: 'Mohon lengkapi nama satuan dan singkatan',
-                        confirmButtonColor: '#4834DF'
-                    });
-                    return false;
-                }
-
-                if (shortName.length > 10) {
-                    e.preventDefault();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Singkatan Terlalu Panjang',
-                        text: 'Singkatan maksimal 10 karakter',
-                        confirmButtonColor: '#4834DF'
-                    });
-                    $('#short_name').focus();
-                    return false;
-                }
-
-                // Show loading
-                Swal.fire({
-                    title: 'Menyimpan...',
-                    html: 'Mohon tunggu sebentar',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-            });
-
-            // Auto-focus first input
-            $('#name').focus();
         });
-    </script>
-@endpush
+
+        // Form Submission with SweetAlert2
+        const form = document.getElementById('unit-form');
+         form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+             const name = document.getElementById('name').value.trim();
+             const shortName = shortNameInput.value.trim();
+
+             if (!name || !shortName) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validasi Gagal',
+                    text: 'Mohon lengkapi nama satuan dan singkatan!',
+                    confirmButtonColor: '#1A56DB', // Blue-700
+                    background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
+                    color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Simpan Satuan?',
+                text: "Pastikan data yang Anda masukkan sudah benar.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#1A56DB',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Ya, Simpan!',
+                cancelButtonText: 'Batal',
+                background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
+                color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Menyimpan...',
+                        html: 'Mohon tunggu sebentar',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                         willOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
+@endsection

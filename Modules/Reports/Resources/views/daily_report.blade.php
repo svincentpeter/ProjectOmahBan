@@ -1,145 +1,119 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Laporan Kas Harian')
 
 @section('breadcrumb')
-<ol class="breadcrumb border-0 m-0">
-    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('reports.index') }}">Laporan</a></li>
-    <li class="breadcrumb-item active">Kas Harian</li>
-</ol>
+    @include('layouts.breadcrumb-flowbite', [
+        'items' => [
+            ['text' => 'Laporan', 'url' => route('reports.index')],
+            ['text' => 'Kas Harian', 'url' => '#', 'icon' => 'bi bi-wallet2'],
+        ]
+    ])
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <div class="animated fadeIn">
-        {{-- Filter Card --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-1 font-weight-bold">
-                            <i class="cil-calendar mr-2 text-primary"></i>
-                            Filter Tanggal
-                        </h5>
-                        <small class="text-muted">Pilih tanggal untuk melihat laporan kas harian</small>
-                    </div>
-                </div>
-            </div>
+    {{-- Filter Card --}}
+    @include('layouts.filter-card', [
+        'action' => route('reports.daily.generate'),
+        'method' => 'POST',
+        'title' => 'Filter Kas Harian',
+        'icon' => 'bi bi-funnel',
+        'filters' => [
+            [
+                'name' => 'report_date', // Must match backend expectation
+                'label' => 'Tanggal Laporan',
+                'type' => 'date',
+                'value' => old('report_date', $reportDate ?? date('Y-m-d')),
+                'required' => true
+            ]
+        ]
+    ])
 
-            <div class="card-body">
-                <form action="{{ route('reports.daily.generate') }}" method="POST">
-                    @csrf
-                    
-                    <div class="row">
-                        {{-- Tanggal Laporan --}}
-                        <div class="col-lg-4 col-md-6 mb-3">
-                            <label for="report_date" class="form-label font-weight-semibold">
-                                <i class="cil-calendar mr-1 text-muted"></i> Tanggal Laporan
-                            </label>
-                            <input type="date" 
-                                   id="report_date" 
-                                   name="report_date"
-                                   value="{{ old('report_date', $reportDate) }}"
-                                   class="form-control @error('report_date') is-invalid @enderror" 
-                                   required>
-                            @error('report_date')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        {{-- Action Buttons --}}
-                        <div class="col-lg-8 col-md-6 mb-3">
-                            <label class="form-label font-weight-semibold d-block">&nbsp;</label>
-                            <div class="btn-group" role="group">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="cil-chart mr-1"></i> Tampilkan Laporan
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="window.print()">
-                                    <i class="cil-print mr-1"></i> Cetak
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        @if ($generated)
+    @if (isset($generated) && $generated)
         @php
             $netPos   = ($netIncome ?? 0) >= 0;
             $gpMargin = ($totalOmset ?? 0) > 0 ? round(($netIncome / max($totalOmset,1)) * 100, 1) : 0;
         @endphp
 
         {{-- Report Header --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="mb-1 font-weight-bold">Laporan Kas Harian</h4>
-                        <p class="text-muted mb-0">
-                            <i class="cil-calendar mr-1"></i>
-                            Tanggal: {{ \Carbon\Carbon::parse($reportDate)->translatedFormat('d M Y') }}
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <small class="text-muted d-block">Generated at</small>
-                        <strong>{{ now()->translatedFormat('d M Y, H:i') }}</strong>
-                    </div>
+        <div class="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-file-earmark-text text-blue-600"></i>
+                    Laporan Kas Harian
+                </h2>
+                <div class="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <span class="flex items-center">
+                        <i class="bi bi-calendar-event mr-1.5"></i>
+                        {{ \Carbon\Carbon::parse($reportDate)->locale('id')->isoFormat('dddd, D MMMM Y') }}
+                    </span>
                 </div>
+            </div>
+            <div class="text-right">
+                <button onclick="window.print()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-all shadow-sm">
+                    <i class="bi bi-printer mr-2"></i> Cetak Laporan
+                </button>
             </div>
         </div>
 
         {{-- KPI Cards --}}
-        <div class="row mb-4">
-            {{-- Total Omset --}}
-            <div class="col-lg-4 col-md-6 mb-3">
-                <div class="stats-card stats-card-blue">
-                    <div class="stats-icon">
-                        <i class="cil-wallet"></i>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            {{-- Omset Kotor --}}
+            <div class="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                    <i class="bi bi-wallet2 text-9xl"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                        <i class="bi bi-cash-coin text-2xl"></i>
                     </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Total Omset Kotor</div>
-                        <div class="stats-value">{{ format_currency($totalOmset) }}</div>
-                        <div class="stats-sub">Semua transaksi hari ini</div>
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium mb-1 tracking-wide">Total Omset Kotor</p>
+                        <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($totalOmset) }}</h3>
+                        <p class="text-xs text-blue-200 mt-1 opacity-80">Semua transaksi hari ini</p>
                     </div>
                 </div>
             </div>
 
-            {{-- Total Pengeluaran --}}
-            <div class="col-lg-4 col-md-6 mb-3">
-                <div class="stats-card stats-card-warning">
-                    <div class="stats-icon">
-                        <i class="cil-building"></i>
+            {{-- Pengeluaran --}}
+            <div class="relative bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                    <i class="bi bi-building text-9xl"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                        <i class="bi bi-cart-x text-2xl"></i>
                     </div>
-                    <div class="stats-content">
-                        <div class="stats-label">Total Pengeluaran</div>
-                        <div class="stats-value text-warning">( {{ format_currency($totalPengeluaran) }} )</div>
-                        <div class="stats-sub">Biaya operasional hari ini</div>
+                    <div>
+                        <p class="text-orange-100 text-sm font-medium mb-1 tracking-wide">Total Pengeluaran</p>
+                        <h3 class="text-2xl font-bold tracking-tight">({{ format_currency($totalPengeluaran) }})</h3>
+                        <p class="text-xs text-orange-200 mt-1 opacity-80">Biaya operasional hari ini</p>
                     </div>
                 </div>
             </div>
 
             {{-- Pendapatan Bersih --}}
-            <div class="col-lg-4 col-md-12 mb-3">
-                <div class="stats-card stats-card-success">
-                    <div class="stats-icon">
-                        <i class="cil-thumb-up"></i>
+            <div class="relative bg-gradient-to-br from-emerald-500 to-green-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+                <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
+                    <i class="bi bi-graph-up-arrow text-9xl"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-start justify-between">
+                         <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
+                            <i class="bi bi-piggy-bank text-2xl"></i>
+                        </div>
+                        <span class="px-2.5 py-1 bg-white/20 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
+                            Margin: {{ $gpMargin }}%
+                        </span>
                     </div>
-                    <div class="stats-content w-100">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
-                            <div class="stats-label mb-0">Pendapatan Bersih</div>
-                            <span class="badge badge-light">Net Ratio: {{ $gpMargin }}%</span>
-                        </div>
-                        <div class="stats-value {{ $netPos ? 'text-success' : 'text-danger' }} mb-2">
-                            {{ format_currency($netIncome) }}
-                        </div>
+                    
+                    <div>
+                        <p class="text-emerald-100 text-sm font-medium mb-1 tracking-wide">Pendapatan Bersih</p>
+                        <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($netIncome) }}</h3>
                         
-                        {{-- Progress Bar --}}
-                        <div class="progress" style="height: 8px; border-radius: 6px;">
-                            <div class="progress-bar {{ $netPos ? 'bg-success' : 'bg-danger' }}"
-                                 role="progressbar"
-                                 style="width: {{ min(max(abs($gpMargin),0),100) }}%"></div>
+                        {{-- Progress Bar for Visual Ratio --}}
+                        <div class="w-full bg-black/20 rounded-full h-1.5 mt-3">
+                            <div class="h-1.5 rounded-full bg-white/80" style="width: {{ min(max(abs($gpMargin),0),100) }}%"></div>
                         </div>
                     </div>
                 </div>
@@ -147,172 +121,192 @@
         </div>
 
         {{-- Sales Table --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 font-weight-bold">
-                    <i class="cil-cart mr-2 text-primary"></i>
+        <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/50 dark:text-blue-400">
+                        <i class="bi bi-cart3"></i>
+                    </div>
                     Daftar Penjualan
-                </h6>
+                </h3>
+                <span class="text-xs font-medium px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md dark:bg-gray-700 dark:text-gray-300">
+                    {{ count($sales) }} Transaksi
+                </span>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead style="background-color: #f8f9fa;">
-                            <tr>
-                                <th class="border-0" width="16%">Reference</th>
-                                <th class="border-0" width="12%">Waktu</th>
-                                <th class="border-0">Item Terjual</th>
-                                <th class="border-0 text-right" width="18%">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-100 dark:border-gray-600">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 font-semibold">Reference</th>
+                            <th scope="col" class="px-6 py-3 font-semibold">Waktu</th>
+                            <th scope="col" class="px-6 py-3 font-semibold">Item Terjual</th>
+                            <th scope="col" class="px-6 py-3 font-semibold text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse ($sales as $sale)
-                            <tr>
-                                <td class="font-weight-semibold">{{ $sale->reference }}</td>
-                                <td>{{ optional($sale->created_at)->format('H:i') ?? '-' }}</td>
-                                <td>
-                                    @if ($sale->saleDetails && $sale->saleDetails->count())
-                                        <ul class="mb-0 pl-3" style="list-style-type: none; padding-left: 0;">
-                                            @foreach ($sale->saleDetails as $d)
-                                                @php
-                                                    $name  = $d->item_name ?? optional($d->product)->name ?? ($d->product_name ?? 'Item');
-                                                    $qty   = (int) ($d->quantity ?? $d->qty ?? 1);
-                                                    $price = (int) ($d->unit_price ?? $d->price ?? 0);
-                                                    $sub   = (int) ($d->sub_total ?? ($qty * $price));
-                                                @endphp
-                                                <li class="mb-1">
-                                                    <i class="cil-check-circle text-success mr-1"></i>
-                                                    <span class="font-weight-semibold">{{ $name }}</span>
-                                                    <span class="text-muted">× {{ $qty }}</span>
-                                                    <span class="text-muted"> @ {{ format_currency($price) }}</span>
-                                                    <span class="ml-2">= <strong>{{ format_currency($sub) }}</strong></span>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @else
-                                        <em class="text-muted">Tidak ada item</em>
-                                    @endif
-                                </td>
-                                <td class="text-right font-weight-bold">{{ format_currency($sale->total_amount) }}</td>
-                            </tr>
+                        <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50">
+                            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white align-top">
+                                {{ $sale->reference }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-500 dark:text-gray-400 align-top">
+                                {{ optional($sale->created_at)->format('H:i') ?? '-' }}
+                            </td>
+                            <td class="px-6 py-4 align-top">
+                                 @if ($sale->saleDetails && $sale->saleDetails->count())
+                                    <ul class="space-y-1.5">
+                                        @foreach ($sale->saleDetails as $d)
+                                            @php
+                                                $name  = $d->item_name ?? optional($d->product)->name ?? ($d->product_name ?? 'Item');
+                                                $qty   = (int) ($d->quantity ?? $d->qty ?? 1);
+                                                $price = (int) ($d->unit_price ?? $d->price ?? 0);
+                                                $sub   = (int) ($d->sub_total ?? ($qty * $price));
+                                            @endphp
+                                            <li class="flex items-start text-xs gap-2">
+                                                <i class="bi bi-dot text-gray-300 mt-0.5"></i>
+                                                <div class="flex-1">
+                                                    <span class="font-medium text-gray-700 dark:text-gray-300">{{ $name }}</span>
+                                                    <div class="text-gray-500 text-[10px]">
+                                                        {{ $qty }} x {{ format_currency($price) }}
+                                                    </div>
+                                                </div>
+                                                <span class="font-semibold text-gray-900 dark:text-white">{{ format_currency($sub) }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <em class="text-gray-400 text-xs">Tidak ada item</em>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white align-top">
+                                {{ format_currency($sale->total_amount) }}
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="cil-inbox" style="font-size: 3rem; opacity: 0.2;"></i>
-                                        <p class="mb-0 mt-3">Tidak ada penjualan pada tanggal ini</p>
-                                    </div>
-                                </td>
-                            </tr>
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <i class="bi bi-inbox text-4xl mb-3 block text-gray-300 dark:text-gray-600"></i>
+                                Tidak ada penjualan pada tanggal ini
+                            </td>
+                        </tr>
                         @endforelse
-                        </tbody>
-                        <tfoot style="background-color: #f8f9fa;">
-                            <tr>
-                                <th colspan="3" class="text-right">Total Omset Kotor</th>
-                                <th class="text-right font-weight-bold text-primary">{{ format_currency($totalOmset) }}</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+                    </tbody>
+                    <tfoot class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th colspan="3" class="px-6 py-4 text-right font-bold text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">Total Penjualan</th>
+                            <td class="px-6 py-4 text-right font-bold text-blue-600 dark:text-blue-400">{{ format_currency($totalOmset) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
 
         {{-- Expenses Table --}}
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 font-weight-bold">
-                    <i class="cil-money mr-2 text-danger"></i>
+        <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
+             <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div class="p-1.5 bg-red-100 text-red-600 rounded-lg dark:bg-red-900/50 dark:text-red-400">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
                     Daftar Pengeluaran
-                </h6>
+                </h3>
+                <span class="text-xs font-medium px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md dark:bg-gray-700 dark:text-gray-300">
+                    {{ count($expenses) }} Transaksi
+                </span>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead style="background-color: #f8f9fa;">
-                            <tr>
-                                <th class="border-0" width="16%">Reference</th>
-                                <th class="border-0" width="18%">Kategori</th>
-                                <th class="border-0">Detail</th>
-                                <th class="border-0 text-right" width="18%">Jumlah</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-100 dark:border-gray-600">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 font-semibold">Reference</th>
+                            <th scope="col" class="px-6 py-3 font-semibold">Kategori</th>
+                            <th scope="col" class="px-6 py-3 font-semibold">Detail</th>
+                            <th scope="col" class="px-6 py-3 font-semibold text-right">Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         @forelse ($expenses as $ex)
-                            <tr>
-                                <td class="font-weight-semibold">{{ $ex->reference }}</td>
-                                <td>
-                                    <span class="badge badge-light">
-                                        {{ optional($ex->category)->category_name ?? '-' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="mb-1">{{ $ex->details ?? '-' }}</div>
-                                    <small class="text-muted">
-                                        <i class="cil-user mr-1"></i>{{ optional($ex->user)->name ?? '—' }}
-                                        <span class="mx-1">•</span>
-                                        <i class="cil-clock mr-1"></i>{{ optional($ex->created_at)->format('H:i') ?? '-' }}
-                                    </small>
-                                </td>
-                                <td class="text-right font-weight-bold text-danger">{{ format_currency($ex->amount) }}</td>
-                            </tr>
+                        <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50">
+                            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white align-top">
+                                {{ $ex->reference }}
+                            </td>
+                            <td class="px-6 py-4 align-top">
+                                <span class="bg-blue-50 text-blue-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
+                                    {{ optional($ex->category)->category_name ?? '-' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 align-top">
+                                <div class="text-gray-800 dark:text-gray-200 font-medium mb-1">{{ $ex->details ?? '-' }}</div>
+                                <div class="text-xs text-gray-500 flex items-center gap-3">
+                                    <span class="flex items-center gap-1"><i class="bi bi-person"></i> {{ optional($ex->user)->name ?? '—' }}</span>
+                                    <span class="flex items-center gap-1"><i class="bi bi-clock"></i> {{ optional($ex->created_at)->format('H:i') ?? '-' }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right font-bold text-red-600 dark:text-red-400 align-top">
+                                {{ format_currency($ex->amount) }}
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="cil-inbox" style="font-size: 3rem; opacity: 0.2;"></i>
-                                        <p class="mb-0 mt-3">Tidak ada pengeluaran pada tanggal ini</p>
-                                    </div>
-                                </td>
-                            </tr>
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                <i class="bi bi-check-circle text-4xl mb-3 block text-gray-300 dark:text-gray-600"></i>
+                                Tidak ada pengeluaran pada tanggal ini
+                            </td>
+                        </tr>
                         @endforelse
-                        </tbody>
-                        <tfoot style="background-color: #f8f9fa;">
-                            <tr>
-                                <th colspan="3" class="text-right">Total Pengeluaran</th>
-                                <th class="text-right font-weight-bold text-danger">{{ format_currency($totalPengeluaran) }}</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+                    </tbody>
+                    <tfoot class="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                            <th colspan="3" class="px-6 py-4 text-right font-bold text-gray-700 dark:text-gray-300 uppercase text-xs tracking-wider">Total Pengeluaran</th>
+                            <td class="px-6 py-4 text-right font-bold text-red-600 dark:text-red-400">{{ format_currency($totalPengeluaran) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
 
-        {{-- Summary Card --}}
-        <div class="card shadow-sm">
-            <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="mb-0 font-weight-bold">
-                    <i class="cil-calculator mr-2 text-primary"></i>
-                    Ringkasan & Penerimaan
-                </h6>
+        {{-- Summary Table --}}
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <div class="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg dark:bg-indigo-900/50 dark:text-indigo-400">
+                        <i class="bi bi-calculator"></i>
+                    </div>
+                    Ringkasan Keuangan
+                </h3>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0">
-                    <tbody>
-                        <tr>
-                            <th style="width:40%">
-                                <i class="cil-wallet mr-2 text-primary"></i> Total Omset Kotor
+            <div>
+                 <table class="w-full text-sm text-left">
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800">
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white w-1/3">
+                                Total Omset Kotor
                             </th>
-                            <td class="text-right font-weight-bold">{{ format_currency($totalOmset) }}</td>
+                            <td class="px-6 py-4 text-right font-bold text-gray-900 dark:text-white">
+                                {{ format_currency($totalOmset) }}
+                            </td>
                         </tr>
-                        <tr>
-                            <th>
-                                <i class="cil-money mr-2 text-danger"></i> Total Pengeluaran
+                        <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800">
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                Total Pengeluaran
                             </th>
-                            <td class="text-right text-danger">({{ format_currency($totalPengeluaran) }})</td>
+                            <td class="px-6 py-4 text-right font-bold text-red-600 dark:text-red-400">
+                                ({{ format_currency($totalPengeluaran) }})
+                            </td>
                         </tr>
-                        <tr style="background-color: #f8f9fa;">
-                            <th>
-                                <i class="cil-thumb-up mr-2 text-success"></i> Pendapatan Bersih
+                        <tr class="bg-emerald-50/50 dark:bg-emerald-900/10">
+                            <th scope="row" class="px-6 py-4 font-bold text-emerald-800 dark:text-emerald-300">
+                                Pendapatan Bersih
                             </th>
-                            <td class="text-right font-weight-bold {{ $netPos ? 'text-success' : 'text-danger' }}">
+                            <td class="px-6 py-4 text-right font-bold {{ $netPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }} text-lg">
                                 {{ format_currency($netIncome) }}
                             </td>
                         </tr>
-                        <tr>
-                            <th>
-                                <i class="cil-credit-card mr-2 text-info"></i> Rincian Penerimaan per Metode/Bank
+                        <tr class="bg-white dark:bg-gray-800 border-t-2 border-dashed border-gray-200 dark:border-gray-700">
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white align-top pt-6">
+                                Rincian Penerimaan (Payments)
                             </th>
-                            <td>
+                            <td class="px-6 py-4 text-right pt-6">
                                 @include('reports::components.payments-summary', ['receipts' => $receipts])
                             </td>
                         </tr>
@@ -320,188 +314,5 @@
                 </table>
             </div>
         </div>
-        @endif
-    </div>
-</div>
+    @endif
 @endsection
-
-@push('page_styles')
-<style>
-    /* ========== Animations ========== */
-    .animated.fadeIn {
-        animation: fadeIn 0.3s ease-in;
-    }
-    
-    @keyframes fadeIn {
-        from { 
-            opacity: 0; 
-            transform: translateY(10px); 
-        }
-        to { 
-            opacity: 1; 
-            transform: translateY(0); 
-        }
-    }
-
-    /* ========== Card Shadow ========== */
-    .shadow-sm {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-    }
-
-    /* ========== Stats Cards ========== */
-    .stats-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        height: 100%;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        border-left: 4px solid;
-    }
-
-    .stats-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    }
-
-    .stats-card-blue { border-left-color: #3b82f6; }
-    .stats-card-warning { border-left-color: #f59e0b; }
-    .stats-card-success { border-left-color: #22c55e; }
-
-    .stats-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.75rem;
-        flex-shrink: 0;
-    }
-
-    .stats-card-blue .stats-icon {
-        background: rgba(59, 130, 246, 0.14);
-        color: #3b82f6;
-    }
-
-    .stats-card-warning .stats-icon {
-        background: rgba(245, 158, 11, 0.22);
-        color: #f59e0b;
-    }
-
-    .stats-card-success .stats-icon {
-        background: rgba(34, 197, 94, 0.14);
-        color: #22c55e;
-    }
-
-    .stats-content {
-        flex: 1;
-    }
-
-    .stats-label {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #6b7280;
-        margin-bottom: 8px;
-    }
-
-    .stats-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #1f2937;
-        line-height: 1.2;
-        letter-spacing: -0.02em;
-    }
-
-    .stats-sub {
-        font-size: 0.8125rem;
-        color: #6b7280;
-        margin-top: 4px;
-    }
-
-    /* ========== Table Styling ========== */
-    .table thead th {
-        font-size: 0.8125rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-        color: #4f5d73;
-        padding: 14px 12px;
-    }
-
-    .table tbody td,
-    .table tbody th {
-        padding: 12px;
-        vertical-align: middle;
-        font-size: 0.875rem;
-    }
-
-    .table tbody tr {
-        transition: all 0.2s ease;
-    }
-
-    .table tbody tr:hover {
-        background-color: rgba(72, 52, 223, 0.03) !important;
-    }
-
-    /* ========== Badge Styling ========== */
-    .badge {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.65rem;
-        font-weight: 600;
-    }
-
-    /* ========== Responsive ========== */
-    @media (max-width: 992px) {
-        .stats-value {
-            font-size: 1.25rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .stats-card {
-            flex-direction: column;
-            text-align: center;
-        }
-        
-        .table thead th,
-        .table tbody td {
-            padding: 10px 8px;
-            font-size: 0.8125rem;
-        }
-    }
-
-    /* ========== Print Styles ========== */
-    @media print {
-        .card, 
-        .card-body, 
-        .stats-card { 
-            box-shadow: none !important; 
-            page-break-inside: avoid;
-        }
-        
-        .btn, 
-        form:first-of-type, 
-        nav, 
-        .breadcrumb, 
-        .btn-group { 
-            display: none !important; 
-        }
-        
-        body, .table { 
-            font-size: 11pt; 
-        }
-        
-        @page { 
-            margin: 15mm; 
-        }
-        
-        .stats-card {
-            border: 1px solid #ddd;
-        }
-    }
-</style>
-@endpush

@@ -8,8 +8,8 @@
     <title>Login | {{ config('app.name') }}</title>
     <link rel="icon" href="{{ asset('images/favicon.png') }}">
 
-    <!-- CoreUI CSS -->
-    <link rel="stylesheet" href="{{ mix('css/app.css') }}" crossorigin="anonymous">
+    <!-- Vite CSS -->
+    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
 
@@ -119,8 +119,7 @@
     </div>
   </div>
 
-  <!-- CoreUI JS -->
-  <script src="{{ mix('js/app.js') }}" defer></script>
+  <!-- JS loaded via Vite in head -->
   <script>
     const loginForm = document.getElementById('login');
     const submitBtn = document.getElementById('submit');

@@ -11,13 +11,18 @@ use Modules\Product\Entities\ProductSecond;
 
 class ProductSecondController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         abort_if(Gate::denies('access_products'), 403);
 
-        $products = ProductSecond::with(['category', 'brand'])
-            ->orderByDesc('created_at')
-            ->paginate(10);
+        $query = ProductSecond::with(['category', 'brand']);
+        
+        // Filter by status if provided
+        if ($request->has('status') && in_array($request->status, ['available', 'sold'])) {
+            $query->where('status', $request->status);
+        }
+        
+        $products = $query->orderByDesc('created_at')->paginate(10);
 
         return view('product::second.index', compact('products'));
     }

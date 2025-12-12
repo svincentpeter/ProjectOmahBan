@@ -114,7 +114,7 @@ class NotificationController extends Controller
                 })
                 ->addColumn('created_at_ts', fn($row) => optional($row->created_at)->timestamp ?? 0)
                 ->addColumn('time_ago', fn($row) => optional($row->created_at)->diffForHumans() ?? '-')
-                ->addColumn('title', fn($row) => e(Str::limit($row->title ?? '-', 60)))
+                ->editColumn('title', fn($row) => e(Str::limit($row->title ?? '-', 60)))
                 ->addColumn('read_status', fn($row) => $row->is_read ? '<span class="badge bg-success"><i class="cil-check-circle"></i> Dibaca</span>' : '<span class="badge bg-primary"><i class="cil-bell"></i> Baru</span>')
                 ->addColumn('reviewed_status', fn($row) => $row->is_reviewed ? '<span class="badge bg-success"><i class="cil-task"></i> Direview</span>' : '<span class="badge bg-warning"><i class="cil-clock"></i> Pending</span>')
                 ->addColumn('fontee_status_badge', function ($row) {

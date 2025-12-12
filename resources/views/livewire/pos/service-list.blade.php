@@ -4,74 +4,78 @@
         
         {{-- Quick Service Templates (Dynamic from Database) --}}
         @if($services && $services->count() > 0)
-        <div>
+<div>
             <div class="mb-3 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-slate-900">
                     <i class="bi bi-tools mr-1"></i>
                     Jasa Tersedia
                 </h3>
                 <p class="text-xs text-slate-500">
-                    {{ $services->count() }} jasa • Klik untuk tambah ke keranjang
+                    {{ $services->count() }} jasa • Klik "Tambah" untuk masuk keranjang
                 </p>
             </div>
             
+            {{-- Modern Service Cards Grid --}}
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 
                 @php
-                    // Define color scheme for dynamic styling
-                    $colors = ['indigo', 'blue', 'emerald', 'amber', 'cyan', 'purple', 'pink', 'rose'];
-                    $icons = ['bi-tools', 'bi-gear', 'bi-wrench', 'bi-arrow-repeat', 'bi-droplet', 'bi-bandaid', 'bi-align-center', 'bi-rulers'];
+                    $icons = ['bi-tools', 'bi-gear-wide-connected', 'bi-wrench-adjustable', 'bi-arrow-repeat', 'bi-droplet-fill', 'bi-disc', 'bi-speedometer2', 'bi-truck'];
                 @endphp
                 
                 @foreach($services as $index => $service)
                     @php
-                        // Cycle through colors and icons
-                        $colorIndex = $index % count($colors);
-                        $color = $colors[$colorIndex];
-                        $icon = $icons[$colorIndex];
-                        
-                        // Service details
+                        $icon = $icons[$index % count($icons)];
                         $serviceName = $service->service_name;
                         $servicePrice = $service->standard_price;
                         $serviceCategory = $service->category ?? 'Layanan';
                     @endphp
                     
-                    <button type="button"
-                            wire:click="addServiceToCart({{ $service->id }})"
-                            wire:loading.attr="disabled"
-                            wire:key="service-{{ $service->id }}"
-                            class="relative group flex flex-col items-center gap-3 rounded-2xl border-2 border-{{ $color }}-200 bg-gradient-to-br from-white to-{{ $color }}-50/30 p-4 text-center shadow-sm transition-all hover:border-{{ $color }}-400 hover:shadow-md active:scale-95">
+                    {{-- Modern Service Card --}}
+                    <div wire:key="service-{{ $service->id }}"
+                         class="group relative bg-white rounded-2xl border border-slate-200 p-4 shadow-sm transition-all hover:shadow-lg hover:border-indigo-300 hover:-translate-y-0.5">
                         
-                        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-{{ $color }}-100 text-{{ $color }}-600 transition-colors group-hover:bg-{{ $color }}-600 group-hover:text-white">
-                            <i class="bi {{ $icon }} text-2xl"></i>
+                        {{-- Card Content --}}
+                        <div class="flex items-start gap-3">
+                            {{-- Icon --}}
+                            <div class="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-200 group-hover:shadow-lg group-hover:shadow-indigo-300 transition-shadow">
+                                <i class="bi {{ $icon }} text-xl"></i>
+                            </div>
+                            
+                            {{-- Info --}}
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-bold text-slate-900 truncate">{{ $serviceName }}</h4>
+                                <p class="text-xs text-slate-500">{{ $serviceCategory }}</p>
+                                <p class="mt-1 text-lg font-bold text-indigo-600">{{ format_currency($servicePrice) }}</p>
+                            </div>
                         </div>
                         
-                        <div>
-                            <p class="text-sm font-semibold text-slate-900">{{ $serviceName }}</p>
-                            <p class="mt-0.5 text-xs text-slate-500">{{ $serviceCategory }}</p>
-                            <p class="mt-1 text-base font-bold text-{{ $color }}-600">{{ format_currency($servicePrice) }}</p>
-                        </div>
-                        
-                        {{-- Loading Indicator --}}
-                        <div wire:loading wire:target="addServiceToCart({{ $service->id }})" class="absolute inset-0 bg-white/80 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                            <svg class="animate-spin h-6 w-6 text-{{ $color }}-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </div>
-                    </button>
+                        {{-- Button Tambah --}}
+                        <button type="button"
+                                wire:click="addServiceToCart({{ $service->id }})"
+                                onclick="showServiceAdded(this)"
+                                class="service-btn mt-3 w-full py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white active:scale-95">
+                            <span class="btn-normal flex items-center justify-center gap-2">
+                                <i class="bi bi-cart-plus text-base"></i>
+                                <span>Tambah</span>
+                            </span>
+                            <span class="btn-success hidden flex items-center justify-center gap-2 text-white">
+                                <i class="bi bi-check-circle-fill text-base"></i>
+                                <span>Masuk!</span>
+                            </span>
+                        </button>
+                    </div>
                 @endforeach
                 
                 {{-- Custom Service Button --}}
                 <button type="button"
                         onclick="openCustomServiceModal()"
-                        class="group flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-white p-4 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50/50 active:scale-95">
-                    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-600">
-                        <i class="bi bi-plus-circle text-2xl"></i>
+                        class="group flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center transition-all hover:border-indigo-400 hover:bg-indigo-50 active:scale-95 min-h-[140px]">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-slate-500 transition-all group-hover:bg-indigo-500 group-hover:text-white group-hover:shadow-md">
+                        <i class="bi bi-plus-lg text-xl"></i>
                     </div>
                     <div>
-                        <p class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Jasa Lainnya</p>
-                        <p class="mt-0.5 text-xs text-slate-500">Input manual</p>
+                        <p class="text-sm font-bold text-slate-700 group-hover:text-indigo-600">Jasa Lainnya</p>
+                        <p class="mt-0.5 text-xs text-slate-500">Input harga manual</p>
                     </div>
                 </button>
                 
@@ -315,5 +319,29 @@
             }
         }
     });
+
+    // Function to show "Masuk!" state after adding to cart
+    function showServiceAdded(btn) {
+        const normalSpan = btn.querySelector('.btn-normal');
+        const successSpan = btn.querySelector('.btn-success');
+        
+        // Toggle visibility
+        normalSpan.classList.add('hidden');
+        successSpan.classList.remove('hidden');
+        
+        // Change button style to green
+        btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'border-indigo-200', 'hover:bg-indigo-600', 'hover:text-white');
+        btn.classList.add('bg-emerald-500', 'border-emerald-500');
+        btn.disabled = true;
+        
+        // Reset after 1.5 seconds
+        setTimeout(() => {
+            normalSpan.classList.remove('hidden');
+            successSpan.classList.add('hidden');
+            btn.classList.remove('bg-emerald-500', 'border-emerald-500');
+            btn.classList.add('bg-indigo-50', 'text-indigo-600', 'border-indigo-200', 'hover:bg-indigo-600', 'hover:text-white');
+            btn.disabled = false;
+        }, 1500);
+    }
     </script>
 </div>
