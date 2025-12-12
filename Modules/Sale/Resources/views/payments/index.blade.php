@@ -1,132 +1,82 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
-@section('title', 'Pembayaran – INV '.$sale->reference)
-
-@section('breadcrumb')
-  <ol class="breadcrumb border-0 m-0">
-    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('sales.index') }}">Sales</a></li>
-    <li class="breadcrumb-item active">Pembayaran</li>
-  </ol>
-@endsection
+@section('title', 'Pembayaran – ' . $sale->reference)
 
 @section('content')
-<div class="container-fluid mb-4">
+    {{-- Breadcrumb --}}
+    @section('breadcrumb')
+        @include('layouts.breadcrumb-flowbite', [
+            'items' => [
+                ['text' => 'Penjualan', 'url' => route('sales.index')],
+                ['text' => 'Buku Penjualan', 'url' => '#', 'icon' => 'bi bi-receipt'],
+                ['text' => 'Pembayaran ' . $sale->reference, 'url' => '#'],
+            ]
+        ])
+    @endsection
 
-  {{-- Ringkasan --}}
-  <div class="row g-3 mb-3">
-    <div class="col-md-3">
-      <div class="card shadow-sm"><div class="card-body">
-        <small class="text-muted">Total</small>
-        <h5 class="mb-0">{{ format_currency($sale->total_amount) }}</h5>
-      </div></div>
-    </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm"><div class="card-body">
-        <small class="text-muted">Dibayar</small>
-        <h5 class="mb-0">{{ format_currency($sale->paid_amount) }}</h5>
-      </div></div>
-    </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm"><div class="card-body">
-        <small class="text-muted">Kurang</small>
-        <h5 class="mb-0 text-danger">{{ format_currency($sale->due_amount) }}</h5>
-      </div></div>
-    </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm"><div class="card-body">
-        <small class="text-muted">Status</small>
-        <h5 class="mb-0">
-          @php $ps = $sale->payment_status; @endphp
-          <span class="badge {{ $ps==='Paid'?'badge-success':($ps==='Partial'?'badge-warning':'badge-secondary') }}">{{ $ps }}</span>
-        </h5>
-      </div></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Pembayaran – INV {{ $sale->reference }}</h5>
-        <div class="d-flex gap-2">
-          <a href="{{ route('sales.index') }}" class="btn btn-light">Kembali</a>
-          <a href="{{ route('sale-payments.create', $sale->id) }}" class="btn btn-primary">
-            Tambah Pembayaran
-          </a>
+    {{-- Info Card --}}
+    <div class="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border-l-4 border-blue-600">
+        <div class="flex justify-between items-start">
+            <div>
+                <h4 class="text-lg font-bold text-gray-800 dark:text-gray-200">
+                    Informasi Penjualan: <span class="text-blue-600">{{ $sale->reference }}</span>
+                </h4>
+                <div class="mt-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <p><span class="font-semibold">Total Tagihan:</span> {{ format_currency($sale->total_amount) }}</p>
+                    <p><span class="font-semibold">Sudah Dibayar:</span> {{ format_currency($sale->paid_amount) }}</p>
+                    <p><span class="font-semibold">Status:</span> 
+                        <span class="px-2 py-0.5 rounded text-xs font-semibold
+                            {{ $sale->payment_status == 'Paid' ? 'bg-green-100 text-green-800' : 
+                               ($sale->payment_status == 'Partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
+                            {{ $sale->payment_status }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-sm text-gray-500">Sisa Tagihan</p>
+                <p class="text-2xl font-bold text-red-500">{{ format_currency($sale->due_amount) }}</p>
+            </div>
         </div>
-      </div>
-
-      <div class="table-responsive">
-        <table id="payments-table" class="table table-striped table-bordered w-100">
-          <thead>
-            <tr>
-              <th>Tanggal</th>
-              <th>Referensi</th>
-              <th>Metode</th>
-              <th>Bank</th>
-              <th class="text-right">Jumlah</th>
-              <th>Catatan</th>
-              <th>Dibuat</th>
-              <th style="width:70px">Aksi</th>
-            </tr>
-          </thead>
-          <tfoot>
-            <tr>
-              <th colspan="4" class="text-right">Total Dibayar</th>
-              <th class="text-right" id="ft-total">Rp0</th>
-              <th colspan="3"></th>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
     </div>
-  </div>
-</div>
+
+    {{-- Main Card --}}
+    <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 shadow-sm rounded-2xl overflow-hidden">
+        <div class="p-6 border-b border-slate-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-700/20">
+            <div>
+                <h5 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-cash-stack text-green-600"></i>
+                    Riwayat Pembayaran
+                </h5>
+                <p class="text-sm text-slate-500 dark:text-gray-400 mt-1">Daftar pembayaran untuk penjualan ini.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="{{ route('sales.index') }}" class="btn btn-secondary text-sm">Kembali</a>
+                @can('access_sale_payments')
+                    @if($sale->due_amount > 0)
+                        <a href="{{ route('sale-payments.create', $sale->id) }}" 
+                           class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-300 shadow-lg shadow-blue-500/30 transition-all duration-200">
+                            <i class="bi bi-plus-lg mr-2"></i>
+                            Tambah Pembayaran
+                        </a>
+                    @endif
+                @endcan
+            </div>
+        </div>
+
+        {{-- DataTable --}}
+        <div class="p-5">
+            {{ $dataTable->table() }}
+        </div>
+    </div>
 @endsection
 
-@push('page_scripts')
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const dt = $('#payments-table').DataTable({
-    processing: true,
-    serverSide: true,
-    ajax: @json(route('sale-payments.datatable', $sale->id)),
-    order: [[0,'desc']],
-    columns: [
-      {data:'date', name:'date'},
-      {data:'reference', name:'reference'},
-      {data:'payment_method', name:'payment_method'},
-      {data:'bank_name', name:'bank_name', defaultContent: ''},
-      {data:'amount_formatted', name:'amount', className:'text-right', orderData:[4]},
-      {data:'note', name:'note', orderable:false},
-      {data:'created_at', name:'created_at'},
-      {data:'actions', orderable:false, searchable:false, className:'text-center'}
-    ],
-    drawCallback: function(settings) {
-      // hitung total di halaman saat ini
-      let api = this.api();
-      let sum = 0;
-      api.column(4, {page:'current'}).data().each(function(v){
-        // ambil angka dari "Rp1.234.567"
-        const n = (v||'').toString().replace(/[^\d\-]/g,'');
-        sum += parseInt(n||0,10);
-      });
-      document.getElementById('ft-total').textContent =
-        new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', maximumFractionDigits:0}).format(sum);
-    }
-  });
+@push('page_styles')
+    @include('includes.datatables-flowbite-css')
+@endpush
 
-  // hapus row
-  $(document).on('click', '.js-del-payment', function(){
-    const url = this.dataset.url;
-    if (!url) return;
-    if (!confirm('Hapus pembayaran ini?')) return;
-    fetch(url, {method:'DELETE', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Accept':'application/json'}})
-      .then(r=>r.json()).then(j=>{
-        if(j.ok){ dt.ajax.reload(null,false); }
-        else{ alert(j.message||'Gagal menghapus'); }
-      }).catch(()=>alert('Gagal terhubung'));
-  });
-});
-</script>
+@push('page_scripts')
+    @include('includes.datatables-flowbite-js')
+    {{ $dataTable->scripts() }}
 @endpush

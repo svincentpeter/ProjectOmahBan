@@ -32,7 +32,7 @@
         </div>
 
         {{-- Stok Rendah --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="window.location.href='{{ route('products.index', ['quick_filter' => 'low-stock']) }}'">
+        <div class="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="window.location.href='{{ route("products.index", ["quick_filter" => "low-stock"]) }}'">
             <div class="flex items-center gap-4 relative z-10">
                 <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
                     <i class="bi bi-exclamation-triangle text-2xl"></i>
@@ -85,58 +85,32 @@
             @php
                 $categories = \Modules\Product\Entities\Category::orderBy('category_name')->pluck('category_name', 'id')->toArray();
             @endphp
+        </div>
 
-            {{-- Global Filter Component --}}
+        {{-- Filter Card --}}
+        <div class="px-6 pt-6">
             @include('layouts.filter-card', [
                 'action' => route('products.index'),
-                'title' => 'Filter Data',
-                'icon' => 'bi bi-funnel',
-                'quickFilters' => [
-                    [
-                        'label' => 'Semua Produk',
-                        'url' => route('products.index', ['quick_filter' => 'all']),
-                        'param' => 'quick_filter',
-                        'value' => 'all',
-                        'icon' => 'bi bi-grid'
-                    ],
-                    [
-                        'label' => 'Stok Rendah',
-                        'url' => route('products.index', ['quick_filter' => 'low-stock']),
-                        'param' => 'quick_filter',
-                        'value' => 'low-stock',
-                        'icon' => 'bi bi-exclamation-triangle'
-                    ],
-                    [
-                        'label' => 'Stok Habis',
-                        'url' => route('products.index', ['quick_filter' => 'out-of-stock']),
-                        'param' => 'quick_filter',
-                        'value' => 'out-of-stock',
-                        'icon' => 'bi bi-slash-circle'
-                    ]
-                ],
+                'title' => 'Filter Produk',
                 'filters' => [
-                    [
-                        'name' => 'category_id',
-                        'label' => 'Kategori',
-                        'type' => 'select',
-                        'icon' => 'bi bi-folder',
-                        'options' => $categories
-                    ]
+                    ['name' => 'brand_id', 'label' => 'Merek', 'type' => 'select', 'options' => $brands, 'placeholder' => 'Semua Merek', 'icon' => 'bi bi-tag'],
+                    ['name' => 'quick_filter', 'label' => 'Status Stok', 'type' => 'select', 'options' => [
+                        'low-stock' => 'Stok Menipis',
+                        'out-of-stock' => 'Habis'
+                    ], 'placeholder' => 'Semua Status', 'icon' => 'bi bi-box-seam']
                 ]
             ])
         </div>
 
         {{-- Table Wrapper --}}
         <div class="p-6 overflow-x-auto">
-            {!! $dataTable->table(['class' => 'w-full text-sm text-left text-slate-500 dark:text-gray-400', 'id' => 'products-table']) !!}
+            {!! $dataTable->table(['class' => 'w-full text-sm text-left text-gray-900 dark:text-gray-400', 'id' => 'products-table']) !!}
         </div>
     </div>
 @endsection
 
 @push('page_styles')
-<style>
     @include('includes.datatables-flowbite-css')
-</style>
 @endpush
 
 @push('page_scripts')
@@ -144,6 +118,14 @@
 {!! $dataTable->scripts() !!}
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Use jQuery selector to avoid race condition with window.LaravelDataTables
+        $('#products-table').on('preXhr.dt', function ( e, settings, data ) {
+            data.brand_id = $('select[name="brand_id"]').val();
+            data.quick_filter = $('select[name="quick_filter"]').val();
+        });
+    });
+
 $(document).ready(function() {
     // Delete confirmation
     $(document).on('click', '.delete-product', function(e) {

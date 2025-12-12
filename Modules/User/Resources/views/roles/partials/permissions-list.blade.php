@@ -26,6 +26,14 @@
             'show_adjustments' => 'Lihat Penyesuaian',
             'edit_adjustments' => 'Edit Penyesuaian',
             'delete_adjustments' => 'Hapus Penyesuaian',
+            'approve_adjustments' => 'Approve Penyesuaian',
+        ],
+        'stock_opname' => [
+            'access_stock_opname' => 'Akses Stock Opname',
+            'create_stock_opname' => 'Buat Stock Opname',
+            'show_stock_opname' => 'Lihat Stock Opname',
+            'edit_stock_opname' => 'Edit Stock Opname',
+            'delete_stock_opname' => 'Hapus Stock Opname',
         ],
         'quotations' => [
             'access_quotations' => 'Akses Penawaran',
@@ -65,6 +73,9 @@
             'delete_sales' => 'Hapus Penjualan',
             'create_pos_sales' => 'Akses Sistem POS',
             'access_sale_payments' => 'Akses Pembayaran Penjualan',
+            'pos.override_price_limit' => 'POS: Override Limit Harga',
+            'pos.approve_discount' => 'POS: Approve Diskon',
+            'pos.view_cost_price' => 'POS: Lihat Harga Modal',
         ],
         'sale_returns' => [
             'access_sale_returns' => 'Akses Retur Penjualan',
@@ -81,6 +92,8 @@
             'edit_purchases' => 'Edit Pembelian',
             'delete_purchases' => 'Hapus Pembelian',
             'access_purchase_payments' => 'Akses Pembayaran Pembelian',
+            'inventory.edit_hpp' => 'Inventory: Edit HPP',
+            'inventory.approve_hpp_override' => 'Inventory: Approve Override HPP',
         ],
         'purchase_returns' => [
             'access_purchase_returns' => 'Akses Retur Pembelian',
@@ -92,11 +105,22 @@
         ],
         'reports' => [
             'access_reports' => 'Akses Laporan',
+            'report.view_deviation' => 'Laporan: Lihat Deviasi',
+            'report.view_activity_log' => 'Laporan: Lihat Log Aktivitas',
+            'report.export_sensitive' => 'Laporan: Export Data Sensitif',
         ],
         'settings' => [
             'access_settings' => 'Akses Pengaturan',
             'access_currencies' => 'Akses Mata Uang',
+            'create_currencies' => 'Buat Mata Uang',
+            'edit_currencies' => 'Edit Mata Uang',
+            'delete_currencies' => 'Hapus Mata Uang',
             'access_units' => 'Akses Satuan Unit',
+            'create_units' => 'Buat Satuan Unit',
+            'edit_units' => 'Edit Satuan Unit',
+            'delete_units' => 'Hapus Satuan Unit',
+            'settings.manage_service_standards' => 'Kelola Standar Servis',
+            'settings.view_system_log' => 'Lihat Log Sistem',
         ],
     ];
 

@@ -2,102 +2,130 @@
 
 @section('title', 'Peran & Hak Akses')
 
+@section('breadcrumb')
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Manajemen Pengguna', 'url' => route('users.index')],
+        ['text' => 'Peran & Hak Akses', 'url' => '#']
+    ]])
+@endsection
+
 @section('content')
-    <div class="p-4 bg-white block sm:flex items-center justify-between border-b border-gray-200 lg:mt-1.5 dark:bg-gray-800 dark:border-gray-700">
-        <div class="w-full mb-1">
-            <div class="mb-4">
-                @include('layouts.breadcrumb-flowbite', ['items' => [
-                    ['text' => 'Home', 'url' => route('home')],
-                    ['text' => 'Peran & Hak Akses', 'url' => '#']
-                ]])
-                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Peran & Hak Akses</h1>
+    {{-- Warning Alert --}}
+    <div class="mb-4">
+        <div class="flex items-center p-4 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800" role="alert">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 inline w-4 h-4 me-3"></i>
+            <div class="flex-1">
+                <span class="font-medium">Perhatian:</span> Peran mengontrol akses pengguna ke fitur sistem. Pastikan memberikan permissions yang tepat untuk menjaga keamanan data.
             </div>
-            
-            {{-- Info Alert --}}
-             <div class="flex items-center p-4 mb-4 text-sm text-yellow-800 border border-yellow-300 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800" role="alert">
-                <i class="bi bi-exclamation-triangle-fill flex-shrink-0 inline w-4 h-4 me-3"></i>
-                <div class="flex-1">
-                    <span class="font-medium">Perhatian:</span> Peran mengontrol akses pengguna ke fitur sistem. Pastikan memberikan permissions yang tepat untuk menjaga keamanan data.
-                </div>
-                <div class="ml-auto">
-                    <div class="flex items-center space-x-2">
-                        <div class="bg-white dark:bg-gray-700 px-3 py-1 rounded-md shadow-sm border border-gray-200 dark:border-gray-600">
-                            <span class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mr-1">Total Peran</span>
-                            <span class="font-bold text-blue-600 dark:text-blue-400">{{ \Spatie\Permission\Models\Role::count() - 1 }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="items-center justify-between block sm:flex md:divide-x md:divide-gray-100 dark:divide-gray-700">
-                <div class="flex items-center mb-4 sm:mb-0">
-                    <form class="sm:pr-3" action="#" method="GET">
-                        <label for="roles-search" class="sr-only">Search</label>
+        </div>
+    </div>
+
+    {{-- Main Table --}}
+    <x-flowbite-table 
+        title="Peran & Hak Akses" 
+        description="Kelola peran dan izin akses pengguna sistem"
+        icon="bi-shield-lock"
+        :items="$roles"
+        :addRoute="route('roles.create')"
+        addLabel="Tambah Peran"
+        searchPlaceholder="Cari peran..."
+    >
+        {{-- Table Header --}}
+        <x-slot name="thead">
+            <tr>
+                <th scope="col" class="px-6 py-4">No</th>
+                <th scope="col" class="px-6 py-4">Nama Peran</th>
+                <th scope="col" class="px-6 py-4">Jumlah Pengguna</th>
+                <th scope="col" class="px-6 py-4 text-right">Aksi</th>
+            </tr>
+        </x-slot>
+
+        {{-- Table Body --}}
+        @forelse($roles as $index => $role)
+        <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $roles->firstItem() + $index }}
+            </td>
+            <td class="px-6 py-4">
+                <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-lg dark:bg-blue-900 dark:text-blue-300">
+                    {{ $role->name }}
+                </span>
+            </td>
+            <td class="px-6 py-4">
+                <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+                    {{ $role->users_count ?? 0 }} pengguna
+                </span>
+            </td>
+            <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-2">
+                    {{-- Edit Button --}}
+                    <a href="{{ route('roles.edit', $role) }}" 
+                       class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                       title="Edit">
+                        <i class="bi bi-pencil-square text-lg"></i>
+                    </a>
+                    
+                    {{-- Delete Button --}}
+                    @if($role->name !== 'Super Admin')
+                    <button type="button" 
+                            class="btn-delete text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            data-id="{{ $role->id }}"
+                            data-name="{{ $role->name }}"
+                            title="Hapus">
+                        <i class="bi bi-trash text-lg"></i>
+                    </button>
+                    
+                    <form id="delete-form-{{ $role->id }}" action="{{ route('roles.destroy', $role) }}" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
                     </form>
+                    @endif
                 </div>
-                <a href="{{ route('roles.create') }}" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                    <i class="bi bi-plus-lg mr-2"></i> Tambah Peran
-                </a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="flex flex-col">
-        <div class="overflow-x-auto">
-            <div class="inline-block min-w-full align-middle">
-                <div class="overflow-hidden shadow">
-                    <div class="p-4 bg-white dark:bg-gray-900">
-                        {{ $dataTable->table(['class' => 'min-w-full divide-y divide-gray-200 dark:divide-gray-600'], true) }}
-                    </div>
+            </td>
+        </tr>
+        @empty
+        <tr>
+            <td colspan="4" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center justify-center">
+                    <i class="bi bi-shield-x text-4xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                    <p class="font-medium">Belum ada peran</p>
+                    <p class="text-sm">Klik tombol "Tambah Peran" untuk membuat peran baru.</p>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    @include('includes.datatables-flowbite-css')
+            </td>
+        </tr>
+        @endforelse
+    </x-flowbite-table>
 @endsection
 
 @push('page_scripts')
-    {{ $dataTable->scripts() }}
+<script>
+$(document).on('click', '.btn-delete', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+    const name = $(this).data('name');
     
-    <script>
-        $(document).ready(function() {
-            // SweetAlert2 Delete Confirmation
-            $(document).on('click', '.btn-delete', function(e) {
-                e.preventDefault();
-                const roleName = $(this).data('name');
-                const form = $(this).closest('form');
-                
-                Swal.fire({
-                    title: 'Hapus Peran?',
-                    html: `Peran <strong>"${roleName}"</strong> akan dihapus dari sistem.<br><br>` +
-                          `<span class="text-red-500 text-sm font-medium"><i class="bi bi-exclamation-triangle me-1"></i>` +
-                          `Pengguna dengan peran ini akan kehilangan akses mereka!</span>`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#E02424', // Red-600
-                    cancelButtonColor: '#6B7280', // Gray-500
-                    confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus!',
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true,
-                    background: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
-                    color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#000000',
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        Swal.fire({
-                            title: 'Menghapus...',
-                            html: 'Mohon tunggu sebentar',
-                            allowOutsideClick: false,
-                            showConfirmButton: false,
-                            willOpen: () => {
-                                Swal.showLoading();
-                            }
-                        });
-                        
-                        form.submit();
-                    }
-                });
+    Swal.fire({
+        title: 'Hapus Peran?',
+        html: `Peran <strong>"${name}"</strong> akan dihapus dari sistem.<br><br>` +
+              `<span class="text-red-500 text-sm font-medium"><i class="bi bi-exclamation-triangle me-1"></i>` +
+              `Pengguna dengan peran ini akan kehilangan akses mereka!</span>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#E02424',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: '<i class="bi bi-trash me-1"></i> Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Menghapus...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
             });
-        });
-    </script>
+            $('#delete-form-' + id).submit();
+        }
+    });
+});
+</script>
 @endpush

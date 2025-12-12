@@ -9,78 +9,127 @@
     ]])
 @endsection
 
-
-
 @section('content')
     {{-- Alerts --}}
     @include('utils.alerts')
 
-    {{-- Main Card --}}
-    <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">
-        
-        {{-- Card Header --}}
-        <div class="p-6 border-b border-zinc-100">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h5 class="text-xl font-bold text-black dark:text-white tracking-tight flex items-center gap-2">
-                        <i class="bi bi-folder text-blue-600"></i>
-                        Kategori Produk
-                    </h5>
-                    <p class="text-sm text-zinc-600 mt-1">Kelola kategori untuk mengorganisir produk</p>
-                </div>
-                
-                <button type="button" 
-                        data-modal-target="modal-create-category" 
-                        data-modal-toggle="modal-create-category"
-                        class="inline-flex items-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
-                    <i class="bi bi-plus-lg me-2"></i> Tambah Kategori
-                </button>
+    {{-- Info Alert --}}
+    <div class="mb-4">
+        <div class="bg-blue-50 border border-blue-200 text-blue-800 px-6 py-4 rounded-xl flex items-start gap-3 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300">
+            <i class="bi bi-info-circle text-blue-600 dark:text-blue-400 text-lg mt-0.5"></i>
+            <div>
+                <p class="text-sm font-medium">
+                    <strong>Informasi:</strong> Kategori membantu Anda mengorganisir produk dengan lebih baik. 
+                    Setiap produk dapat ditempatkan dalam satu kategori untuk memudahkan pencarian dan manajemen.
+                </p>
             </div>
-        </div>
-
-        {{-- Info Alert --}}
-        <div class="px-6 pt-4">
-            <div class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-xl flex items-start gap-3">
-                <i class="bi bi-info-circle text-blue-600 text-lg mt-0.5"></i>
-                <div>
-                    <p class="text-sm font-medium">
-                        <strong>Informasi:</strong> Kategori membantu Anda mengorganisir produk dengan lebih baik. 
-                        Setiap produk dapat ditempatkan dalam satu kategori untuk memudahkan pencarian dan manajemen.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        {{-- Table Wrapper --}}
-        <div class="p-6 pt-4 overflow-x-auto">
-            {!! $dataTable->table(['class' => 'w-full text-sm text-left text-slate-500 dark:text-gray-400', 'id' => 'categories-table']) !!}
         </div>
     </div>
+
+    {{-- Main Table using Flowbite Table Component --}}
+    <x-flowbite-table 
+        title="Kategori Produk" 
+        description="Kelola kategori untuk mengorganisir produk"
+        icon="bi-folder"
+        :items="$categories"
+        searchPlaceholder="Cari kategori..."
+    >
+        {{-- Action Buttons in Header --}}
+        <x-slot name="actions">
+            <button type="button" 
+                    data-modal-target="modal-create-category" 
+                    data-modal-toggle="modal-create-category"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-800">
+                <i class="bi bi-plus-lg mr-2"></i> Tambah Kategori
+            </button>
+        </x-slot>
+
+        {{-- Table Header --}}
+        <x-slot name="thead">
+            <tr>
+                <th scope="col" class="px-6 py-4">No</th>
+                <th scope="col" class="px-6 py-4">Kode</th>
+                <th scope="col" class="px-6 py-4">Nama Kategori</th>
+                <th scope="col" class="px-6 py-4">Jumlah Produk</th>
+                <th scope="col" class="px-6 py-4 text-right">Aksi</th>
+            </tr>
+        </x-slot>
+
+        {{-- Table Body --}}
+        @forelse($categories as $index => $category)
+        <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $categories->firstItem() + $index }}
+            </td>
+            <td class="px-6 py-4">
+                <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300">
+                    {{ $category->category_code }}
+                </span>
+            </td>
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                {{ $category->category_name }}
+            </td>
+            <td class="px-6 py-4">
+                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                    {{ $category->products()->count() }} produk
+                </span>
+            </td>
+            <td class="px-6 py-4">
+                <div class="flex items-center justify-end gap-2">
+                    {{-- Edit Button --}}
+                    <button type="button" 
+                            class="btn-edit-category text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            data-id="{{ $category->id }}"
+                            data-code="{{ $category->category_code }}"
+                            data-name="{{ $category->category_name }}"
+                            title="Edit">
+                        <i class="bi bi-pencil-square text-lg"></i>
+                    </button>
+                    
+                    {{-- Delete Button --}}
+                    <button type="button" 
+                            class="btn-delete-category text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            data-id="{{ $category->id }}"
+                            data-name="{{ $category->category_name }}"
+                            title="Hapus">
+                        <i class="bi bi-trash text-lg"></i>
+                    </button>
+                    
+                    {{-- Hidden Delete Form --}}
+                    <form id="delete-form-{{ $category->id }}" action="{{ route('product-categories.destroy', $category->id) }}" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                </div>
+            </td>
+        </tr>
+        @empty
+        <tr>
+            <td colspan="5" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center justify-center">
+                    <i class="bi bi-folder-x text-4xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                    <p class="font-medium">Belum ada kategori</p>
+                    <p class="text-sm">Klik tombol "Tambah Kategori" untuk membuat kategori baru.</p>
+                </div>
+            </td>
+        </tr>
+        @endforelse
+    </x-flowbite-table>
 
     {{-- Include Modals from Partials --}}
     @include('product::categories.partials._modal-create')
     @include('product::categories.partials._modal-edit')
 @endsection
 
-@push('page_styles')
-<style>
-    @include('includes.datatables-flowbite-css')
-</style>
-@endpush
-
 @push('page_scripts')
-@include('includes.datatables-flowbite-js')
-{!! $dataTable->scripts() !!}
-
 <script>
 $(document).ready(function() {
-    // Handle Edit button click - populate modal and show it
     // Helper to toggle modal visibility
     function toggleModal(modalId, show) {
         const modal = $('#' + modalId);
         if (show) {
             modal.removeClass('hidden').addClass('flex');
-            $('body').addClass('overflow-hidden'); // Prevent background scroll
+            $('body').addClass('overflow-hidden');
         } else {
             modal.addClass('hidden').removeClass('flex');
             $('body').removeClass('overflow-hidden');
@@ -103,19 +152,16 @@ $(document).ready(function() {
         toggleModal('modal-edit-category', true);
     });
     
-    // Close edit modal
+    // Close modals
     $(document).on('click', '[data-modal-hide="modal-edit-category"]', function() {
         toggleModal('modal-edit-category', false);
     });
     
-    // Close create modal
     $(document).on('click', '[data-modal-hide="modal-create-category"]', function() {
         toggleModal('modal-create-category', false);
     });
     
-    // Show create modal - manually handle to ensure consistency
     $('[data-modal-target="modal-create-category"]').on('click', function(e) {
-        // e.preventDefault(); // Optional, depending on if flowbite listener is also attached
         toggleModal('modal-create-category', true);
     });
 
@@ -135,9 +181,7 @@ $(document).ready(function() {
             data: form.serialize(),
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(response) {
-                // Close modal using helper
                 toggleModal('modal-create-category', false);
-                
                 form[0].reset();
                 
                 Swal.fire({
@@ -150,7 +194,6 @@ $(document).ready(function() {
                     toast: true
                 });
                 
-                // Reload page untuk refresh DataTables
                 setTimeout(() => location.reload(), 1500);
             },
             error: function(xhr) {
@@ -184,7 +227,6 @@ $(document).ready(function() {
             data: form.serialize(),
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(response) {
-                // Close modal using helper
                 toggleModal('modal-edit-category', false);
                 
                 Swal.fire({
@@ -197,7 +239,6 @@ $(document).ready(function() {
                     toast: true
                 });
                 
-                // Reload page untuk refresh DataTables
                 setTimeout(() => location.reload(), 1500);
             },
             error: function(xhr) {

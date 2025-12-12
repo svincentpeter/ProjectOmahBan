@@ -82,7 +82,16 @@ class CustomersDataTable extends DataTable
             
             // Kolom action buttons
             ->addColumn('action', function ($data) {
-                return view('people::customers.partials.actions', compact('data'));
+                return view('partials.datatable-actions', [
+                    'id' => $data->id,
+                    'showRoute' => route('customers.show', $data->id),
+                    'editRoute' => route('customers.edit', $data->id),
+                    'deleteRoute' => route('customers.destroy', $data->id),
+                    'itemName' => $data->customer_name,
+                    'showPermission' => 'show_customers',
+                    'editPermission' => 'edit_customers',
+                    'deletePermission' => 'delete_customers',
+                ])->render();
             })
             
             // Set kolom yang mengandung HTML (jangan di-escape)
@@ -156,6 +165,12 @@ class CustomersDataTable extends DataTable
                 'autoWidth' => false,
                 'processing' => true,
                 'serverSide' => true,
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
             ]);
     }
     public function getColumns(): array

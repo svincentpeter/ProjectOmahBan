@@ -30,7 +30,7 @@
                         <input type="text" 
                                id="create-category-code" 
                                name="category_code" 
-                               class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white font-medium" 
+                               class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-600 dark:border-gray-500 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white font-medium" 
                                placeholder="Contoh: CA_01" 
                                required
                                value="{{ 'CA_' . str_pad((\Modules\Product\Entities\Category::max('id') ?? 0) + 1, 2, '0', STR_PAD_LEFT) }}">
@@ -43,7 +43,7 @@
                         <input type="text" 
                                id="create-category-name" 
                                name="category_name" 
-                               class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white font-medium" 
+                               class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 dark:bg-gray-600 dark:border-gray-500 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white font-medium" 
                                placeholder="Contoh: Ban, Velg, Aksesoris..." 
                                required>
                         <p id="create-category-name-error" class="mt-2 text-sm text-red-600 hidden"></p>

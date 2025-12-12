@@ -142,24 +142,21 @@
 
                     $('#profitAmount').text(formattedProfit);
                     $('#profitPercentage').text(percentage + '%');
-                    $('#profitMarginAlert').fadeIn();
+                    $('#profitMarginAlert').removeClass('hidden').addClass('flex');
 
-                    // Warna badge
+                    // Warna badge using Tailwind classes
+                    var badge = $('#profitPercentage');
+                    badge.removeClass('bg-red-100 text-red-800 bg-yellow-100 text-yellow-800 bg-green-100 text-green-800');
+
                     if (percentage < 10) {
-                        $('#profitPercentage')
-                            .removeClass('badge-primary badge-success badge-warning')
-                            .addClass('badge-danger');
+                        badge.addClass('bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300');
                     } else if (percentage < 30) {
-                        $('#profitPercentage')
-                            .removeClass('badge-primary badge-danger badge-success')
-                            .addClass('badge-warning');
+                        badge.addClass('bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300');
                     } else {
-                        $('#profitPercentage')
-                            .removeClass('badge-danger badge-warning')
-                            .addClass('badge-success');
+                        badge.addClass('bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300');
                     }
                 } else {
-                    $('#profitMarginAlert').fadeOut();
+                    $('#profitMarginAlert').addClass('hidden').removeClass('flex');
                 }
             }
 

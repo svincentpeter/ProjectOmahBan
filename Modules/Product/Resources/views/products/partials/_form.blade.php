@@ -19,7 +19,7 @@
                             <i class="bi bi-tag me-1 text-gray-500"></i> Nama Barang <span class="text-red-500">*</span>
                         </label>
                         <input type="text" id="product_name" name="product_name" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_name') border-red-500 @enderror"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_name') border-red-500 @enderror"
                             value="{{ old('product_name', $product->product_name ?? '') }}"
                             placeholder="Contoh: Ban Mobil Bridgestone" required>
                         @error('product_name')
@@ -38,7 +38,7 @@
                         <div class="flex">
                             <div class="relative w-full">
                                 <input type="text" id="product_code" name="product_code" 
-                                    class="rounded-none rounded-s-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_code') border-red-500 @enderror"
+                                    class="rounded-none rounded-s-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_code') border-red-500 @enderror"
                                     value="{{ old('product_code', $product->product_code ?? $defaultCode) }}"
                                     placeholder="PRD-0001" required>
                             </div>
@@ -58,7 +58,7 @@
                             <i class="bi bi-folder me-1 text-gray-500"></i> Kategori <span class="text-red-500">*</span>
                         </label>
                         <select id="category_id" name="category_id" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('category_id') border-red-500 @enderror" required>
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('category_id') border-red-500 @enderror" required>
                             <option value="">-- Pilih Kategori --</option>
                             @foreach ($categories as $category)
                                 <option value="{{ $category->id }}" {{ old('category_id', $product->category_id ?? null) == $category->id ? 'selected' : '' }}>
@@ -77,7 +77,7 @@
                             <i class="bi bi-award me-1 text-gray-500"></i> Merek
                         </label>
                         <select id="brand_id" name="brand_id" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             <option value="">-- Tanpa Merek --</option>
                             @foreach ($brands as $brand)
                                 <option value="{{ $brand->id }}" {{ old('brand_id', $product->brand_id ?? null) == $brand->id ? 'selected' : '' }}>
@@ -109,7 +109,7 @@
                             <i class="bi bi-arrows-angle-expand me-1 text-gray-500"></i> Ukuran
                         </label>
                         <input type="text" id="product_size" name="product_size" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             value="{{ old('product_size', $product->product_size ?? '') }}"
                             placeholder="235/75 R15">
                         @error('product_size')
@@ -123,7 +123,7 @@
                             <i class="bi bi-record-circle me-1 text-gray-500"></i> Ring
                         </label>
                         <input type="text" id="ring" name="ring" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             value="{{ old('ring', $product->ring ?? '') }}"
                             placeholder="15">
                         @error('ring')
@@ -137,7 +137,7 @@
                             <i class="bi bi-calendar-event me-1 text-gray-500"></i> Tahun Produksi
                         </label>
                         <input type="number" id="product_year" name="product_year" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                             value="{{ old('product_year', $product->product_year ?? '') }}"
                             placeholder="{{ date('Y') }}" min="2000" max="{{ date('Y') + 1 }}">
                         @error('product_year')
@@ -164,7 +164,7 @@
                             <i class="bi bi-arrow-down-circle me-1 text-gray-500"></i> Modal <span class="text-red-500">*</span>
                         </label>
                         <input type="text" id="product_cost" name="product_cost" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_cost') border-red-500 @enderror"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_cost') border-red-500 @enderror"
                             value="{{ old('product_cost', $product->product_cost ?? 0) }}" required>
                         @error('product_cost')
                             <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -178,7 +178,7 @@
                             <i class="bi bi-arrow-up-circle me-1 text-gray-500"></i> Harga Jual <span class="text-red-500">*</span>
                         </label>
                         <input type="text" id="product_price" name="product_price" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_price') border-red-500 @enderror"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_price') border-red-500 @enderror"
                             value="{{ old('product_price', $product->product_price ?? 0) }}" required>
                         @error('product_price')
                             <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -220,7 +220,7 @@
                             <i class="bi bi-plus-circle me-1 text-gray-500"></i> Stok Awal <span class="text-red-500">*</span>
                         </label>
                         <input type="number" id="stok_awal" name="stok_awal" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('stok_awal') border-red-500 @enderror"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('stok_awal') border-red-500 @enderror"
                             value="{{ old('stok_awal', $product->stok_awal ?? 0) }}" min="0" required>
                         @error('stok_awal')
                             <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -234,7 +234,7 @@
                                 <i class="bi bi-box-seam me-1 text-gray-500"></i> Stok Sisa
                             </label>
                             <input type="number" id="product_quantity" name="product_quantity" 
-                                class="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-400"
+                                class="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-gray-400"
                                 value="{{ $product->product_quantity }}" readonly>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Stok saat ini (tidak bisa diedit)</p>
                         </div>
@@ -246,7 +246,7 @@
                             <i class="bi bi-bell me-1 text-gray-500"></i> Stok Minimum <span class="text-red-500">*</span>
                         </label>
                         <input type="number" id="product_stock_alert" name="product_stock_alert" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_stock_alert') border-red-500 @enderror"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_stock_alert') border-red-500 @enderror"
                             value="{{ old('product_stock_alert', $product->product_stock_alert ?? 4) }}" min="0" required>
                         @error('product_stock_alert')
                             <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -260,7 +260,7 @@
                             <i class="bi bi-rulers me-1 text-gray-500"></i> Unit Satuan <span class="text-red-500">*</span>
                         </label>
                         <select id="product_unit" name="product_unit" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_unit') border-red-500 @enderror" required>
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('product_unit') border-red-500 @enderror" required>
                             @foreach (\Modules\Setting\Entities\Unit::all() as $unit)
                                 <option value="{{ $unit->short_name }}" {{ old('product_unit', $product->product_unit ?? $unit->short_name) == $unit->short_name ? 'selected' : '' }}>
                                     {{ $unit->name }} ({{ $unit->short_name }})
@@ -288,7 +288,7 @@
                     <i class="bi bi-pencil me-1 text-gray-500"></i> Catatan
                 </label>
                 <textarea id="product_note" name="product_note" rows="4" 
-                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 placeholder:text-gray-400 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     placeholder="Tambahkan catatan atau informasi tambahan tentang produk...">{{ old('product_note', $product->product_note ?? '') }}</textarea>
                 @error('product_note')
                     <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -308,13 +308,16 @@
                 </h6>
             </div>
             <div class="p-6">
-                @if (isset($product))
-                    {{-- Edit mode --}}
-                    <x-image-upload :model="$product" max-files="3" label="" max-size="2" help-text="Upload maksimal 3 gambar. Format: JPG, PNG. Maks: 2MB/file." />
-                @else
-                    {{-- Create mode --}}
-                    <x-image-upload max-files="3" label="" max-size="2" help-text="Upload maksimal 3 gambar. Format: JPG, PNG. Maks: 2MB/file." />
-                @endif
+                {{-- Manual Dropzone HTML (copied from Product Second's working implementation) --}}
+                <div class="dropzone-container mb-4">
+                    <div id="document-dropzone" class="dropzone border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors p-6 text-center cursor-pointer min-h-[200px] flex flex-col items-center justify-center dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600">
+                         <div class="dz-message" data-dz-message>
+                             <i class="bi bi-cloud-upload text-4xl text-gray-400 mb-2 dark:text-gray-300"></i>
+                             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Klik atau drag file ke sini</p>
+                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Maks 3 gambar, 2MB per file</p>
+                         </div>
+                    </div>
+                </div>
 
                 <div class="p-4 mt-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-700 dark:text-blue-400" role="alert">
                     <span class="font-medium"><i class="bi bi-lightbulb me-1"></i> Tips:</span> Gunakan gambar dengan kualitas baik dan pencahayaan cukup.

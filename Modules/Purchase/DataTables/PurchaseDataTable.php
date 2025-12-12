@@ -35,7 +35,46 @@ class PurchaseDataTable extends DataTable
                 return view('purchase::baru.partials.payment-status', compact('data'));
             })
             ->addColumn('action', function ($data) {
-                return view('purchase::baru.partials.actions', compact('data'));
+                // Custom Actions: Show Payments & Add Payment
+                $customActions = '';
+                
+                if (auth()->user()->can('access_purchase_payments')) {
+                    // Show Payments
+                    $customActions .= '
+                        <li>
+                            <a href="'.route('purchase-payments.index', $data->id).'" 
+                               class="flex items-center gap-2 px-4 py-2.5 hover:bg-yellow-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors">
+                                <i class="bi bi-cash-coin text-yellow-600 dark:text-yellow-400"></i>
+                                <span>Show Payments</span>
+                            </a>
+                        </li>
+                    ';
+
+                    // Add Payment (if due > 0)
+                    if ($data->due_amount > 0) {
+                        $customActions .= '
+                            <li>
+                                <a href="'.route('purchase-payments.create', $data->id).'" 
+                                   class="flex items-center gap-2 px-4 py-2.5 hover:bg-green-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors">
+                                    <i class="bi bi-plus-circle-dotted text-green-600 dark:text-green-400"></i>
+                                    <span>Add Payment</span>
+                                </a>
+                            </li>
+                        ';
+                    }
+                }
+
+                return view('partials.datatable-actions', [
+                    'id' => $data->id,
+                    'itemName' => 'Pembelian ' . $data->date->format('d/m/Y'),
+                    'showRoute' => route('purchases.show', $data->id),
+                    'editRoute' => route('purchases.edit', $data->id),
+                    'deleteRoute' => route('purchases.destroy', $data->id),
+                    'showPermission' => 'show_purchases',
+                    'editPermission' => 'edit_purchases',
+                    'deletePermission' => 'delete_purchases',
+                    'customActions' => $customActions
+                ])->render();
             })
             ->rawColumns(['status', 'payment_status', 'action']);
     }
@@ -68,11 +107,7 @@ class PurchaseDataTable extends DataTable
                 break;
             default:
                 // Default: Today atau custom range dari request
-                if (!request()->has('quick_filter') && !request()->has('from')) {
-                     // Default behavior if nothing selected: show all or today? 
-                     // Controller logic was: if no quick_filter, use 'from'/'to' or Today.
-                }
-                $from = request('from') ? request('from') : null; // Modified to allow null if all
+                $from = request('from') ? request('from') : null; 
                 $to = request('to') ? request('to') : null;
         }
 
@@ -107,7 +142,15 @@ class PurchaseDataTable extends DataTable
             ->setTableId('purchases-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->orderBy(10); // order by created_at (hidden)
+            ->orderBy(10) // order by created_at (hidden)
+            ->parameters([
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
+            ]);
     }
 
     protected function getColumns() {

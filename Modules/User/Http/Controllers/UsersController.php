@@ -14,10 +14,35 @@ use Modules\Upload\Entities\Upload;
 
 class UsersController extends Controller
 {
-    public function index(UsersDataTable $dataTable) {
+    public function index(Request $request) {
         abort_if(Gate::denies('access_user_management'), 403);
 
-        return $dataTable->render('user::users.index');
+        $query = User::query()->with('roles')->orderBy('name');
+
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->has('role') && $request->role) {
+            $query->whereHas('roles', function($q) use ($request) {
+                $q->where('name', $request->role);
+            });
+        }
+
+        if ($request->has('status')) {
+            if ($request->status === '1') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        $users = $query->paginate(15);
+
+        return view('user::users.index', compact('users'));
     }
 
 

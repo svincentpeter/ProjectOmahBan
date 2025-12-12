@@ -1,90 +1,48 @@
-@extends('layouts.app')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Tambah Produk Bekas')
 
 @section('breadcrumb')
-    <ol class="breadcrumb border-0 m-0">
-        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('products_second.index') }}">Produk Bekas</a></li>
-        <li class="breadcrumb-item active">Tambah Produk Bekas</li>
-    </ol>
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Manajemen Produk', 'url' => '#'],
+        ['text' => 'Produk Bekas', 'url' => route('products_second.index')],
+        ['text' => 'Tambah Produk', 'url' => route('products_second.create'), 'icon' => 'bi bi-plus-lg']
+    ]])
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="animated fadeIn">
-            {{-- Alerts --}}
-            @include('utils.alerts')
+    <div class="max-w-7xl mx-auto">
+        {{-- Alerts --}}
+        @include('utils.alerts')
 
-            <form id="product-form" action="{{ route('products_second.store') }}" method="POST"
-                enctype="multipart/form-data">
-                @csrf
+        <form id="product-form" action="{{ route('products_second.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
 
-                {{-- Sticky Action Bar --}}
-                <div class="action-bar second-shadow-sm mb-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0 font-weight-bold">
-                                <i class="cil-plus mr-2 text-primary"></i>
-                                Tambah Produk Bekas
-                            </h5>
-                            <small class="text-muted">Produk ban/velg bekas (second-hand)</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('products_second.index') }}" class="btn btn-outline-secondary">
-                                <i class="cil-arrow-left mr-1"></i> Kembali
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="cil-check-circle mr-1"></i> Simpan Produk
-                            </button>
-                        </div>
-                    </div>
+            {{-- Sticky Action Bar --}}
+            <div class="sticky top-[72px] z-30 mb-6 p-4 bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h5 class="flex items-center gap-2 text-lg font-bold text-slate-800">
+                        <i class="bi bi-plus-circle text-blue-600"></i>
+                        Tambah Produk Bekas
+                    </h5>
+                    <p class="text-sm text-slate-500 mt-0.5">Produk ban/velg bekas (second-hand)</p>
                 </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('products_second.index') }}" class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
+                        <i class="bi bi-arrow-left me-1"></i> Kembali
+                    </a>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm hover:shadow transition-all">
+                        <i class="bi bi-check-lg me-1"></i> Simpan Produk
+                    </button>
+                </div>
+            </div>
 
-                {{-- Include Modern Form (create mode: tanpa $product) --}}
-                @include('product::second.partials._form')
-
-            </form>
-
-            {{-- Shared scripts for create & edit (Dropzone, MaskMoney, Swal, dll) --}}
-            @include('product::second.partials._scripts')
-        </div>
+            {{-- Include Modern Form (create mode: tanpa $product) --}}
+            @include('product::second.partials._form')
+        </form>
     </div>
 @endsection
 
-{{-- Tidak perlu lagi section third_party_scripts & page_scripts di sini,
-    karena sudah di-handle di partial _scripts --}}
-
-@push('page_styles')
-    <style>
-        .animated.fadeIn {
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .action-bar {
-            background: white;
-            padding: 1.25rem;
-            border-radius: 10px;
-        }
-
-        .d-flex.gap-2 > * {
-            margin-left: 0.5rem;
-        }
-
-        .d-flex.gap-2 > *:first-child {
-            margin-left: 0;
-        }
-    </style>
+@push('page_scripts')
+    @include('product::second.partials._scripts')
 @endpush

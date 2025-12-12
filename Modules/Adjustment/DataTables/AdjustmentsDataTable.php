@@ -14,7 +14,64 @@ class AdjustmentsDataTable extends DataTable
         return datatables()
             ->eloquent($query)
             ->addColumn('action', function ($adjustment) {
-                return view('adjustment::adjustments.partials.actions', compact('adjustment'));
+                $approveBtn = '';
+                $rejectBtn = '';
+                
+                // Approve/Reject Buttons (Only Pending & Permission)
+                if ($adjustment->status === 'pending' && auth()->user()->can('approve_adjustments')) {
+                    $url = route('adjustments.approve', $adjustment->id); // Passed as data-url if needed, but JS uses constructed URL currently. We can pass it.
+                    // Actually JS above constructed logic using url("adjustments/approve") ... let's ensure it matches.
+                    // Route list usually: POST adjustments/{id}/approve
+                    
+                    $approveBtn = '
+                        <li>
+                            <a href="javascript:void(0)" 
+                               class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors approve-adjustment"
+                               data-id="'.$adjustment->id.'"
+                               data-reference="'.$adjustment->reference.'">
+                                <i class="bi bi-check-circle text-emerald-600 dark:text-emerald-400"></i>
+                                <span>Approve</span>
+                            </a>
+                        </li>';
+                        
+                    $rejectBtn = '
+                        <li>
+                            <a href="javascript:void(0)" 
+                               class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors reject-adjustment"
+                               data-id="'.$adjustment->id.'"
+                               data-reference="'.$adjustment->reference.'">
+                                <i class="bi bi-x-circle text-red-600 dark:text-red-400"></i>
+                                <span>Reject</span>
+                            </a>
+                        </li>';
+                }
+
+                // Print PDF Button
+                $printBtn = '
+                    <li>
+                        <a href="'.route('adjustments.pdf', $adjustment->id).'" 
+                           target="_blank"
+                           class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors">
+                            <i class="bi bi-printer text-purple-600 dark:text-purple-400"></i>
+                            <span>Print PDF</span>
+                        </a>
+                    </li>';
+
+                return view('partials.datatable-actions', [
+                    'id' => $adjustment->id,
+                    'itemName' => $adjustment->reference,
+                    'showRoute' => route('adjustments.show', $adjustment->id),
+                    'showPermission' => 'show_adjustments',
+                    
+                    // Edit/Delete only if pending
+                    'editRoute' => ($adjustment->status === 'pending') ? route('adjustments.edit', $adjustment->id) : null,
+                    'editPermission' => 'edit_adjustments',
+                    
+                    'deleteRoute' => ($adjustment->status === 'pending') ? route('adjustments.destroy', $adjustment->id) : null,
+                    'deletePermission' => 'delete_adjustments',
+                    
+                    'customActions' => $approveBtn . $rejectBtn . $printBtn
+                ])->render();
             })
             ->editColumn('date', function ($adjustment) {
                 return '<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-700"><i class="bi bi-calendar3 me-1"></i>' . \Carbon\Carbon::parse($adjustment->date)->format('d M Y') . '</span>';
@@ -141,6 +198,12 @@ class AdjustmentsDataTable extends DataTable
             ->minifiedAjax()
             ->parameters([
                 'order' => [[0, 'desc']],
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
             ]);
     }
 

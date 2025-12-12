@@ -218,6 +218,87 @@
                The prompt didn't explicitly demand Export button preservation but standard UI.
                However, to be safe, if you need Export, add it back or use what's available.
             */
+            // ===== Approve / Reject Logic =====
+            $(document).on('click', '.approve-adjustment', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const reference = $(this).data('reference');
+                const url = '{{ url("adjustments/approve") }}/' + id; // Approximating route, need to be careful. BETTER use data-url
+
+                Swal.fire({
+                    title: 'Approve Pengajuan?',
+                    html: `Apakah Anda yakin ingin <strong class="text-emerald-600">menyetujui</strong> pengajuan <strong>${reference}</strong>?<br><small class="text-zinc-500">Stok produk akan diupdate sesuai penyesuaian ini.</small>`,
+                    icon: 'question',
+                    input: 'textarea',
+                    inputLabel: 'Catatan Approval (opsional)',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: '<i class="bi bi-check-circle"></i> Ya, Approve!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                }).then((r) => {
+                    if (r.isConfirmed) {
+                        Swal.fire({
+                            title: 'Memproses...',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        const form = $('<form>', {
+                            method: 'POST',
+                            action: url
+                        });
+                        form.append($('<input>', { type: 'hidden', name: '_token', value: '{{ csrf_token() }}' }));
+                        form.append($('<input>', { type: 'hidden', name: 'action', value: 'approve' }));
+                        form.append($('<input>', { type: 'hidden', name: 'notes', value: r.value || '' }));
+                        
+                        $('body').append(form);
+                        form.submit();
+                    }
+                });
+            });
+
+            $(document).on('click', '.reject-adjustment', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const reference = $(this).data('reference');
+                const url = '{{ url("adjustments/approve") }}/' + id;
+
+                Swal.fire({
+                    title: 'Reject Pengajuan?',
+                    html: `Apakah Anda yakin ingin <strong class="text-red-600">menolak</strong> pengajuan <strong>${reference}</strong>?`,
+                    icon: 'warning',
+                    input: 'textarea',
+                    inputLabel: 'Alasan Penolakan (wajib)',
+                    inputValidator: (v) => !v && 'Alasan penolakan harus diisi!',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Ya, Reject!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                }).then((r) => {
+                    if (r.isConfirmed) {
+                        Swal.fire({
+                            title: 'Memproses...',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        const form = $('<form>', {
+                            method: 'POST',
+                            action: url
+                        });
+                        form.append($('<input>', { type: 'hidden', name: '_token', value: '{{ csrf_token() }}' }));
+                        form.append($('<input>', { type: 'hidden', name: 'action', value: 'reject' }));
+                        form.append($('<input>', { type: 'hidden', name: 'notes', value: r.value }));
+                        
+                        $('body').append(form);
+                        form.submit();
+                    }
+                });
+            });
         });
     </script>
 @endpush

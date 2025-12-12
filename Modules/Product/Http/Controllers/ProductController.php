@@ -20,13 +20,8 @@ class ProductController extends Controller
     public function index(ProductDataTable $dataTable)
     {
         abort_if(Gate::denies('access_products'), 403);
-
-        $products = Product::query()
-            ->active() // cukup filter aktif
-            ->with(['category', 'brand', 'stockMovements'])
-            ->paginate(10);
-
-        return $dataTable->render('product::products.index', compact('products'));
+        $brands = Brand::orderBy('name')->pluck('name', 'id');
+        return $dataTable->render('product::products.index', compact('brands'));
     }
 
     public function create()

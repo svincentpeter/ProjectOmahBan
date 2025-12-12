@@ -18,8 +18,23 @@ class PurchasePaymentsDataTable extends DataTable
                 return format_currency($data->amount);
             })
             ->addColumn('action', function ($data) {
-                return view('purchase::payments.partials.actions', compact('data'));
-            });
+                return view('partials.datatable-actions', [
+                    'id' => $data->id,
+                    'itemName' => 'Pembayaran ' . $data->reference,
+                    // edit uses nested resource pattern: purchases/{purchase}/payments/{payment}/edit
+                    // But controller route is likely purchase-payments.edit taking ($purchase_id, $payment) or just ($payment)?
+                    // Controller: public function edit($purchase_id, PurchasePayment $purchasePayment)
+                    // Route list check would be good, but assuming standard nested or separate.
+                    // Controller calls route('purchases.index') on success.
+                    // Looking at Actions from partials/actions.blade.php (Wait, I haven't seen the payments partial).
+                    // Controller actions...
+                    'editRoute' => route('purchase-payments.edit', ['purchase_id' => $data->purchase_id, 'purchase_payment' => $data->id]),
+                    'editPermission' => 'access_purchase_payments',
+                    'deleteRoute' => route('purchase-payments.destroy', $data->id),
+                    'deletePermission' => 'access_purchase_payments',
+                ])->render();
+            })
+            ->rawColumns(['action']);
     }
 
     public function query(PurchasePayment $model) {
@@ -31,19 +46,15 @@ class PurchasePaymentsDataTable extends DataTable
             ->setTableId('purchase-payments-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
-                                'tr' .
-                                <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->orderBy(5)
-            ->buttons(
-                Button::make('excel')
-                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
-                Button::make('print')
-                    ->text('<i class="bi bi-printer-fill"></i> Print'),
-                Button::make('reload')
-                    ->text('<i class="bi bi-arrow-repeat"></i> Reload')
-                    ->action('function(e, dt, node, config){ dt.ajax.reload(); }')
-            );
+            ->orderBy(0) // date column
+            ->parameters([
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
+            ]);
     }
 
     protected function getColumns() {

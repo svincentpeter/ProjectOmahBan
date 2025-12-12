@@ -191,17 +191,15 @@
 
     <script>
         $(document).ready(function() {
-            const table = window.LaravelDataTables['customers-table'];
-            
-            // Hook into the request to add parameters
-            table.on('preXhr.dt', function ( e, settings, data ) {
+            // Use jQuery selector to avoid race condition with window.LaravelDataTables
+            $('#customers-table').on('preXhr.dt', function ( e, settings, data ) {
                 data.city = $('#city').val();
                 data.status = $('#status').val();
             });
             
             // Handle Filter Changes
             $('#city, #status').on('change', function() {
-                table.draw();
+                $('#customers-table').DataTable().draw();
             });
 
             // Delete confirmation

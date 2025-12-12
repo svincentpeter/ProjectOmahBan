@@ -9,7 +9,6 @@
         "anayarojo/shoppingcart": "^4.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "barryvdh/laravel-snappy": "^1.0",
-        "filament/filament": "3.3",
         "guzzlehttp/guzzle": "^7.0.1",
         "h4cc/wkhtmltopdf-amd64": "^0.12.4",
         "laravel/framework": "^10.0",
@@ -18,7 +17,6 @@
         "livewire/livewire": "^3.0",
         "maatwebsite/excel": "^3.1",
         "midtrans/midtrans-php": "^2.6",
-        "milon/barcode": "^10.0",
         "nwidart/laravel-modules": "11",
         "realrashid/sweet-alert": "^6.0",
         "spatie/laravel-medialibrary": "^10.0",
@@ -55,8 +53,7 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi",
-            "@php artisan filament:upgrade"
+            "@php artisan package:discover --ansi"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

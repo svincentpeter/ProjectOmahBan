@@ -1,29 +1,13 @@
-@extends('layouts.flowbite')
+@extends('layouts.app-flowbite')
 
 @section('title', 'Detail Notifikasi')
 
 @section('breadcrumb')
-    <nav class="flex mb-6" aria-label="Breadcrumb">
-      <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-        <li class="inline-flex items-center">
-          <a href="{{ route('home') }}" class="inline-flex items-center text-sm font-medium text-zinc-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-            <i class="bi bi-house-door me-2"></i> Beranda
-          </a>
-        </li>
-        <li>
-          <div class="flex items-center">
-            <i class="bi bi-chevron-right text-zinc-400 mx-1 text-xs"></i>
-            <a href="{{ route('notifications.index') }}" class="ms-1 text-sm font-medium text-zinc-900 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white">Notifikasi</a>
-          </div>
-        </li>
-        <li aria-current="page">
-          <div class="flex items-center">
-             <i class="bi bi-chevron-right text-zinc-400 mx-1 text-xs"></i>
-            <span class="ms-1 text-sm font-medium text-zinc-500 md:ms-2 dark:text-gray-400">Detail #{{ $notification->id }}</span>
-          </div>
-        </li>
-      </ol>
-    </nav>
+    @include('layouts.breadcrumb-flowbite', ['items' => [
+        ['text' => 'Operasional', 'url' => '#'],
+        ['text' => 'Notifikasi', 'url' => route('notifications.index'), 'icon' => 'bi bi-bell-fill'],
+        ['text' => 'Detail #' . $notification->id, 'url' => '#']
+    ]])
 @endsection
 
 @section('content')

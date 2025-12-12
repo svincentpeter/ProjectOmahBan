@@ -30,6 +30,9 @@
     <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
     <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
 
+    {{-- 5. Dropzone CSS --}}
+    <link href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" rel="stylesheet" type="text/css" />
+
     <!-- Styles & Scripts (Local Vite) -->
     @vite(['resources/css/flowbite.css', 'resources/js/app.js'])
 
@@ -109,6 +112,17 @@
     {{-- 5. Filepond --}}
     <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
     <script src="https://unpkg.com/filepond/dist/filepond.js"></script>
+
+    {{-- 6. Dropzone JS --}}
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <script>
+        // CRITICAL: Disable auto-discover IMMEDIATELY after Dropzone loads
+        // to prevent it from auto-attaching to elements with class "dropzone"
+        // before our manual initialization scripts run
+        if (typeof Dropzone !== 'undefined') {
+            Dropzone.autoDiscover = false;
+        }
+    </script>
 
     {{-- 6. Select2 --}}
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

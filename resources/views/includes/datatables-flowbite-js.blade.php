@@ -3,7 +3,6 @@
         // Default DataTables Configuration for Flowbite (Enhanced)
         $.extend(true, $.fn.dataTable.defaults, {
             // DOM Layout: 
-            // - Mobile: Stacked elements
             // - Desktop: Buttons & Length (Left), Search (Right)
             // - Responsive table in middle
             // - Info & Pagination at bottom
@@ -61,7 +60,7 @@
                 infoEmpty: "Menampilkan 0 data",
                 infoFiltered: "<span class='text-gray-500'>(disaring dari <span class='font-semibold'>_MAX_</span> total)</span>",
                 zeroRecords: "Tidak ada data yang cocok dengan pencarian",
-                processing: `<div class="flex items-center gap-3 px-4 py-2">
+                processing: `<div class="flex items-center gap-3">
                     <div class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent text-blue-600 rounded-full" role="status" aria-label="loading">
                         <span class="sr-only">Loading...</span>
                     </div>
@@ -93,13 +92,13 @@
                 var searchInput = wrapper.find('.dataTables_filter input');
                 var timeout = null;
                 
-                searchInput.off('keyup.DT input.DT'); // Unbind default events
+                searchInput.off('keyup.DT input.DT');
                 searchInput.on('keyup input', function(e) {
                     clearTimeout(timeout);
                     var value = this.value;
                     timeout = setTimeout(function() {
                         api.search(value).draw();
-                    }, 300); // 300ms delay
+                    }, 300);
                 });
 
                 // 2. Clear Search Button
@@ -126,22 +125,21 @@
                 searchInput.attr('aria-label', 'Search data');
                 wrapper.find('.dataTables_length select').attr('aria-label', 'Rows per page');
                 
-                // 4. Styling injections for non-standard elements
-                wrapper.addClass('bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700');
+                // 4. Styling injections for container
+                // 4. Styling injections for container
+                // wrapper.addClass('bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden');
+                wrapper.addClass('overflow-hidden'); // Keep overflow handling but remove visual card styles
                 
                 // 5. Keyboard Shortcuts
                 $(document).on('keydown', function(e) {
-                    // Press '/' to focus search
                     if (e.key === '/' && !$(e.target).is('input, textarea')) {
                         e.preventDefault();
                         searchInput.focus();
                     }
-                    // Ctrl + Right Arrow for Next Page
                     if (e.ctrlKey && e.key === 'ArrowRight') {
                         e.preventDefault();
                         api.page('next').draw('page');
                     }
-                    // Ctrl + Left Arrow for Prev Page
                     if (e.ctrlKey && e.key === 'ArrowLeft') {
                         e.preventDefault();
                         api.page('previous').draw('page');
@@ -152,15 +150,7 @@
             drawCallback: function () {
                 var api = this.api();
                 var wrapper = $(api.table().container());
-                
-                // Ensure pagination buttons have consistent rounded styles
                 wrapper.find('.paginate_button').removeClass('dt-button');
-                
-                // Add scroll hint if table is wider than wrapper
-                var scrollBody = wrapper.find('.dataTables_scrollBody');
-                if (scrollBody.length && scrollBody[0].scrollWidth > scrollBody.width()) {
-                   wrapper.addClass('has-scroll');
-                }
             }
         });
     });

@@ -15,16 +15,63 @@ class SalePaymentsDataTable extends DataTable
     public function dataTable($query) {
         return datatables()
             ->eloquent($query)
-            ->addColumn('amount', function ($data) {
+            ->addColumn('amount_formatted', function ($data) { // Renamed to amount_formatted to match column name in index?
                 return format_currency($data->amount);
             })
+            // Map payment_method to show bank if exists
+            ->editColumn('payment_method', function($data) {
+                if (!empty($data->bank_name)) {
+                    return $data->payment_method . ' (' . $data->bank_name . ')';
+                }
+                return $data->payment_method;
+            })
+            ->editColumn('date', function($data) {
+                return \Carbon\Carbon::parse($data->date)->format('d/m/Y');
+            })
             ->addColumn('action', function ($data) {
-                return view('sale::payments.partials.actions', compact('data'));
-            });
+                return view('partials.datatable-actions', [
+                    'id' => $data->id,
+                    'itemName' => 'Pembayaran ' . $data->reference,
+                    'editRoute' => route('sale-payments.edit', ['sale' => $data->sale_id, 'sale_payment' => $data->id]), // Verify route name: sale-payments.edit takes $sale_id, $salePayment
+                        // Controller: public function edit($sale_id, SalePayment $salePayment)
+                        // Route resource usually: sales.payments.edit ??
+                        // Let's check existing partial or route usage.
+                        // Controller actions in index view (manual JS) used: data-url="{{ route('sale-payments.destroy', $row->id) }}"? No, JS used dataset.url.
+                        // Existing create used route('sale-payments.create', $sale->id).
+                        // I will assume route 'sale-payments.edit' exists and takes sale_id and sale_payment params.
+                        // Wait, resource routes usually are /sale-payments/{sale_payment}/edit if not nested OR /sales/{sale}/payments/{payment}/edit.
+                        // Controller signature implies nested or two params? function edit($sale_id, SalePayment $salePayment)
+                        // This implies /sales/{sale}/payments/{payment}/edit structure.
+                        // The route name 'sale-payments.edit' likely maps to this.
+                    'editPermission' => 'access_sale_payments',
+                    'deleteRoute' => route('sale-payments.destroy', ['sale' => $data->sale_id, 'sale_payment' => $data->id]), // Destroy also takes $sale_id?
+                        // Controller: public function destroy($sale_id = null, SalePayment $salePayment)
+                        // It accepts $sale_id as first arg (optional) and model binding for second.
+                    'deletePermission' => 'access_sale_payments',
+                ])->render();
+            })
+            ->rawColumns(['action']);
     }
 
     public function query(SalePayment $model) {
-        return $model->newQuery()->bySale()->with('sale');
+        // Filter by Sale ID from URL
+        $saleId = request()->route('sale'); // parameter name in route? 'sale' or 'sale_id'?
+        // Controller index($sale_id, ...)
+        // Resource route usually passes 'sale'.
+        // Let's assume 'sale' parameter.
+        // Actually, if using $dataTable->render(), the request context handles it if I use properly.
+        // But better to get straight from request.
+        // The previous code utilized ->bySale()? No, it was $model->newQuery()->bySale()->with('sale');
+        // Wait, bySale() scope usually filters by request? Or is it a scope I assume exists?
+        // Let's look at previous file content (Step 842): "return $model->newQuery()->bySale()->with('sale');"
+        // If bySale() works, great. If not, explicitly:
+        $query = $model->newQuery();
+        if ($saleId = request()->route('sale')) {
+             $query->where('sale_id', $saleId);
+        } elseif ($saleId = request()->route('sale_id')) {
+             $query->where('sale_id', $saleId);
+        }
+        return $query;
     }
 
     public function html() {
@@ -32,32 +79,27 @@ class SalePaymentsDataTable extends DataTable
             ->setTableId('sale-payments-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
-                                'tr' .
-                                <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->orderBy(5)
-            ->buttons(
-                Button::make('excel')
-                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
-                Button::make('print')
-                    ->text('<i class="bi bi-printer-fill"></i> Print'),
-                Button::make('reload')
-                    ->text('<i class="bi bi-arrow-repeat"></i> Reload')
-                    ->action('function(e, dt, node, config){ dt.ajax.reload(); }')
-            );
+            ->orderBy(0, 'desc') // Date desc
+            ->parameters([
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
+            ]);
     }
 
     protected function getColumns() {
         return [
-    Column::make('date')->className('align-middle text-center'),
-    Column::make('reference')->className('align-middle text-center'),
-    Column::make('payment_method')->className('align-middle text-center'),
-    Column::make('bank_name')->className('align-middle text-center'),
-    Column::computed('amount_formatted')->className('align-middle text-right'),
-    Column::make('note')->className('align-middle'),
-    Column::make('created_at'),
-    Column::computed('actions')->exportable(false)->printable(false)->className('align-middle text-center'),
-];
+            Column::make('date')->title('Tanggal')->className('align-top'),
+            Column::make('reference')->title('Ref')->className('align-top'),
+            Column::make('payment_method')->title('Metode')->className('align-top'),
+            // Bank name merged into method or separate? I merged it in editColumn payment_method. Remove separate column.
+            Column::computed('amount_formatted')->title('Jumlah')->className('text-right align-top'),
+            Column::make('note')->title('Catatan')->className('align-top'),
+            Column::computed('action')->title('Aksi')->exportable(false)->printable(false)->className('text-center align-top'),
+        ];
     }
 
     protected function filename(): string {

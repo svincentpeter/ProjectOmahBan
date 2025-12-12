@@ -6,6 +6,8 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Api\MidtransCallbackController;
 use App\Http\Controllers\Api\FonteeWebhookController;
 use App\Http\Controllers\Owner\NotificationController;
+use App\Http\Controllers\Owner\DashboardController;
+use App\Http\Controllers\Owner\ManualInputController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,7 +67,7 @@ Route::prefix('notifications')
         Route::post('{notification}/mark-as-reviewed', [NotificationController::class, 'markAsReviewed'])
             ->whereNumber('notification')
             ->name('mark-as-reviewed'); // konsisten kebab-case
-
+    
         Route::get('{notification}', [NotificationController::class, 'show'])
             ->whereNumber('notification')
             ->name('show');
@@ -77,4 +79,30 @@ Route::prefix('notifications')
         Route::delete('{notification}/api', [NotificationController::class, 'destroyApi'])
             ->whereNumber('notification')
             ->name('destroy.api');
+    });
+
+// ======================================================================
+// OWNER DASHBOARD & MANUAL INPUT MONITORING
+// ======================================================================
+Route::prefix('owner')
+    ->name('owner.')
+    ->middleware(['auth'])
+    ->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Manual Input Monitoring
+        Route::prefix('manual-inputs')
+            ->name('manual-inputs.')
+            ->group(function () {
+                Route::get('/', [ManualInputController::class, 'index'])->name('index');
+                Route::get('/summary', [ManualInputController::class, 'summary'])->name('summary');
+                Route::get('/{sale}', [ManualInputController::class, 'show'])->name('show');
+            });
+
+        // Alias untuk notifications (agar owner.notifications.* juga tersedia)
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/{notification}', [NotificationController::class, 'show'])
+            ->whereNumber('notification')
+            ->name('notifications.show');
     });

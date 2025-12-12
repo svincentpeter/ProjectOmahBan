@@ -122,74 +122,20 @@
     {{ $dataTable->scripts() }}
     
     <script>
-        // Global Action Functions
-        window.toggleActionDropdown = function(event, id) {
-            event.stopPropagation();
-            const button = event.currentTarget;
-            const dropdown = document.getElementById('dropdown-' + id);
-            
-            // Close all other dropdowns
-            document.querySelectorAll('.action-dropdown').forEach(d => {
-                if (d.id !== 'dropdown-' + id) {
-                    d.style.display = 'none';
-                }
-            });
-            
-            // Toggle current dropdown
-            if (dropdown.style.display === 'none' || dropdown.style.display === '') {
-                const rect = button.getBoundingClientRect();
-                dropdown.style.top = (rect.bottom + 5) + 'px';
-                dropdown.style.left = (rect.left - 200) + 'px'; // Custom left offset adjustment if needed, usually right aligned 
-                // Better positioning logic for right alignment:
-                dropdown.style.left = (rect.right - 224) + 'px'; // 224px is w-56
-                dropdown.style.display = 'block';
-            } else {
-                dropdown.style.display = 'none';
-            }
-        };
-
-        window.confirmDeletePurchaseSecond = function(id) {
-            Swal.fire({
-                title: 'Hapus Pembelian?',
-                text: 'Data yang dihapus tidak dapat dikembalikan!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#EF4444',
-                cancelButtonColor: '#9CA3AF',
-                confirmButtonText: '<i class="bi bi-trash"></i> Ya, Hapus!',
-                cancelButtonText: 'Batal',
-                customClass: {
-                    confirmButton: 'bg-red-600 text-white font-bold py-2 px-4 rounded-xl',
-                    cancelButton: 'bg-gray-400 text-white font-bold py-2 px-4 rounded-xl ml-2'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.getElementById('destroy' + id).submit();
-                }
-            });
-        };
-
         $(document).ready(function() {
-            // Close dropdowns on outside click
-            $(document).on('click', function(event) {
-                if (!$(event.target).closest('[id^="dropdown-"]').length && !$(event.target).closest('button').length) {
-                    $('.action-dropdown').hide();
-                }
-            });
-
-            // Handle scroll to hide dropdowns
-            $('.dataTables_scrollBody').on('scroll', function() {
-                $('.action-dropdown').hide();
-            });
-
             // Inject Filters into DataTable AJAX
-            const table = window.LaravelDataTables['purchases-second-table'];
-            table.on('preXhr.dt', function ( e, settings, data ) {
+            // Use jQuery selector to avoid race conditions
+            $('#purchases-second-table').on('preXhr.dt', function ( e, settings, data ) {
                 data.quick_filter = '{{ request('quick_filter') }}';
                 data.from = $('input[name="from"]').val();
                 data.to = $('input[name="to"]').val();
                 data.customer = $('input[name="customer"]').val();
                 data.payment_status = $('select[name="payment_status"]').val();
+            });
+
+            // Trigger redraw on filter change
+            $('input[name="from"], input[name="to"], input[name="customer"], select[name="payment_status"]').on('change', function() {
+                $('#purchases-second-table').DataTable().draw();
             });
         });
     </script>

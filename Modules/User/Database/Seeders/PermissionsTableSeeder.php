@@ -64,7 +64,25 @@ class PermissionsTableSeeder extends Seeder
         // Settings
         'access_settings',
         // Units
-        'access_units',
+        'access_units', 'create_units', 'edit_units', 'delete_units',
+
+        // POS
+        'pos.override_price_limit', 'pos.approve_discount', 'pos.view_cost_price',
+
+        // Inventory
+        'inventory.edit_hpp', 'inventory.approve_hpp_override',
+
+        // Reports Extra
+        'report.view_deviation', 'report.view_activity_log', 'report.export_sensitive',
+
+        // Settings Extra
+        'settings.manage_service_standards', 'settings.view_system_log',
+
+        // Adjustments Extra
+        'approve_adjustments',
+
+        // Stock Opname
+        'access_stock_opname', 'create_stock_opname', 'edit_stock_opname', 'show_stock_opname', 'delete_stock_opname',
     ];
 
     // Buat permissions (idempotent) dengan guard 'web'

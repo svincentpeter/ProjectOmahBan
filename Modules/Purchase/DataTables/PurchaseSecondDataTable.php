@@ -33,7 +33,28 @@ class PurchaseSecondDataTable extends DataTable
                 return view('purchase::second.partials.payment-status', compact('data'));
             })
             ->addColumn('action', function ($data) {
-                return view('purchase::second.partials.actions', compact('data'));
+                // Custom Actions
+                $customActions = '
+                    <li>
+                        <a href="'.route('purchases.second.pdf', $data->id).'" target="_blank"
+                           class="flex items-center gap-2 px-4 py-2.5 hover:bg-green-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors">
+                            <i class="bi bi-file-earmark-pdf text-green-600 dark:text-green-400"></i>
+                            <span>Cetak Nota</span>
+                        </a>
+                    </li>
+                ';
+
+                return view('partials.datatable-actions', [
+                    'id' => $data->id,
+                    'itemName' => 'Pembelian Bekas ' . optional($data->date)->format('d/m/Y'),
+                    'showRoute' => route('purchases.second.show', $data->id),
+                    'editRoute' => $data->status == 'Pending' ? route('purchases.second.edit', $data->id) : null,
+                    'deleteRoute' => route('purchases.second.destroy', $data->id),
+                    'showPermission' => 'show_purchases',
+                    'editPermission' => 'edit_purchases',
+                    'deletePermission' => 'delete_purchases',
+                    'customActions' => $customActions
+                ])->render();
             })
             ->rawColumns(['status', 'payment_status', 'action']);
     }
@@ -66,7 +87,6 @@ class PurchaseSecondDataTable extends DataTable
         }
 
         if ($startDate && $endDate) {
-            // kalau kamu memang punya scope between(), pakai itu
             if (method_exists($model, 'scopeBetween')) {
                 $query->between($startDate, $endDate);
             } else {
@@ -99,8 +119,15 @@ class PurchaseSecondDataTable extends DataTable
             ->setTableId('purchases-second-table')
             ->columns($this->getColumns())
             ->minifiedAjax()
-            // DOM and Language handled globally
-            ->orderBy(1, 'desc');
+            ->orderBy(1, 'desc')
+            ->parameters([
+                'drawCallback' => 'function() { 
+                    window.scrollTo(0, 0); 
+                    if (typeof initFlowbite === "function") {
+                        initFlowbite();
+                    }
+                }'
+            ]);
     }
 
     protected function getColumns()

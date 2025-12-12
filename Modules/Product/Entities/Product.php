@@ -28,13 +28,27 @@ class Product extends Model implements HasMedia
         'avg_cost',
         'is_active',
         'meta',
-        // Legacy fields (map saat migrasi, tetap support existing)
+        
+        // Mapped Database Columns (snake_case)
+        'product_name',
+        'product_code',
+        'product_quantity',
+        'product_cost',
+        'product_price',
+        'product_unit',
+        'product_stock_alert',
+        'product_note',
+        'product_size',
+        'ring',
+        'product_year',
+        'stok_awal',
+
+        // Legacy fields (map saat migrasi, tetap support existing jika masih ada referensi)
         'productname',
         'productcode',
         'categoryid',
         'brandid',
         'productsize',
-        'ring',
         'productyear',
         'productcost',
         'productprice',

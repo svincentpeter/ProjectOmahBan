@@ -2,15 +2,16 @@
 
 @section('title', 'Ubah Mata Uang')
 
-@section('content')
-    {{-- Breadcrumb --}}
+@section('breadcrumb')
     @include('layouts.breadcrumb-flowbite', [
         'items' => [
-            ['text' => 'Beranda', 'url' => route('home')],
             ['text' => 'Mata Uang', 'url' => route('currencies.index')],
             ['text' => 'Ubah: ' . $currency->currency_name, 'url' => '#'],
         ]
     ])
+@endsection
+
+@section('content')
 
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <form action="{{ route('currencies.update', $currency) }}" method="POST" autocomplete="off" id="currency-form">
@@ -177,7 +178,6 @@
     </div>
 
     @push('page_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Live Preview Logic
