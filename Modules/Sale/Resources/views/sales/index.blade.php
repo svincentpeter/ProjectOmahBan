@@ -73,66 +73,12 @@
     }
 @endphp
 
-{{-- Filter Card --}}
-@include('layouts.filter-card', [
-    'action' => route('sales.index'),
-    'title' => 'Filter Data Penjualan',
-    'icon' => 'bi bi-funnel',
-    'quickFilters' => [
-        [
-            'label' => 'Hari Ini',
-            'url' => request()->fullUrlWithQuery(['preset' => 'today']),
-            'param' => 'preset',
-            'value' => 'today',
-            'icon' => 'bi bi-clock',
-        ],
-        [
-            'label' => 'Minggu Ini',
-            'url' => request()->fullUrlWithQuery(['preset' => 'this_week']),
-            'param' => 'preset',
-            'value' => 'this_week',
-            'icon' => 'bi bi-calendar-week',
-        ],
-        [
-            'label' => 'Bulan Ini',
-            'url' => request()->fullUrlWithQuery(['preset' => 'this_month']),
-            'param' => 'preset',
-            'value' => 'this_month',
-            'icon' => 'bi bi-calendar-month',
-        ],
-    ],
-    'filters' => [
-        [
-            'name' => 'month',
-            'label' => 'Pilih Bulan',
-            'type' => 'select',
-            'options' => $months,
-            'placeholder' => 'Pilih Bulan',
-        ],
-        ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => request('from')],
-        ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => request('to')],
-        [
-            'name' => 'has_adjustment',
-            'label' => 'Ada Diskon',
-            'type' => 'select',
-            'options' => ['1' => 'Ya, Ada Diskon'],
-            'placeholder' => 'Semua',
-        ],
-        [
-            'name' => 'has_manual',
-            'label' => 'Input Manual',
-            'type' => 'select',
-            'options' => ['1' => 'Ya, Input Manual'],
-            'placeholder' => 'Semua',
-        ],
-    ],
-])
+
 
 {{-- Main Card --}}
 <div
     class="bg-white rounded-2xl shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
-    <div
-        class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
+    <div class="px-6 pt-6 flex justify-between items-center">
         <div>
             <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
                 <i class="bi bi-receipt-cutoff mr-2 text-blue-600"></i>
@@ -146,7 +92,64 @@
         </a>
     </div>
 
-    <div class="p-4">
+    {{-- Filter Card --}}
+    <div class="px-6 pt-6">
+        @include('layouts.filter-card', [
+            'action' => route('sales.index'),
+            'title' => 'Filter Data Penjualan',
+            'icon' => 'bi bi-funnel',
+            'quickFilters' => [
+                [
+                    'label' => 'Hari Ini',
+                    'url' => request()->fullUrlWithQuery(['preset' => 'today']),
+                    'param' => 'preset',
+                    'value' => 'today',
+                    'icon' => 'bi bi-clock',
+                ],
+                [
+                    'label' => 'Minggu Ini',
+                    'url' => request()->fullUrlWithQuery(['preset' => 'this_week']),
+                    'param' => 'preset',
+                    'value' => 'this_week',
+                    'icon' => 'bi bi-calendar-week',
+                ],
+                [
+                    'label' => 'Bulan Ini',
+                    'url' => request()->fullUrlWithQuery(['preset' => 'this_month']),
+                    'param' => 'preset',
+                    'value' => 'this_month',
+                    'icon' => 'bi bi-calendar-month',
+                ],
+            ],
+            'filters' => [
+                [
+                    'name' => 'month',
+                    'label' => 'Pilih Bulan',
+                    'type' => 'select',
+                    'options' => $months,
+                    'placeholder' => 'Pilih Bulan',
+                ],
+                ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => request('from')],
+                ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => request('to')],
+                [
+                    'name' => 'has_adjustment',
+                    'label' => 'Ada Diskon',
+                    'type' => 'select',
+                    'options' => ['1' => 'Ya, Ada Diskon'],
+                    'placeholder' => 'Semua',
+                ],
+                [
+                    'name' => 'has_manual',
+                    'label' => 'Input Manual',
+                    'type' => 'select',
+                    'options' => ['1' => 'Ya, Input Manual'],
+                    'placeholder' => 'Semua',
+                ],
+            ],
+        ])
+    </div>
+
+    <div class="px-6 pb-6">
         {{ $dataTable->table() }}
     </div>
 </div>

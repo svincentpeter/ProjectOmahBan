@@ -323,8 +323,43 @@
                         {{ format_currency(abs($saleDiff)) }}
                     </span>
                 </div>
+                @else
+                {{-- Midtrans Payment Flow --}}
+                <div class="space-y-4">
+                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 text-center space-y-3">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto shadow-md">
+                            <i class="bi bi-credit-card-2-front text-indigo-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-indigo-900">Pembayaran Digital Midtrans</p>
+                            <p class="text-xs text-indigo-600 mt-1">GoPay, ShopeePay, QRIS, Bank Transfer, Credit Card</p>
+                        </div>
+                        <div class="flex justify-center gap-2 pt-2">
+                            <span class="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] text-slate-600 shadow-sm"><i class="bi bi-wallet2 mr-1"></i>GoPay</span>
+                            <span class="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] text-slate-600 shadow-sm"><i class="bi bi-qr-code mr-1"></i>QRIS</span>
+                            <span class="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] text-slate-600 shadow-sm"><i class="bi bi-bank mr-1"></i>VA</span>
+                            <span class="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[10px] text-slate-600 shadow-sm"><i class="bi bi-credit-card mr-1"></i>CC</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+                        <p class="flex items-center gap-1.5">
+                            <i class="bi bi-info-circle"></i>
+                            Total yang akan dibayar: <strong class="text-amber-900">{{ format_currency($sale->total_amount ?? 0) }}</strong>
+                        </p>
+                    </div>
+                    
+                    <button wire:click="generateMidtransToken" 
+                        wire:loading.attr="disabled"
+                        class="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3.5 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50">
+                        <span wire:loading wire:target="generateMidtransToken" class="animate-spin"><i class="bi bi-arrow-repeat"></i></span>
+                        <i class="bi bi-wallet2" wire:loading.remove wire:target="generateMidtransToken"></i>
+                        <span>Buka Pembayaran Midtrans</span>
+                    </button>
+                </div>
                 @endif
 
+                @if($payment_method !== 'Midtrans')
                 <button wire:click="markAsPaid" 
                     wire:loading.attr="disabled"
                     class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 disabled:opacity-50">
@@ -332,6 +367,7 @@
                     <i class="bi bi-check-circle" wire:loading.remove wire:target="markAsPaid"></i>
                     <span>Tandai Lunas</span>
                 </button>
+                @endif
             </div>
             @else
             {{-- Sudah Lunas --}}
@@ -575,8 +611,7 @@
                         decimalPlaces: 0,
                         unformatOnSubmit: true,
                         modifyValueOnWheel: false,
-                        minimumValue: 0,
-                        allowDecimalPadding: false
+                        minimumValue: 0
                     });
 
                     // Set initial value
@@ -638,6 +673,88 @@
             };
     
             initSelect2();
+            
+            // ========== MIDTRANS SNAP HANDLER ==========
+            Livewire.on('open-midtrans-snap', (event) => {
+                // Handle different event formats from Livewire 3
+                const token = Array.isArray(event) ? (event[0]?.token || event[0]) : (event.token || event);
+                
+                console.log('Midtrans Snap Token received:', token);
+                
+                if (!token) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Token pembayaran tidak ditemukan. Coba lagi.',
+                        timer: 4000,
+                        showConfirmButton: false,
+                        position: 'center'
+                    });
+                    return;
+                }
+                
+                // Cek apakah Snap sudah ready
+                if (typeof snap === 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Midtrans Tidak Tersedia',
+                        text: 'Library Midtrans belum dimuat. Silakan refresh halaman dan coba lagi.',
+                        timer: 5000,
+                        showConfirmButton: true
+                    });
+                    return;
+                }
+                
+                // Buka Snap Popup
+                snap.pay(token, {
+                    onSuccess: function(result) {
+                        console.log('Midtrans Payment Success:', result);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Pembayaran Berhasil!',
+                            html: `<p>Pembayaran Anda telah diterima.</p><p class="text-sm text-slate-500 mt-2">Transaction ID: ${result.transaction_id || '-'}</p>`,
+                            timer: 4000,
+                            showConfirmButton: false,
+                            position: 'center'
+                        });
+                        // Kirim data transaksi ke Livewire untuk update status
+                        @this.call('markAsPaidViaMidtrans', {
+                            transaction_id: result.transaction_id,
+                            payment_type: result.payment_type,
+                            gross_amount: result.gross_amount,
+                            transaction_status: result.transaction_status
+                        });
+                    },
+                    onPending: function(result) {
+                        console.log('Midtrans Payment Pending:', result);
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Menunggu Pembayaran',
+                            html: `<p>Silakan selesaikan pembayaran Anda.</p><p class="text-xs text-slate-500 mt-2">Status akan otomatis terupdate setelah pembayaran diterima.</p>`,
+                            timer: 6000,
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    onError: function(result) {
+                        console.error('Midtrans Payment Error:', result);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Pembayaran Gagal',
+                            text: result.status_message || 'Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.',
+                            timer: 5000,
+                            showConfirmButton: true
+                        });
+                    },
+                    onClose: function() {
+                        console.log('Midtrans popup closed by user');
+                        // Check status setelah popup ditutup (mungkin user sudah bayar tapi tutup popup)
+                        setTimeout(() => {
+                            @this.checkMidtransStatus();
+                        }, 1000);
+                    }
+                });
+            });
         });
     </script>
 </div>

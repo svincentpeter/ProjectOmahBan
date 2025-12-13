@@ -177,8 +177,7 @@
                         decimalPlaces: 0,
                         unformatOnSubmit: true, 
                         modifyValueOnWheel: false, 
-                        minimumValue: '-999999999',
-                        allowDecimalPadding: false
+                        minimumValue: '-999999999'
                     });
 
                     let initialVal = @this.get(this.model);

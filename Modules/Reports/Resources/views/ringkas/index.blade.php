@@ -12,44 +12,71 @@
 @endsection
 
 @section('content')
-    {{-- Filter Card --}}
-    @include('layouts.filter-card', [
-        'action' => url()->current(),
-        'method' => 'GET',
-        'title' => 'Filter Periode Ringkasan',
-        'icon' => 'bi bi-funnel',
-        'quickFilters' => [
-             ['label' => 'Hari Ini', 'url' => request()->fullUrlWithQuery(['from' => now()->toDateString(), 'to' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-check'],
-             ['label' => '7 Hari Terakhir', 'url' => request()->fullUrlWithQuery(['from' => now()->subDays(6)->toDateString(), 'to' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-week'],
-             ['label' => 'Bulan Ini', 'url' => request()->fullUrlWithQuery(['from' => now()->startOfMonth()->toDateString(), 'to' => now()->toDateString()]), 'param' => 'ignore', 'value' => 'ignore', 'icon' => 'bi bi-calendar-month'],
-        ],
-        'filters' => [
-            [
-                'name' => 'from',
-                'label' => 'Dari Tanggal',
-                'type' => 'date',
-                'value' => $from,
-                'required' => true
-            ],
-            [
-                'name' => 'to',
-                'label' => 'Sampai Tanggal',
-                'type' => 'date',
-                'value' => $to,
-                'required' => true
-            ],
-            [
-                'name' => 'only_paid',
-                'label' => 'Status Pembayaran',
-                'type' => 'select',
-                'value' => request('only_paid', 1),
-                'options' => [
-                    '1' => 'Hanya Transaksi Lunas',
-                    '0' => 'Semua Transaksi'
-                ]
-            ]
-        ]
-    ])
+    {{-- Main Control Card --}}
+    <div class="mb-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-slate-200 dark:border-gray-700 p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+             <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-journal-text text-blue-600"></i>
+                    Laporan Ringkasan Harian
+                </h2>
+                <div class="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <span class="flex items-center">
+                        <i class="bi bi-calendar-range mr-1.5"></i>
+                        Periode: {{ \Carbon\Carbon::parse($from)->translatedFormat('d M Y') }} – {{ \Carbon\Carbon::parse($to)->translatedFormat('d M Y') }}
+                    </span>
+                </div>
+            </div>
+            <div class="text-right">
+                <button onclick="window.print()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-all shadow-sm">
+                    <i class="bi bi-printer mr-2"></i> Cetak Laporan
+                </button>
+            </div>
+        </div>
+
+        <form action="{{ url()->current() }}" method="GET" class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                         <label for="from" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Dari Tanggal</label>
+                         <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <i class="bi bi-calendar-event text-gray-500 dark:text-gray-400"></i>
+                            </div>
+                            <input type="date" id="from" name="from" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ $from }}" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="to" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sampai Tanggal</label>
+                         <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <i class="bi bi-calendar-check text-gray-500 dark:text-gray-400"></i>
+                            </div>
+                            <input type="date" id="to" name="to" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ $to }}" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="only_paid" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status Pembayaran</label>
+                        <select id="only_paid" name="only_paid" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                            <option value="1" {{ request('only_paid', 1) == '1' ? 'selected' : '' }}>Hanya Transaksi Lunas</option>
+                            <option value="0" {{ request('only_paid', 1) == '0' ? 'selected' : '' }}>Semua Transaksi</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="md:col-span-1">
+                     <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors">
+                        <i class="bi bi-filter mr-2"></i> Tampilkan
+                    </button>
+                </div>
+            </div>
+            {{-- Quick Filters Links --}}
+            <div class="mt-4 flex flex-wrap gap-2">
+                 <a href="{{ request()->fullUrlWithQuery(['from' => now()->toDateString(), 'to' => now()->toDateString()]) }}" class="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors">Hari Ini</a>
+                 <a href="{{ request()->fullUrlWithQuery(['from' => now()->subDays(6)->toDateString(), 'to' => now()->toDateString()]) }}" class="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors">7 Hari Terakhir</a>
+                 <a href="{{ request()->fullUrlWithQuery(['from' => now()->startOfMonth()->toDateString(), 'to' => now()->toDateString()]) }}" class="text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors">Bulan Ini</a>
+            </div>
+        </form>
+    </div>
 
     @php
         $profitMargin = $sum['omset'] > 0 ? round(($sum['total_profit'] / $sum['omset']) * 100, 1) : 0;
@@ -135,7 +162,7 @@
 
     {{-- Summary Table --}}
     <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-gray-100 dark:border-gray-700">
+        <div class="px-6 pt-6">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/50 dark:text-blue-400">
                     <i class="bi bi-bar-chart-fill"></i>
@@ -143,7 +170,7 @@
                 Ringkasan Keuangan Detail
             </h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="px-6 pb-6 overflow-x-auto">
             <table class="w-full text-sm text-left">
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50">
@@ -185,7 +212,7 @@
 
     {{-- Payment Method Breakdown --}}
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-gray-100 dark:border-gray-700">
+        <div class="px-6 pt-6">
             <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <div class="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg dark:bg-indigo-900/50 dark:text-indigo-400">
                     <i class="bi bi-credit-card-2-front"></i>
@@ -193,7 +220,7 @@
                 Rincian per Metode Pembayaran
             </h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="px-6 pb-6 overflow-x-auto">
             <table class="w-full text-sm text-left">
                 <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-100 dark:border-gray-600">
                     <tr>

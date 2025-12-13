@@ -64,7 +64,7 @@
     <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">
         
         {{-- Card Header --}}
-        <div class="p-6 border-b border-zinc-100">
+        <div class="px-6 pt-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
                     <h5 class="text-xl font-bold text-black dark:text-white tracking-tight flex items-center gap-2">
@@ -103,7 +103,7 @@
         </div>
 
         {{-- Table Wrapper --}}
-        <div class="p-6 overflow-x-auto">
+        <div class="px-6 pb-6 overflow-x-auto">
             {!! $dataTable->table(['class' => 'w-full text-sm text-left text-gray-900 dark:text-gray-400', 'id' => 'products-table']) !!}
         </div>
     </div>

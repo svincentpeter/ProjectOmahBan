@@ -12,49 +12,57 @@
 @endsection
 
 @section('content')
-    {{-- Filter Card --}}
-    @include('layouts.filter-card', [
-        'action' => route('reports.daily.generate'),
-        'method' => 'POST',
-        'title' => 'Filter Kas Harian',
-        'icon' => 'bi bi-funnel',
-        'filters' => [
-            [
-                'name' => 'report_date', // Must match backend expectation
-                'label' => 'Tanggal Laporan',
-                'type' => 'date',
-                'value' => old('report_date', $reportDate ?? date('Y-m-d')),
-                'required' => true
-            ]
-        ]
-    ])
+    {{-- Main Control Card --}}
+    <div class="mb-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-slate-200 dark:border-gray-700 p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="bi bi-file-earmark-text text-blue-600"></i>
+                    Laporan Kas Harian
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    @if(isset($generated) && $generated)
+                        Periode: {{ \Carbon\Carbon::parse($reportDate)->locale('id')->isoFormat('dddd, D MMMM Y') }}
+                    @else
+                        Silakan pilih tanggal untuk membuat laporan
+                    @endif
+                </p>
+            </div>
+            @if(isset($generated) && $generated)
+            <div>
+                <button onclick="window.print()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-all shadow-sm">
+                    <i class="bi bi-printer mr-2"></i> Cetak Laporan
+                </button>
+            </div>
+            @endif
+        </div>
+
+        <form action="{{ route('reports.daily.generate') }}" method="POST" class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+            @csrf
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div class="md:col-span-3">
+                    <label for="report_date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tanggal Laporan</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="bi bi-calendar-event text-gray-500 dark:text-gray-400"></i>
+                        </div>
+                        <input type="date" id="report_date" name="report_date" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ old('report_date', $reportDate ?? date('Y-m-d')) }}" required>
+                    </div>
+                </div>
+                <div class="md:col-span-1">
+                    <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors">
+                        <i class="bi bi-filter mr-2"></i> Tampilkan
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 
     @if (isset($generated) && $generated)
         @php
             $netPos   = ($netIncome ?? 0) >= 0;
             $gpMargin = ($totalOmset ?? 0) > 0 ? round(($netIncome / max($totalOmset,1)) * 100, 1) : 0;
         @endphp
-
-        {{-- Report Header --}}
-        <div class="mb-6 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
-            <div>
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <i class="bi bi-file-earmark-text text-blue-600"></i>
-                    Laporan Kas Harian
-                </h2>
-                <div class="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    <span class="flex items-center">
-                        <i class="bi bi-calendar-event mr-1.5"></i>
-                        {{ \Carbon\Carbon::parse($reportDate)->locale('id')->isoFormat('dddd, D MMMM Y') }}
-                    </span>
-                </div>
-            </div>
-            <div class="text-right">
-                <button onclick="window.print()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-all shadow-sm">
-                    <i class="bi bi-printer mr-2"></i> Cetak Laporan
-                </button>
-            </div>
-        </div>
 
         {{-- KPI Cards --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -122,7 +130,7 @@
 
         {{-- Sales Table --}}
         <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
-            <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div class="px-6 pt-6 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/50 dark:text-blue-400">
                         <i class="bi bi-cart3"></i>
@@ -133,7 +141,7 @@
                     {{ count($sales) }} Transaksi
                 </span>
             </div>
-            <div class="overflow-x-auto">
+            <div class="px-6 pb-6 overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-100 dark:border-gray-600">
                         <tr>
@@ -203,7 +211,7 @@
 
         {{-- Expenses Table --}}
         <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
-             <div class="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+             <div class="px-6 pt-6 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <div class="p-1.5 bg-red-100 text-red-600 rounded-lg dark:bg-red-900/50 dark:text-red-400">
                         <i class="bi bi-cash-stack"></i>
@@ -214,7 +222,7 @@
                     {{ count($expenses) }} Transaksi
                 </span>
             </div>
-            <div class="overflow-x-auto">
+            <div class="px-6 pb-6 overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-100 dark:border-gray-600">
                         <tr>
@@ -267,7 +275,7 @@
 
         {{-- Summary Table --}}
         <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
-            <div class="p-5 border-b border-gray-100 dark:border-gray-700">
+            <div class="px-6 pt-6">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <div class="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg dark:bg-indigo-900/50 dark:text-indigo-400">
                         <i class="bi bi-calculator"></i>
@@ -275,7 +283,7 @@
                     Ringkasan Keuangan
                 </h3>
             </div>
-            <div>
+            <div class="px-6 pb-6">
                  <table class="w-full text-sm text-left">
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                         <tr class="bg-white hover:bg-gray-50 dark:bg-gray-800">

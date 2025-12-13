@@ -37,30 +37,13 @@
         </div>
     </div>
 
-    {{-- Filter Card --}}
-    @include('layouts.filter-card', [
-        'action' => route('expenses.index'),
-        'title' => 'Filter Data Pengeluaran',
-        'icon' => 'bi bi-funnel',
-        'quickFilters' => [
-            ['label' => 'Hari Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'today'])), 'param' => 'quick_filter', 'value' => 'today', 'icon' => 'bi bi-clock'],
-            ['label' => 'Kemarin', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'yesterday'])), 'param' => 'quick_filter', 'value' => 'yesterday', 'icon' => 'bi bi-clock-history'],
-            ['label' => 'Minggu Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'this_week'])), 'param' => 'quick_filter', 'value' => 'this_week', 'icon' => 'bi bi-calendar-week'],
-            ['label' => 'Bulan Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'this_month'])), 'param' => 'quick_filter', 'value' => 'this_month', 'icon' => 'bi bi-calendar-month'],
-            ['label' => 'Semua', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'all'])), 'param' => 'quick_filter', 'value' => 'all', 'icon' => 'bi bi-collection'],
-        ],
-        'filters' => [
-            ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => $from ?? request('from')],
-            ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => $to ?? request('to')],
-            ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => $categories->pluck('category_name', 'id')->toArray(), 'placeholder' => 'Semua Kategori', 'value' => request('category_id')],
-        ]
-    ])
+
 
     {{-- Main Card --}}
     <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 shadow-sm rounded-2xl overflow-hidden mt-6">
-        <div class="p-6 border-b border-slate-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-50/50 dark:bg-gray-700/20">
+        <div class="px-6 pt-6 flex justify-between items-center">
             <div>
-                <h5 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <h5 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
                     <i class="bi bi-wallet2 text-blue-600"></i>
                     Daftar Pengeluaran
                 </h5>
@@ -76,8 +59,29 @@
             </div>
         </div>
 
+        {{-- Filter Card --}}
+        <div class="px-6 pt-6">
+            @include('layouts.filter-card', [
+                'action' => route('expenses.index'),
+                'title' => 'Filter Data Pengeluaran',
+                'icon' => 'bi bi-funnel',
+                'quickFilters' => [
+                    ['label' => 'Hari Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'today'])), 'param' => 'quick_filter', 'value' => 'today', 'icon' => 'bi bi-clock'],
+                    ['label' => 'Kemarin', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'yesterday'])), 'param' => 'quick_filter', 'value' => 'yesterday', 'icon' => 'bi bi-clock-history'],
+                    ['label' => 'Minggu Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'this_week'])), 'param' => 'quick_filter', 'value' => 'this_week', 'icon' => 'bi bi-calendar-week'],
+                    ['label' => 'Bulan Ini', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'this_month'])), 'param' => 'quick_filter', 'value' => 'this_month', 'icon' => 'bi bi-calendar-month'],
+                    ['label' => 'Semua', 'url' => route('expenses.index', array_merge(request()->query(), ['quick_filter' => 'all'])), 'param' => 'quick_filter', 'value' => 'all', 'icon' => 'bi bi-collection'],
+                ],
+                'filters' => [
+                    ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => $from ?? request('from')],
+                    ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => $to ?? request('to')],
+                    ['name' => 'category_id', 'label' => 'Kategori', 'type' => 'select', 'options' => $categories->pluck('category_name', 'id')->toArray(), 'placeholder' => 'Semua Kategori', 'value' => request('category_id')],
+                ]
+            ])
+        </div>
+
         {{-- DataTable --}}
-        <div class="p-5">
+        <div class="px-6 pb-6">
             {{ $dataTable->table() }}
         </div>
     </div>

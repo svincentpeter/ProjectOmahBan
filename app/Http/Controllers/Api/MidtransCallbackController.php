@@ -14,7 +14,7 @@ class MidtransCallbackController extends Controller
             $callback = new CallbackService();
 
             if ($callback->isSignatureKeyVerified()) {
-                $callback->updateSaleStatus();
+                $callback->updateSale();
 
                 return response()->json(
                     [
