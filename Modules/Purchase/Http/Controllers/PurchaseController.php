@@ -150,9 +150,22 @@ class PurchaseController extends Controller
 
                 // Update stock produk jika status Completed
                 if ($request->status == 'Completed') {
-                    $product = Product::findOrFail($cart_item->id);
+                    $product = Product::lockForUpdate()->findOrFail($cart_item->id);
                     $product->update([
                         'product_quantity' => $product->product_quantity + $cart_item->qty,
+                    ]);
+
+                    // Catat ke stock_movements untuk audit trail
+                    DB::table('stock_movements')->insert([
+                        'product_id' => $product->id,
+                        'ref_type' => 'purchase',
+                        'ref_id' => $purchase->id,
+                        'type' => 'in',
+                        'quantity' => $cart_item->qty,
+                        'description' => 'Purchase #' . ($purchase->reference ?? $purchase->id),
+                        'user_id' => auth()->id(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 }
             }
@@ -224,9 +237,22 @@ class PurchaseController extends Controller
             // Restore stock jika purchase sebelumnya Completed
             foreach ($purchase->purchaseDetails as $purchase_detail) {
                 if ($purchase->status == 'Completed') {
-                    $product = Product::findOrFail($purchase_detail->product_id);
+                    $product = Product::lockForUpdate()->findOrFail($purchase_detail->product_id);
                     $product->update([
                         'product_quantity' => $product->product_quantity - $purchase_detail->quantity,
+                    ]);
+
+                    // Catat restore stok ke stock_movements
+                    DB::table('stock_movements')->insert([
+                        'product_id' => $product->id,
+                        'ref_type' => 'purchase',
+                        'ref_id' => $purchase->id,
+                        'type' => 'out',
+                        'quantity' => $purchase_detail->quantity,
+                        'description' => 'Purchase Restore (Edit) #' . ($purchase->reference ?? $purchase->id),
+                        'user_id' => auth()->id(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 }
                 // Delete old purchase details
@@ -264,9 +290,22 @@ class PurchaseController extends Controller
 
                 // Update stock produk jika status Completed
                 if ($request->status == 'Completed') {
-                    $product = Product::findOrFail($cart_item->id);
+                    $product = Product::lockForUpdate()->findOrFail($cart_item->id);
                     $product->update([
                         'product_quantity' => $product->product_quantity + $cart_item->qty,
+                    ]);
+
+                    // Catat ke stock_movements untuk audit trail
+                    DB::table('stock_movements')->insert([
+                        'product_id' => $product->id,
+                        'ref_type' => 'purchase',
+                        'ref_id' => $purchase->id,
+                        'type' => 'in',
+                        'quantity' => $cart_item->qty,
+                        'description' => 'Purchase (Updated) #' . ($purchase->reference ?? $purchase->id),
+                        'user_id' => auth()->id(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
                 }
             }
@@ -287,16 +326,31 @@ class PurchaseController extends Controller
         abort_if(Gate::denies('delete_purchases'), 403);
 
         // Restore stock jika purchase Completed sebelum delete
-        if ($purchase->status == 'Completed') {
-            foreach ($purchase->purchaseDetails as $purchase_detail) {
-                $product = Product::findOrFail($purchase_detail->product_id);
-                $product->update([
-                    'product_quantity' => $product->product_quantity - $purchase_detail->quantity,
-                ]);
-            }
-        }
+        DB::transaction(function () use ($purchase) {
+            if ($purchase->status == 'Completed') {
+                foreach ($purchase->purchaseDetails as $purchase_detail) {
+                    $product = Product::lockForUpdate()->findOrFail($purchase_detail->product_id);
+                    $product->update([
+                        'product_quantity' => $product->product_quantity - $purchase_detail->quantity,
+                    ]);
 
-        $purchase->delete();
+                    // Catat restore stok ke stock_movements
+                    DB::table('stock_movements')->insert([
+                        'product_id' => $product->id,
+                        'ref_type' => 'purchase',
+                        'ref_id' => $purchase->id,
+                        'type' => 'out',
+                        'quantity' => $purchase_detail->quantity,
+                        'description' => 'Purchase Restore (Deleted) #' . ($purchase->reference ?? $purchase->id),
+                        'user_id' => auth()->id(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            $purchase->delete();
+        });
 
         toast('Pembelian berhasil dihapus!', 'warning');
         return redirect()->route('purchases.index');

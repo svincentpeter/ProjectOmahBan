@@ -84,30 +84,12 @@
         </div>
     </div>
 
-    {{-- Filter Card --}}
-    @include('layouts.filter-card', [
-        'action' => route('purchases.index'),
-        'title' => 'Filter Data Pembelian',
-        'icon' => 'bi bi-funnel',
-        'quickFilters' => [
-            ['label' => 'Semua', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'all']), 'param' => 'quick_filter', 'value' => 'all', 'icon' => 'bi bi-grid'],
-            ['label' => 'Hari Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'today']), 'param' => 'quick_filter', 'value' => 'today', 'icon' => 'bi bi-clock'],
-            ['label' => 'Kemarin', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'yesterday']), 'param' => 'quick_filter', 'value' => 'yesterday', 'icon' => 'bi bi-clock-history'],
-            ['label' => 'Minggu Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'this_week']), 'param' => 'quick_filter', 'value' => 'this_week', 'icon' => 'bi bi-calendar-week'],
-            ['label' => 'Bulan Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'this_month']), 'param' => 'quick_filter', 'value' => 'this_month', 'icon' => 'bi bi-calendar-month'],
-        ],
-        'filters' => [
-            ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => $from],
-            ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => $to],
-            ['name' => 'supplier_id', 'label' => 'Supplier', 'type' => 'select', 'options' => $suppliers->pluck('supplier_name', 'id')->toArray(), 'placeholder' => 'Pilih Supplier'],
-            ['name' => 'payment_status', 'label' => 'Status Bayar', 'type' => 'select', 'options' => ['Lunas' => 'Lunas', 'Belum Lunas' => 'Belum Lunas'], 'placeholder' => 'Semua Status'],
-        ]
-    ])
+
 
     {{-- Main Card --}}
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
         {{-- Header --}}
-        <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+        <div class="px-6 pt-6 flex justify-between items-center">
             <div>
                 <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
                     <i class="bi bi-box-seam mr-2 text-purple-600"></i>
@@ -123,8 +105,30 @@
             @endcan
         </div>
 
+        {{-- Filter Card --}}
+        <div class="px-6 pt-6">
+            @include('layouts.filter-card', [
+                'action' => route('purchases.index'),
+                'title' => 'Filter Data Pembelian',
+                'icon' => 'bi bi-funnel',
+                'quickFilters' => [
+                    ['label' => 'Semua', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'all']), 'param' => 'quick_filter', 'value' => 'all', 'icon' => 'bi bi-grid'],
+                    ['label' => 'Hari Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'today']), 'param' => 'quick_filter', 'value' => 'today', 'icon' => 'bi bi-clock'],
+                    ['label' => 'Kemarin', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'yesterday']), 'param' => 'quick_filter', 'value' => 'yesterday', 'icon' => 'bi bi-clock-history'],
+                    ['label' => 'Minggu Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'this_week']), 'param' => 'quick_filter', 'value' => 'this_week', 'icon' => 'bi bi-calendar-week'],
+                    ['label' => 'Bulan Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'this_month']), 'param' => 'quick_filter', 'value' => 'this_month', 'icon' => 'bi bi-calendar-month'],
+                ],
+                'filters' => [
+                    ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => $from],
+                    ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => $to],
+                    ['name' => 'supplier_id', 'label' => 'Supplier', 'type' => 'select', 'options' => $suppliers->pluck('supplier_name', 'id')->toArray(), 'placeholder' => 'Pilih Supplier'],
+                    ['name' => 'payment_status', 'label' => 'Status Bayar', 'type' => 'select', 'options' => ['Lunas' => 'Lunas', 'Belum Lunas' => 'Belum Lunas'], 'placeholder' => 'Semua Status'],
+                ]
+            ])
+        </div>
+
         {{-- Table Content --}}
-        <div class="p-6">
+        <div class="px-6 pb-6">
             {{ $dataTable->table() }}
         </div>
     </div>

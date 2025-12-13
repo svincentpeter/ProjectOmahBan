@@ -1,4 +1,4 @@
-{{-- Nota POS A6 Landscape – 1 Halaman, dots & tanda tangan rapi --}}
+{{-- Nota POS A6 Landscape – 1 Halaman, ada padding di tiap sudut --}}
 <!DOCTYPE html>
 <html lang="id">
 
@@ -6,12 +6,17 @@
     <meta charset="UTF-8">
     <title>Nota {{ $sale->reference ?? '-' }}</title>
     <style>
+        /* =========================================================
+           KUNCI: jangan andalkan @page margin (kadang "terasa nol")
+           -> bikin padding dari wrapper .sheet supaya pasti ada ruang tepi
+        ========================================================= */
+
         @page {
-            margin: 5mm;
-            size: 148mm 105mm;
+            /* Change to A5 Landscape (larger than A6) to prevent cut-off */
+            size: A5 landscape;
+            margin: 0;
         }
 
-        /* A6 landscape */
         * {
             box-sizing: border-box;
         }
@@ -20,35 +25,30 @@
         body {
             margin: 0;
             padding: 0;
+            width: 100%;
         }
 
         body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 10.5px;
+            font-size: 10px; /* Sedikit diperkecil agar muat */
             color: #000;
         }
 
         .sheet {
             width: 100%;
+            padding: 4mm; /* Kurangi padding agar area konten lebih luas */
+            page-break-inside: avoid;
         }
 
         /* Grid header */
-        .row {
-            width: 100%;
-        }
-
+        .row { width: 100%; }
         .col {
             display: inline-block;
             vertical-align: top;
         }
 
-        .col-left {
-            width: 60%;
-        }
-
-        .col-right {
-            width: 39%;
-        }
+        .col-left { width: 60%; }
+        .col-right { width: 39%; }
 
         /* Logo & alamat */
         .logo {
@@ -70,14 +70,14 @@
 
         .address {
             margin-top: 6px;
-            line-height: 1.35;
+            line-height: 1.30; /* sedikit dipadatkan */
             font-size: 10px;
         }
 
         /* Blok meta kanan */
         .meta {
             font-size: 10px;
-            line-height: 1.5;
+            line-height: 1.45; /* sedikit dipadatkan */
         }
 
         .meta .nota {
@@ -96,43 +96,37 @@
             white-space: nowrap;
         }
 
-        .meta .label {
-            padding-right: 4px;
-        }
+        .meta .label { padding-right: 4px; }
+        .meta .colon { padding: 0 4px; }
 
-        .meta .colon {
-            padding: 0 4px;
-        }
-
-        /* beri jarak setelah ':' */
+        /* garis titik untuk isian */
         .meta .dotsline {
             display: inline-block;
             min-width: 38mm;
-            /* lebar garis titik (atur sesuai selera) */
             border-bottom: 1px dotted #000;
             line-height: 10px;
             height: 10px;
             vertical-align: baseline;
         }
 
-        .meta .dotsline.short {
-            min-width: 28mm;
-        }
-
-        /* variasi lebih pendek jika perlu */
+        .meta .dotsline.short { min-width: 28mm; }
 
         /* Tabel item */
         table.items {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 6px;
-            page-break-inside: avoid;
-        }
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    page-break-inside: avoid;
+
+    table-layout: fixed; /* <-- TAMBAH INI */
+}
+
 
         table.items th,
         table.items td {
             border: 1px solid #000;
-            padding: 3px 4px;
+            padding: 2px 3px;  /* dipadatkan sedikit agar 1 halaman aman */
+            line-height: 1.15;
         }
 
         table.items th {
@@ -141,52 +135,29 @@
             font-weight: 700;
         }
 
-        table.items td {
-            vertical-align: top;
-        }
+        table.items td { vertical-align: top; }
 
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
-        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
 
         /* Lebar kolom */
-        .col-qty {
-            width: 7%;
-        }
+        /* Lebar kolom (re-balance supaya kolom kanan lega) */
+.col-qty   { width: 7%;  }
+.col-name  { width: 30%; }
+.col-merk  { width: 12%; }
+.col-ukuran{ width: 12%; }
+.col-year  { width: 9%;  }
+.col-price { width: 14%; }
+.col-total { width: 16%; }  /* JUMLAH jadi lebih lebar */
 
-        .col-name {
-            width: 33%;
-        }
 
-        .col-merk {
-            width: 14%;
-        }
-
-        .col-ukuran {
-            width: 12%;
-        }
-
-        .col-year {
-            width: 10%;
-        }
-
-        .col-price {
-            width: 12%;
-        }
-
-        .col-total {
-            width: 12%;
-        }
-
-        /* Kotak total kecil di kanan */
+        /* TOTAL: jangan float -> sering bikin tanda tangan "loncat" halaman */
         table.total-box {
             border-collapse: collapse;
-            float: right;
+            float: none;
             margin-top: 3mm;
+            margin-left: auto; /* tetap rata kanan */
+            page-break-inside: avoid;
         }
 
         table.total-box td {
@@ -195,23 +166,22 @@
             font-size: 10px;
         }
 
-        table.total-box .label {
-            font-weight: 700;
-        }
+        table.total-box .label { font-weight: 700; }
 
         table.total-box .amount {
             min-width: 28mm;
             text-align: right;
         }
 
-        /* Tanda tangan model "foto 1" */
+        /* Tanda tangan: hilangkan clear:both dan hemat tinggi */
         .sign {
-            clear: both;
-            margin-top: 9mm;
+            clear: none;
+            margin-top: 6mm;
             width: 70%;
+            page-break-inside: avoid;
+            page-break-before: avoid;
         }
 
-        /* agak ke kiri, tidak mentok kanan */
         .sign .area {
             width: 46%;
             display: inline-block;
@@ -221,7 +191,7 @@
 
         .sign .label {
             font-size: 10px;
-            margin-bottom: 8mm;
+            margin-bottom: 6mm; /* dipadatkan dari 8mm */
         }
 
         .sign .line {
@@ -229,11 +199,7 @@
             margin: 0 auto;
             height: 0;
             border-top: 1px solid #000;
-            /* garis lurus, bukan titik-titik */
         }
-
-        /* 👇 HAPUS CSS WATERMARK (tidak dipakai lagi) */
-        /* .watermark { ... } */
     </style>
 </head>
 
@@ -257,23 +223,27 @@
             <div class="col col-right">
                 <div class="meta">
                     {{-- No. NOTA di atas block Semarang/Kepada/Jalan/Telp --}}
-                    <div class="nota">No. NOTA: <span class="dotsline short">{{ $sale->reference ?? '-' }}</span>
+                    <div class="nota">
+                        No. NOTA: <span class="dotsline short">{{ $sale->reference ?? '-' }}</span>
                     </div>
 
                     <table>
                         <tr>
                             <td class="label">Semarang</td>
                             <td class="colon">:</td>
-                            <td><span
-                                    class="dotsline short">{{ \Carbon\Carbon::parse($sale->date ?? now())->translatedFormat('d F Y') }}</span>
+                            <td>
+                                <span class="dotsline short">
+                                    {{ \Carbon\Carbon::parse($sale->date ?? now())->translatedFormat('d F Y') }}
+                                </span>
                             </td>
                         </tr>
                         <tr>
                             <td class="label">Kepada Yth.</td>
                             <td class="colon">:</td>
-                            {{-- 👇 PERBAIKAN: Prioritaskan $sale->customer_name --}}
-                            <td><span
-                                    class="dotsline">{{ $sale->customer_name ?? (data_get($sale, 'customer.name') ?? '') }}</span>
+                            <td>
+                                <span class="dotsline">
+                                    {{ $sale->customer_name ?? (data_get($sale, 'customer.name') ?? '') }}
+                                </span>
                             </td>
                         </tr>
                         <tr>
@@ -290,14 +260,10 @@
                                 </span>
                             </td>
                         </tr>
-
                     </table>
                 </div>
             </div>
         </div>
-
-        {{-- 👇 HAPUS WATERMARK (tidak ada kondisi @if payment_status) --}}
-        {{-- TIDAK ADA LAGI <div class="watermark">DRAFT</div> --}}
 
         {{-- TABEL ITEM --}}
         <table class="items">
@@ -314,8 +280,9 @@
             </thead>
             <tbody>
                 @php
-                    // Batas maksimal baris agar pasti 1 halaman A6
-                    $maxRows = 8;
+                    // Batas maksimal baris agar pasti 1 halaman A6 + padding
+                    $maxRows = 6;
+
                     $details = $sale->saleDetails ?? collect();
                     $slice = $details->take($maxRows);
                     $rowCount = 0;
@@ -339,14 +306,14 @@
                                 (data_get($item, 'product.brand.brand_name') ?? '-');
                             $size = data_get($item, 'product.product_size') ?? data_get($item, 'product.size');
                             $ring = data_get($item, 'product.ring');
-                            $ukuran = $size && $ring ? $size . ' - R' . $ring : $size ?? '-';
+                            $ukuran = $size && $ring ? $size . ' - R' . $ring : ($size ?? '-');
                             $tahun =
                                 data_get($item, 'product.product_year') ??
                                 (data_get($item, 'product.production_year') ?? '-');
                         } elseif ($src === 'second' && $item->productable) {
                             $name = $item->item_name ?? $name;
-                            $name = preg_replace('/\s*\d+\/\d+\s*R\d+/i', '', $name); // buang "265/65 R17"
-                            $name = preg_replace('/\s*\(\d+%\)$/', '', $name); // buang "(80%)"
+                            $name = preg_replace('/\s*\d+\/\d+\s*R\d+/i', '', $name);
+                            $name = preg_replace('/\s*\(\d+%\)$/', '', $name);
                             $name = trim($name);
 
                             $merk =
@@ -354,13 +321,15 @@
                                 (data_get($item, 'productable.brand') ?? '-');
                             $size = data_get($item, 'productable.size');
                             $ring = data_get($item, 'productable.ring');
-                            $ukuran = $size && $ring ? $size . ' - R' . $ring : $size ?? '-';
+                            $ukuran = $size && $ring ? $size . ' - R' . $ring : ($size ?? '-');
                             $tahun =
                                 data_get($item, 'productable.product_year') ??
                                 (data_get($item, 'productable.year') ?? '-');
                         }
+
                         $rowCount++;
                     @endphp
+
                     <tr>
                         <td class="text-center">{{ $qty }}</td>
                         <td>{{ $name }}</td>
@@ -395,7 +364,7 @@
             </tr>
         </table>
 
-        {{-- TANDA TANGAN seperti foto 1 --}}
+        {{-- TANDA TANGAN --}}
         <div class="sign">
             <div class="area">
                 <div class="label">Diterima Oleh,</div>

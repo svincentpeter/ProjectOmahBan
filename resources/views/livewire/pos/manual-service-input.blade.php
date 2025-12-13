@@ -198,7 +198,6 @@
                                 minimumValue: '0',
                                 maximumValue: '999999999',
                                 modifyValueOnWheel: false,
-                                allowDecimalPadding: false,
                             });
                             input.addEventListener('autoNumeric:rawValueModified', pushToWire);
                             input.addEventListener('change', pushToWire);

@@ -89,28 +89,28 @@
     </div>
 
     {{-- Main Card --}}
-    <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-zinc-200 dark:border-gray-700">
         {{-- Header & Toolbar --}}
-        <div class="p-5 border-b border-zinc-100">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h5 class="text-lg font-bold text-zinc-800 flex items-center">
-                        <i class="bi bi-people-fill text-indigo-600 me-2"></i>
-                        Daftar Customer
-                    </h5>
-                    <p class="text-sm text-zinc-500 mt-1">Kelola data customer untuk transaksi penjualan</p>
-                </div>
-                <div>
-                    @can('create_customers')
-                    <a href="{{ route('customers.create') }}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm hover:shadow-md">
-                        <i class="bi bi-plus-lg me-2"></i> Tambah Customer
-                    </a>
-                    @endcan
-                </div>
+        {{-- Header & Toolbar --}}
+        <div class="px-6 pt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h5 class="text-lg font-bold text-zinc-800 dark:text-white flex items-center">
+                    <i class="bi bi-people-fill text-indigo-600 me-2"></i>
+                    Daftar Customer
+                </h5>
+                <p class="text-sm text-zinc-500 dark:text-gray-400 mt-1">Kelola data customer untuk transaksi penjualan</p>
             </div>
+            <div>
+                @can('create_customers')
+                <a href="{{ route('customers.create') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-900 transition-all shadow-sm hover:shadow-md">
+                    <i class="bi bi-plus-lg me-2"></i> Tambah Customer
+                </a>
+                @endcan
+            </div>
+        </div>
 
-            {{-- Filter Section --}}
-            {{-- Filter Section --}}
+        {{-- Filter Section --}}
+        <div class="px-6 pt-6">
             @include('layouts.filter-card', [
                 'action' => route('customers.index'),
                 'title' => 'Filter Data',
@@ -157,10 +157,9 @@
                 ]
             ])
         </div>
-        </div>
 
         {{-- DataTable --}}
-        <div class="p-0">
+        <div class="px-6 pb-6">
             <div class="overflow-x-auto">
                 {{ $dataTable->table(['class' => 'w-full text-sm text-left text-zinc-500 dark:text-zinc-400', 'id' => 'customers-table'], true) }}
             </div>

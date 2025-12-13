@@ -82,26 +82,28 @@
 
     <!-- Filter & Table Card -->
     <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">
-            {{-- Header & Toolbar --}}
-            <div class="p-5 border-b border-zinc-100">
+            {{-- Card Header --}}
+        <div class="px-6 pt-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h5 class="text-lg font-bold text-zinc-800 flex items-center">
-                        <i class="bi bi-people-fill text-blue-600 me-2"></i>
+                    <h5 class="text-xl font-bold text-zinc-800 flex items-center gap-2">
+                        <i class="bi bi-people-fill text-blue-600"></i>
                         Daftar Supplier
                     </h5>
                     <p class="text-sm text-zinc-500 mt-1">Kelola data mitra pemasok untuk inventaris toko</p>
                 </div>
                 <div>
                     @can('create_suppliers')
-                    <a href="{{ route('suppliers.create') }}" class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all shadow-sm hover:shadow-md">
-                        <i class="bi bi-plus-lg me-2"></i> Tambah Supplier
-                    </a>
+                        <a href="{{ route('suppliers.create') }}" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all shadow-sm hover:shadow-md">
+                            <i class="bi bi-plus-lg me-2"></i> Tambah Supplier
+                        </a>
                     @endcan
                 </div>
             </div>
+        </div>
 
-            {{-- Filter Section --}}
+        {{-- Filter Section --}}
+        <div class="px-6 pt-6">
             {{-- Filter Section --}}
             @include('layouts.filter-card', [
                 'action' => route('suppliers.index'),
@@ -149,13 +151,10 @@
                 ]
             ])
         </div>
-        </div>
 
-        <!-- DataTable -->
-        <div class="p-0">
-            <div class="overflow-x-auto">
-                {{ $dataTable->table(['class' => 'w-full text-sm text-left text-zinc-500 dark:text-zinc-400', 'id' => 'suppliers-table'], true) }}
-            </div>
+        {{-- DataTable --}}
+        <div class="px-6 pb-6 overflow-x-auto">
+            {{ $dataTable->table(['class' => 'w-full text-sm text-left text-zinc-500 dark:text-zinc-400', 'id' => 'suppliers-table'], true) }}
         </div>
     </div>
 @endsection
@@ -170,8 +169,7 @@
 
     <script>
         $(document).ready(function() {
-    <script>
-        $(document).ready(function() {
+
             // Use jQuery selector to avoid race condition with window.LaravelDataTables
             $('#suppliers-table').on('preXhr.dt', function ( e, settings, data ) {
                 data.city = $('#city').val();
@@ -189,7 +187,7 @@
                 const id = $(this).data('id');
                 const name = $(this).data('name');
                 const hasPurchases = $(this).data('has-purchases'); // boolean string 'true'/'false'
-                const url = '{{ route('suppliers.destroy', ':id') }}'.replace(':id', id);
+                const url = "{{ route('suppliers.destroy', ':id') }}".replace(':id', id);
 
                 // Customize message based on purchase history
                 let warningTitle = 'Hapus Supplier?';

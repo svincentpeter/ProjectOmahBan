@@ -49,6 +49,28 @@ class LoginController extends Controller
             ]);
         }
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+        // Get the intended URL
+        $intendedUrl = session()->pull('url.intended', RouteServiceProvider::HOME);
+        
+        // List of API/AJAX endpoints that should not be used as redirect targets
+        $apiPatterns = [
+            '/notifications/summary',
+            '/notifications/data',
+            '/notifications/latest',
+            '/notifications/unread-count',
+            '/api/',
+            '/ajax/',
+        ];
+        
+        // Check if intended URL contains any API patterns
+        foreach ($apiPatterns as $pattern) {
+            if (str_contains($intendedUrl, $pattern)) {
+                // Redirect to dashboard instead of API endpoint
+                return redirect(RouteServiceProvider::HOME);
+            }
+        }
+        
+        // Safe to redirect to intended URL
+        return redirect($intendedUrl);
     }
 }

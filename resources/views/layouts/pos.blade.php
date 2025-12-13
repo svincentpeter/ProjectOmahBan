@@ -10,7 +10,7 @@
     <link rel="icon" href="{{ asset('images/favicon.png') }}">
     
     {{-- Tailwind CSS via CDN (User Requested) and Local CSS --}}
-    <script src="https://cdn.tailwindcss.com"></script>
+    {{-- Tailwind CSS via CDN (User Requested) and Local CSS --}}
     @vite(['resources/css/pos.css', 'resources/js/app.js'])
     
     {{-- Flowbite CSS: loaded via NPM/Vite (node_modules/flowbite) --}}
@@ -18,24 +18,7 @@
     {{-- Bootstrap Icons --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     
-    {{-- Tailwind Config --}}
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        ob: {
-                            primary: '#4f46e5',
-                            soft: '#eef2ff',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+
     
     {{-- Livewire Styles --}}
     @livewireStyles

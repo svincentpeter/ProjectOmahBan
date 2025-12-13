@@ -1406,11 +1406,131 @@ class Checkout extends Component
 
         $this->sale->refresh();
 
+        // Jika sudah lunas, update UI
+        if ($this->sale->payment_status === 'Paid') {
+            $this->show_payment = false;
+            $this->show_midtrans_payment = false;
+            $this->dispatch('swal-success', 'Pembayaran Midtrans berhasil.');
+            return;
+        }
+
+        // Coba query langsung ke Midtrans API untuk cek status
+        try {
+            if ($this->sale->midtrans_order_id) {
+                \Midtrans\Config::$serverKey = config('midtrans.server_key');
+                \Midtrans\Config::$isProduction = config('midtrans.is_production');
+                
+                $status = \Midtrans\Transaction::status($this->sale->midtrans_order_id);
+                
+                // Handle response yang bisa berupa array atau object
+                $transactionStatus = is_array($status) 
+                    ? ($status['transaction_status'] ?? 'unknown')
+                    : ($status->transaction_status ?? 'unknown');
+                
+                Log::info('Midtrans Status Check', [
+                    'order_id' => $this->sale->midtrans_order_id,
+                    'transaction_status' => $transactionStatus,
+                ]);
+                
+                // Jika settlement atau capture, tandai lunas
+                if (in_array($transactionStatus, ['settlement', 'capture'])) {
+                    $this->markAsPaidViaMidtrans($status);
+                    return;
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Midtrans Status Check failed: ' . $e->getMessage());
+            // Fallback: tetap check dari database
+        }
+        
+        // Re-check dari database setelah query API
+        $this->sale->refresh();
         if ($this->sale->payment_status === 'Paid') {
             $this->show_payment = false;
             $this->show_midtrans_payment = false;
             $this->dispatch('swal-success', 'Pembayaran Midtrans berhasil.');
         }
+    }
+
+    /**
+     * Tandai lunas via Midtrans (dipanggil setelah konfirmasi dari Midtrans API atau JS callback)
+     */
+    public function markAsPaidViaMidtrans($transactionResult = null)
+    {
+        if (!$this->sale) {
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+            // Handle both array (from JS) and object (from Midtrans API) formats
+            if (is_array($transactionResult)) {
+                $paymentType = $transactionResult['payment_type'] ?? 'midtrans';
+                $transactionId = $transactionResult['transaction_id'] ?? null;
+                $grossAmount = (int) ($transactionResult['gross_amount'] ?? $this->sale->total_amount);
+            } else {
+                $paymentType = $transactionResult->payment_type ?? 'midtrans';
+                $transactionId = $transactionResult->transaction_id ?? null;
+                $grossAmount = (int) ($transactionResult->gross_amount ?? $this->sale->total_amount);
+            }
+
+            // Update sale
+            $this->sale->update([
+                'payment_status' => 'Paid',
+                'status' => 'Completed',
+                'paid_amount' => $grossAmount,
+                'due_amount' => 0,
+                'paid_at' => now(),
+                'payment_method' => 'Midtrans',
+                'midtrans_transaction_id' => $transactionId,
+                'midtrans_payment_type' => $this->mapMidtransPaymentType($paymentType),
+            ]);
+
+            // Buat SalePayment record
+            SalePayment::create([
+                'sale_id' => $this->sale->id,
+                'date' => now()->toDateString(),
+                'reference' => 'MIDTRANS/' . ($transactionId ?? uniqid()),
+                'amount' => $grossAmount,
+                'payment_method' => 'Midtrans - ' . ucfirst($paymentType),
+                'note' => 'Paid via Midtrans ' . ucfirst($paymentType),
+            ]);
+
+            DB::commit();
+
+            // Refresh sale dan update UI
+            $this->sale->refresh();
+            $this->show_payment = false;
+            $this->show_midtrans_payment = false;
+            
+            $this->dispatch('swal-success', 'Pembayaran Midtrans berhasil diproses!');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('markAsPaidViaMidtrans Error: ' . $e->getMessage());
+            $this->dispatch('swal-error', 'Gagal memproses pembayaran: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Map Midtrans payment type ke enum database
+     */
+    private function mapMidtransPaymentType(string $type): string
+    {
+        $map = [
+            'credit_card' => 'credit_card',
+            'gopay' => 'gopay',
+            'shopeepay' => 'shopeepay',
+            'qris' => 'qris',
+            'bank_transfer' => 'bank_transfer',
+            'echannel' => 'bank_transfer',
+            'permata' => 'bank_transfer',
+            'bca_va' => 'bank_transfer',
+            'bni_va' => 'bank_transfer',
+            'bri_va' => 'bank_transfer',
+        ];
+        
+        return $map[$type] ?? 'other';
     }
 
     /**

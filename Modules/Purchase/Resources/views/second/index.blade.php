@@ -68,30 +68,12 @@
         </div>
     </div>
 
-    {{-- Filter Card --}}
-    @include('layouts.filter-card', [
-        'action' => route('purchases.second.index'),
-        'title' => 'Filter Data Pembelian Bekas',
-        'icon' => 'bi bi-funnel',
-        'quickFilters' => [
-            ['label' => 'Semua', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'all']), 'param' => 'quick_filter', 'value' => 'all', 'icon' => 'bi bi-grid'],
-            ['label' => 'Hari Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'today']), 'param' => 'quick_filter', 'value' => 'today', 'icon' => 'bi bi-clock'],
-            ['label' => 'Kemarin', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'yesterday']), 'param' => 'quick_filter', 'value' => 'yesterday', 'icon' => 'bi bi-clock-history'],
-            ['label' => 'Minggu Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'this_week']), 'param' => 'quick_filter', 'value' => 'this_week', 'icon' => 'bi bi-calendar-week'],
-            ['label' => 'Bulan Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'this_month']), 'param' => 'quick_filter', 'value' => 'this_month', 'icon' => 'bi bi-calendar-month'],
-        ],
-        'filters' => [
-            ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => $from ?? null],
-            ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => $to ?? null],
-            ['name' => 'customer', 'label' => 'Customer', 'type' => 'text', 'value' => request('customer'), 'placeholder' => 'Cari Customer...'],
-            ['name' => 'payment_status', 'label' => 'Status Bayar', 'type' => 'select', 'options' => ['Lunas' => 'Lunas', 'Belum Lunas' => 'Belum Lunas'], 'placeholder' => 'Semua Status'],
-        ]
-    ])
+
 
     {{-- Main Card --}}
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
         {{-- Header --}}
-        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
+        <div class="px-6 pt-6 flex justify-between items-center">
             <div>
                 <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center">
                     <i class="bi bi-recycle mr-2 text-purple-600"></i>
@@ -106,8 +88,30 @@
                 </a>
             @endcan
         </div>
+
+        {{-- Filter Card --}}
+        <div class="px-6 pt-6">
+            @include('layouts.filter-card', [
+                'action' => route('purchases.second.index'),
+                'title' => 'Filter Data Pembelian Bekas',
+                'icon' => 'bi bi-funnel',
+                'quickFilters' => [
+                    ['label' => 'Semua', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'all']), 'param' => 'quick_filter', 'value' => 'all', 'icon' => 'bi bi-grid'],
+                    ['label' => 'Hari Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'today']), 'param' => 'quick_filter', 'value' => 'today', 'icon' => 'bi bi-clock'],
+                    ['label' => 'Kemarin', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'yesterday']), 'param' => 'quick_filter', 'value' => 'yesterday', 'icon' => 'bi bi-clock-history'],
+                    ['label' => 'Minggu Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'this_week']), 'param' => 'quick_filter', 'value' => 'this_week', 'icon' => 'bi bi-calendar-week'],
+                    ['label' => 'Bulan Ini', 'url' => request()->fullUrlWithQuery(['quick_filter' => 'this_month']), 'param' => 'quick_filter', 'value' => 'this_month', 'icon' => 'bi bi-calendar-month'],
+                ],
+                'filters' => [
+                    ['name' => 'from', 'label' => 'Dari Tanggal', 'type' => 'date', 'value' => $from ?? null],
+                    ['name' => 'to', 'label' => 'Sampai Tanggal', 'type' => 'date', 'value' => $to ?? null],
+                    ['name' => 'customer', 'label' => 'Customer', 'type' => 'text', 'value' => request('customer'), 'placeholder' => 'Cari Customer...'],
+                    ['name' => 'payment_status', 'label' => 'Status Bayar', 'type' => 'select', 'options' => ['Lunas' => 'Lunas', 'Belum Lunas' => 'Belum Lunas'], 'placeholder' => 'Semua Status'],
+                ]
+            ])
+        </div>
         
-        <div class="p-4">
+        <div class="px-6 pb-6">
             {{ $dataTable->table() }}
         </div>
     </div>

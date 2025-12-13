@@ -58,6 +58,8 @@
         </div>
     </div>
 
+    
+
     {{-- Main Card --}}
     <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">
         
@@ -76,25 +78,6 @@
                         class="inline-flex items-center text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl transition-all shadow-sm hover:shadow">
                     <i class="bi bi-plus-lg me-2"></i> Tambah Jasa
                 </button>
-            </div>
-
-            {{-- Filter Card --}}
-            <div class="px-6 pt-6">
-                @include('layouts.filter-card', [
-                    'action' => route('service-masters.index'),
-                    'title' => 'Filter Data Jasa',
-                    'filters' => [
-                        ['name' => 'category', 'label' => 'Kategori', 'type' => 'select', 'options' => [
-                            'service' => 'Service',
-                            'goods' => 'Goods',
-                            'custom' => 'Custom'
-                        ], 'placeholder' => 'Semua Kategori', 'icon' => 'bi bi-tags'],
-                        ['name' => 'quick', 'label' => 'Status', 'type' => 'select', 'options' => [
-                            'active' => 'Aktif',
-                            'inactive' => 'Nonaktif'
-                        ], 'placeholder' => 'Semua Status', 'icon' => 'bi bi-check-circle']
-                    ]
-                ])
             </div>
 
         {{-- DataTable --}}
