@@ -51,6 +51,21 @@
                     <a href="{{ route('sales.index') }}" class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center transition-colors">
                         <i class="bi bi-arrow-left mr-2"></i> Kembali
                     </a>
+                    @php
+                        // Build WhatsApp message
+                        $waMessage = "Halo, berikut invoice penjualan:\n\n";
+                        $waMessage .= "*" . ($sale->reference ?? '#' . $sale->id) . "*\n";
+                        $waMessage .= "Tanggal: " . \Carbon\Carbon::parse($sale->date)->format('d/m/Y') . "\n";
+                        $waMessage .= "Total: " . format_currency($sale->total_amount) . "\n";
+                        if ($sale->due_amount > 0) {
+                            $waMessage .= "Kurang Bayar: " . format_currency($sale->due_amount) . "\n";
+                        }
+                        $waMessage .= "\nTerima kasih atas kepercayaan Anda!";
+                        $waLink = "https://wa.me/?text=" . urlencode($waMessage);
+                    @endphp
+                    <a href="{{ $waLink }}" target="_blank" class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center shadow hover:shadow-lg transition-all">
+                        <i class="bi bi-whatsapp mr-2"></i> WhatsApp
+                    </a>
                     <a href="{{ route('sales.pdf', $sale->id) }}" target="_blank" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 flex items-center shadow hover:shadow-lg transition-all">
                         <i class="bi bi-printer mr-2"></i> Cetak
                     </a>

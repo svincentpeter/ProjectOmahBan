@@ -36,43 +36,35 @@ class PurchasePaymentsController extends Controller
 
         $request->validate([
             'date' => 'required|date',
-            'reference' => 'required|string|max:255',
-            'amount' => 'required|numeric',
+            'reference' => 'nullable|string|max:255',
+            'amount' => 'required|numeric|min:1',
             'note' => 'nullable|string|max:1000',
-            'purchase_id' => 'required',
-            'payment_method' => 'required|string|max:255'
+            'purchase_id' => 'required|exists:purchases,id',
+            'payment_method' => 'required|string|max:255',
+            'bank_name' => 'nullable|string|max:255',
         ]);
 
         DB::transaction(function () use ($request) {
+            // Sanitize amount (remove formatting if any)
+            $amount = preg_replace('/[^0-9]/', '', $request->amount);
+
             PurchasePayment::create([
                 'date' => $request->date,
-                'reference' => $request->reference,
-                'amount' => $request->amount,
+                'reference' => $request->reference ?: PurchasePayment::generateReference(),
+                'amount' => (int) $amount,
                 'note' => $request->note,
                 'purchase_id' => $request->purchase_id,
-                'payment_method' => $request->payment_method
+                'payment_method' => $request->payment_method,
+                'bank_name' => $request->bank_name,
+                'user_id' => auth()->id(),
             ]);
 
+            // Use the new recalcPaymentStatus method
             $purchase = Purchase::findOrFail($request->purchase_id);
-
-            $due_amount = $purchase->due_amount - $request->amount;
-
-            if ($due_amount == $purchase->total_amount) {
-                $payment_status = 'Unpaid';
-            } elseif ($due_amount > 0) {
-                $payment_status = 'Partial';
-            } else {
-                $payment_status = 'Paid';
-            }
-
-            $purchase->update([
-                'paid_amount' => ($purchase->paid_amount + $request->amount) * 100,
-                'due_amount' => $due_amount * 100,
-                'payment_status' => $payment_status
-            ]);
+            $purchase->recalcPaymentStatus();
         });
 
-        toast('Purchase Payment Created!', 'success');
+        toast('Pembayaran berhasil ditambahkan!', 'success');
 
         return redirect()->route('purchases.index');
     }
@@ -92,43 +84,31 @@ class PurchasePaymentsController extends Controller
 
         $request->validate([
             'date' => 'required|date',
-            'reference' => 'required|string|max:255',
-            'amount' => 'required|numeric',
+            'reference' => 'nullable|string|max:255',
+            'amount' => 'required|numeric|min:1',
             'note' => 'nullable|string|max:1000',
-            'purchase_id' => 'required',
-            'payment_method' => 'required|string|max:255'
+            'purchase_id' => 'required|exists:purchases,id',
+            'payment_method' => 'required|string|max:255',
+            'bank_name' => 'nullable|string|max:255',
         ]);
 
         DB::transaction(function () use ($request, $purchasePayment) {
-            $purchase = $purchasePayment->purchase;
-
-            $due_amount = ($purchase->due_amount + $purchasePayment->amount) - $request->amount;
-
-            if ($due_amount == $purchase->total_amount) {
-                $payment_status = 'Unpaid';
-            } elseif ($due_amount > 0) {
-                $payment_status = 'Partial';
-            } else {
-                $payment_status = 'Paid';
-            }
-
-            $purchase->update([
-                'paid_amount' => (($purchase->paid_amount - $purchasePayment->amount) + $request->amount) * 100,
-                'due_amount' => $due_amount * 100,
-                'payment_status' => $payment_status
-            ]);
+            $amount = preg_replace('/[^0-9]/', '', $request->amount);
 
             $purchasePayment->update([
                 'date' => $request->date,
-                'reference' => $request->reference,
-                'amount' => $request->amount,
+                'reference' => $request->reference ?: $purchasePayment->reference,
+                'amount' => (int) $amount,
                 'note' => $request->note,
                 'purchase_id' => $request->purchase_id,
-                'payment_method' => $request->payment_method
+                'payment_method' => $request->payment_method,
+                'bank_name' => $request->bank_name,
             ]);
+
+            // recalcPaymentStatus is called automatically via model boot events
         });
 
-        toast('Purchase Payment Updated!', 'info');
+        toast('Pembayaran berhasil diperbarui!', 'info');
 
         return redirect()->route('purchases.index');
     }
@@ -137,10 +117,17 @@ class PurchasePaymentsController extends Controller
     public function destroy(PurchasePayment $purchasePayment) {
         abort_if(Gate::denies('access_purchase_payments'), 403);
 
+        $purchase = $purchasePayment->purchase;
         $purchasePayment->delete();
 
-        toast('Purchase Payment Deleted!', 'warning');
+        // Recalc after delete - model event should handle this but let's be explicit
+        if ($purchase) {
+            $purchase->recalcPaymentStatus();
+        }
+
+        toast('Pembayaran berhasil dihapus!', 'warning');
 
         return redirect()->route('purchases.index');
     }
 }
+

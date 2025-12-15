@@ -13,80 +13,98 @@
 @endsection
 
 @section('content')
-    {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {{-- Total Customer --}}
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-zinc-200 flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
-            <div class="relative z-10">
-                <p class="text-sm font-medium text-zinc-500 mb-1">Total Customer</p>
-                <h3 class="text-2xl font-bold text-zinc-800">
-                    {{ \Modules\People\Entities\Customer::count() }}
-                </h3>
+    {{-- Statistics Cards (Line Color, bukan fullfill) --}}
+@php
+    $totalCustomers = \Modules\People\Entities\Customer::count();
+
+    try {
+        $activeCustomers = \Modules\People\Entities\Customer::whereHas('sales', function($q) {
+            $q->where('date', '>=', now()->subMonths(6));
+        })->count();
+    } catch (\Throwable $e) {
+        \Log::error('Error counting active customers: ' . $e->getMessage());
+        $activeCustomers = 0;
+    }
+
+    $totalCities = \Modules\People\Entities\Customer::distinct('city')->count('city');
+
+    try {
+        $totalSales = \Modules\Sale\Entities\Sale::count();
+    } catch (\Throwable $e) {
+        $totalSales = 0;
+    }
+@endphp
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+    {{-- Total Customer --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-indigo-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 mb-1">Total Customer</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalCustomers }}</h3>
+                <p class="text-xs text-slate-500 mt-1">Seluruh customer terdaftar</p>
             </div>
-            <div class="p-3 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors">
-                <i class="bi bi-people text-indigo-600 text-xl"></i>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100">
+                <i class="bi bi-people text-xl"></i>
             </div>
         </div>
+    </div>
 
-        {{-- Customer Aktif --}}
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-zinc-200 flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
-            <div class="relative z-10">
-                <p class="text-sm font-medium text-zinc-500 mb-1">Customer Aktif</p>
-                <h3 class="text-2xl font-bold text-zinc-800">
-                    @php
-                        try {
-                            $activeCustomers = \Modules\People\Entities\Customer::whereHas('sales', function($q) { 
-                                $q->where('date', '>=', now()->subMonths(6)); 
-                            })->count();
-                        } catch (\Throwable $e) {
-                            \Log::error('Error counting active customers: ' . $e->getMessage());
-                            $activeCustomers = 0;
-                        }
-                    @endphp
-                    {{ $activeCustomers }}
-                </h3>
+    {{-- Customer Aktif --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-emerald-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 mb-1">Customer Aktif</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $activeCustomers }}</h3>
                 <p class="text-xs text-emerald-600 mt-1 flex items-center">
                     <i class="bi bi-activity me-1"></i> In last 6 months
                 </p>
             </div>
-            <div class="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
-                <i class="bi bi-person-check text-emerald-600 text-xl"></i>
-            </div>
-        </div>
-
-        {{-- Total Kota --}}
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-zinc-200 flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
-            <div class="relative z-10">
-                <p class="text-sm font-medium text-zinc-500 mb-1">Total Kota</p>
-                <h3 class="text-2xl font-bold text-zinc-800">
-                    {{ \Modules\People\Entities\Customer::distinct('city')->count('city') }}
-                </h3>
-            </div>
-            <div class="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-                <i class="bi bi-geo-alt text-blue-600 text-xl"></i>
-            </div>
-        </div>
-
-        {{-- Total Transaksi --}}
-        <div class="bg-white rounded-2xl p-4 shadow-sm border border-zinc-200 flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
-            <div class="relative z-10">
-                <p class="text-sm font-medium text-zinc-500 mb-1">Total Transaksi</p>
-                <h3 class="text-2xl font-bold text-zinc-800">
-                        @php
-                        try {
-                            $totalSales = \Modules\Sale\Entities\Sale::count();
-                        } catch (\Throwable $e) {
-                            $totalSales = 0;
-                        }
-                    @endphp
-                    {{ $totalSales }}
-                </h3>
-            </div>
-            <div class="p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition-colors">
-                <i class="bi bi-cart text-amber-600 text-xl"></i>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <i class="bi bi-person-check text-xl"></i>
             </div>
         </div>
     </div>
+
+    {{-- Total Kota --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-blue-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 mb-1">Total Kota</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalCities }}</h3>
+                <p class="text-xs text-slate-500 mt-1">Sebaran kota customer</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                <i class="bi bi-geo-alt text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Total Transaksi --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-amber-500">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 mb-1">Total Transaksi</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalSales }}</h3>
+                <p class="text-xs text-slate-500 mt-1">Jumlah transaksi penjualan</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                <i class="bi bi-cart text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 
     {{-- Main Card --}}
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-zinc-200 dark:border-gray-700">

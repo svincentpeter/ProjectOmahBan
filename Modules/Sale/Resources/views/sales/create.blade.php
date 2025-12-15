@@ -40,8 +40,8 @@
             <form id="sale-form" action="{{ route('sales.store') }}" method="POST">
                 @csrf
 
-                {{-- Reference & Date --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {{-- Reference & Date & Customer --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div>
                         <label for="reference" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Reference <span class="text-red-500">*</span></label>
                         <div class="relative">
@@ -57,14 +57,28 @@
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <i class="bi bi-calendar-event text-gray-500"></i>
                             </div>
-                            <input type="date" name="date" id="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5" value="{{ \Carbon\Carbon::now()->format('Y-m-d') }}" required>
+                            <input type="date" name="date" id="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5" value="{{ isset($quotation) ? $quotation->date : \Carbon\Carbon::now()->format('Y-m-d') }}" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="customer_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Customer <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <i class="bi bi-person text-gray-500"></i>
+                            </div>
+                            <select name="customer_id" id="customer_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5" required>
+                                <option value="">Select Customer</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}" {{ (isset($quotation) && $quotation->customer_id == $customer->id) ? 'selected' : '' }}>{{ $customer->customer_name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 </div>
 
                 {{-- Cart Component --}}
                 <div class="mb-8">
-                    <livewire:product-cart :cartInstance="'sale'" />
+                    <livewire:product-cart :cartInstance="'sale'" :data="$quotation ?? null" />
                 </div>
 
                 {{-- Status, Payment, Amount --}}

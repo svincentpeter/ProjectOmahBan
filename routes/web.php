@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Api\MidtransCallbackController;
-use App\Http\Controllers\Api\FonteeWebhookController;
 use App\Http\Controllers\Owner\NotificationController;
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\ManualInputController;
@@ -27,14 +26,26 @@ Route::middleware('auth')->group(function () {
     Route::get('/sales-purchases/chart-data', [HomeController::class, 'salesPurchasesChart'])->name('sales-purchases.chart');
     Route::get('/current-month/chart-data', [HomeController::class, 'currentMonthChart'])->name('current-month.chart');
     Route::get('/payment-flow/chart-data', [HomeController::class, 'paymentChart'])->name('payment-flow.chart');
+    
+    // Audit Log
+    Route::get('/audit-log', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-log.index');
+
+    // WhatsApp Settings
+    Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
+        Route::get('/settings', [\App\Http\Controllers\WhatsAppController::class, 'settings'])->name('settings');
+        Route::get('/status', [\App\Http\Controllers\WhatsAppController::class, 'status'])->name('status');
+        Route::get('/qr', [\App\Http\Controllers\WhatsAppController::class, 'qrCode'])->name('qr');
+        Route::post('/test', [\App\Http\Controllers\WhatsAppController::class, 'testMessage'])->name('test');
+        Route::post('/notify-owner', [\App\Http\Controllers\WhatsAppController::class, 'notifyOwner'])->name('notify-owner');
+        Route::post('/reconnect', [\App\Http\Controllers\WhatsAppController::class, 'reconnect'])->name('reconnect');
+        Route::post('/disconnect', [\App\Http\Controllers\WhatsAppController::class, 'disconnect'])->name('disconnect');
+    });
 });
 
 // ======================================================================
 // WEBHOOKS (PUBLIC, CSRF-EXEMPT) → tempatkan DI LUAR middleware auth
 // ======================================================================
 Route::post('/api/midtrans/callback', [MidtransCallbackController::class, 'receive'])->name('midtrans.callback');
-
-Route::post('/api/webhooks/fontee', [FonteeWebhookController::class, 'handle'])->name('webhooks.fontee');
 
 // ======================================================================
 // OWNER NOTIFICATION CENTER (auth)

@@ -316,7 +316,7 @@
 </li>
 
 @can('access_sales')
-<li class="px-1" x-data="{ open: {{ request()->routeIs(['sales.*', 'sale-payments.*']) ? 'true' : 'false' }} }">
+<li class="px-1" x-data="{ open: {{ request()->routeIs(['sales.*', 'sale-payments.*', 'sale-returns.*', 'quotations.*']) ? 'true' : 'false' }} }">
     <button @click="open = !open" type="button"
             class="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group text-zinc-800 hover:bg-zinc-100">
         <i class="bi bi-receipt text-base text-zinc-500 group-hover:text-zinc-700"></i>
@@ -325,12 +325,28 @@
     </button>
     <ul x-show="open" x-collapse class="mt-0.5 space-y-0.5 ml-4 border-l border-zinc-100 pl-3">
         <li>
+            <a href="{{ route('quotations.index') }}" 
+               class="flex items-center gap-2 px-2.5 py-2 rounded-md text-xs transition-all {{ request()->routeIs('quotations.*') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50' }}">
+                <span class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('quotations.*') ? 'bg-blue-500' : 'bg-zinc-400' }}"></span>
+                Penawaran
+            </a>
+        </li>
+        <li>
             <a href="{{ route('sales.index') }}" 
                class="flex items-center gap-2 px-2.5 py-2 rounded-md text-xs transition-all {{ request()->routeIs('sales.index') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50' }}">
                 <span class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('sales.index') ? 'bg-blue-500' : 'bg-zinc-400' }}"></span>
                 Semua Penjualan
             </a>
         </li>
+        @can('access_sale_returns')
+        <li>
+            <a href="{{ route('sale-returns.index') }}" 
+               class="flex items-center gap-2 px-2.5 py-2 rounded-md text-xs transition-all {{ request()->routeIs('sale-returns.*') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50' }}">
+                <span class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('sale-returns.*') ? 'bg-blue-500' : 'bg-zinc-400' }}"></span>
+                Retur Penjualan
+            </a>
+        </li>
+        @endcan
     </ul>
 </li>
 @endcan

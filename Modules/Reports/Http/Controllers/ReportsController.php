@@ -180,57 +180,172 @@ $netProfit   = $grossProfit - $operatingExpenses;
         ]);
     }
 
+    /**
+     * Reusable query logic for Cashier Report
+     */
+    private function getCashierData(Request $request)
+    {
+        $from     = $request->input('from', now()->startOfMonth()->toDateString());
+        $to       = $request->input('to',   now()->toDateString());
+        $userId   = $request->input('user_id');
+        $onlyPaid = $request->boolean('only_paid', true);
+
+        $rows = Sale::query()
+            ->when($onlyPaid, fn($q) => $q->where('status', 'Completed'))
+            ->between($from, $to)
+            ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->selectRaw('user_id, COUNT(*) as trx_count,
+                         COALESCE(SUM(total_amount),0)  as omset,
+                         COALESCE(SUM(total_hpp),0)     as total_hpp,
+                         COALESCE(SUM(total_profit),0)  as total_profit')
+            ->groupBy('user_id')
+            ->with('user:id,name')
+            ->orderBy('user_id')
+            ->get();
+            
+        return [$rows, $from, $to];
+    }
+
     public function ringkasCashier(Request $request)
-{
-    // 1) Ambil filter dengan default aman
-    $from     = $request->input('from', now()->startOfMonth()->toDateString());
-    $to       = $request->input('to',   now()->toDateString());
-    $userId   = $request->input('user_id');
-    $onlyPaid = $request->boolean('only_paid', true);
+    {
+        [$rows, $from, $to] = $this->getCashierData($request);
 
-    // 2) Data kasir untuk dropdown
-    $cashiers = User::query()->select('id','name')->orderBy('name')->get();
+        // Data kasir untuk dropdown
+        $cashiers = User::query()->orderBy('name')->pluck('name', 'id');
 
-    // 3) Agregasi per kasir
-    $rows = Sale::query()
-        ->when($onlyPaid, fn($q) => $q->where('status', 'Completed')) // UBAH jika field status berbeda
-        ->between($from, $to)
-        ->when($userId, fn($q) => $q->where('user_id', $userId))
-        ->selectRaw('user_id, COUNT(*) as trx_count,
-                     COALESCE(SUM(total_amount),0)  as omset,
-                     COALESCE(SUM(total_hpp),0)     as total_hpp,
-                     COALESCE(SUM(total_profit),0)  as total_profit')
-        ->groupBy('user_id')
-        ->with('user:id,name')
-        ->orderBy('user_id')
-        ->get();
+        return view('reports::ringkas.cashier', [
+            'from'     => $from,
+            'to'       => $to,
+            'userId'   => $request->input('user_id'),
+            'onlyPaid' => $request->boolean('only_paid', true),
+            'cashiers' => $cashiers,
+            'rows'     => $rows,
+        ]);
+    }
 
-    // 4) Kirim ke view
-    return view('reports::ringkas.cashier', [
-        'from'     => $from,
-        'to'       => $to,
-        'userId'   => $userId,
-        'onlyPaid' => $onlyPaid,
-        'cashiers' => $cashiers,
-        'rows'     => $rows,
-    ]);
-}
+    public function exportCashierExcel(Request $request)
+    {
+        [$rows, $from, $to] = $this->getCashierData($request);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\CashierReportExport($rows, $from, $to),
+            "laporan_kinerja_kasir_{$from}_{$to}.xlsx"
+        );
+    }
+
+    public function exportCashierPdf(Request $request)
+    {
+        [$rows, $from, $to] = $this->getCashierData($request);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.cashier-report-pdf', [
+            'rows' => $rows,
+            'from' => $from,
+            'to'   => $to,
+        ]);
+
+        return $pdf->stream("laporan_kinerja_kasir_{$from}_{$to}.pdf");
+    }
 
     /* =========================
-     *  STUB untuk folder lain
-     *  (biar route tidak 404)
+     *  SALES REPORT
      * ========================= */
-    public function salesIndex(Request $request)              { return $this->emptyIndex('reports::sales.index'); }
-    public function generateSalesReport(Request $request)     { return $this->emptyResult('reports::sales.index'); }
+    public function salesIndex(Request $request)
+    {
+        $from = $request->input('from', now()->startOfMonth()->toDateString());
+        $to = $request->input('to', now()->toDateString());
+        $status = $request->input('status');
+
+        $query = Sale::query()
+            ->whereBetween('date', [$from, $to]);
+        
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $sales = $query->orderBy('date', 'desc')->get();
+
+        $summary = [
+            'count' => $sales->count(),
+            'total' => $sales->sum('total_amount'),
+            'paid' => $sales->sum('paid_amount'),
+            'due' => $sales->sum('due_amount'),
+        ];
+
+        return view('reports::sales.index', compact('sales', 'summary', 'from', 'to'));
+    }
+
+    public function generateSalesReport(Request $request)
+    {
+        return $this->salesIndex($request);
+    }
 
     public function salesReturnIndex(Request $request)        { return $this->emptyIndex('reports::sales-return.index'); }
     public function generateSalesReturnReport(Request $request){ return $this->emptyResult('reports::sales-return.index'); }
 
-    public function paymentsIndex(Request $request)           { return $this->emptyIndex('reports::payments.index'); }
-    public function generatePaymentsReport(Request $request)  { return $this->emptyResult('reports::payments.index'); }
+    /* =========================
+     *  PAYMENTS REPORT
+     * ========================= */
+    public function paymentsIndex(Request $request)
+    {
+        $from = $request->input('from', now()->startOfMonth()->toDateString());
+        $to = $request->input('to', now()->toDateString());
+        $method = $request->input('method');
 
-    public function purchasesIndex(Request $request)          { return $this->emptyIndex('reports::purchases.index'); }
-    public function generatePurchasesReport(Request $request) { return $this->emptyResult('reports::purchases.index'); }
+        $query = SalePayment::query()
+            ->with('sale:id,reference')
+            ->whereBetween('date', [$from, $to]);
+        
+        if ($method) {
+            $query->where('payment_method', $method);
+        }
+
+        $payments = $query->orderBy('date', 'desc')->get();
+
+        $summary = [
+            'count' => $payments->count(),
+            'total' => $payments->sum('amount'),
+        ];
+
+        return view('reports::payments.index', compact('payments', 'summary', 'from', 'to'));
+    }
+
+    public function generatePaymentsReport(Request $request)
+    {
+        return $this->paymentsIndex($request);
+    }
+
+    /* =========================
+     *  PURCHASES REPORT
+     * ========================= */
+    public function purchasesIndex(Request $request)
+    {
+        $from = $request->input('from', now()->startOfMonth()->toDateString());
+        $to = $request->input('to', now()->toDateString());
+        $status = $request->input('status');
+
+        $query = \Modules\Purchase\Entities\Purchase::query()
+            ->whereBetween('date', [$from, $to]);
+        
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $purchases = $query->orderBy('date', 'desc')->get();
+
+        $summary = [
+            'count' => $purchases->count(),
+            'total' => $purchases->sum('total_amount'),
+            'paid' => $purchases->sum('paid_amount'),
+            'due' => $purchases->sum('due_amount'),
+        ];
+
+        return view('reports::purchases.index', compact('purchases', 'summary', 'from', 'to'));
+    }
+
+    public function generatePurchasesReport(Request $request)
+    {
+        return $this->purchasesIndex($request);
+    }
 
     public function purchasesReturnIndex(Request $request)    { return $this->emptyIndex('reports::purchases-return.index'); }
     public function generatePurchasesReturnReport(Request $request) { return $this->emptyResult('reports::purchases-return.index'); }

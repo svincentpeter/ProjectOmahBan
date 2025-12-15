@@ -116,14 +116,14 @@
     table.dataTable tbody td {
         padding: 1rem;
         border-bottom: 1px solid #e5e7eb;
-        color: #6b7280;
+        color: #111827; /* Changed from #6b7280 to dark/black for better readability */
         vertical-align: middle;
         font-size: 0.875rem;
     }
 
     .dark table.dataTable tbody td {
         border-bottom-color: #374151;
-        color: #d1d5db;
+        color: #f3f4f6; /* Light color for dark mode */
     }
 
     /* Row Hover Effect */

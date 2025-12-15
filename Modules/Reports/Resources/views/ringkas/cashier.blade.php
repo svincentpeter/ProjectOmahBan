@@ -16,12 +16,16 @@
         // Fallback vars are handled in controller usually, but here we keep safety
         $from = $from ?? request('from', now()->startOfMonth()->toDateString());
         $to = $to ?? request('to', now()->toDateString());
+
         // Calculate aggregate
         $totTrx = (int) $rows->sum('trx_count');
         $totOmset = (int) $rows->sum('omset');
         $totHpp = (int) $rows->sum('total_hpp');
         $totProfit = (int) $rows->sum('total_profit');
         $npMargin = $totOmset > 0 ? round(($totProfit / max($totOmset, 1)) * 100, 1) : 0;
+
+        // Helper format angka (biar Rp tidak “ikut membesar”)
+        $fmtMoney = fn($n) => number_format((int) $n, 0, ',', '.');
     @endphp
 
     {{-- Main Control Card --}}
@@ -39,14 +43,20 @@
                     </span>
                 </div>
             </div>
-            <div class="text-right">
-                <button onclick="window.print()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-all shadow-sm">
-                    <i class="bi bi-printer mr-2"></i> Cetak Laporan
-                </button>
+            <div class="text-right flex items-center justify-end gap-2">
+                <a href="{{ route('ringkas-report.cashier.export-excel', request()->all()) }}"
+                   class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 focus:ring-4 focus:ring-green-100 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/50 transition-all shadow-sm">
+                    <i class="bi bi-file-earmark-excel mr-2"></i> Export Excel
+                </a>
+                <a href="{{ route('ringkas-report.cashier.export-pdf', request()->all()) }}" target="_blank"
+                   class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 focus:ring-4 focus:ring-red-100 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/50 transition-all shadow-sm">
+                    <i class="bi bi-file-earmark-pdf mr-2"></i> Export PDF
+                </a>
             </div>
         </div>
 
-        <form action="{{ route('ringkas-report.cashier') }}" method="GET" class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+        <form action="{{ route('ringkas-report.cashier') }}" method="GET"
+              class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
                      <div>
@@ -55,7 +65,9 @@
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <i class="bi bi-calendar-event text-gray-500 dark:text-gray-400"></i>
                             </div>
-                            <input type="date" id="from" name="from" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ $from }}" required>
+                            <input type="date" id="from" name="from"
+                                   class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                   value="{{ $from }}" required>
                         </div>
                     </div>
                     <div>
@@ -64,12 +76,15 @@
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <i class="bi bi-calendar-check text-gray-500 dark:text-gray-400"></i>
                             </div>
-                            <input type="date" id="to" name="to" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value="{{ $to }}" required>
+                            <input type="date" id="to" name="to"
+                                   class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                   value="{{ $to }}" required>
                         </div>
                     </div>
                     <div>
                         <label for="user_id" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Pilih Kasir</label>
-                        <select id="user_id" name="user_id" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <select id="user_id" name="user_id"
+                                class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             <option value="">— Semua Kasir —</option>
                             @foreach($cashiers as $id => $name)
                                 <option value="{{ $id }}" {{ request('user_id') == $id ? 'selected' : '' }}>{{ $name }}</option>
@@ -78,14 +93,16 @@
                     </div>
                     <div>
                         <label for="only_paid" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status Pembayaran</label>
-                        <select id="only_paid" name="only_paid" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        <select id="only_paid" name="only_paid"
+                                class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             <option value="1" {{ request('only_paid', 1) == '1' ? 'selected' : '' }}>Hanya Lunas</option>
                             <option value="0" {{ request('only_paid', 1) == '0' ? 'selected' : '' }}>Semua</option>
                         </select>
                     </div>
                 </div>
                 <div class="md:col-span-1">
-                     <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors">
+                     <button type="submit"
+                             class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-colors">
                         <i class="bi bi-filter mr-2"></i> Tampilkan
                     </button>
                 </div>
@@ -93,82 +110,113 @@
         </form>
     </div>
 
-    {{-- KPI Cards --}}
+    {{-- KPI Cards (Line Color - no full gradient) --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+
         {{-- Total Transaksi --}}
-        <div class="relative bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
-                <i class="bi bi-people text-9xl"></i>
-            </div>
-             <div class="relative z-10">
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
-                    <i class="bi bi-list-check text-2xl"></i>
+        <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                    border-l-4 border-l-blue-600">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-600 dark:text-gray-300">Total Transaksi</p>
+                    <h3 class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-white leading-none tabular-nums">
+                        {{ number_format($totTrx, 0, ',', '.') }}
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-gray-400 mt-2">Semua kasir terpilih</p>
                 </div>
-                <div>
-                   <p class="text-blue-100 text-sm font-medium mb-1 tracking-wide">Total Transaksi</p>
-                   <h3 class="text-3xl font-bold tracking-tight">{{ number_format($totTrx, 0, ',', '.') }}</h3>
-                   <p class="text-xs text-blue-200 mt-1 opacity-80">Semua kasir terpilih</p>
-               </div>
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                            bg-blue-50 text-blue-700 ring-1 ring-blue-100
+                            dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-900/50">
+                    <i class="bi bi-list-check text-xl"></i>
+                </div>
             </div>
         </div>
 
         {{-- Total Omset --}}
-        <div class="relative bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-             <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
-                <i class="bi bi-wallet2 text-9xl"></i>
-            </div>
-            <div class="relative z-10">
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
-                    <i class="bi bi-cash-coin text-2xl"></i>
+        <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                    border-l-4 border-l-indigo-600">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-600 dark:text-gray-300">Total Omset</p>
+
+                    <div class="mt-1 flex items-baseline gap-2 whitespace-nowrap">
+                        <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">Rp</span>
+                        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white leading-none tabular-nums tracking-tight">
+                            {{ $fmtMoney($totOmset) }}
+                        </h3>
+                    </div>
+
+                    <p class="text-xs text-slate-500 dark:text-gray-400 mt-2">Akumulasi penjualan</p>
                 </div>
-                 <div>
-                   <p class="text-indigo-100 text-sm font-medium mb-1 tracking-wide">Total Omset</p>
-                   <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($totOmset) }}</h3>
-                   <p class="text-xs text-indigo-200 mt-1 opacity-80">Akumulasi penjualan</p>
-               </div>
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                            bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100
+                            dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-900/50">
+                    <i class="bi bi-wallet2 text-xl"></i>
+                </div>
             </div>
         </div>
 
         {{-- Total HPP --}}
-        <div class="relative bg-gradient-to-br from-orange-500 to-rose-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-             <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
-                <i class="bi bi-basket text-9xl"></i>
-            </div>
-            <div class="relative z-10">
-                 <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
-                    <i class="bi bi-box-seam text-2xl"></i>
+        <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                    border-l-4 border-l-amber-600">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-600 dark:text-gray-300">Total HPP</p>
+
+                    <div class="mt-1 flex items-baseline gap-2 whitespace-nowrap">
+                        <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">(Rp</span>
+                        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white leading-none tabular-nums tracking-tight">
+                            {{ $fmtMoney($totHpp) }}
+                        </h3>
+                        <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">)</span>
+                    </div>
+
+                    <p class="text-xs text-slate-500 dark:text-gray-400 mt-2">Harga pokok terjual</p>
                 </div>
-                 <div>
-                   <p class="text-orange-100 text-sm font-medium mb-1 tracking-wide">Total HPP</p>
-                   <h3 class="text-2xl font-bold tracking-tight">({{ format_currency($totHpp) }})</h3>
-                   <p class="text-xs text-orange-200 mt-1 opacity-80">Harga pokok terjual</p>
-               </div>
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                            bg-amber-50 text-amber-700 ring-1 ring-amber-100
+                            dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-900/50">
+                    <i class="bi bi-box-seam text-xl"></i>
+                </div>
             </div>
         </div>
 
         {{-- Total Profit --}}
-        <div class="relative bg-gradient-to-br from-green-500 to-emerald-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-             <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20">
-                <i class="bi bi-graph-up-arrow text-9xl"></i>
-            </div>
-            <div class="relative z-10">
-                 <div class="flex items-start justify-between">
-                     <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 shadow-inner">
-                        <i class="bi bi-trophy text-2xl"></i>
+        <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                    border-l-4 border-l-emerald-600">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                        <p class="text-sm font-semibold text-slate-600 dark:text-gray-300">Total Profit</p>
+                        <span class="px-2 py-0.5 text-xs font-bold rounded-lg
+                                     bg-emerald-50 text-emerald-700 border border-emerald-100
+                                     dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-900/50">
+                            {{ $npMargin }}%
+                        </span>
                     </div>
-                    <span class="px-2.5 py-1 bg-white/20 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
-                        {{ $npMargin }}%
-                    </span>
+
+                    <div class="mt-1 flex items-baseline gap-2 whitespace-nowrap">
+                        <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">Rp</span>
+                        <h3 class="text-2xl font-extrabold leading-none tabular-nums tracking-tight
+                                   {{ $totProfit >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-600 dark:text-rose-400' }}">
+                            {{ $fmtMoney($totProfit) }}
+                        </h3>
+                    </div>
+
+                    <div class="w-full bg-slate-100 dark:bg-gray-700 rounded-full h-1.5 mt-3 overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-emerald-500"
+                             style="width:{{ min(max(abs($npMargin),0),100) }}%"></div>
+                    </div>
                 </div>
-                 <div>
-                   <p class="text-green-100 text-sm font-medium mb-1 tracking-wide">Total Profit</p>
-                   <h3 class="text-2xl font-bold tracking-tight">{{ format_currency($totProfit) }}</h3>
-                    <div class="w-full bg-black/20 rounded-full h-1.5 mt-2">
-                         <div class="h-1.5 rounded-full bg-white/80" style="width:{{ min(max(abs($npMargin),0),100) }}%"></div>
-                    </div>
-               </div>
+
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                            bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100
+                            dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-900/50">
+                    <i class="bi bi-graph-up-arrow text-xl"></i>
+                </div>
             </div>
         </div>
+
     </div>
 
     {{-- Performance Table --}}

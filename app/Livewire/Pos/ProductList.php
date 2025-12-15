@@ -47,7 +47,8 @@ class ProductList extends Component
                 ->when($this->search, function ($query) {
                     return $query->where(function ($subQuery) {
                         $subQuery->where('product_name', 'like', '%'.$this->search.'%')
-                                 ->orWhere('product_code', 'like', '%'.$this->search.'%');
+                                 ->orWhere('product_code', 'like', '%'.$this->search.'%')
+                                 ->orWhere('barcode', 'like', '%'.$this->search.'%');
                     });
                 })
                 ->paginate($this->limit)

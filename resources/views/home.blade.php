@@ -184,6 +184,15 @@
         </div>
     @endcan
 
+    {{-- DASHBOARD WIDGETS ROW --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {{-- LOW STOCK WIDGET --}}
+        <livewire:dashboard.low-stock-widget />
+
+        {{-- TOP PRODUCTS WIDGET --}}
+        <livewire:dashboard.top-products-widget />
+    </div>
+
     {{-- =========================
          CHART SECTION
     ========================== --}}

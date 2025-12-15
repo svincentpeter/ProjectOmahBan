@@ -9,6 +9,7 @@ use Modules\Sale\Http\Controllers\SalePaymentsController;
 use Modules\Sale\Http\Controllers\ReportController;
 use Modules\Sale\Http\Controllers\CartController;
 use Modules\Sale\Http\Controllers\VarianceMonitoringController;
+use Modules\Sale\Http\Controllers\QuotationController;
 
 // ============================
 // Group Middleware Auth
@@ -108,4 +109,35 @@ Route::middleware('auth')
             });
     });
 
-    
+// ============================
+// ============================
+// QUOTATIONS
+// ============================
+Route::middleware('auth')->group(function () {
+    Route::resource('quotations', QuotationController::class);
+    Route::get('quotations/{quotation}/convert-to-sale', [QuotationController::class, 'convertToSale'])
+        ->name('quotations.convert-to-sale');
+});
+
+// ============================
+// SALE RETURNS
+// ============================
+Route::middleware('auth')
+    ->prefix('sale-returns')
+    ->name('sale-returns.')
+    ->group(function () {
+        Route::get('/', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'index'])->name('index');
+        Route::get('/create', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'create'])->name('create');
+        Route::post('/', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'store'])->name('store');
+        Route::get('/{saleReturn}', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'show'])->name('show');
+        Route::get('/{saleReturn}/edit', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'edit'])->name('edit');
+        Route::put('/{saleReturn}', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'update'])->name('update');
+        Route::delete('/{saleReturn}', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'destroy'])->name('destroy');
+        
+        // Approval actions (AJAX)
+        Route::post('/{saleReturn}/approve', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'approve'])->name('approve');
+        Route::post('/{saleReturn}/reject', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'reject'])->name('reject');
+        
+        // AJAX: Get sale items for return form
+        Route::get('/ajax/sale/{sale}/items', [\Modules\Sale\Http\Controllers\SaleReturnController::class, 'getSaleItems'])->name('ajax.sale-items');
+    });

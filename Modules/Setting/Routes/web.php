@@ -18,6 +18,10 @@ Route::group(['middleware' => 'auth'], function () {
     //General Settings
     Route::get('/settings', 'SettingController@index')->name('settings.index');
     Route::patch('/settings', 'SettingController@update')->name('settings.update');
+    // Backup & Restore
+    Route::get('/settings/backup', 'BackupController@backup')->name('settings.backup');
+    Route::post('/settings/restore', 'BackupController@restore')->name('settings.restore');
+
     // Units
     Route::resource('units', 'UnitsController')->except('show');
 });

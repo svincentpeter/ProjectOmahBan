@@ -384,8 +384,9 @@ class PosController extends Controller
         // 👇 DEBUG: Uncomment untuk cek apakah customer_name ada
         // dd($sale->customer_name);
 
+        $customPaper =  [0, 0, 220 * 2.83465, 95 * 2.83465]; // 220mm x 95mm
         $pdf = Pdf::loadView('sale::sales.print-pos', ['sale' => $sale])
-            ->setPaper('a6', 'landscape')
+            ->setPaper($customPaper)
             ->setOption('margin-top', 5)
             ->setOption('margin-bottom', 5)
             ->setOption('margin-left', 5)

@@ -8,6 +8,10 @@
     
     <!-- Favicon -->
     <link rel="icon" href="{{ asset('images/favicon.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -108,6 +112,9 @@
 
     {{-- 4. SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+
+    {{-- SweetAlert Flash from RealRashid Package (toast() helper) --}}
+    @include('sweetalert::alert')
 
     {{-- 5. Filepond --}}
     <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>

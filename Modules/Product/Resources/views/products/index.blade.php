@@ -15,50 +15,70 @@
     {{-- Alerts --}}
     @include('utils.alerts')
 
-    {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {{-- Total Produk --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-200 transform transition-all hover:scale-[1.02]">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-box-seam text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-blue-100 text-sm font-medium mb-1">Total Produk</p>
-                    <p class="text-3xl font-bold">{{ \Modules\Product\Entities\Product::active()->count() }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+   {{-- Statistics Cards (Line Color, bukan full gradient) --}}
+@php
+    $totalProduk = \Modules\Product\Entities\Product::active()->count();
+    $stokRendah  = \Modules\Product\Entities\Product::active()
+        ->whereColumn('product_quantity', '<=', 'product_stock_alert')
+        ->where('product_quantity', '>', 0)
+        ->count();
+    $totalKategori = \Modules\Product\Entities\Category::count();
+@endphp
 
-        {{-- Stok Rendah --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="window.location.href='{{ route("products.index", ["quick_filter" => "low-stock"]) }}'">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-exclamation-triangle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-amber-100 text-sm font-medium mb-1">Stok Rendah</p>
-                    <p class="text-3xl font-bold">{{ \Modules\Product\Entities\Product::active()->whereColumn('product_quantity', '<=', 'product_stock_alert')->where('product_quantity', '>', 0)->count() }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
-        {{-- Total Kategori --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg shadow-teal-200 transform transition-all hover:scale-[1.02]">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-folder text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-emerald-100 text-sm font-medium mb-1">Total Kategori</p>
-                    <p class="text-3xl font-bold">{{ \Modules\Product\Entities\Category::count() }}</p>
-                </div>
+    {{-- Total Produk --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-blue-600">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                <i class="bi bi-box-seam text-xl"></i>
             </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Total Produk</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalProduk }}</p>
+                <p class="text-xs text-slate-500 mt-1">Produk aktif terdaftar</p>
+            </div>
         </div>
     </div>
+
+    {{-- Stok Rendah (clickable) --}}
+    <button type="button"
+        onclick="window.location.href='{{ route("products.index", ["quick_filter" => "low-stock"]) }}'"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                <i class="bi bi-exclamation-triangle text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Stok Rendah</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $stokRendah }}</p>
+                <p class="text-xs text-slate-500 mt-1">Butuh restock segera</p>
+            </div>
+        </div>
+    </button>
+
+    {{-- Total Kategori --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-emerald-600">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <i class="bi bi-folder text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Total Kategori</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalKategori }}</p>
+                <p class="text-xs text-slate-500 mt-1">Kategori tersedia</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 
     {{-- Main Card --}}
     <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">

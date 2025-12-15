@@ -16,75 +16,107 @@
             ]
         ])
     @endsection
+{{-- Stats Cards (Line Color, angka rapi untuk nominal) --}}
+@php
+    $totalPurchases = (int) ($total_purchases ?? 0);
+    $totalAmount    = (int) ($total_amount ?? 0);
+    $totalPaid      = (int) ($total_paid ?? 0);
+    $totalDue       = (int) ($total_due ?? 0);
 
-    {{-- Stats Cards --}}
-    <div class="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {{-- Total Pembelian --}}
-        <div class="relative overflow-hidden p-5 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div class="relative z-10 flex items-center">
-                <div class="p-3 mr-4 bg-white/20 backdrop-blur-sm rounded-xl">
-                    <i class="bi bi-box-seam text-3xl text-white"></i>
-                </div>
-                <div>
-                    <p class="mb-1 text-sm font-medium text-purple-100">Total Pembelian</p>
-                    <p class="text-2xl font-bold text-white">
-                        {{ $total_purchases }}
-                    </p>
-                </div>
-            </div>
-            <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+    $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
+@endphp
 
-        {{-- Total Nilai --}}
-        <div class="relative overflow-hidden p-5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div class="relative z-10 flex items-center">
-                <div class="p-3 mr-4 bg-white/20 backdrop-blur-sm rounded-xl">
-                    <i class="bi bi-credit-card text-3xl text-white"></i>
-                </div>
-                <div>
-                    <p class="mb-1 text-sm font-medium text-blue-100">Total Nilai</p>
-                    <p class="text-2xl font-bold text-white">
-                        {{ rupiah($total_amount) }}
-                    </p>
-                </div>
-            </div>
-            <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+<div class="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
 
-        {{-- Terbayar --}}
-        <div class="relative overflow-hidden p-5 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div class="relative z-10 flex items-center">
-                <div class="p-3 mr-4 bg-white/20 backdrop-blur-sm rounded-xl">
-                    <i class="bi bi-check-circle text-3xl text-white"></i>
-                </div>
-                <div>
-                    <p class="mb-1 text-sm font-medium text-emerald-100">Terbayar</p>
-                    <p class="text-2xl font-bold text-white">
-                        {{ rupiah($total_paid) }}
-                    </p>
-                </div>
+    {{-- Total Pembelian --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-purple-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600">Total Pembelian</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 leading-tight tabular-nums tracking-tight">
+                    {{ $totalPurchases }}
+                </p>
+                <p class="text-xs text-slate-500 mt-1">Total transaksi pembelian</p>
             </div>
-            <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
-
-        {{-- Sisa Hutang --}}
-        <div class="relative overflow-hidden p-5 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div class="relative z-10 flex items-center">
-                <div class="p-3 mr-4 bg-white/20 backdrop-blur-sm rounded-xl">
-                    <i class="bi bi-exclamation-triangle text-3xl text-white"></i>
-                </div>
-                <div>
-                    <p class="mb-1 text-sm font-medium text-orange-100">Sisa Hutang</p>
-                    <p class="text-2xl font-bold text-white">
-                        {{ rupiah($total_due) }}
-                    </p>
-                </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-purple-50 text-purple-700 ring-1 ring-purple-100">
+                <i class="bi bi-box-seam text-xl"></i>
             </div>
-            <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
         </div>
     </div>
 
+    {{-- Total Nilai --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-blue-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600">Total Nilai</p>
 
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-sm font-semibold text-slate-500">Rp</span>
+                    <span class="text-2xl md:text-[26px] font-extrabold text-slate-900 leading-tight tabular-nums tracking-tight">
+                        {{ $fmt($totalAmount) }}
+                    </span>
+                </div>
+
+                <p class="text-xs text-slate-500 mt-1">Nilai pembelian</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                <i class="bi bi-credit-card text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Terbayar --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-emerald-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600">Terbayar</p>
+
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-sm font-semibold text-slate-500">Rp</span>
+                    <span class="text-2xl md:text-[26px] font-extrabold text-slate-900 leading-tight tabular-nums tracking-tight">
+                        {{ $fmt($totalPaid) }}
+                    </span>
+                </div>
+
+                <p class="text-xs text-slate-500 mt-1">Sudah dibayarkan</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <i class="bi bi-check-circle text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Sisa Hutang --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-rose-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600">Sisa Hutang</p>
+
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-sm font-semibold text-slate-500">Rp</span>
+                    <span class="text-2xl md:text-[26px] font-extrabold text-slate-900 leading-tight tabular-nums tracking-tight">
+                        {{ $fmt($totalDue) }}
+                    </span>
+                </div>
+
+                <p class="text-xs text-slate-500 mt-1">Belum dilunasi</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-rose-50 text-rose-700 ring-1 ring-rose-100">
+                <i class="bi bi-exclamation-triangle text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!--  -->
 
     {{-- Main Card --}}
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700 overflow-hidden">

@@ -19,64 +19,88 @@
     {{-- Alerts --}}
     @include('utils.alerts')
 
-    {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        {{-- Total Opname --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-slate-500 to-slate-700 rounded-2xl p-6 text-white shadow-lg shadow-slate-200 transform transition-all hover:scale-[1.02]">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-clipboard-data text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-slate-100 text-sm font-medium mb-1">Total</p>
-                    <p class="text-3xl font-bold">{{ $stats['total'] }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+    {{-- Statistics Cards (Line Color, bukan full gradient) --}}
+@php
+    $total     = $stats['total'] ?? 0;
+    $draft     = $stats['draft'] ?? 0;
+    $progress  = $stats['in_progress'] ?? 0;
+    $completed = $stats['completed'] ?? 0;
+@endphp
 
-        {{-- Draft --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-zinc-400 to-zinc-600 rounded-2xl p-6 text-white shadow-lg shadow-zinc-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#status').val('draft').trigger('change');">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-file-earmark-text text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-zinc-100 text-sm font-medium mb-1">Draft</p>
-                    <p class="text-3xl font-bold">{{ $stats['draft'] }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
 
-        {{-- Sedang Berjalan --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#status').val('in_progress').trigger('change');">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-arrow-repeat text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-amber-100 text-sm font-medium mb-1">Berjalan</p>
-                    <p class="text-3xl font-bold">{{ $stats['in_progress'] }}</p>
-                </div>
+    {{-- Total Opname --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-slate-600">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-slate-50 text-slate-700 ring-1 ring-slate-100">
+                <i class="bi bi-clipboard-data text-xl"></i>
             </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
-
-        {{-- Selesai --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg shadow-teal-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#status').val('completed').trigger('change');">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-check-circle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-emerald-100 text-sm font-medium mb-1">Selesai</p>
-                    <p class="text-3xl font-bold">{{ $stats['completed'] }}</p>
-                </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Total</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $total }}</p>
+                <p class="text-xs text-slate-500 mt-1">Semua stok opname</p>
             </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         </div>
     </div>
+
+    {{-- Draft (clickable) --}}
+    <button type="button"
+        onclick="$('#status').val('draft').trigger('change');"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-zinc-50 text-zinc-700 ring-1 ring-zinc-100">
+                <i class="bi bi-file-earmark-text text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Draft</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $draft }}</p>
+                <p class="text-xs text-slate-500 mt-1">Belum dimulai</p>
+            </div>
+        </div>
+    </button>
+
+    {{-- Sedang Berjalan (clickable) --}}
+    <button type="button"
+        onclick="$('#status').val('in_progress').trigger('change');"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                <i class="bi bi-arrow-repeat text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Berjalan</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $progress }}</p>
+                <p class="text-xs text-slate-500 mt-1">Sedang diproses</p>
+            </div>
+        </div>
+    </button>
+
+    {{-- Selesai (clickable) --}}
+    <button type="button"
+        onclick="$('#status').val('completed').trigger('change');"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <i class="bi bi-check-circle text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Selesai</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $completed }}</p>
+                <p class="text-xs text-slate-500 mt-1">Opname selesai</p>
+            </div>
+        </div>
+    </button>
+
+</div>
+
 
     {{-- Main Card --}}
     <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">
