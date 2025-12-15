@@ -101,3 +101,10 @@ composer.phar
 # ----------------
 # /.docker
 # docker-compose.override.yml
+
+# ----------------
+# WhatsApp Baileys Service
+# ----------------
+/whatsapp-service/node_modules
+/whatsapp-service/sessions
+/whatsapp-service/.env

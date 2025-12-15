@@ -70,13 +70,20 @@ class SaleController extends Controller
         return view('sale::partials.items-mini', compact('sale'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         abort_if(Gate::denies('create_sales'), 403);
-        // pastikan mulai bersih
-        Cart::instance('sale')->destroy();
-        session()->forget('editing_sale_id');
-        return view('sale::sales.create');
+        
+        // Clear cart unless coming from quotation conversion
+        if (!$request->has('from_quotation')) {
+            Cart::instance('sale')->destroy();
+            session()->forget('editing_sale_id');
+        }
+
+        $quotation = $request->has('quotation_id') ? \Modules\Sale\Entities\Quotation::find($request->quotation_id) : null;
+        $customers = \Modules\People\Entities\Customer::all();
+        
+        return view('sale::sales.create', compact('quotation', 'customers'));
     }
 
     /**
@@ -124,6 +131,8 @@ class SaleController extends Controller
                 'date' => $request->input('date', now()->toDateString()),
                 'reference' => $reference,
                 'user_id' => auth()->id(),
+                'customer_id' => $request->customer_id,
+                'customer_name' => \Modules\People\Entities\Customer::find($request->customer_id)?->customer_name,
                 'tax_percentage' => $taxPercent,
                 'discount_percentage' => $discPercent,
                 'shipping_amount' => $shippingAmount,

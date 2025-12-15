@@ -10,64 +10,90 @@
 @endsection
 
 @section('content')
-    <!-- Stats Grid (Vibrant Gradients) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Belum Dibaca -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="window.location.href='{{ route('notifications.index', ['is_read' => '0']) }}'">
-            <div class="flex items-center justify-between z-10 relative">
-                <div>
-                    <p class="text-blue-100 text-sm font-medium mb-1">Pesan Belum Dibaca</p>
-                    <h3 class="text-3xl font-bold">{{ $stats['unread_count'] }}</h3>
-                </div>
-                <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                    <i class="bi bi-envelope text-2xl text-white"></i>
-                </div>
-            </div>
-            <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-        </div>
+    <!-- Stats Grid (Line Color - bukan full gradient) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 
-        <!-- Hari Ini -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-purple-200 transform transition-all hover:scale-[1.02]">
-            <div class="flex items-center justify-between z-10 relative">
-                <div>
-                    <p class="text-purple-100 text-sm font-medium mb-1">Aktivitas Hari Ini</p>
-                    <h3 class="text-3xl font-bold">{{ $stats['today_count'] }}</h3>
-                </div>
-                <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                    <i class="bi bi-calendar4-week text-2xl text-white"></i>
-                </div>
+    {{-- Belum Dibaca (clickable) --}}
+    <a href="{{ route('notifications.index', ['is_read' => '0']) }}"
+       class="group bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+              border-l-4 border-l-blue-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 dark:text-gray-300 mb-1">Pesan Belum Dibaca</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-white leading-tight tabular-nums tracking-tight">
+                    {{ $stats['unread_count'] }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">Klik untuk melihat yang baru</p>
             </div>
-             <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-blue-50 text-blue-700 ring-1 ring-blue-100
+                        dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-900/50">
+                <i class="bi bi-envelope text-xl"></i>
+            </div>
         </div>
+    </a>
 
-        <!-- Belum Direview -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="window.location.href='{{ route('notifications.index', ['is_reviewed' => '0']) }}'">
-            <div class="flex items-center justify-between z-10 relative">
-                <div>
-                    <p class="text-orange-100 text-sm font-medium mb-1">Menunggu Review</p>
-                    <h3 class="text-3xl font-bold">{{ $stats['unreviewed_count'] }}</h3>
-                </div>
-                <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                    <i class="bi bi-clipboard-check text-2xl text-white"></i>
-                </div>
+    {{-- Hari Ini --}}
+    <div class="group bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-violet-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 dark:text-gray-300 mb-1">Aktivitas Hari Ini</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-white leading-tight tabular-nums tracking-tight">
+                    {{ $stats['today_count'] }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">Masuk hari ini</p>
             </div>
-             <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-        </div>
-
-        <!-- Critical -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 text-white shadow-lg shadow-red-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="window.location.href='{{ route('notifications.index', ['severity' => 'critical']) }}'">
-            <div class="flex items-center justify-between z-10 relative">
-                <div>
-                    <p class="text-red-100 text-sm font-medium mb-1">Notifikasi Penting</p>
-                    <h3 class="text-3xl font-bold">{{ $stats['critical_count'] }}</h3>
-                </div>
-                <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                    <i class="bi bi-shield-exclamation text-2xl text-white"></i>
-                </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-violet-50 text-violet-700 ring-1 ring-violet-100
+                        dark:bg-violet-900/30 dark:text-violet-300 dark:ring-violet-900/50">
+                <i class="bi bi-calendar4-week text-xl"></i>
             </div>
-             <div class="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
         </div>
     </div>
+
+    {{-- Menunggu Review (clickable) --}}
+    <a href="{{ route('notifications.index', ['is_reviewed' => '0']) }}"
+       class="group bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+              border-l-4 border-l-amber-500">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 dark:text-gray-300 mb-1">Menunggu Review</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-white leading-tight tabular-nums tracking-tight">
+                    {{ $stats['unreviewed_count'] }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">Butuh tindakan</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-amber-50 text-amber-700 ring-1 ring-amber-100
+                        dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-900/50">
+                <i class="bi bi-clipboard-check text-xl"></i>
+            </div>
+        </div>
+    </a>
+
+    {{-- Critical (clickable) --}}
+    <a href="{{ route('notifications.index', ['severity' => 'critical']) }}"
+       class="group bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+              border-l-4 border-l-rose-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 dark:text-gray-300 mb-1">Notifikasi Penting</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-white leading-tight tabular-nums tracking-tight">
+                    {{ $stats['critical_count'] }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">Prioritas tinggi</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-rose-50 text-rose-700 ring-1 ring-rose-100
+                        dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-900/50">
+                <i class="bi bi-shield-exclamation text-xl"></i>
+            </div>
+        </div>
+    </a>
+
+</div>
+
 
     <!-- Manual Flowbite Table Section -->
     <section class="bg-gray-50 dark:bg-gray-900 p-0 sm:p-0">

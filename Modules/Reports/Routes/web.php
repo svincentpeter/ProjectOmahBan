@@ -39,4 +39,6 @@ Route::middleware(['web', 'auth', 'can:access_reports'])
 Route::middleware(['web', 'auth', 'can:access_reports'])->group(function () {
     // Ringkas per kasir (route lama yang diinginkan sidebar)
     Route::get('/reports/ringkas/cashier', [ReportsController::class, 'ringkasCashier'])->name('ringkas-report.cashier');
+    Route::get('/reports/ringkas/cashier/export/excel', [ReportsController::class, 'exportCashierExcel'])->name('ringkas-report.cashier.export-excel');
+    Route::get('/reports/ringkas/cashier/export/pdf', [ReportsController::class, 'exportCashierPdf'])->name('ringkas-report.cashier.export-pdf');
 });

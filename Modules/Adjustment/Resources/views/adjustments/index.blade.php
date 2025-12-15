@@ -16,64 +16,88 @@
     {{-- Alerts --}}
     @include('utils.alerts')
 
-    {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        {{-- Total Penyesuaian --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-200 transform transition-all hover:scale-[1.02]">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-layers text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-blue-100 text-sm font-medium mb-1">Total</p>
-                    <p class="text-3xl font-bold">{{ $stats['total'] ?? 0 }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+    {{-- Statistics Cards (Line Color, bukan full gradient) --}}
+@php
+    $total    = $stats['total'] ?? 0;
+    $pending  = $stats['pending'] ?? 0;
+    $approved = $stats['approved'] ?? 0;
+    $rejected = $stats['rejected'] ?? 0;
+@endphp
 
-        {{-- Pending --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#filter-status').val('pending').trigger('change');">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-hourglass-split text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-amber-100 text-sm font-medium mb-1">Pending</p>
-                    <p class="text-3xl font-bold">{{ $stats['pending'] ?? 0 }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
 
-        {{-- Approved --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg shadow-teal-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#filter-status').val('approved').trigger('change');">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-check-circle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-emerald-100 text-sm font-medium mb-1">Approved</p>
-                    <p class="text-3xl font-bold">{{ $stats['approved'] ?? 0 }}</p>
-                </div>
+    {{-- Total Penyesuaian --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-blue-600">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                <i class="bi bi-layers text-xl"></i>
             </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
-
-        {{-- Rejected --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 text-white shadow-lg shadow-rose-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="$('#filter-status').val('rejected').trigger('change');">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-x-circle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-red-100 text-sm font-medium mb-1">Rejected</p>
-                    <p class="text-3xl font-bold">{{ $stats['rejected'] ?? 0 }}</p>
-                </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Total</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $total }}</p>
+                <p class="text-xs text-slate-500 mt-1">Semua penyesuaian</p>
             </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         </div>
     </div>
+
+    {{-- Pending (clickable) --}}
+    <button type="button"
+        onclick="$('#status').val('pending').trigger('change');"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                <i class="bi bi-hourglass-split text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Pending</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $pending }}</p>
+                <p class="text-xs text-slate-500 mt-1">Menunggu approval</p>
+            </div>
+        </div>
+    </button>
+
+    {{-- Approved (clickable) --}}
+    <button type="button"
+        onclick="$('#status').val('approved').trigger('change');"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <i class="bi bi-check-circle text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Approved</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $approved }}</p>
+                <p class="text-xs text-slate-500 mt-1">Sudah diproses</p>
+            </div>
+        </div>
+    </button>
+
+    {{-- Rejected (clickable) --}}
+    <button type="button"
+        onclick="$('#status').val('rejected').trigger('change');"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-rose-50 text-rose-700 ring-1 ring-rose-100">
+                <i class="bi bi-x-circle text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Rejected</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $rejected }}</p>
+                <p class="text-xs text-slate-500 mt-1">Ditolak</p>
+            </div>
+        </div>
+    </button>
+
+</div>
+
 
     {{-- Main Card --}}
     <div class="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-200/50 dark:bg-gray-800 dark:border-gray-700">

@@ -15,58 +15,69 @@
     {{-- Alerts --}}
     @include('utils.alerts')
 
-    {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {{-- Total Produk --}}
-        <div
-            class="relative overflow-hidden bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-purple-200 transform transition-all hover:scale-[1.02]">
-            <div class="flex items-center gap-4 relative z-10">
-                <div
-                    class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-recycle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-purple-100 text-sm font-medium mb-1">Total Produk</p>
-                    <p class="text-3xl font-bold">{{ \Modules\Product\Entities\ProductSecond::count() }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+    {{-- Statistics Cards (Line Color, bukan full gradient) --}}
+@php
+    $totalSecond   = \Modules\Product\Entities\ProductSecond::count();
+    $availableSecond = \Modules\Product\Entities\ProductSecond::where('status', 'available')->count();
+    $soldSecond      = \Modules\Product\Entities\ProductSecond::where('status', 'sold')->count();
+@endphp
 
-        {{-- Tersedia --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg shadow-teal-200 transform transition-all hover:scale-[1.02] cursor-pointer"
-            onclick="window.location.href = @json(route('products_second.index', ['status' => 'available']))">
-            <div class="flex items-center gap-4 relative z-10">
-                <div
-                    class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-check-circle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-emerald-100 text-sm font-medium mb-1">Tersedia</p>
-                    <p class="text-3xl font-bold">
-                        {{ \Modules\Product\Entities\ProductSecond::where('status', 'available')->count() }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
-        {{-- Terjual --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 text-white shadow-lg shadow-rose-200 transform transition-all hover:scale-[1.02] cursor-pointer"
-            onclick="window.location.href = @json(route('products_second.index', ['status' => 'sold']))">
-            <div class="flex items-center gap-4 relative z-10">
-                <div
-                    class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-x-circle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-rose-100 text-sm font-medium mb-1">Terjual</p>
-                    <p class="text-3xl font-bold">
-                        {{ \Modules\Product\Entities\ProductSecond::where('status', 'sold')->count() }}</p>
-                </div>
+    {{-- Total Produk --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-purple-600">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-purple-50 text-purple-700 ring-1 ring-purple-100">
+                <i class="bi bi-recycle text-xl"></i>
             </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Total Produk</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalSecond }}</p>
+                <p class="text-xs text-slate-500 mt-1">Produk bekas terdaftar</p>
+            </div>
         </div>
     </div>
+
+    {{-- Tersedia (clickable) --}}
+    <button type="button"
+        onclick="window.location.href='{{ route('products_second.index', ['status' => 'available']) }}'"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <i class="bi bi-check-circle text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Tersedia</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $availableSecond }}</p>
+                <p class="text-xs text-slate-500 mt-1">Siap dijual</p>
+            </div>
+        </div>
+    </button>
+
+    {{-- Terjual (clickable) --}}
+    <button type="button"
+        onclick="window.location.href='{{ route('products_second.index', ['status' => 'sold']) }}'"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-rose-50 text-rose-700 ring-1 ring-rose-100">
+                <i class="bi bi-x-circle text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Terjual</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $soldSecond }}</p>
+                <p class="text-xs text-slate-500 mt-1">Sudah keluar stok</p>
+            </div>
+        </div>
+    </button>
+
+</div>
+
 
     {{-- Main Card --}}
     <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">

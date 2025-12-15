@@ -65,6 +65,32 @@ class ProductCart extends Component
         }
     }
 
+    public function increaseQuantity($row_id) {
+        $cart_item = Cart::instance($this->cart_instance)->get($row_id);
+        $product_id = $cart_item->id;
+
+        if ($this->cart_instance == 'sale' || $this->cart_instance == 'purchase_return') {
+            // Check if quantity + 1 exceeds stock
+            if ($this->check_quantity[$product_id] < ($this->quantity[$product_id] + 1)) {
+                session()->flash('message', 'The requested quantity is not available in stock.');
+                return;
+            }
+        }
+        
+        $this->quantity[$product_id]++;
+        $this->updateQuantity($row_id, $product_id);
+    }
+
+    public function decreaseQuantity($row_id) {
+        $cart_item = Cart::instance($this->cart_instance)->get($row_id);
+        $product_id = $cart_item->id;
+
+        if ($this->quantity[$product_id] > 1) {
+             $this->quantity[$product_id]--;
+             $this->updateQuantity($row_id, $product_id);
+        }
+    }
+
     public function render() {
         $cart_items = Cart::instance($this->cart_instance)->content();
 

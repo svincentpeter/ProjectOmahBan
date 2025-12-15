@@ -8,6 +8,26 @@
                 </div>
                 Filter Laporan Kas Harian
             </h3>
+            {{-- Export & Comparison Buttons --}}
+            <div class="flex items-center gap-2">
+                <button wire:click="toggleComparison" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-lg border {{ $showComparison ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600' }} transition-colors">
+                    <i class="bi bi-arrow-left-right mr-1.5"></i>
+                    Bandingkan
+                </button>
+                <div class="border-l border-gray-200 dark:border-gray-600 h-6 mx-1"></div>
+                <button wire:click="exportCsv" wire:loading.attr="disabled" class="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors">
+                    <i class="bi bi-filetype-csv mr-1.5"></i>
+                    CSV
+                </button>
+                <button wire:click="exportExcel" wire:loading.attr="disabled" class="inline-flex items-center px-3 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/50 transition-colors">
+                    <i class="bi bi-file-earmark-excel mr-1.5"></i>
+                    Excel
+                </button>
+                <button wire:click="exportPdf" wire:loading.attr="disabled" class="inline-flex items-center px-3 py-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/50 transition-colors">
+                    <i class="bi bi-file-earmark-pdf mr-1.5"></i>
+                    PDF
+                </button>
+            </div>
         </div>
         
         <form wire:submit.prevent>
@@ -121,6 +141,100 @@
             </div>
         </div>
     </div>
+
+    {{-- Period Comparison Section --}}
+    @if($showComparison)
+    <div class="mb-6 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800">
+            <h4 class="text-base font-bold text-purple-800 dark:text-purple-300 flex items-center gap-2">
+                <i class="bi bi-arrow-left-right"></i>
+                Perbandingan dengan Hari Sebelumnya
+            </h4>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {{-- Omzet Comparison --}}
+                <div class="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Omzet</p>
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ format_currency($omzet) }}</div>
+                    @php
+                        $omzetDiff = $omzet - $prevOmzet;
+                        $omzetPct = $prevOmzet > 0 ? round(($omzetDiff / $prevOmzet) * 100, 1) : 0;
+                    @endphp
+                    <div class="flex items-center justify-center gap-2">
+                        <span class="text-sm {{ $omzetDiff >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                            <i class="bi {{ $omzetDiff >= 0 ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
+                            {{ $omzetDiff >= 0 ? '+' : '' }}{{ format_currency($omzetDiff) }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full {{ $omzetDiff >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                            {{ $omzetPct >= 0 ? '+' : '' }}{{ $omzetPct }}%
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Kemarin: {{ format_currency($prevOmzet) }}</p>
+                </div>
+
+                {{-- Pengeluaran Comparison --}}
+                <div class="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Pengeluaran</p>
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ format_currency($pengeluaran) }}</div>
+                    @php
+                        $expDiff = $pengeluaran - $prevPengeluaran;
+                        $expPct = $prevPengeluaran > 0 ? round(($expDiff / $prevPengeluaran) * 100, 1) : 0;
+                    @endphp
+                    <div class="flex items-center justify-center gap-2">
+                        <span class="text-sm {{ $expDiff <= 0 ? 'text-green-600' : 'text-red-600' }}">
+                            <i class="bi {{ $expDiff <= 0 ? 'bi-arrow-down' : 'bi-arrow-up' }}"></i>
+                            {{ $expDiff >= 0 ? '+' : '' }}{{ format_currency($expDiff) }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full {{ $expDiff <= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                            {{ $expPct >= 0 ? '+' : '' }}{{ $expPct }}%
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Kemarin: {{ format_currency($prevPengeluaran) }}</p>
+                </div>
+
+                {{-- Income Bersih Comparison --}}
+                <div class="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Income Bersih</p>
+                    <div class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ format_currency($incomeBersih) }}</div>
+                    @php
+                        $incDiff = $incomeBersih - $prevIncomeBersih;
+                        $incPct = $prevIncomeBersih != 0 ? round(($incDiff / abs($prevIncomeBersih)) * 100, 1) : 0;
+                    @endphp
+                    <div class="flex items-center justify-center gap-2">
+                        <span class="text-sm {{ $incDiff >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                            <i class="bi {{ $incDiff >= 0 ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
+                            {{ $incDiff >= 0 ? '+' : '' }}{{ format_currency($incDiff) }}
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full {{ $incDiff >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                            {{ $incPct >= 0 ? '+' : '' }}{{ $incPct }}%
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">Kemarin: {{ format_currency($prevIncomeBersih) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- Chart Section --}}
+    @if(count($chartData ?? []) > 0)
+    <div class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <h4 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <i class="bi bi-pie-chart text-blue-600"></i>
+                Komposisi Metode Pembayaran
+            </h4>
+        </div>
+        <div class="p-6">
+            <div class="flex justify-center">
+                <div class="w-full max-w-md">
+                    <canvas id="paymentChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- Tabs --}}
     <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
@@ -295,11 +409,72 @@
         </div>
     </div>
     
-    {{-- Flowbite Tabs JS Helper (Re-init for Livewire if needed, usually Flowbite handles this with data attributes) --}}
+    {{-- Flowbite Tabs JS Helper + Chart.js for Pie Chart --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-        document.addEventListener('livewire:load', function () {
-            // Re-init flowbite if components need it after livewire update
-            // initFlowbite(); 
+        document.addEventListener('DOMContentLoaded', function () {
+            initPaymentChart();
         });
+
+        document.addEventListener('livewire:navigated', function () {
+            initPaymentChart();
+        });
+
+        function initPaymentChart() {
+            const chartCanvas = document.getElementById('paymentChart');
+            if (!chartCanvas) return;
+
+            // Destroy existing chart if any
+            if (window.paymentChartInstance) {
+                window.paymentChartInstance.destroy();
+            }
+
+            const chartData = @json($chartData ?? []);
+            if (chartData.length === 0) return;
+
+            const labels = chartData.map(item => item.label);
+            const values = chartData.map(item => item.value);
+            const colors = [
+                '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444',
+                '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'
+            ];
+
+            window.paymentChartInstance = new Chart(chartCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: Rp ${value.toLocaleString('id-ID')} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </div>

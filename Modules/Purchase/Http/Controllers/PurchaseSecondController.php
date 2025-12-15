@@ -121,7 +121,8 @@ class PurchaseSecondController extends Controller
             $cart = json_decode($request->cart_json, true);
 
             if (empty($cart)) {
-                return redirect()->back()->with('error', 'Keranjang kosong! Tambahkan produk terlebih dahulu.');
+                toast('Keranjang kosong! Tambahkan produk terlebih dahulu.', 'error');
+                return redirect()->back();
             }
 
             // Create Purchase Second
@@ -169,10 +170,8 @@ class PurchaseSecondController extends Controller
             return redirect()->route('purchases.second.index');
         } catch (\Exception $e) {
             DB::rollBack();
-
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            toast('Terjadi kesalahan: ' . $e->getMessage(), 'error');
+            return redirect()->back();
         }
     }
 
@@ -197,7 +196,8 @@ class PurchaseSecondController extends Controller
 
         // Only allow edit if status is Pending
         if ($purchaseSecond->status === 'Completed') {
-            return redirect()->back()->with('error', 'Pembelian dengan status Completed tidak dapat diedit.');
+            toast('Pembelian dengan status Completed tidak dapat diedit.', 'warning');
+            return redirect()->back();
         }
 
         // Get available second products
@@ -217,7 +217,8 @@ class PurchaseSecondController extends Controller
 
         // Only allow update if status is Pending
         if ($purchaseSecond->status === 'Completed' && $request->status === 'Pending') {
-            return redirect()->back()->with('error', 'Tidak dapat mengubah status Completed ke Pending.');
+            toast('Tidak dapat mengubah status Completed ke Pending.', 'error');
+            return redirect()->back();
         }
 
         DB::beginTransaction();
@@ -227,7 +228,8 @@ class PurchaseSecondController extends Controller
             $cart = json_decode($request->cart_json, true);
 
             if (empty($cart)) {
-                return redirect()->back()->with('error', 'Keranjang kosong! Tambahkan produk terlebih dahulu.');
+                toast('Keranjang kosong! Tambahkan produk terlebih dahulu.', 'error');
+                return redirect()->back();
             }
 
             // Update Purchase Second
@@ -279,10 +281,8 @@ class PurchaseSecondController extends Controller
             return redirect()->route('purchases.second.index');
         } catch (\Exception $e) {
             DB::rollBack();
-
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            toast('Terjadi kesalahan: ' . $e->getMessage(), 'error');
+            return redirect()->back();
         }
     }
 
@@ -319,10 +319,8 @@ class PurchaseSecondController extends Controller
             return redirect()->route('purchases.second.index');
         } catch (\Exception $e) {
             DB::rollBack();
-
-            return redirect()
-                ->back()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            toast('Terjadi kesalahan: ' . $e->getMessage(), 'error');
+            return redirect()->back();
         }
     }
 }

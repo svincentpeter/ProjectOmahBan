@@ -13,72 +13,87 @@
 @endsection
 
 @section('content')
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <!-- Total Supplier -->
-        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-            <div class="flex justify-between items-start z-10 relative">
-                <div>
-                    <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Supplier</p>
-                    <h3 class="text-2xl font-black text-blue-600">{{ \Modules\People\Entities\Supplier::count() }}</h3>
-                </div>
-                <div class="p-2.5 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <i class="bi bi-people text-xl"></i>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors z-0"></div>
-        </div>
+    {{-- Statistics Cards (Line Color, bukan fullfill) --}}
+@php
+    $totalSuppliers = \Modules\People\Entities\Supplier::count();
 
-        <!-- Supplier Aktif -->
-        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-            <div class="flex justify-between items-start z-10 relative">
-                <div>
-                    <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Supplier Aktif</p>
-                    <h3 class="text-2xl font-black text-emerald-600">
-                        {{ \Modules\People\Entities\Supplier::whereHas('purchases', function ($q) {
-                            $q->where('date', '>=', now()->subMonths(6));
-                        })->count() }}
-                    </h3>
-                </div>
-                <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <i class="bi bi-check-circle text-xl"></i>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:bg-emerald-100 transition-colors z-0"></div>
-        </div>
+    $activeSuppliers = \Modules\People\Entities\Supplier::whereHas('purchases', function ($q) {
+        $q->where('date', '>=', now()->subMonths(6));
+    })->count();
 
-        <!-- Total Kota -->
-        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-            <div class="flex justify-between items-start z-10 relative">
-                <div>
-                    <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Jangkauan Kota</p>
-                    <h3 class="text-2xl font-black text-violet-600">
-                        {{ \Modules\People\Entities\Supplier::distinct('city')->count('city') }}
-                    </h3>
-                </div>
-                <div class="p-2.5 bg-violet-50 text-violet-600 rounded-xl group-hover:scale-110 transition-transform">
-                    <i class="bi bi-geo-alt text-xl"></i>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-violet-50 rounded-full group-hover:bg-violet-100 transition-colors z-0"></div>
-        </div>
+    $totalCities = \Modules\People\Entities\Supplier::distinct('city')->count('city');
 
-        <!-- Total Transaksi -->
-        <div class="bg-white p-5 rounded-2xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-            <div class="flex justify-between items-start z-10 relative">
-                <div>
-                    <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Transaksi</p>
-                    <h3 class="text-2xl font-black text-amber-500">
-                        {{ \Modules\Purchase\Entities\Purchase::count() }}
-                    </h3>
-                </div>
-                <div class="p-2.5 bg-amber-50 text-amber-500 rounded-xl group-hover:scale-110 transition-transform">
-                    <i class="bi bi-cart-check text-xl"></i>
-                </div>
+    $totalPurchases = \Modules\Purchase\Entities\Purchase::count();
+@endphp
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+    {{-- Total Supplier --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-blue-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 mb-1">Total Supplier</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalSuppliers }}</h3>
+                <p class="text-xs text-slate-500 mt-1">Supplier terdaftar</p>
             </div>
-            <div class="absolute -bottom-6 -right-6 w-24 h-24 bg-amber-50 rounded-full group-hover:bg-amber-100 transition-colors z-0"></div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                <i class="bi bi-people text-xl"></i>
+            </div>
         </div>
     </div>
+
+    {{-- Supplier Aktif --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-emerald-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 mb-1">Supplier Aktif</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $activeSuppliers }}</h3>
+                <p class="text-xs text-slate-500 mt-1">Transaksi 6 bulan terakhir</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <i class="bi bi-check-circle text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Jangkauan Kota --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-violet-600">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 mb-1">Jangkauan Kota</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalCities }}</h3>
+                <p class="text-xs text-slate-500 mt-1">Sebaran kota supplier</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-violet-50 text-violet-700 ring-1 ring-violet-100">
+                <i class="bi bi-geo-alt text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Total Transaksi --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-amber-500">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600 mb-1">Total Transaksi</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalPurchases }}</h3>
+                <p class="text-xs text-slate-500 mt-1">Jumlah pembelian</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                <i class="bi bi-cart-check text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 
     <!-- Filter & Table Card -->
     <div class="bg-white rounded-2xl shadow-sm border border-zinc-200">

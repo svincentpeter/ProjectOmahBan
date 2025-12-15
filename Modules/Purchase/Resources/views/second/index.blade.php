@@ -12,61 +12,110 @@
             ]
         ])
     @endsection
+{{-- Stats Cards (Line Color, angka rapi untuk nominal) --}}
+@php
+    $totalPurchases = (int) ($summary['total_purchases'] ?? 0);
+    $totalAmount    = (int) ($summary['total_amount'] ?? 0);
+    $totalPaid      = (int) ($summary['total_paid'] ?? 0);
+    $totalDue       = (int) ($summary['total_due'] ?? 0);
 
-    {{-- Stats Cards --}}
-    <div class="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {{-- Total Pembelian --}}
-        <div class="flex items-center p-4 bg-white rounded-2xl shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700 transition hover:shadow-md">
-            <div class="p-3 mr-4 text-purple-600 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl dark:text-purple-100 dark:from-purple-900 dark:to-purple-800">
-                <i class="bi bi-recycle text-2xl"></i>
-            </div>
-            <div>
-                <p class="mb-1 text-sm font-medium text-gray-600 dark:text-gray-400">Total Pembelian</p>
-                <p class="text-xl font-bold text-gray-800 dark:text-gray-200">
-                    {{ $summary['total_purchases'] }}
-                </p>
-            </div>
-        </div>
+    $fmt = fn ($n) => number_format((int) $n, 0, ',', '.');
+@endphp
 
-        {{-- Total Nilai --}}
-        <div class="flex items-center p-4 bg-white rounded-2xl shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700 transition hover:shadow-md">
-            <div class="p-3 mr-4 text-blue-600 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl dark:text-blue-100 dark:from-blue-900 dark:to-blue-800">
-                <i class="bi bi-credit-card text-2xl"></i>
-            </div>
-            <div>
-                <p class="mb-1 text-sm font-medium text-gray-600 dark:text-gray-400">Total Nilai</p>
-                <p class="text-xl font-bold text-gray-800 dark:text-gray-200">
-                    {{ format_currency($summary['total_amount']) }}
-                </p>
-            </div>
-        </div>
+<div class="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
 
-        {{-- Terbayar --}}
-        <div class="flex items-center p-4 bg-white rounded-2xl shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700 transition hover:shadow-md">
-            <div class="p-3 mr-4 text-emerald-600 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl dark:text-emerald-100 dark:from-emerald-900 dark:to-emerald-800">
-                <i class="bi bi-check-circle text-2xl"></i>
-            </div>
-            <div>
-                <p class="mb-1 text-sm font-medium text-gray-600 dark:text-gray-400">Terbayar</p>
-                <p class="text-xl font-bold text-gray-800 dark:text-gray-200">
-                    {{ format_currency($summary['total_paid']) }}
+    {{-- Total Pembelian --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-purple-600 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600 dark:text-gray-400">Total Pembelian</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-gray-100 leading-tight tabular-nums tracking-tight">
+                    {{ $totalPurchases }}
                 </p>
+                <p class="text-xs text-slate-500 dark:text-gray-500 mt-1">Total transaksi pembelian</p>
             </div>
-        </div>
-
-        {{-- Sisa Hutang --}}
-        <div class="flex items-center p-4 bg-white rounded-2xl shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700 transition hover:shadow-md">
-            <div class="p-3 mr-4 text-orange-600 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl dark:text-orange-100 dark:from-orange-900 dark:to-orange-800">
-                <i class="bi bi-exclamation-triangle text-2xl"></i>
-            </div>
-            <div>
-                <p class="mb-1 text-sm font-medium text-gray-600 dark:text-gray-400">Sisa Hutang</p>
-                <p class="text-xl font-bold text-gray-800 dark:text-gray-200">
-                    {{ format_currency($summary['total_due']) }}
-                </p>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-purple-50 text-purple-700 ring-1 ring-purple-100
+                        dark:bg-purple-900/40 dark:text-purple-200 dark:ring-purple-900/60">
+                <i class="bi bi-recycle text-xl"></i>
             </div>
         </div>
     </div>
+
+    {{-- Total Nilai --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-blue-600 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600 dark:text-gray-400">Total Nilai</p>
+
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">Rp</span>
+                    <span class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-gray-100 leading-tight tabular-nums tracking-tight">
+                        {{ $fmt($totalAmount) }}
+                    </span>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-gray-500 mt-1">Nilai pembelian</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-blue-50 text-blue-700 ring-1 ring-blue-100
+                        dark:bg-blue-900/40 dark:text-blue-200 dark:ring-blue-900/60">
+                <i class="bi bi-credit-card text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Terbayar --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-emerald-600 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600 dark:text-gray-400">Terbayar</p>
+
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">Rp</span>
+                    <span class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-gray-100 leading-tight tabular-nums tracking-tight">
+                        {{ $fmt($totalPaid) }}
+                    </span>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-gray-500 mt-1">Sudah dibayarkan</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100
+                        dark:bg-emerald-900/40 dark:text-emerald-200 dark:ring-emerald-900/60">
+                <i class="bi bi-check-circle text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+    {{-- Sisa Hutang --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-rose-600 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600 dark:text-gray-400">Sisa Hutang</p>
+
+                <div class="flex items-baseline gap-2 whitespace-nowrap">
+                    <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">Rp</span>
+                    <span class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-gray-100 leading-tight tabular-nums tracking-tight">
+                        {{ $fmt($totalDue) }}
+                    </span>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-gray-500 mt-1">Belum dilunasi</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-rose-50 text-rose-700 ring-1 ring-rose-100
+                        dark:bg-rose-900/40 dark:text-rose-200 dark:ring-rose-900/60">
+                <i class="bi bi-exclamation-triangle text-xl"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
 
 
 

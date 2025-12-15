@@ -158,8 +158,8 @@
                 @endif
             </div>
 
-            <!-- WhatsApp / Fontee Status -->
-            @if ($notification->fontee_message_id)
+            <!-- WhatsApp Status -->
+            @if ($notification->whatsapp_message_id)
             <div class="bg-white border border-slate-100 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6">
                 <h5 class="text-xs font-extrabold text-black uppercase tracking-widest mb-5 border-b border-slate-50 pb-3">Integrasi</h5>
                 <div class="flex items-center justify-between">
@@ -169,7 +169,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-zinc-400 font-bold uppercase">WhatsApp</p>
-                            <p class="text-sm font-bold text-zinc-900">{{ ucfirst($notification->fontee_status ?? 'Terkirim') }}</p>
+                            <p class="text-sm font-bold text-zinc-900">{{ ucfirst($notification->whatsapp_status ?? 'Terkirim') }}</p>
                         </div>
                     </div>
                     <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>

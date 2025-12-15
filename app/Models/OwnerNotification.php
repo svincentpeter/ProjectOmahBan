@@ -21,7 +21,7 @@ class OwnerNotification extends Model
         'is_read' => false,
         'is_reviewed' => false,
         'severity' => 'info',
-        'fontee_status' => null,
+        'whatsapp_status' => null,
     ];
 
     /**
@@ -51,10 +51,10 @@ class OwnerNotification extends Model
         'reviewed_at',
         'reviewed_by',
         'review_notes',
-        'fontee_message_id',
-        'fontee_status', // pending|sent|read|failed
-        'fontee_sent_at',
-        'fontee_error_message',
+        'whatsapp_message_id',
+        'whatsapp_status', // pending|sent|read|failed
+        'whatsapp_sent_at',
+        'whatsapp_error_message',
     ];
 
     /**
@@ -66,7 +66,7 @@ class OwnerNotification extends Model
         'is_reviewed' => 'boolean',
         'read_at' => 'datetime',
         'reviewed_at' => 'datetime',
-        'fontee_sent_at' => 'datetime',
+        'whatsapp_sent_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -196,32 +196,32 @@ class OwnerNotification extends Model
     }
 
     /* ===========================
-     * Helpers - Fontee status
+     * Helpers - WhatsApp status
      * ===========================
      */
 
-    public function markFonteeSent(string $messageId): void
+    public function markWhatsAppSent(string $messageId): void
     {
         $this->forceFill([
-            'fontee_status' => 'sent',
-            'fontee_message_id' => $messageId,
-            'fontee_sent_at' => now(),
-            'fontee_error_message' => null,
+            'whatsapp_status' => 'sent',
+            'whatsapp_message_id' => $messageId,
+            'whatsapp_sent_at' => now(),
+            'whatsapp_error_message' => null,
         ])->save();
     }
 
-    public function markFonteeFailed(string $errorMessage): void
+    public function markWhatsAppFailed(string $errorMessage): void
     {
         $this->forceFill([
-            'fontee_status' => 'failed',
-            'fontee_error_message' => $errorMessage,
+            'whatsapp_status' => 'failed',
+            'whatsapp_error_message' => $errorMessage,
         ])->save();
     }
 
-    public function markFonteeRead(): void
+    public function markWhatsAppRead(): void
     {
         $this->forceFill([
-            'fontee_status' => 'read',
+            'whatsapp_status' => 'read',
         ])->save();
     }
 

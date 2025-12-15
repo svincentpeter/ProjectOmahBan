@@ -202,6 +202,21 @@
                                     </span>
                                     <input type="hidden" name="total_amount" id="total_amount" value="0">
                                 </div>
+                                {{-- Quick Payment Buttons --}}
+                                <div class="flex gap-2 mb-3">
+                                    <button type="button" onclick="setPaymentPercentage(100)" 
+                                        class="flex-1 px-3 py-2 text-xs font-medium text-center text-green-600 border border-green-600 rounded-lg hover:bg-green-50 focus:ring-4 focus:ring-green-300 dark:text-green-500 dark:border-green-500 dark:hover:bg-gray-800 dark:focus:ring-green-800 transition-colors">
+                                        💯 Lunas (100%)
+                                    </button>
+                                    <button type="button" onclick="setPaymentPercentage(50)" 
+                                        class="flex-1 px-3 py-2 text-xs font-medium text-center text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 focus:ring-4 focus:ring-blue-300 dark:text-blue-500 dark:border-blue-500 dark:hover:bg-gray-800 dark:focus:ring-blue-800 transition-colors">
+                                        50%
+                                    </button>
+                                    <button type="button" onclick="setPaymentPercentage(25)" 
+                                        class="flex-1 px-3 py-2 text-xs font-medium text-center text-orange-600 border border-orange-600 rounded-lg hover:bg-orange-50 focus:ring-4 focus:ring-orange-300 dark:text-orange-500 dark:border-orange-500 dark:hover:bg-gray-800 dark:focus:ring-orange-800 transition-colors">
+                                        25%
+                                    </button>
+                                </div>
                                 <div class="flex items-center justify-between">
                                     <label for="paid_amount" class="text-sm font-medium text-gray-900 dark:text-white mr-2">
                                         Jumlah Bayar:
@@ -382,11 +397,28 @@
                 $('#total_amount').val(total);
                 $('#grand_total').text(formatCurrency(total));
 
-                let paid = $('#paid_amount').maskMoney('unmasked')[0] || 0;
-                let due = total - paid;
+                // Manual parsing for robustness
+                let paidVal = $('#paid_amount').val() || '';
+                // Remove non-digit characters except comma (for decimal, though we use 0 precision usually)
+                // Assuming format: Rp 1.000.000
+                let cleanStr = paidVal.replace(/[^\d]/g, ''); 
+                let paid = parseFloat(cleanStr) || 0;
+                
+                let due = Math.max(0, total - paid);
                 
                 $('#due_amount').val(due);
                 $('#due_amount_display').text(formatCurrency(due));
+            };
+
+            // Quick Payment Percentage Function
+            window.setPaymentPercentage = function(percentage) {
+                let total = parseFloat($('#total_amount').val()) || 0;
+                let amount = Math.round(total * (percentage / 100));
+                
+                $('#paid_amount').val(amount);
+                $('#paid_amount').maskMoney('mask');
+                
+                calculateSummary();
             };
 
             window.formatCurrency = function(num) {
@@ -407,6 +439,13 @@
                 
                 // Inject Cart to Hidden Input
                 $('#cart_json').val(JSON.stringify(cart));
+
+                // Unmask paid_amount before submit to prevent validation error
+                // Backend already handles this with prepareForValidation, but this is double safety
+                let paidVal = $('#paid_amount').val();
+                let cleanPaid = paidVal.replace(/[^\d]/g, '');
+                $('#paid_amount').val(cleanPaid);
+
                 return true;
             });
 

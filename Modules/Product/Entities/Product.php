@@ -10,10 +10,20 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media; // FIX: Import untuk conversions
 use Modules\Adjustment\Entities\StockMovement;
 use Modules\Adjustment\Entities\AdjustedProduct;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Product extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, InteractsWithMedia;
+    use HasFactory, SoftDeletes, InteractsWithMedia, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['product_name', 'product_code', 'product_quantity', 'product_price', 'is_active'])
+            ->logOnlyDirty()
+            ->useLogName('product');
+    }
 
     protected $fillable = [
         // Unified fields (prioritas untuk unifikasi)
@@ -42,6 +52,7 @@ class Product extends Model implements HasMedia
         'ring',
         'product_year',
         'stok_awal',
+        'barcode', // Added for barcode scanning support
 
         // Legacy fields (map saat migrasi, tetap support existing jika masih ada referensi)
         'productname',

@@ -9,7 +9,108 @@
     ]])
 @endsection
 
+
 @section('content')
+
+@php
+    // Statistik ringan (aman untuk index)
+    $totalUsers    = (int) \App\Models\User::count();
+    $activeUsers   = (int) \App\Models\User::where('is_active', 1)->count();
+    $inactiveUsers = (int) \App\Models\User::where('is_active', 0)->count();
+    $totalRoles    = (int) \Spatie\Permission\Models\Role::count();
+
+    // URLs (ikut filter yang sudah Anda pakai: role, status, search)
+    $urlAll      = route('users.index');
+    $urlActive   = route('users.index', array_filter(['status' => 1, 'role' => request('role'), 'search' => request('search')]));
+    $urlInactive = route('users.index', array_filter(['status' => 'inactive', 'role' => request('role'), 'search' => request('search')]));
+    $urlRole     = route('users.index', array_filter(['role' => request('role'), 'search' => request('search')]));
+@endphp
+
+{{-- Stats Cards (Line Color) --}}
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
+
+    {{-- Total Pengguna --}}
+    <a href="{{ $urlAll }}"
+       class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+              border-l-4 border-l-blue-600 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600 dark:text-gray-300">Total Pengguna</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-white leading-tight tabular-nums tracking-tight">
+                    {{ number_format($totalUsers, 0, ',', '.') }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">Semua akun terdaftar</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-blue-50 text-blue-700 ring-1 ring-blue-100
+                        dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-900/50">
+                <i class="bi bi-people text-xl"></i>
+            </div>
+        </div>
+    </a>
+
+    {{-- Aktif --}}
+    <a href="{{ $urlActive }}"
+       class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+              border-l-4 border-l-emerald-600 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600 dark:text-gray-300">Aktif</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-white leading-tight tabular-nums tracking-tight">
+                    {{ number_format($activeUsers, 0, ',', '.') }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">Bisa login & akses</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100
+                        dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-900/50">
+                <i class="bi bi-check-circle text-xl"></i>
+            </div>
+        </div>
+    </a>
+
+    {{-- Nonaktif --}}
+    <a href="{{ $urlInactive }}"
+       class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+              border-l-4 border-l-rose-600 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600 dark:text-gray-300">Nonaktif</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-white leading-tight tabular-nums tracking-tight">
+                    {{ number_format($inactiveUsers, 0, ',', '.') }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">Akun dibatasi</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-rose-50 text-rose-700 ring-1 ring-rose-100
+                        dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-900/50">
+                <i class="bi bi-x-circle text-xl"></i>
+            </div>
+        </div>
+    </a>
+
+    {{-- Total Role --}}
+    <a href="{{ $urlRole }}"
+       class="group bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition
+              border-l-4 border-l-amber-500 dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <p class="mb-1 text-sm font-semibold text-slate-600 dark:text-gray-300">Total Role</p>
+                <p class="text-2xl md:text-[26px] font-extrabold text-slate-900 dark:text-white leading-tight tabular-nums tracking-tight">
+                    {{ number_format($totalRoles, 0, ',', '.') }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">Role di sistem</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-amber-50 text-amber-700 ring-1 ring-amber-100
+                        dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-900/50">
+                <i class="bi bi-shield-lock text-xl"></i>
+            </div>
+        </div>
+    </a>
+
+</div>
+
     {{-- Main Table --}}
     <x-flowbite-table 
         title="Data Pengguna" 

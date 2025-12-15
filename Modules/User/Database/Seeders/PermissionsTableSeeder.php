@@ -50,6 +50,7 @@ class PermissionsTableSeeder extends Seeder
         'access_sale_payments',
         // Sale Returns
         'access_sale_returns','create_sale_returns','show_sale_returns','edit_sale_returns','delete_sale_returns',
+        'approve_sale_returns', // Added for approval workflow
         'access_sale_return_payments',
         // Purchases
         'access_purchases','create_purchases','show_purchases','edit_purchases','delete_purchases',

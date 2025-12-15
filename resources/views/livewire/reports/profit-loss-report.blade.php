@@ -1,67 +1,167 @@
 <div wire:key="pl-root">
-    {{-- Filter Card (Styled to match layouts.filter-card) --}}
-    <div class="mb-6 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/50 dark:text-blue-400">
-                    <i class="bi bi-funnel-fill"></i>
+    {{-- Header & Filter Section --}}
+    <div class="mb-6 space-y-4">
+        {{-- Card Header with Icon --}}
+        <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+                    <i class="bi bi-wallet2 text-2xl"></i>
                 </div>
-                Filter Laporan Laba Rugi
-            </h3>
-        </div>
-        
-        <form wire:submit.prevent="generateReport">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-                <div class="md:col-span-5">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        <i class="bi bi-calendar-event mr-1.5 text-blue-600"></i> Tanggal Mulai
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <i class="bi bi-calendar-range text-gray-500 dark:text-gray-400"></i>
-                        </div>
-                        <input wire:model="startDate" type="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors">
-                    </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Laporan Laba Rugi</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Analisa pendapatan, HPP, dan beban operasional perusahaan</p>
                 </div>
-
-                <div class="md:col-span-5">
-                    <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                        <i class="bi bi-calendar-event mr-1.5 text-blue-600"></i> Tanggal Akhir
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <i class="bi bi-calendar-range text-gray-500 dark:text-gray-400"></i>
-                        </div>
-                        <input wire:model="endDate" type="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 transition-colors">
-                    </div>
-                </div>
-
-                <div class="md:col-span-2">
-                    <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-xl text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-all shadow-md hover:shadow-lg flex items-center justify-center">
-                        <span wire:loading.remove wire:target="generateReport" class="flex items-center">
-                            <i class="bi bi-search mr-2"></i> Tampilkan
-                        </span>
-                        <div wire:loading wire:target="generateReport" class="flex items-center">
-                             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Loading...
-                        </div>
+            </div>
+            
+            {{-- Action Buttons --}}
+            <div class="flex items-center gap-2">
+                <button wire:click="toggleComparison" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl border {{ $showComparison ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700' }} transition-all shadow-sm">
+                    <i class="bi bi-arrow-left-right mr-2"></i> Bandingkan
+                </button>
+                <div class="h-8 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden md:block"></div>
+                <div class="flex rounded-xl shadow-sm" role="group">
+                    <button wire:click="exportExcel" wire:loading.attr="disabled" class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-white border border-gray-200 rounded-l-xl hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-green-400 dark:hover:bg-gray-700 transition-all">
+                        <i class="bi bi-file-earmark-excel mr-2"></i> Excel
+                    </button>
+                    <button wire:click="exportPdf" wire:loading.attr="disabled" class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-white border-t border-b border-r border-gray-200 rounded-r-xl hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-red-400 dark:hover:bg-gray-700 transition-all">
+                        <i class="bi bi-file-earmark-pdf mr-2"></i> PDF
                     </button>
                 </div>
             </div>
+        </div>
 
-            {{-- Loading Indicator --}}
-            <div wire:loading.flex wire:target="generateReport" class="flex items-center mt-4 p-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400" role="alert">
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span class="font-medium">Sedang menganalisa data keuangan...</span>
-            </div>
-        </form>
+        {{-- Filter Card --}}
+        <div class="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
+            <form wire:submit.prevent="generateReport">
+                <div class="flex flex-col md:flex-row gap-6 items-end">
+                    
+                    {{-- Date Range Inputs --}}
+                    <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Dari Tanggal
+                            </label>
+                            <input wire:model="startDate" type="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transaction-colors">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Sampai Tanggal
+                            </label>
+                            <input wire:model="endDate" type="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white transaction-colors">
+                        </div>
+                    </div>
+
+                    {{-- Quick Filters --}}
+                    <div class="flex md:flex-col gap-2 overflow-x-auto pb-1 md:pb-0">
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:block mb-1">Filter Cepat</label>
+                        <div class="flex gap-2">
+                            <button type="button" wire:click="setPeriod('this_month')" class="px-3 py-1.5 text-xs font-medium border rounded-full transition-all whitespace-nowrap {{ $activePeriod === 'this_month' ? 'bg-blue-100 text-blue-700 border-blue-200 ring-2 ring-blue-500/20 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700' }}">
+                                Bulan Ini
+                            </button>
+                            <button type="button" wire:click="setPeriod('last_month')" class="px-3 py-1.5 text-xs font-medium border rounded-full transition-all whitespace-nowrap {{ $activePeriod === 'last_month' ? 'bg-blue-100 text-blue-700 border-blue-200 ring-2 ring-blue-500/20 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700' }}">
+                                Bulan Lalu
+                            </button>
+                            <button type="button" wire:click="setPeriod('this_year')" class="px-3 py-1.5 text-xs font-medium border rounded-full transition-all whitespace-nowrap {{ $activePeriod === 'this_year' ? 'bg-blue-100 text-blue-700 border-blue-200 ring-2 ring-blue-500/20 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700' }}">
+                                Tahun Ini
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Submit Button --}}
+                    <div>
+                         <button type="submit" class="w-full md:w-auto text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-xl text-sm px-6 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 transition-all shadow-md hover:shadow-lg flex items-center justify-center min-w-[120px]">
+                            <span wire:loading.remove wire:target="generateReport, setPeriod">
+                                <i class="bi bi-filter mr-2"></i> Terapkan
+                            </span>
+                            <div wire:loading wire:target="generateReport, setPeriod">
+                                <span class="flex items-center gap-2"><i class="bi bi-arrow-repeat animate-spin"></i> Loading...</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
+
+    {{-- Period Comparison Section --}}
+    @if($showComparison)
+    <div class="mb-6 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800">
+            <h4 class="text-base font-bold text-purple-800 dark:text-purple-300 flex items-center gap-2">
+                <i class="bi bi-arrow-left-right"></i>
+                Perbandingan dengan Periode Sebelumnya
+            </h4>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {{-- Revenue --}}
+                @php
+                    $revDiff = $revenue - $prevRevenue;
+                    $revPct = $prevRevenue > 0 ? round(($revDiff / $prevRevenue) * 100, 1) : 0;
+                @endphp
+                <div class="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Revenue</p>
+                    <div class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ format_currency($revenue) }}</div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ $revDiff >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $revPct >= 0 ? '+' : '' }}{{ $revPct }}%
+                    </span>
+                </div>
+
+                {{-- COGS --}}
+                @php
+                    $cogsDiff = $cogs - $prevCogs;
+                    $cogsPct = $prevCogs > 0 ? round(($cogsDiff / $prevCogs) * 100, 1) : 0;
+                @endphp
+                <div class="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">COGS</p>
+                    <div class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ format_currency($cogs) }}</div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ $cogsDiff <= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $cogsPct >= 0 ? '+' : '' }}{{ $cogsPct }}%
+                    </span>
+                </div>
+
+                {{-- Gross Profit --}}
+                @php
+                    $gpDiff = $grossProfit - $prevGrossProfit;
+                    $gpPct = $prevGrossProfit != 0 ? round(($gpDiff / abs($prevGrossProfit)) * 100, 1) : 0;
+                @endphp
+                <div class="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Laba Kotor</p>
+                    <div class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ format_currency($grossProfit) }}</div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ $gpDiff >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $gpPct >= 0 ? '+' : '' }}{{ $gpPct }}%
+                    </span>
+                </div>
+
+                {{-- Expenses --}}
+                @php
+                    $expDiff = $expenses - $prevExpenses;
+                    $expPct = $prevExpenses > 0 ? round(($expDiff / $prevExpenses) * 100, 1) : 0;
+                @endphp
+                <div class="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Beban</p>
+                    <div class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ format_currency($expenses) }}</div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ $expDiff <= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $expPct >= 0 ? '+' : '' }}{{ $expPct }}%
+                    </span>
+                </div>
+
+                {{-- Net Profit --}}
+                @php
+                    $npDiff = $netProfit - $prevNetProfit;
+                    $npPct = $prevNetProfit != 0 ? round(($npDiff / abs($prevNetProfit)) * 100, 1) : 0;
+                @endphp
+                <div class="text-center p-4 rounded-xl bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800">
+                    <p class="text-xs text-green-600 dark:text-green-400 mb-1 font-semibold">Laba Bersih</p>
+                    <div class="text-lg font-bold text-green-700 dark:text-green-300 mb-1">{{ format_currency($netProfit) }}</div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ $npDiff >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $npPct >= 0 ? '+' : '' }}{{ $npPct }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- Report Results --}}
     @if ($revenue !== null)

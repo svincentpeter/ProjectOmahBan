@@ -5,7 +5,7 @@ namespace App\Listeners;
 use App\Events\ManualInputCreated;
 use App\Models\OwnerNotification;
 use App\Models\User;
-use App\Services\Fontee\FonteeNotificationService;
+use App\Services\WhatsApp\BaileysNotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -19,11 +19,11 @@ class NotifyOwnerOfManualInput
     public $tries = 3;
     public $timeout = 30;
 
-    protected $fonteeService;
+    protected BaileysNotificationService $baileysService;
 
-    public function __construct(FonteeNotificationService $fonteeService)
+    public function __construct(BaileysNotificationService $baileysService)
     {
-        $this->fonteeService = $fonteeService;
+        $this->baileysService = $baileysService;
     }
 
     /**
@@ -107,8 +107,8 @@ class NotifyOwnerOfManualInput
                         $log->linkToNotification($notification);
                     }
 
-                    // Kirim keluar via Fontee (async/non-blocking di sisi service)
-                    $this->fonteeService->sendNotification($notification);
+                    // Kirim keluar via Baileys WhatsApp (async/non-blocking)
+                    $this->baileysService->sendNotification($notification);
                 } catch (\Throwable $inner) {
                     Log::error('NotifyOwnerOfManualInput: per-recipient failed', [
                         'sale_id' => $sale->id,

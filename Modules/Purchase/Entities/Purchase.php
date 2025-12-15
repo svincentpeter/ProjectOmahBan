@@ -122,4 +122,59 @@ class Purchase extends Model
     {
         return Carbon::parse($this->date)->format('d M, Y');
     }
+
+    /**
+     * Relasi ke PurchasePayment (payment history)
+     */
+    public function payments()
+    {
+        return $this->hasMany(PurchasePayment::class, 'purchase_id');
+    }
+
+    /**
+     * Alias for payments
+     */
+    public function purchasePayments()
+    {
+        return $this->payments();
+    }
+
+    /**
+     * Recalculate paid_amount, due_amount, and payment_status based on payments
+     */
+    public function recalcPaymentStatus(): self
+    {
+        $paid = (int) $this->payments()->sum('amount');
+        $this->paid_amount = $paid;
+        $this->due_amount = max(0, (int) $this->total_amount - $paid);
+
+        // Determine payment status
+        if ($this->due_amount <= 0) {
+            $this->payment_status = 'Paid';
+        } elseif ($this->paid_amount > 0) {
+            $this->payment_status = 'Partial';
+        } else {
+            $this->payment_status = 'Unpaid';
+        }
+
+        // Auto-update status if fully paid
+        if ($this->payment_status === 'Paid' && $this->status !== 'Completed') {
+            $this->status = 'Completed';
+        }
+
+        $this->save();
+        return $this;
+    }
+
+    /**
+     * Get supplier display name
+     */
+    public function getSupplierDisplayNameAttribute(): string
+    {
+        if ($this->supplier) {
+            return (string) $this->supplier->supplier_name;
+        }
+        return (string) ($this->supplier_name ?? '-');
+    }
 }
+

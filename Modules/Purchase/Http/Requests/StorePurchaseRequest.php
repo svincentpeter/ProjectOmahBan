@@ -8,13 +8,18 @@ use Illuminate\Support\Facades\Gate;
 class StorePurchaseRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
     {
-        return Gate::allows('create_purchases'); // FIX: Dari 'create_sales' ke 'create_purchases'
+        $amount = $this->total_amount;
+        $paid = $this->paid_amount;
+
+        // Clean formatting: Rp 1.000.000 -> 1000000
+        $amount = str_replace(['Rp', '.', ' '], '', $amount);
+        $paid = str_replace(['Rp', '.', ' '], '', $paid);
+
+        $this->merge([
+            'total_amount' => $amount,
+            'paid_amount' => $paid,
+        ]);
     }
 
     /**

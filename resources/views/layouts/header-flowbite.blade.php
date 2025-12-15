@@ -77,18 +77,6 @@
             <span class="sr-only">Cari</span>
         </button>
         
-        {{-- Dark Mode Toggle --}}
-        <button id="theme-toggle" type="button" class="text-zinc-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-            <i class="bi bi-sun-fill text-xl hidden dark:inline"></i>
-            <i class="bi bi-moon-stars-fill text-xl inline dark:hidden"></i>
-            <span class="sr-only">Toggle dark mode</span>
-        </button>
-        
-        {{-- Apps Dropdown --}}
-         <button type="button" class="text-zinc-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">    
-            <i class="bi bi-grid-3x3-gap-fill text-xl"></i>
-        </button>
-        
         {{-- User Menu --}}
         <div class="flex items-center ms-1">
             <div>

@@ -13,50 +13,69 @@
     {{-- Alerts --}}
     @include('utils.alerts')
 
-    {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        {{-- Total Jasa --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-purple-200 transform transition-all hover:scale-[1.02]">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-wrench text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-purple-100 text-sm font-medium mb-1">Total Jasa</p>
-                    <p class="text-3xl font-bold">{{ \Modules\Product\Entities\ServiceMaster::count() }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+    {{-- Statistics Cards (Line Color, bukan full gradient) --}}
+@php
+    $totalJasa = \Modules\Product\Entities\ServiceMaster::count();
+    $aktifJasa = \Modules\Product\Entities\ServiceMaster::where('status', 1)->count();
+    $nonaktifJasa = \Modules\Product\Entities\ServiceMaster::where('status', 0)->count();
+@endphp
 
-        {{-- Aktif --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg shadow-teal-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="window.location.href='{{ route('service-masters.index', ['quick' => 'active']) }}'">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-check-circle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-emerald-100 text-sm font-medium mb-1">Aktif</p>
-                    <p class="text-3xl font-bold">{{ \Modules\Product\Entities\ServiceMaster::where('status', 1)->count() }}</p>
-                </div>
-            </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
-        {{-- Nonaktif --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg shadow-orange-200 transform transition-all hover:scale-[1.02] cursor-pointer" onclick="window.location.href='{{ route('service-masters.index', ['quick' => 'inactive']) }}'">
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-white shadow-inner">
-                    <i class="bi bi-x-circle text-2xl"></i>
-                </div>
-                <div>
-                    <p class="text-amber-100 text-sm font-medium mb-1">Nonaktif</p>
-                    <p class="text-3xl font-bold">{{ \Modules\Product\Entities\ServiceMaster::where('status', 0)->count() }}</p>
-                </div>
+    {{-- Total Jasa --}}
+    <div class="group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+                border-l-4 border-l-purple-600">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-purple-50 text-purple-700 ring-1 ring-purple-100">
+                <i class="bi bi-wrench text-xl"></i>
             </div>
-            <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Total Jasa</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $totalJasa }}</p>
+                <p class="text-xs text-slate-500 mt-1">Master jasa terdaftar</p>
+            </div>
         </div>
     </div>
+
+    {{-- Aktif (clickable) --}}
+    <button type="button"
+        onclick="window.location.href='{{ route('service-masters.index', ['quick' => 'active']) }}'"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <i class="bi bi-check-circle text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Aktif</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $aktifJasa }}</p>
+                <p class="text-xs text-slate-500 mt-1">Siap dipakai kasir</p>
+            </div>
+        </div>
+    </button>
+
+    {{-- Nonaktif (clickable) --}}
+    <button type="button"
+        onclick="window.location.href='{{ route('service-masters.index', ['quick' => 'inactive']) }}'"
+        class="text-left group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition
+               border-l-4 border-l-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center
+                        bg-amber-50 text-amber-700 ring-1 ring-amber-100">
+                <i class="bi bi-x-circle text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-600">Nonaktif</p>
+                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $nonaktifJasa }}</p>
+                <p class="text-xs text-slate-500 mt-1">Disembunyikan sementara</p>
+            </div>
+        </div>
+    </button>
+
+</div>
+
 
     
 

@@ -11,10 +11,20 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\People\Entities\Customer; // ⭐ TAMBAHAN: Relasi ke Customer
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Sale extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['reference', 'customer_name', 'total_amount', 'paid_amount', 'status', 'payment_status'])
+            ->logOnlyDirty()
+            ->useLogName('sale');
+    }
 
     protected $table = 'sales';
 
