@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 13, 2025 at 07:23 PM
+-- Generation Time: Dec 17, 2025 at 05:01 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.12
 
@@ -67,6 +67,40 @@ DELIMITER ;
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `activity_log`
+--
+
+CREATE TABLE `activity_log` (
+  `id` bigint UNSIGNED NOT NULL,
+  `log_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `subject_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `event` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `subject_id` bigint UNSIGNED DEFAULT NULL,
+  `causer_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `causer_id` bigint UNSIGNED DEFAULT NULL,
+  `properties` json DEFAULT NULL,
+  `batch_uuid` char(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `activity_log`
+--
+
+INSERT INTO `activity_log` (`id`, `log_name`, `description`, `subject_type`, `event`, `subject_id`, `causer_type`, `causer_id`, `properties`, `batch_uuid`, `created_at`, `updated_at`) VALUES
+(1, 'sale', 'created', 'Modules\\Sale\\Entities\\Sale', 'created', 19, 'App\\Models\\User', 1, '{\"attributes\": {\"status\": \"Draft\", \"reference\": \"OB2-00019\", \"paid_amount\": 0, \"total_amount\": 925000, \"customer_name\": null, \"payment_status\": \"Unpaid\"}}', NULL, '2025-12-14 17:02:42', '2025-12-14 17:02:42'),
+(2, 'sale', 'updated', 'Modules\\Sale\\Entities\\Sale', 'updated', 19, 'App\\Models\\User', 1, '{\"old\": [], \"attributes\": []}', NULL, '2025-12-14 17:02:42', '2025-12-14 17:02:42'),
+(3, 'sale', 'updated', 'Modules\\Sale\\Entities\\Sale', 'updated', 19, 'App\\Models\\User', 1, '{\"old\": [], \"attributes\": []}', NULL, '2025-12-14 17:02:51', '2025-12-14 17:02:51'),
+(4, 'sale', 'created', 'Modules\\Sale\\Entities\\Sale', 'created', 20, 'App\\Models\\User', 1, '{\"attributes\": {\"status\": \"Draft\", \"reference\": \"OB2-00020\", \"paid_amount\": 0, \"total_amount\": 925000, \"customer_name\": null, \"payment_status\": \"Unpaid\"}}', NULL, '2025-12-14 17:24:10', '2025-12-14 17:24:10'),
+(5, 'sale', 'updated', 'Modules\\Sale\\Entities\\Sale', 'updated', 20, 'App\\Models\\User', 1, '{\"old\": [], \"attributes\": []}', NULL, '2025-12-14 17:24:10', '2025-12-14 17:24:10'),
+(6, 'sale', 'created', 'Modules\\Sale\\Entities\\Sale', 'created', 21, 'App\\Models\\User', 1, '{\"attributes\": {\"status\": \"Draft\", \"reference\": \"OB2-00021\", \"paid_amount\": 0, \"total_amount\": 835000, \"customer_name\": null, \"payment_status\": \"Unpaid\"}}', NULL, '2025-12-14 18:06:10', '2025-12-14 18:06:10'),
+(7, 'sale', 'updated', 'Modules\\Sale\\Entities\\Sale', 'updated', 21, 'App\\Models\\User', 1, '{\"old\": [], \"attributes\": []}', NULL, '2025-12-14 18:06:10', '2025-12-14 18:06:10');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `adjusted_products`
 --
 
@@ -87,7 +121,14 @@ CREATE TABLE `adjusted_products` (
 
 INSERT INTO `adjusted_products` (`id`, `adjustment_id`, `product_id`, `quantity`, `type`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 1, 2, 5, 'add', '2025-11-17 03:27:04', '2025-11-17 03:27:04', NULL),
-(2, 2, 2, 5, 'add', '2025-11-17 03:32:55', '2025-11-17 03:32:55', NULL);
+(2, 2, 2, 5, 'add', '2025-11-17 03:32:55', '2025-11-17 03:32:55', NULL),
+(100, 100, 1, 3, 'add', '2025-12-17 17:00:35', '2025-12-17 17:00:35', NULL),
+(101, 101, 2, 2, 'sub', '2025-12-17 17:00:35', '2025-12-17 17:00:35', NULL),
+(102, 102, 5, 1, 'sub', '2025-12-16 17:00:35', '2025-12-16 17:00:35', NULL),
+(103, 103, 3, 4, 'add', '2025-12-14 17:00:35', '2025-12-14 17:00:35', NULL),
+(104, 104, 4, 2, 'sub', '2025-12-12 17:00:35', '2025-12-12 17:00:35', NULL),
+(105, 105, 2, 5, 'sub', '2025-12-10 17:00:35', '2025-12-10 17:00:35', NULL),
+(106, 106, 3, 1, 'sub', '2025-12-07 17:00:35', '2025-12-07 17:00:35', NULL);
 
 --
 -- Triggers `adjusted_products`
@@ -162,7 +203,14 @@ CREATE TABLE `adjustments` (
 
 INSERT INTO `adjustments` (`id`, `date`, `reference`, `note`, `status`, `requester_id`, `approver_id`, `reason`, `description`, `approval_notes`, `approval_date`, `total_value`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, '2025-11-12', 'ADJ-20251117-00001', NULL, 'approved', 1, 1, 'Rusak', 'Testing barang', 'Diterima', '2025-11-17 03:27:30', 3625000.00, '2025-11-17 03:27:04', '2025-11-17 03:27:30', NULL),
-(2, '2025-11-17', 'ADJ-20251117-00002', NULL, 'approved', 1, 1, 'Hilang', 'Testing barang', NULL, '2025-11-17 03:33:05', 3625000.00, '2025-11-17 03:32:55', '2025-11-17 03:33:05', NULL);
+(2, '2025-11-17', 'ADJ-20251117-00002', NULL, 'approved', 1, 1, 'Hilang', 'Testing barang', NULL, '2025-11-17 03:33:05', 3625000.00, '2025-11-17 03:32:55', '2025-11-17 03:33:05', NULL),
+(100, '2025-12-18', 'ADJ-DEMO-00001', 'Stok fisik lebih banyak dari sistem setelah stock opname', 'pending', 5, NULL, 'Lainnya', 'Ditemukan 3 unit ban GT Savero yang belum tercatat di sistem. Kemungkinan dari pengiriman supplier yang belum di-input.', NULL, NULL, 3842280.00, '2025-12-17 17:00:35', '2025-12-17 17:00:35', NULL),
+(101, '2025-12-18', 'ADJ-DEMO-00002', 'Ban rusak karena penyimpanan tidak tepat', 'pending', 5, NULL, 'Rusak', 'Ditemukan 2 unit Ban Bridgestone dengan kondisi retak karena terkena sinar matahari langsung di gudang.', NULL, NULL, 1450000.00, '2025-12-17 17:00:35', '2025-12-17 17:00:35', NULL),
+(102, '2025-12-17', 'ADJ-DEMO-00003', 'Kehilangan stok velg', 'pending', 6, NULL, 'Hilang', 'Selisih stok velg HSR Ring 17 sebanyak 1 unit. Sudah dicari namun tidak ditemukan.', NULL, NULL, 2450000.00, '2025-12-16 17:00:35', '2025-12-16 17:00:35', NULL),
+(103, '2025-12-15', 'ADJ-DEMO-00004', 'Koreksi stok setelah audit bulanan', 'approved', 4, 1, 'Lainnya', 'Hasil audit bulanan menunjukkan ada 4 unit ban Dunlop tidak tercatat.', 'Approved. Stok sudah diverifikasi oleh Supervisor.', '2025-12-15 17:00:35', 3560000.00, '2025-12-14 17:00:35', '2025-12-15 17:00:35', NULL),
+(104, '2025-12-13', 'ADJ-DEMO-00005', 'Ban kadaluarsa ditarik dari stok', 'approved', 4, 1, 'Kadaluarsa', 'Penarikan 2 unit ban lama (produksi 2020) yang sudah tidak layak jual.', 'Approved. Ban akan dimusnahkan sesuai SOP.', '2025-12-13 17:00:35', 1280000.00, '2025-12-12 17:00:35', '2025-12-13 17:00:35', NULL),
+(105, '2025-12-11', 'ADJ-DEMO-00006', 'Klaim kehilangan tidak valid', 'rejected', 5, 4, 'Hilang', 'Kasir mengklaim 5 unit ban hilang dari gudang.', 'DITOLAK: Setelah investigasi CCTV, stok masih lengkap. Kesalahan hitung.', '2025-12-11 17:00:35', 3625000.00, '2025-12-10 17:00:35', '2025-12-11 17:00:35', NULL),
+(106, '2025-12-08', 'ADJ-DEMO-00007', 'Pengajuan tidak lengkap', 'rejected', 6, 4, 'Rusak', 'Pengajuan adjustmen untuk barang rusak tanpa bukti foto.', 'DITOLAK: Tidak ada dokumentasi foto. Harap ajukan ulang dengan bukti.', '2025-12-08 17:00:35', 890000.00, '2025-12-07 17:00:35', '2025-12-08 17:00:35', NULL);
 
 -- --------------------------------------------------------
 
@@ -218,7 +266,18 @@ INSERT INTO `adjustment_logs` (`id`, `adjustment_id`, `user_id`, `action`, `old_
 (1, 1, 1, 'created', NULL, 'pending', 'Pengajuan baru', 1, '2025-11-17 03:27:04', '2025-11-17 04:27:04', NULL),
 (2, 1, 1, 'approved', 'pending', 'approved', 'Diterima', 1, '2025-11-17 03:27:30', '2025-11-17 04:27:30', NULL),
 (3, 2, 1, 'created', NULL, 'pending', 'Pengajuan baru', 1, '2025-11-17 03:32:55', '2025-11-17 04:32:55', NULL),
-(4, 2, 1, 'approved', 'pending', 'approved', 'Approved', 1, '2025-11-17 03:33:05', '2025-11-17 04:33:05', NULL);
+(4, 2, 1, 'approved', 'pending', 'approved', 'Approved', 1, '2025-11-17 03:33:05', '2025-11-17 04:33:05', NULL),
+(27, 100, 5, 'created', NULL, 'pending', 'Pengajuan adjustment oleh Kasir Ani', 0, '2025-12-17 17:00:35', '2025-12-17 17:00:35', NULL),
+(28, 101, 5, 'created', NULL, 'pending', 'Pengajuan adjustment oleh Kasir Ani - barang rusak', 0, '2025-12-17 17:00:35', '2025-12-17 17:00:35', NULL),
+(29, 102, 6, 'created', NULL, 'pending', 'Pengajuan adjustment oleh Kasir Budi - kehilangan', 0, '2025-12-16 17:00:35', '2025-12-17 17:00:35', NULL),
+(30, 103, 4, 'created', NULL, 'pending', 'Pengajuan oleh Supervisor', 1, '2025-12-14 17:00:35', '2025-12-17 17:00:35', NULL),
+(31, 103, 1, 'approved', 'pending', 'approved', 'Disetujui oleh Owner. Stok sudah diverifikasi fisik.', 1, '2025-12-15 17:00:35', '2025-12-17 17:00:35', NULL),
+(32, 104, 4, 'created', NULL, 'pending', 'Pengajuan penarikan ban kadaluarsa', 1, '2025-12-12 17:00:35', '2025-12-17 17:00:35', NULL),
+(33, 104, 1, 'approved', 'pending', 'approved', 'Disetujui. Ban akan dimusnahkan.', 1, '2025-12-13 17:00:35', '2025-12-17 17:00:35', NULL),
+(34, 105, 5, 'created', NULL, 'pending', 'Pengajuan kehilangan stok', 1, '2025-12-10 17:00:35', '2025-12-17 17:00:35', NULL),
+(35, 105, 4, 'rejected', 'pending', 'rejected', 'DITOLAK: Investigasi CCTV menunjukkan stok lengkap.', 1, '2025-12-11 17:00:35', '2025-12-17 17:00:35', NULL),
+(36, 106, 6, 'created', NULL, 'pending', 'Pengajuan barang rusak', 1, '2025-12-07 17:00:35', '2025-12-17 17:00:35', NULL),
+(37, 106, 4, 'rejected', 'pending', 'rejected', 'DITOLAK: Tidak ada dokumentasi foto.', 1, '2025-12-08 17:00:35', '2025-12-17 17:00:35', NULL);
 
 -- --------------------------------------------------------
 
@@ -273,10 +332,10 @@ INSERT INTO `categories` (`id`, `category_code`, `category_name`, `created_at`, 
 -- (See below for the actual view)
 --
 CREATE TABLE `categories_view` (
-`id` bigint unsigned
-,`category_code` varchar(255)
-,`name` varchar(255)
+`category_code` varchar(255)
 ,`created_at` timestamp
+,`id` bigint unsigned
+,`name` varchar(255)
 ,`updated_at` timestamp
 );
 
@@ -460,7 +519,14 @@ INSERT INTO `manual_input_details` (`id`, `sale_id`, `sale_detail_id`, `cashier_
 (5, 6, 7, 5, 'service', 'Ngetestt', 1, 22222, 'TWESTTTTTINFGGGGG', 0, '2025-11-07 06:52:09', '2025-11-07 06:52:09'),
 (6, 7, 8, 1, 'service', 'Spooring Ban', 1, 150000, NULL, 0, '2025-11-12 06:46:41', '2025-11-12 06:46:41'),
 (7, 9, 11, 1, 'service', 'Balancing', 1, 20000, NULL, 0, '2025-12-09 10:05:32', '2025-12-09 10:05:32'),
-(8, 14, 16, 1, 'goods', 'Ban Bridgestone Ecopia EP150 185/65 R15', 1, 925000, 'Barang second belum di-input', 725000, '2025-12-09 17:22:00', '2025-12-09 17:22:00');
+(8, 14, 16, 1, 'goods', 'Ban Bridgestone Ecopia EP150 185/65 R15', 1, 925000, 'Barang second belum di-input', 725000, '2025-12-09 17:22:00', '2025-12-09 17:22:00'),
+(9, 19, 21, 1, 'goods', 'Ban Bridgestone Ecopia EP150 185/65 R15', 1, 925000, 'Barang second belum di-input', 725000, '2025-12-14 17:02:42', '2025-12-14 17:02:42'),
+(22, 105, 106, 5, 'service', 'Pasang Ban', 1, 25000, 'Jasa pemasangan ban standar', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(23, 105, 107, 5, 'service', 'Balancing', 4, 20000, 'Balancing 4 roda', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(24, 106, 109, 6, 'goods', 'Nitrogen', 4, 8000, 'Isi nitrogen 4 ban', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(25, 106, 110, 6, 'goods', 'Pentil Tubeless', 4, 5000, 'Ganti pentil tubeless', 2000, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(26, 107, 111, 5, 'service', 'Spooring Ban', 1, 150000, 'Jasa spooring roda depan', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(27, 108, 112, 5, 'goods', 'Ban Bekas Dunlop 205/65 R15', 1, 750000, 'Barang second belum di-input ke inventory', 500000, '2025-12-16 17:00:47', '2025-12-16 17:00:47');
 
 --
 -- Triggers `manual_input_details`
@@ -546,7 +612,8 @@ INSERT INTO `manual_input_logs` (`id`, `sale_id`, `sale_detail_id`, `cashier_id`
 (7, 6, 7, 5, 'manual_item', 'Ngetestt', 1, NULL, 22222, NULL, NULL, 'TWESTTTTTINFGGGGG', 0, NULL, 'pending', NULL, 1, 7, '2025-11-07 06:52:09', '2025-11-07 06:52:09', '2025-11-07 06:52:09'),
 (8, 7, 8, 1, 'manual_item', 'Spooring Ban', 1, NULL, 150000, NULL, NULL, 'No reason provided', 0, NULL, 'pending', NULL, 1, 11, '2025-11-12 06:46:41', '2025-11-12 06:46:41', '2025-11-12 06:46:41'),
 (9, 9, 11, 1, 'manual_item', 'Balancing', 1, NULL, 20000, NULL, NULL, 'No reason provided', 0, NULL, 'pending', NULL, 1, 15, '2025-12-09 10:05:32', '2025-12-09 10:05:32', '2025-12-09 10:05:32'),
-(10, 14, 16, 1, 'manual_item', 'Ban Bridgestone Ecopia EP150 185/65 R15', 1, NULL, 925000, NULL, NULL, 'Barang second belum di-input', 0, NULL, 'pending', NULL, 1, 19, '2025-12-09 17:22:00', '2025-12-09 17:22:00', '2025-12-09 17:22:00');
+(10, 14, 16, 1, 'manual_item', 'Ban Bridgestone Ecopia EP150 185/65 R15', 1, NULL, 925000, NULL, NULL, 'Barang second belum di-input', 0, NULL, 'pending', NULL, 1, 19, '2025-12-09 17:22:00', '2025-12-09 17:22:00', '2025-12-09 17:22:00'),
+(11, 19, 21, 1, 'manual_item', 'Ban Bridgestone Ecopia EP150 185/65 R15', 1, NULL, 925000, NULL, NULL, 'Barang second belum di-input', 0, NULL, 'pending', NULL, 1, 25, '2025-12-14 17:02:51', '2025-12-14 17:02:42', '2025-12-14 17:02:51');
 
 -- --------------------------------------------------------
 
@@ -579,7 +646,12 @@ INSERT INTO `manual_input_summary_daily` (`id`, `date`, `cashier_id`, `total_tra
 (15, '2025-12-09', 1, 5, 1, 1, 20000, 0, NULL, '2025-12-09 11:05:32', '2025-12-09 17:47:09'),
 (21, '2025-12-10', 1, 1, 1, 1, 925000, 0, NULL, '2025-12-09 18:22:00', '2025-12-09 18:22:00'),
 (23, '2025-12-13', 1, 2, 0, 0, 0, 0, NULL, '2025-12-13 17:47:10', '2025-12-13 17:57:20'),
-(25, '2025-12-14', 1, 2, 0, 0, 0, 0, NULL, '2025-12-13 18:04:43', '2025-12-13 18:24:40');
+(25, '2025-12-14', 1, 2, 0, 0, 0, 0, NULL, '2025-12-13 18:04:43', '2025-12-13 18:24:40'),
+(27, '2025-12-15', 1, 3, 1, 1, 925000, 0, NULL, '2025-12-14 18:02:42', '2025-12-14 19:06:10'),
+(61, '2025-12-18', 5, 5, 3, 6, 255000, 0, NULL, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(64, '2025-12-18', 4, 1, 0, 0, 0, 0, NULL, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(65, '2025-12-17', 5, 2, 1, 1, 750000, 0, NULL, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(67, '2025-12-18', 6, 1, 2, 8, 52000, 0, NULL, '2025-12-17 17:00:47', '2025-12-17 17:00:47');
 
 -- --------------------------------------------------------
 
@@ -691,7 +763,15 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (56, '2025_09_08_133151_normalize_money_to_idr', 21),
 (57, '2025_09_08_150741_align_settings_currency_to_idr', 22),
 (58, '2025_10_21_134216_add_midtrans_columns_to_sales_table', 23),
-(59, '2025_12_10_234040_add_deleted_at_to_stock_opname_logs_table', 24);
+(59, '2025_12_10_234040_add_deleted_at_to_stock_opname_logs_table', 24),
+(60, '2025_12_14_150000_create_sale_returns_tables', 25),
+(61, '2025_12_14_152000_add_barcode_to_products', 26),
+(62, '2025_12_14_151152_create_quotations_table', 27),
+(63, '2025_12_14_151153_create_quotation_details_table', 27),
+(64, '2025_12_14_192547_create_activity_log_table', 28),
+(65, '2025_12_14_192548_add_event_column_to_activity_log_table', 29),
+(66, '2025_12_14_192549_add_batch_uuid_column_to_activity_log_table', 29),
+(67, '2025_12_14_235740_rename_fontee_to_whatsapp_in_owner_notifications', 30);
 
 -- --------------------------------------------------------
 
@@ -752,10 +832,10 @@ CREATE TABLE `owner_notifications` (
   `reviewed_at` timestamp NULL DEFAULT NULL,
   `reviewed_by` bigint UNSIGNED DEFAULT NULL COMMENT 'User ID yang review',
   `review_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `fontee_message_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ID dari Fontee API',
-  `fontee_status` enum('pending','sent','failed','read') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
-  `fontee_sent_at` timestamp NULL DEFAULT NULL,
-  `fontee_error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `whatsapp_message_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ID dari Fontee API',
+  `whatsapp_status` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `whatsapp_sent_at` datetime DEFAULT NULL,
+  `whatsapp_error_message` text COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -765,7 +845,7 @@ CREATE TABLE `owner_notifications` (
 -- Dumping data for table `owner_notifications`
 --
 
-INSERT INTO `owner_notifications` (`id`, `user_id`, `sale_id`, `notification_type`, `title`, `message`, `data`, `severity`, `is_read`, `is_reviewed`, `read_at`, `reviewed_at`, `reviewed_by`, `review_notes`, `fontee_message_id`, `fontee_status`, `fontee_sent_at`, `fontee_error_message`, `created_at`, `updated_at`, `deleted_at`) VALUES
+INSERT INTO `owner_notifications` (`id`, `user_id`, `sale_id`, `notification_type`, `title`, `message`, `data`, `severity`, `is_read`, `is_reviewed`, `read_at`, `reviewed_at`, `reviewed_by`, `review_notes`, `whatsapp_message_id`, `whatsapp_status`, `whatsapp_sent_at`, `whatsapp_error_message`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 1, 1, 'price_adjustment', '✅ Penyesuaian Harga - Inv OB2-00001', 'Harga EP150 disesuaikan dari Rp 925.000 menjadi Rp 900.000 (-2.70%).', '{\"items\": [{\"qty\": 1, \"name\": \"EP150 185/65 R15\", \"price\": 900000}], \"cashier_id\": 5, \"invoice_no\": \"OB2-00001\", \"cashier_name\": \"Ani (Kasir 1)\"}', 'info', 1, 0, '2025-11-08 06:09:39', NULL, NULL, NULL, NULL, 'sent', NULL, NULL, '2025-11-06 19:06:00', '2025-11-08 06:09:39', NULL),
 (2, 1, 2, 'manual_input_alert', '⚠️ Input Manual Disesuaikan - Inv OB2-00002', 'Balancing naik dari Rp 20.000 ➜ Rp 25.000 (approved).', '{\"items\": [{\"name\": \"Balancing\", \"type\": \"service\", \"price\": 25000, \"reason\": \"Velg besar\", \"quantity\": 1}], \"cashier_id\": 5, \"invoice_no\": \"OB2-00002\", \"items_count\": 1, \"cashier_name\": \"Ani (Kasir 1)\", \"total_amount\": 25000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, 'sent', NULL, NULL, '2025-11-06 19:20:25', '2025-11-06 19:20:25', NULL),
 (3, 1, 4, 'manual_input_alert', '⚠️ Input Manual (2 item) - Inv OB2-00004', 'Transaksi memuat 2 item manual: Jasa Pasang Ban (30.000), Nitrogen (8.000).', '{\"items\": [{\"name\": \"Jasa Pasang Ban\", \"type\": \"service\", \"price\": 30000, \"quantity\": 1}, {\"name\": \"Nitrogen\", \"type\": \"goods\", \"price\": 8000, \"quantity\": 1}], \"cashier_id\": 5, \"invoice_no\": \"OB2-00004\", \"items_count\": 2, \"cashier_name\": \"Ani (Kasir 1)\", \"total_amount\": 38000}', 'warning', 0, 0, NULL, NULL, NULL, NULL, NULL, 'sent', NULL, NULL, '2025-11-06 19:40:12', '2025-11-06 19:40:12', NULL),
@@ -784,7 +864,13 @@ INSERT INTO `owner_notifications` (`id`, `user_id`, `sale_id`, `notification_typ
 (16, 1, 14, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00014', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00014\nWaktu: 10-12-2025 00:22:00', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00014\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 1, 1, '2025-12-10 03:52:52', '2025-12-12 12:25:58', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-09 17:22:00', '2025-12-12 12:25:58', NULL),
 (17, 2, 14, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00014', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00014\nWaktu: 10-12-2025 00:22:00', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00014\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-09 17:22:00', '2025-12-09 17:22:00', NULL),
 (18, 3, 14, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00014', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00014\nWaktu: 10-12-2025 00:22:00', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00014\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-09 17:22:00', '2025-12-09 17:22:00', NULL),
-(19, 4, 14, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00014', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00014\nWaktu: 10-12-2025 00:22:00', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00014\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-09 17:22:00', '2025-12-09 17:22:00', NULL);
+(19, 4, 14, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00014', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00014\nWaktu: 10-12-2025 00:22:00', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00014\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-09 17:22:00', '2025-12-09 17:22:00', NULL),
+(20, 1, 19, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00019', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00019\nWaktu: 15-12-2025 00:02:42', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00019\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 1, 0, '2025-12-14 17:04:37', NULL, NULL, NULL, '3EB0A59BDADE4C99DAB53D', 'sent', '2025-12-15 00:02:43', NULL, '2025-12-14 17:02:43', '2025-12-14 17:04:37', NULL),
+(21, 2, 19, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00019', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00019\nWaktu: 15-12-2025 00:02:42', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00019\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, '3EB02C31DF82CA6DC3F152', 'sent', '2025-12-15 00:02:43', NULL, '2025-12-14 17:02:43', '2025-12-14 17:02:43', NULL),
+(22, 3, 19, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00019', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00019\nWaktu: 15-12-2025 00:02:42', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00019\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, '3EB0C4A9C46D8A9E8B0D8C', 'sent', '2025-12-15 00:02:47', NULL, '2025-12-14 17:02:43', '2025-12-14 17:02:47', NULL),
+(23, 4, 19, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00019', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00019\nWaktu: 15-12-2025 00:02:42', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00019\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, '3EB0B88974B9D1FAC31557', 'sent', '2025-12-15 00:02:51', NULL, '2025-12-14 17:02:47', '2025-12-14 17:02:51', NULL),
+(24, 9006, 19, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00019', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00019\nWaktu: 15-12-2025 00:02:42', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00019\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, '3EB025A9E3C900A74212FE', 'sent', '2025-12-15 00:02:51', NULL, '2025-12-14 17:02:51', '2025-12-14 17:02:51', NULL),
+(25, 9007, 19, 'manual_input_alert', '⚠️ Input Manual - Inv OB2-00019', 'Kasir Administrator membuat transaksi dengan 1 item input manual:\n\nBan Bridgestone Ecopia EP150 185/65 R15 (1x @ Rp 925.000)\n\nTotal: Rp 925.000\nInvoice: OB2-00019\nWaktu: 15-12-2025 00:02:42', '{\"items\": [{\"name\": \"Ban Bridgestone Ecopia EP150 185/65 R15\", \"type\": \"goods\", \"price\": 925000, \"reason\": \"Barang second belum di-input\", \"quantity\": 1}], \"cashier_id\": 1, \"invoice_no\": \"OB2-00019\", \"items_count\": 1, \"cashier_name\": \"Administrator\", \"total_amount\": 925000}', 'info', 0, 0, NULL, NULL, NULL, NULL, '3EB07B2E0BB6ED5E1749DB', 'sent', '2025-12-15 00:02:51', NULL, '2025-12-14 17:02:51', '2025-12-14 17:02:51', NULL);
 
 -- --------------------------------------------------------
 
@@ -908,7 +994,11 @@ INSERT INTO `permissions` (`id`, `name`, `guard_name`, `created_at`, `updated_at
 (163, 'delete_stock_opname', 'web', '2025-12-04 15:04:12', '2025-12-04 15:04:12'),
 (164, 'create_units', 'web', '2025-12-12 07:03:17', '2025-12-12 07:03:17'),
 (165, 'edit_units', 'web', '2025-12-12 07:03:17', '2025-12-12 07:03:17'),
-(166, 'delete_units', 'web', '2025-12-12 07:03:17', '2025-12-12 07:03:17');
+(166, 'delete_units', 'web', '2025-12-12 07:03:17', '2025-12-12 07:03:17'),
+(167, 'approve_sale_returns', 'web', '2025-12-14 07:28:15', '2025-12-14 07:28:15'),
+(168, 'access_audit_log', 'web', '2025-12-14 12:35:57', '2025-12-14 12:35:57'),
+(169, 'view_audit_log_details', 'web', '2025-12-14 12:35:57', '2025-12-14 12:35:57'),
+(170, 'export_audit_log', 'web', '2025-12-14 12:35:57', '2025-12-14 12:35:57');
 
 -- --------------------------------------------------------
 
@@ -922,6 +1012,7 @@ CREATE TABLE `products` (
   `category_id` bigint UNSIGNED NOT NULL,
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `barcode` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `product_quantity` int NOT NULL,
   `stok_awal` int NOT NULL DEFAULT '0',
   `product_cost` int NOT NULL,
@@ -944,13 +1035,13 @@ CREATE TABLE `products` (
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `is_active`, `category_id`, `product_name`, `product_code`, `product_quantity`, `stok_awal`, `product_cost`, `product_price`, `product_unit`, `product_stock_alert`, `product_order_tax`, `product_tax_type`, `product_note`, `created_at`, `updated_at`, `deleted_at`, `brand_id`, `product_size`, `ring`, `product_year`) VALUES
-(1, 1, 2, 'Ban GT Savero', 'GT_Savero', 50, 5, 1280760, 1425000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-10-10 02:50:49', NULL, 1, '31x10,5', '15', NULL),
-(2, 1, 2, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 17, 20, 725000, 925000, 'PC', 4, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-12-09 16:47:44', NULL, 2, '185/65', '15', 2024),
-(3, 1, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', 21, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 3, '205/65', '16', 2024),
-(4, 1, 2, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 21, 16, 640000, 835000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-11-06 09:43:29', NULL, 1, '195/65', '15', 2024),
-(5, 1, 3, 'Velg HSR Samurai Ring 17 5x114.3', 'HSR-SAM-R17-51143', 8, 8, 2450000, 3050000, 'PC', 2, NULL, NULL, 'Finish Black Polish', '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 4, NULL, '17', 2024),
-(6, 1, 3, 'Velg OEM Toyota Innova Ring 16', 'OEM-INV-R16', 6, 6, 1200000, 1600000, 'PC', 6, NULL, NULL, 'Kondisi Baru OEM', '2025-08-17 05:04:07', '2025-12-12 18:05:22', NULL, 5, NULL, '16', 2023);
+INSERT INTO `products` (`id`, `is_active`, `category_id`, `product_name`, `product_code`, `barcode`, `product_quantity`, `stok_awal`, `product_cost`, `product_price`, `product_unit`, `product_stock_alert`, `product_order_tax`, `product_tax_type`, `product_note`, `created_at`, `updated_at`, `deleted_at`, `brand_id`, `product_size`, `ring`, `product_year`) VALUES
+(1, 1, 2, 'Ban GT Savero', 'GT_Savero', NULL, 51, 5, 1280760, 1425000, 'PC', 2, NULL, NULL, NULL, '2025-08-06 02:17:51', '2025-12-14 03:38:24', NULL, 1, '31x10,5', '15', NULL),
+(2, 1, 2, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', NULL, 12, 20, 725000, 925000, 'PC', 4, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-12-09 16:47:44', NULL, 2, '185/65', '15', 2024),
+(3, 1, 2, 'Ban Dunlop SP Touring R1 205/65 R16', 'DN-SPR1-20565R16', NULL, 21, 12, 890000, 1090000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 3, '205/65', '16', 2024),
+(4, 1, 2, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', NULL, 19, 16, 640000, 835000, 'PC', 3, NULL, NULL, NULL, '2025-08-17 05:04:07', '2025-11-06 09:43:29', NULL, 1, '195/65', '15', 2024),
+(5, 1, 3, 'Velg HSR Samurai Ring 17 5x114.3', 'HSR-SAM-R17-51143', NULL, 6, 8, 2450000, 3050000, 'PC', 2, NULL, NULL, 'Finish Black Polish', '2025-08-17 05:04:07', '2025-08-17 05:04:07', NULL, 4, NULL, '17', 2024),
+(6, 1, 3, 'Velg OEM Toyota Innova Ring 16', 'OEM-INV-R16', NULL, 6, 6, 1200000, 1600000, 'PC', 6, NULL, NULL, 'Kondisi Baru OEM', '2025-08-17 05:04:07', '2025-12-12 18:05:22', NULL, 5, NULL, '16', 2023);
 
 -- --------------------------------------------------------
 
@@ -1016,7 +1107,9 @@ CREATE TABLE `purchases` (
 --
 
 INSERT INTO `purchases` (`id`, `date`, `reference`, `supplier_id`, `supplier_name`, `total_amount`, `paid_amount`, `due_amount`, `status`, `payment_status`, `payment_method`, `bank_name`, `note`, `user_id`, `created_at`, `updated_at`) VALUES
-(3, '2025-12-11', 'PB-20251211-0001', 1, 'Testing', 1280760, 0, 1280760, 'Completed', 'Belum Lunas', 'Cash', NULL, NULL, 1, '2025-12-11 04:32:39', '2025-12-11 04:32:39');
+(3, '2025-12-11', 'PB-20251211-0001', 1, 'Testing', 1280760, 1280760, 0, 'Completed', 'Lunas', 'Cash', NULL, NULL, 1, '2025-12-11 04:32:39', '2025-12-14 03:31:14'),
+(4, '2025-12-14', 'PB-20251214-0001', 1, 'Testing', 2561520, 2561520, 0, 'Completed', 'Lunas', 'Cash', NULL, NULL, 1, '2025-12-14 03:20:54', '2025-12-14 03:20:54'),
+(5, '2025-12-14', 'PB-20251214-0002', 1, 'Testing', 3842280, 3842280, 0, 'Completed', 'Lunas', 'Cash', NULL, NULL, 1, '2025-12-14 03:38:24', '2025-12-14 03:38:24');
 
 -- --------------------------------------------------------
 
@@ -1042,7 +1135,9 @@ CREATE TABLE `purchase_details` (
 --
 
 INSERT INTO `purchase_details` (`id`, `purchase_id`, `product_id`, `product_name`, `product_code`, `quantity`, `unit_price`, `sub_total`, `created_at`, `updated_at`) VALUES
-(1, 3, 1, 'Ban GT Savero', 'GT_Savero', 1, 1280760, 1280760, '2025-12-11 04:32:39', '2025-12-11 04:32:39');
+(2, 4, 1, 'Ban GT Savero', 'GT_Savero', 2, 1280760, 2561520, '2025-12-14 03:20:54', '2025-12-14 03:20:54'),
+(3, 3, 1, 'Ban GT Savero', 'GT_Savero', 1, 1280760, 1280760, '2025-12-14 03:31:14', '2025-12-14 03:31:14'),
+(4, 5, 1, 'Ban GT Savero', 'GT_Savero', 3, 1280760, 3842280, '2025-12-14 03:38:24', '2025-12-14 03:38:24');
 
 -- --------------------------------------------------------
 
@@ -1115,6 +1210,71 @@ CREATE TABLE `purchase_second_details` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotations`
+--
+
+CREATE TABLE `quotations` (
+  `id` bigint UNSIGNED NOT NULL,
+  `date` date NOT NULL,
+  `reference` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_id` bigint UNSIGNED DEFAULT NULL,
+  `customer_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tax_percentage` int NOT NULL DEFAULT '0',
+  `tax_amount` int NOT NULL DEFAULT '0',
+  `discount_percentage` int NOT NULL DEFAULT '0',
+  `discount_amount` int NOT NULL DEFAULT '0',
+  `shipping_amount` int NOT NULL DEFAULT '0',
+  `total_amount` int NOT NULL,
+  `status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `note` text COLLATE utf8mb4_unicode_ci,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `quotations`
+--
+
+INSERT INTO `quotations` (`id`, `date`, `reference`, `customer_id`, `customer_name`, `tax_percentage`, `tax_amount`, `discount_percentage`, `discount_amount`, `shipping_amount`, `total_amount`, `status`, `note`, `deleted_at`, `created_at`, `updated_at`) VALUES
+(1, '2025-12-14', 'QT-20251214-000001', 3, 'Peter', 0, 0, 0, 0, 0, 835000, 'Pending', NULL, NULL, '2025-12-14 08:34:41', '2025-12-14 08:34:41');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotation_details`
+--
+
+CREATE TABLE `quotation_details` (
+  `id` bigint UNSIGNED NOT NULL,
+  `quotation_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `productable_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `productable_id` bigint UNSIGNED DEFAULT NULL,
+  `source_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',
+  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `quantity` int NOT NULL,
+  `price` int NOT NULL,
+  `unit_price` int NOT NULL,
+  `sub_total` int NOT NULL,
+  `product_discount_amount` int NOT NULL DEFAULT '0',
+  `product_discount_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
+  `product_tax_amount` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `quotation_details`
+--
+
+INSERT INTO `quotation_details` (`id`, `quotation_id`, `product_id`, `productable_type`, `productable_id`, `source_type`, `product_name`, `product_code`, `quantity`, `price`, `unit_price`, `sub_total`, `product_discount_amount`, `product_discount_type`, `product_tax_amount`, `created_at`, `updated_at`) VALUES
+(1, 1, 4, 'Modules\\Product\\Entities\\Product', 4, 'new', 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 835000, 835000, 0, 'fixed', 0, '2025-12-14 08:34:41', '2025-12-14 08:34:41');
 
 -- --------------------------------------------------------
 
@@ -1249,7 +1409,14 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 (164, 1),
 (165, 1),
 (166, 1),
+(167, 1),
+(168, 1),
+(169, 1),
+(170, 1),
 (157, 2),
+(168, 2),
+(169, 2),
+(170, 2),
 (74, 3),
 (75, 3),
 (76, 3),
@@ -1342,6 +1509,9 @@ INSERT INTO `role_has_permissions` (`permission_id`, `role_id`) VALUES
 (164, 3),
 (165, 3),
 (166, 3),
+(168, 3),
+(169, 3),
+(170, 3),
 (74, 4),
 (75, 4),
 (76, 4),
@@ -1482,7 +1652,19 @@ INSERT INTO `sales` (`id`, `customer_id`, `date`, `reference`, `user_id`, `custo
 (15, NULL, '2025-12-13', 'OB2-00015', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 925000, 0, 725000, 200000, 0, 925000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-12-13 16:47:10', '2025-12-13 16:47:10', NULL, 0, NULL, 0, NULL),
 (16, NULL, '2025-12-13', 'OB2-00016', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 1425000, 0, 1280760, 144240, 0, 1425000, 'Draft', 'Unpaid', NULL, 'Tunai', '0be5733e-469f-4f4d-b1bf-742a0534a7f8', NULL, NULL, NULL, NULL, '2025-12-13 16:57:20', '2025-12-13 16:58:43', NULL, 0, NULL, 0, NULL),
 (17, NULL, '2025-12-14', 'OB2-00017', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 925000, 0, 725000, 200000, 0, 925000, 'Draft', 'Unpaid', NULL, 'Tunai', '8af745ee-2258-49ba-8735-c4df2bd640d2', NULL, NULL, NULL, NULL, '2025-12-13 17:04:43', '2025-12-13 17:04:50', NULL, 0, NULL, 0, NULL),
-(18, NULL, '2025-12-14', 'OB2-00018', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 835000, 0, 640000, 195000, 835000, 0, 'Completed', 'Paid', '2025-12-13 17:25:07', 'Midtrans', '013f6fbe-3a69-43f6-a810-af10ce312466', 'c2ec9c88-cc21-429a-a1eb-0fd446c86c6f', 'credit_card', NULL, NULL, '2025-12-13 17:24:40', '2025-12-13 17:25:07', NULL, 0, NULL, 0, NULL);
+(18, NULL, '2025-12-14', 'OB2-00018', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 835000, 0, 640000, 195000, 835000, 0, 'Completed', 'Paid', '2025-12-13 17:25:07', 'Midtrans', '013f6fbe-3a69-43f6-a810-af10ce312466', 'c2ec9c88-cc21-429a-a1eb-0fd446c86c6f', 'credit_card', NULL, NULL, '2025-12-13 17:24:40', '2025-12-13 17:25:07', NULL, 0, NULL, 0, NULL),
+(19, NULL, '2025-12-15', 'OB2-00019', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 925000, 1, 725000, 200000, 0, 925000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-12-14 17:02:42', '2025-12-14 17:02:51', NULL, 1, '\"[{\\\"name\\\":\\\"Ban Bridgestone Ecopia EP150 185\\\\/65 R15\\\",\\\"quantity\\\":1,\\\"price\\\":925000,\\\"reason\\\":\\\"Barang second belum di-input\\\",\\\"type\\\":\\\"goods\\\"}]\"', 1, '2025-12-14 17:02:51'),
+(20, NULL, '2025-12-15', 'OB2-00020', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 925000, 0, 725000, 200000, 0, 925000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-12-14 17:24:10', '2025-12-14 17:24:10', NULL, 0, NULL, 0, NULL),
+(21, NULL, '2025-12-15', 'OB2-00021', 1, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 835000, 0, 640000, 195000, 0, 835000, 'Draft', 'Unpaid', NULL, 'Tunai', NULL, NULL, NULL, NULL, NULL, '2025-12-14 18:06:10', '2025-12-14 18:06:10', NULL, 0, NULL, 0, NULL),
+(100, 1, '2025-12-18', 'OB2-DEMO-001', 5, 'Peter Vincent', NULL, NULL, 0, 0, 0, 0, 0, 0, 1850000, 0, 1450000, 400000, 1850000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, 'Pembelian 2 ban untuk mobil keluarga', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL, 0, NULL, 0, NULL),
+(101, NULL, '2025-12-18', 'OB2-DEMO-002', 5, 'Walk-in Customer', NULL, NULL, 0, 0, 0, 0, 0, 0, 3050000, 0, 2450000, 600000, 3050000, 0, 'Completed', 'Paid', NULL, 'Transfer', NULL, NULL, NULL, 'BCA', 'Pembelian velg HSR', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL, 0, NULL, 0, NULL),
+(102, 1, '2025-12-18', 'OB2-DEMO-003', 5, 'Peter Vincent', NULL, NULL, 1, 0, 0, 0, 0, 0, 878750, 0, 725000, 153750, 878750, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, 'Diskon 5% pelanggan setia', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL, 0, NULL, 0, NULL),
+(103, NULL, '2025-12-18', 'OB2-DEMO-004', 4, 'Bengkel Maju Jaya', NULL, NULL, 1, 0, 0, 0, 0, 0, 2745000, 0, 2450000, 295000, 2745000, 0, 'Completed', 'Paid', NULL, 'Transfer', NULL, NULL, NULL, 'Mandiri', 'Harga khusus bengkel partner - sudah approval supervisor', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL, 0, NULL, 0, NULL),
+(104, NULL, '2025-12-17', 'OB2-DEMO-005', 5, 'PT Logistik Nusantara', NULL, NULL, 1, 0, 0, 0, 0, 0, 4837500, 0, 3842280, 995220, 4837500, 0, 'Completed', 'Paid', NULL, 'Transfer', NULL, NULL, NULL, 'BRI', 'Pembelian bulk 4 ban - diskon 15% approval Owner', '2025-12-16 17:00:47', '2025-12-16 17:00:47', NULL, 0, NULL, 0, NULL),
+(105, NULL, '2025-12-18', 'OB2-DEMO-006', 5, 'Walk-in Customer', NULL, NULL, 0, 0, 0, 0, 0, 0, 1040000, 1, 725000, 315000, 1040000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, 'Beli ban + pasang + balancing', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL, 2, '[{\"name\": \"Pasang Ban\", \"type\": \"service\", \"price\": 25000, \"quantity\": 1}, {\"name\": \"Balancing\", \"type\": \"service\", \"price\": 20000, \"quantity\": 1}]', 1, '2025-12-17 17:00:47'),
+(106, NULL, '2025-12-18', 'OB2-DEMO-007', 6, 'Walk-in Customer', NULL, NULL, 0, 0, 0, 0, 0, 0, 893000, 1, 640000, 253000, 893000, 0, 'Completed', 'Paid', NULL, 'QRIS', NULL, NULL, NULL, NULL, 'Beli ban + isi nitrogen + ganti pentil', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL, 2, '[{\"name\": \"Nitrogen\", \"type\": \"goods\", \"price\": 8000, \"quantity\": 4}, {\"name\": \"Pentil Tubeless\", \"type\": \"goods\", \"price\": 5000, \"quantity\": 4}]', 1, '2025-12-17 17:00:47'),
+(107, 1, '2025-12-18', 'OB2-DEMO-008', 5, 'Peter Vincent', NULL, NULL, 0, 0, 0, 0, 0, 0, 150000, 1, 0, 150000, 150000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, 'Jasa spooring saja', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL, 1, '[{\"name\": \"Spooring Ban\", \"type\": \"service\", \"price\": 150000, \"quantity\": 1}]', 1, '2025-12-17 17:00:47'),
+(108, NULL, '2025-12-17', 'OB2-DEMO-009', 5, 'Walk-in Customer', NULL, NULL, 0, 0, 0, 0, 0, 0, 750000, 1, 500000, 250000, 750000, 0, 'Completed', 'Paid', NULL, 'Tunai', NULL, NULL, NULL, NULL, 'Ban bekas kondisi 85% - belum input di sistem', '2025-12-16 17:00:47', '2025-12-16 17:00:47', NULL, 1, '[{\"name\": \"Ban Bekas Dunlop 205/65 R15\", \"type\": \"goods\", \"price\": 750000, \"reason\": \"Barang second belum di-input ke inventory\", \"quantity\": 1}]', 1, '2025-12-16 17:00:47');
 
 --
 -- Triggers `sales`
@@ -1556,7 +1738,23 @@ INSERT INTO `sale_details` (`id`, `sale_id`, `item_name`, `product_id`, `product
 (17, 15, 'Ban Bridgestone Ecopia EP150 185/65 R15', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 1, 925000, 925000, 0, 0, NULL, NULL, NULL, 725000, NULL, 925000, 925000, 200000, 0, 'fixed', 0, '2025-12-13 16:47:10', '2025-12-13 16:47:10'),
 (18, 16, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 1, 1425000, 1425000, 0, 0, NULL, NULL, NULL, 1280760, NULL, 1425000, 1425000, 144240, 0, 'fixed', 0, '2025-12-13 16:57:20', '2025-12-13 16:57:20'),
 (19, 17, 'Ban Bridgestone Ecopia EP150 185/65 R15', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 1, 925000, 925000, 0, 0, NULL, NULL, NULL, 725000, NULL, 925000, 925000, 200000, 0, 'fixed', 0, '2025-12-13 17:04:43', '2025-12-13 17:04:43'),
-(20, 18, 'Ban GT Radial Champiro Eco 195/65 R15', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 835000, 0, 0, NULL, NULL, NULL, 640000, NULL, 835000, 835000, 195000, 0, 'fixed', 0, '2025-12-13 17:24:40', '2025-12-13 17:24:40');
+(20, 18, 'Ban GT Radial Champiro Eco 195/65 R15', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 835000, 0, 0, NULL, NULL, NULL, 640000, NULL, 835000, 835000, 195000, 0, 'fixed', 0, '2025-12-13 17:24:40', '2025-12-13 17:24:40'),
+(21, 19, 'Ban Bridgestone Ecopia EP150 185/65 R15', NULL, NULL, NULL, 'manual', 'goods', 'Ban Bridgestone Ecopia EP150 185/65 R15', '-', 1, 925000, 925000, 0, 0, NULL, NULL, NULL, 0, 725000, 925000, 925000, 200000, 0, 'fixed', 0, '2025-12-14 17:02:42', '2025-12-14 17:02:42'),
+(22, 20, 'Ban Bridgestone Ecopia EP150 185/65 R15', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 1, 925000, 925000, 0, 0, NULL, NULL, NULL, 725000, NULL, 925000, 925000, 200000, 0, 'fixed', 0, '2025-12-14 17:24:10', '2025-12-14 17:24:10'),
+(23, 21, 'Ban GT Radial Champiro Eco 195/65 R15', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 835000, 0, 0, NULL, NULL, NULL, 640000, NULL, 835000, 835000, 195000, 0, 'fixed', 0, '2025-12-14 18:06:10', '2025-12-14 18:06:10'),
+(100, 100, 'Ban Bridgestone Ecopia EP150', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 2, 925000, 925000, 0, 0, NULL, NULL, NULL, 725000, NULL, 925000, 1850000, 400000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(101, 101, 'Velg HSR Samurai Ring 17', 5, NULL, NULL, 'new', NULL, 'Velg HSR Samurai Ring 17 5x114.3', 'HSR-SAM-R17-51143', 1, 3050000, 3050000, 0, 0, NULL, NULL, NULL, 2450000, NULL, 3050000, 3050000, 600000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(102, 102, 'Ban Bridgestone Ecopia EP150', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 1, 878750, 925000, 1, 46250, 'Diskon 5% pelanggan loyal - sudah 10x transaksi', 5, '2025-12-17 17:00:47', 725000, NULL, 878750, 878750, 153750, 46250, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(103, 103, 'Velg HSR Samurai Ring 17', 5, NULL, NULL, 'new', NULL, 'Velg HSR Samurai Ring 17 5x114.3', 'HSR-SAM-R17-51143', 1, 2745000, 3050000, 1, 305000, 'Harga partner bengkel - approval Supervisor', 4, '2025-12-17 17:00:47', 2450000, NULL, 2745000, 2745000, 295000, 305000, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(104, 104, 'Ban GT Savero', 1, NULL, NULL, 'new', NULL, 'Ban GT Savero', 'GT_Savero', 4, 1209375, 1425000, 1, 215625, 'Diskon 15% pembelian bulk - approval Owner Bpk. Budi', 1, '2025-12-16 17:00:47', 1280760, NULL, 1209375, 4837500, 995220, 862500, 'fixed', 0, '2025-12-16 17:00:47', '2025-12-16 17:00:47'),
+(105, 105, 'Ban Bridgestone Ecopia EP150', 2, NULL, NULL, 'new', NULL, 'Ban Bridgestone Ecopia EP150 185/65 R15', 'BS-EP150-18565R15', 1, 925000, 925000, 0, 0, NULL, NULL, NULL, 725000, NULL, 925000, 925000, 200000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(106, 105, 'Pasang Ban', NULL, 2, 'Modules\\Product\\Entities\\ServiceMaster', 'manual', 'service', 'Pasang Ban', 'SRV-2', 1, 25000, 25000, 0, 0, NULL, NULL, NULL, 0, NULL, 25000, 25000, 25000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(107, 105, 'Balancing', NULL, 3, 'Modules\\Product\\Entities\\ServiceMaster', 'manual', 'service', 'Balancing', 'SRV-3', 1, 20000, 20000, 0, 0, NULL, NULL, NULL, 0, NULL, 20000, 80000, 80000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(108, 106, 'Ban GT Radial Champiro Eco', 4, NULL, NULL, 'new', NULL, 'Ban GT Radial Champiro Eco 195/65 R15', 'GT-CE-19565R15', 1, 835000, 835000, 0, 0, NULL, NULL, NULL, 640000, NULL, 835000, 835000, 195000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(109, 106, 'Nitrogen', NULL, NULL, NULL, 'manual', 'goods', 'Isi Nitrogen', 'GD-N2', 1, 8000, 8000, 0, 0, NULL, NULL, NULL, 0, 0, 8000, 32000, 32000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(110, 106, 'Pentil Tubeless', NULL, NULL, NULL, 'manual', 'goods', 'Pentil Tubeless', 'GD-PENTIL', 1, 5000, 5000, 0, 0, NULL, NULL, NULL, 0, 2000, 5000, 20000, 12000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(111, 107, 'Spooring Ban', NULL, 1, 'Modules\\Product\\Entities\\ServiceMaster', 'manual', 'service', 'Spooring Ban', 'SRV-1', 1, 150000, 150000, 0, 0, NULL, NULL, NULL, 0, NULL, 150000, 150000, 150000, 0, 'fixed', 0, '2025-12-17 17:00:47', '2025-12-17 17:00:47'),
+(112, 108, 'Ban Bekas Dunlop 205/65 R15', NULL, NULL, NULL, 'manual', 'goods', 'Ban Bekas Dunlop 205/65 R15', '-', 1, 750000, 750000, 0, 0, NULL, NULL, NULL, 0, 500000, 750000, 750000, 250000, 0, 'fixed', 0, '2025-12-16 17:00:47', '2025-12-16 17:00:47');
 
 --
 -- Triggers `sale_details`
@@ -2001,7 +2199,67 @@ INSERT INTO `sale_payments` (`id`, `sale_id`, `amount`, `date`, `reference`, `pa
 (36, 6, 22222, '2025-11-07', 'INV/OB2-00005', 'QRIS', NULL, NULL, '2025-11-07 06:52:15', '2025-11-07 06:52:15', NULL),
 (37, 11, 925000, '2025-12-09', 'INV/OB2-00011', 'Tunai', NULL, NULL, '2025-12-09 15:21:14', '2025-12-09 15:21:14', NULL),
 (38, 13, 925000, '2025-12-09', 'INV/OB2-00013', 'Tunai', NULL, NULL, '2025-12-09 16:47:44', '2025-12-09 16:47:44', NULL),
-(39, 18, 835000, '2025-12-14', 'MIDTRANS/c2ec9c88-cc21-429a-a1eb-0fd446c86c6f', 'Midtrans - Credit_card', NULL, 'Paid via Midtrans Credit_card', '2025-12-13 17:25:07', '2025-12-13 17:25:07', NULL);
+(39, 18, 835000, '2025-12-14', 'MIDTRANS/c2ec9c88-cc21-429a-a1eb-0fd446c86c6f', 'Midtrans - Credit_card', NULL, 'Paid via Midtrans Credit_card', '2025-12-13 17:25:07', '2025-12-13 17:25:07', NULL),
+(58, 100, 1850000, '2025-12-18', 'INV/OB2-DEMO-001', 'Tunai', NULL, 'Pembayaran tunai lunas', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(59, 101, 3050000, '2025-12-18', 'INV/OB2-DEMO-002', 'Transfer', 'BCA', 'Transfer ke rekening BCA toko', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(60, 102, 878750, '2025-12-18', 'INV/OB2-DEMO-003', 'Tunai', NULL, 'Diskon pelanggan loyal', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(61, 103, 2745000, '2025-12-18', 'INV/OB2-DEMO-004', 'Transfer', 'Mandiri', 'Partner bengkel', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(62, 104, 4837500, '2025-12-17', 'INV/OB2-DEMO-005', 'Transfer', 'BRI', 'Pembeli corporate', '2025-12-16 17:00:47', '2025-12-16 17:00:47', NULL),
+(63, 105, 1040000, '2025-12-18', 'INV/OB2-DEMO-006', 'Tunai', NULL, 'Beli ban + jasa', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(64, 106, 893000, '2025-12-18', 'INV/OB2-DEMO-007', 'QRIS', NULL, 'Via QRIS', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(65, 107, 150000, '2025-12-18', 'INV/OB2-DEMO-008', 'Tunai', NULL, 'Jasa spooring', '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(66, 108, 750000, '2025-12-17', 'INV/OB2-DEMO-009', 'Tunai', NULL, 'Ban bekas', '2025-12-16 17:00:47', '2025-12-16 17:00:47', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_returns`
+--
+
+CREATE TABLE `sale_returns` (
+  `id` bigint UNSIGNED NOT NULL,
+  `reference` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sale_id` bigint UNSIGNED NOT NULL,
+  `customer_id` bigint UNSIGNED DEFAULT NULL,
+  `date` date NOT NULL,
+  `status` enum('Pending','Approved','Rejected','Completed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Pending',
+  `total_amount` bigint NOT NULL DEFAULT '0',
+  `refund_amount` bigint NOT NULL DEFAULT '0',
+  `refund_method` enum('Cash','Credit','Store Credit') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Cash',
+  `reason` text COLLATE utf8mb4_unicode_ci,
+  `note` text COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_return_details`
+--
+
+CREATE TABLE `sale_return_details` (
+  `id` bigint UNSIGNED NOT NULL,
+  `sale_return_id` bigint UNSIGNED NOT NULL,
+  `sale_detail_id` bigint UNSIGNED DEFAULT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_code` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `quantity` int NOT NULL,
+  `unit_price` bigint NOT NULL,
+  `sub_total` bigint NOT NULL,
+  `source_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',
+  `reason` text COLLATE utf8mb4_unicode_ci,
+  `condition` enum('good','damaged','defective') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'good',
+  `restock` tinyint(1) NOT NULL DEFAULT '1',
+  `productable_type` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `productable_id` bigint UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -2199,7 +2457,20 @@ INSERT INTO `stock_movements` (`id`, `productable_type`, `productable_id`, `prod
 (92, 'Modules\\Product\\Entities\\Product', 2, 2, 15, 'sale', 'out', 1, 'Sale OB2-00015', 1, '2025-12-13 17:47:10', '2025-12-13 17:47:10', NULL),
 (93, 'Modules\\Product\\Entities\\Product', 1, 1, 16, 'sale', 'out', 1, 'Sale OB2-00016', 1, '2025-12-13 17:57:20', '2025-12-13 17:57:20', NULL),
 (94, 'Modules\\Product\\Entities\\Product', 2, 2, 17, 'sale', 'out', 1, 'Sale OB2-00017', 1, '2025-12-13 18:04:43', '2025-12-13 18:04:43', NULL),
-(95, 'Modules\\Product\\Entities\\Product', 4, 4, 18, 'sale', 'out', 1, 'Sale OB2-00018', 1, '2025-12-13 18:24:40', '2025-12-13 18:24:40', NULL);
+(95, 'Modules\\Product\\Entities\\Product', 4, 4, 18, 'sale', 'out', 1, 'Sale OB2-00018', 1, '2025-12-13 18:24:40', '2025-12-13 18:24:40', NULL),
+(96, NULL, NULL, 1, 4, 'purchase', 'in', 2, 'Purchase #PB-20251214-0001', 1, '2025-12-14 03:20:54', '2025-12-14 03:20:54', NULL),
+(97, NULL, NULL, 1, 3, 'purchase', 'out', 1, 'Purchase Restore (Edit) #PB-20251211-0001', 1, '2025-12-14 03:31:14', '2025-12-14 03:31:14', NULL),
+(98, NULL, NULL, 1, 3, 'purchase', 'in', 1, 'Purchase (Updated) #PB-20251211-0001', 1, '2025-12-14 03:31:14', '2025-12-14 03:31:14', NULL),
+(99, NULL, NULL, 1, 5, 'purchase', 'in', 3, 'Purchase #PB-20251214-0002', 1, '2025-12-14 03:38:24', '2025-12-14 03:38:24', NULL),
+(100, 'Modules\\Product\\Entities\\Product', 2, 2, 20, 'sale', 'out', 1, 'Sale OB2-00020', 1, '2025-12-14 18:24:10', '2025-12-14 18:24:10', NULL),
+(101, 'Modules\\Product\\Entities\\Product', 4, 4, 21, 'sale', 'out', 1, 'Sale OB2-00021', 1, '2025-12-14 19:06:10', '2025-12-14 19:06:10', NULL),
+(116, 'Modules\\Product\\Entities\\Product', 2, 2, 100, 'sale', 'out', 2, 'Sale OB2-DEMO-001', 5, '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(117, 'Modules\\Product\\Entities\\Product', 5, 5, 101, 'sale', 'out', 1, 'Sale OB2-DEMO-002', 5, '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(118, 'Modules\\Product\\Entities\\Product', 2, 2, 102, 'sale', 'out', 1, 'Sale OB2-DEMO-003', 5, '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(119, 'Modules\\Product\\Entities\\Product', 5, 5, 103, 'sale', 'out', 1, 'Sale OB2-DEMO-004', 4, '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(120, 'Modules\\Product\\Entities\\Product', 1, 1, 104, 'sale', 'out', 4, 'Sale OB2-DEMO-005', 5, '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(121, 'Modules\\Product\\Entities\\Product', 2, 2, 105, 'sale', 'out', 1, 'Sale OB2-DEMO-006', 5, '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL),
+(122, 'Modules\\Product\\Entities\\Product', 4, 4, 106, 'sale', 'out', 1, 'Sale OB2-DEMO-007', 6, '2025-12-17 17:00:47', '2025-12-17 17:00:47', NULL);
 
 -- --------------------------------------------------------
 
@@ -2537,21 +2808,30 @@ CREATE TABLE `user_activity_logs` (
 --
 CREATE TABLE `v_adjustment_summary` (
 `adjustment_id` bigint unsigned
-,`reference` varchar(255)
-,`date` date
-,`status` enum('pending','approved','rejected')
-,`reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya')
-,`total_value` decimal(10,2)
-,`requester_name` varchar(255)
 ,`approver_name` varchar(255)
-,`total_products` bigint
-,`total_items` decimal(32,0)
+,`date` date
 ,`last_activity` varchar(24)
+,`reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya')
+,`reference` varchar(255)
+,`requester_name` varchar(255)
+,`status` enum('pending','approved','rejected')
+,`total_items` decimal(32,0)
+,`total_products` bigint
+,`total_value` decimal(10,2)
 );
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `activity_log`
+--
+ALTER TABLE `activity_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `subject` (`subject_type`,`subject_id`),
+  ADD KEY `causer` (`causer_type`,`causer_id`),
+  ADD KEY `activity_log_log_name_index` (`log_name`);
 
 --
 -- Indexes for table `adjusted_products`
@@ -2729,7 +3009,7 @@ ALTER TABLE `owner_notifications`
   ADD KEY `idx_user_reviewed` (`user_id`,`is_reviewed`),
   ADD KEY `idx_severity` (`severity`),
   ADD KEY `idx_notification_type` (`notification_type`),
-  ADD KEY `idx_fontee_status` (`fontee_status`),
+  ADD KEY `idx_fontee_status` (`whatsapp_status`),
   ADD KEY `idx_created_at` (`created_at`);
 
 --
@@ -2753,7 +3033,8 @@ ALTER TABLE `products`
   ADD UNIQUE KEY `uk_products_code` (`product_code`),
   ADD KEY `products_category_id_foreign` (`category_id`),
   ADD KEY `products_brand_id_foreign` (`brand_id`),
-  ADD KEY `idx_products_year` (`product_year`);
+  ADD KEY `idx_products_year` (`product_year`),
+  ADD KEY `products_barcode_index` (`barcode`);
 ALTER TABLE `products` ADD FULLTEXT KEY `ft_products_search` (`product_name`,`product_code`,`product_size`,`ring`);
 
 --
@@ -2815,6 +3096,22 @@ ALTER TABLE `purchase_second_details`
   ADD KEY `purchase_second_details_product_second_id_foreign` (`product_second_id`);
 
 --
+-- Indexes for table `quotations`
+--
+ALTER TABLE `quotations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `quotations_reference_unique` (`reference`),
+  ADD KEY `quotations_customer_id_foreign` (`customer_id`);
+
+--
+-- Indexes for table `quotation_details`
+--
+ALTER TABLE `quotation_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `quotation_details_quotation_id_foreign` (`quotation_id`),
+  ADD KEY `quotation_details_product_id_foreign` (`product_id`);
+
+--
 -- Indexes for table `roles`
 --
 ALTER TABLE `roles`
@@ -2873,6 +3170,27 @@ ALTER TABLE `sale_payments`
   ADD KEY `idx_sale_payments_method` (`payment_method`),
   ADD KEY `sale_payments_date_method_bank_idx` (`date`,`payment_method`,`bank_name`),
   ADD KEY `sale_payments_sale_date_index` (`sale_id`,`date`);
+
+--
+-- Indexes for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `sale_returns_reference_unique` (`reference`),
+  ADD KEY `sale_returns_customer_id_foreign` (`customer_id`),
+  ADD KEY `sale_returns_created_by_foreign` (`created_by`),
+  ADD KEY `sale_returns_approved_by_foreign` (`approved_by`),
+  ADD KEY `sale_returns_date_status_index` (`date`,`status`),
+  ADD KEY `sale_returns_sale_id_index` (`sale_id`);
+
+--
+-- Indexes for table `sale_return_details`
+--
+ALTER TABLE `sale_return_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sale_return_details_sale_detail_id_foreign` (`sale_detail_id`),
+  ADD KEY `sale_return_details_sale_return_id_index` (`sale_return_id`),
+  ADD KEY `sale_return_details_productable_type_productable_id_index` (`productable_type`,`productable_id`);
 
 --
 -- Indexes for table `service_masters`
@@ -2983,16 +3301,22 @@ ALTER TABLE `user_activity_logs`
 --
 
 --
+-- AUTO_INCREMENT for table `activity_log`
+--
+ALTER TABLE `activity_log`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
 -- AUTO_INCREMENT for table `adjusted_products`
 --
 ALTER TABLE `adjusted_products`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
 
 --
 -- AUTO_INCREMENT for table `adjustments`
 --
 ALTER TABLE `adjustments`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=107;
 
 --
 -- AUTO_INCREMENT for table `adjustment_files`
@@ -3004,7 +3328,7 @@ ALTER TABLE `adjustment_files`
 -- AUTO_INCREMENT for table `adjustment_logs`
 --
 ALTER TABLE `adjustment_logs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `brands`
@@ -3058,19 +3382,19 @@ ALTER TABLE `fontee_config`
 -- AUTO_INCREMENT for table `manual_input_details`
 --
 ALTER TABLE `manual_input_details`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `manual_input_logs`
 --
 ALTER TABLE `manual_input_logs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `manual_input_summary_daily`
 --
 ALTER TABLE `manual_input_summary_daily`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
 
 --
 -- AUTO_INCREMENT for table `media`
@@ -3082,19 +3406,19 @@ ALTER TABLE `media`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
 
 --
 -- AUTO_INCREMENT for table `owner_notifications`
 --
 ALTER TABLE `owner_notifications`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `permissions`
 --
 ALTER TABLE `permissions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=167;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=171;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -3112,13 +3436,13 @@ ALTER TABLE `product_seconds`
 -- AUTO_INCREMENT for table `purchases`
 --
 ALTER TABLE `purchases`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `purchase_details`
 --
 ALTER TABLE `purchase_details`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `purchase_payments`
@@ -3137,6 +3461,18 @@ ALTER TABLE `purchase_seconds`
 --
 ALTER TABLE `purchase_second_details`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quotations`
+--
+ALTER TABLE `quotations`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `quotation_details`
+--
+ALTER TABLE `quotation_details`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -3163,6 +3499,18 @@ ALTER TABLE `sale_payments`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `sale_return_details`
+--
+ALTER TABLE `sale_return_details`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `service_masters`
 --
 ALTER TABLE `service_masters`
@@ -3184,7 +3532,7 @@ ALTER TABLE `settings`
 -- AUTO_INCREMENT for table `stock_movements`
 --
 ALTER TABLE `stock_movements`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
 
 --
 -- AUTO_INCREMENT for table `stock_opnames`
@@ -3389,6 +3737,19 @@ ALTER TABLE `purchase_second_details`
   ADD CONSTRAINT `purchase_second_details_purchase_second_id_foreign` FOREIGN KEY (`purchase_second_id`) REFERENCES `purchase_seconds` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `quotations`
+--
+ALTER TABLE `quotations`
+  ADD CONSTRAINT `quotations_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `quotation_details`
+--
+ALTER TABLE `quotation_details`
+  ADD CONSTRAINT `quotation_details_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `quotation_details_quotation_id_foreign` FOREIGN KEY (`quotation_id`) REFERENCES `quotations` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `role_has_permissions`
 --
 ALTER TABLE `role_has_permissions`
@@ -3422,6 +3783,22 @@ ALTER TABLE `sale_details`
 ALTER TABLE `sale_payments`
   ADD CONSTRAINT `fk_sp_sale` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_spay_sale` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  ADD CONSTRAINT `sale_returns_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sale_returns_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `sale_returns_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sale_returns_sale_id_foreign` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `sale_return_details`
+--
+ALTER TABLE `sale_return_details`
+  ADD CONSTRAINT `sale_return_details_sale_detail_id_foreign` FOREIGN KEY (`sale_detail_id`) REFERENCES `sale_details` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sale_return_details_sale_return_id_foreign` FOREIGN KEY (`sale_return_id`) REFERENCES `sale_returns` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `service_masters`

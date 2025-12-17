@@ -534,6 +534,26 @@
                 Pengaturan Umum
             </a>
         </li>
+        <li>
+            <a href="{{ route('whatsapp.settings') }}" 
+               class="flex items-center gap-2 px-2.5 py-2 rounded-md text-xs transition-all {{ request()->routeIs('whatsapp.*') ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50' }}">
+                <span class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('whatsapp.*') ? 'bg-blue-500' : 'bg-zinc-400' }}"></span>
+                WhatsApp Settings
+                @php
+                    try {
+                        $waStatus = app(\App\Services\WhatsApp\BaileysNotificationService::class)->getStatus();
+                        $isConnected = $waStatus['connected'] ?? false;
+                    } catch (\Throwable $e) {
+                        $isConnected = false;
+                    }
+                @endphp
+                @if($isConnected)
+                    <span class="ml-auto w-2 h-2 rounded-full bg-green-500 animate-pulse" title="WhatsApp Connected"></span>
+                @else
+                    <span class="ml-auto w-2 h-2 rounded-full bg-red-500" title="WhatsApp Disconnected"></span>
+                @endif
+            </a>
+        </li>
         @endcan
     </ul>
 </li>
