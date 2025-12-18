@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Events\ManualInputCreated;
 use App\Models\OwnerNotification;
 use App\Models\User;
+use App\Models\NotificationSetting;
 use App\Services\WhatsApp\BaileysNotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -45,9 +46,16 @@ class NotifyOwnerOfManualInput
             return;
         }
 
+        // Check dynamic setting
+        $setting = NotificationSetting::getByType('manual_input');
+        if ($setting && !$setting->is_enabled) {
+            Log::info('Manual input notification disabled in settings, skipping.', ['sale_id' => $sale->id]);
+            return;
+        }
+
         try {
             // 1) Target penerima (Owner, Supervisor, Super Admin) - case-insensitive & guard aman
-            $owners = \App\Models\User::query()
+            $owners = User::query()
                 ->where(function ($q) {
                     // is_active default ke 1 kalau null
                     $q->whereNull('is_active')->orWhere('is_active', 1);
@@ -92,7 +100,7 @@ class NotifyOwnerOfManualInput
                     $rp = number_format($prc, 0, ',', '.');
                     return "{$nm} ({$qty}x @ Rp {$rp})";
                 })
-                ->join(', ');
+                ->join("\n"); // Use newline for list in template
 
             // 4) Ambil semua log manual input YANG BELUM dinotifikasi → untuk dilink ke notifikasi
             $pendingLogs = ManualInputLog::query()->where('sale_id', $sale->id)->manualInput()->unnotified()->get();
@@ -100,7 +108,7 @@ class NotifyOwnerOfManualInput
             // 5) Kirim notifikasi per owner (satu owner gagal tidak menggagalkan yang lain)
             foreach ($owners as $owner) {
                 try {
-                    $notification = $this->createNotification($owner, $sale, $manualItems, $itemCount, $totalValue, $itemsList, $cashier);
+                    $notification = $this->createNotification($owner, $sale, $manualItems, $itemCount, $totalValue, $itemsList, $cashier, $setting);
 
                     // Link semua log pending ke notifikasi barusan
                     foreach ($pendingLogs as $log) {
@@ -136,13 +144,29 @@ class NotifyOwnerOfManualInput
     /**
      * Helper: Buat record OwnerNotification (termasuk payload 'data')
      */
-    private function createNotification($owner, $sale, array $manualItems, int $itemCount, int $totalValue, string $itemsList, $cashier): OwnerNotification
+    private function createNotification($owner, $sale, array $manualItems, int $itemCount, int $totalValue, string $itemsList, $cashier, $setting = null): OwnerNotification
     {
         $ref = $sale->reference ?? '#' . $sale->id;
         $title = "⚠️ Input Manual - Inv {$ref}";
         $totalStr = number_format($totalValue, 0, ',', '.');
+        $datetime = $sale->created_at?->format('d-m-Y H:i:s') ?? now()->format('d-m-Y H:i:s');
 
-        $message = "Kasir {$cashier->name} membuat transaksi dengan {$itemCount} item input manual:\n\n" . $itemsList . "\n\n" . "Total: Rp {$totalStr}\n" . "Invoice: {$ref}\n" . 'Waktu: ' . ($sale->created_at?->format('d-m-Y H:i:s') ?? now()->format('d-m-Y H:i:s'));
+        // Prepare data for template
+        $templateData = [
+            'invoice' => $ref,
+            'cashier' => $cashier->name,
+            'item_count' => $itemCount,
+            'items_list' => $itemsList,
+            'total' => $totalStr,
+            'datetime' => $datetime,
+        ];
+
+        if ($setting) {
+             $message = $setting->parseTemplate($templateData);
+        } else {
+             // Fallback default template if setting missing
+             $message = "🔔 *⚠️ Input Manual - Inv {$ref}*\n\nKasir *{$cashier->name}* membuat transaksi dengan *{$itemCount} item* input manual:\n\n{$itemsList}\n\n💰 *Total: Rp {$totalStr}*\n📋 Invoice: {$ref}\n⏰ Waktu: {$datetime}";
+        }
 
         return OwnerNotification::create([
             'user_id' => $owner->id,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\NotificationSetting;
 use App\Services\WhatsApp\BaileysNotificationService;
 use Illuminate\Http\Request;
 
@@ -28,12 +29,16 @@ class WhatsAppController extends Controller
             $qrData = $this->whatsapp->getQrCode();
         }
 
+        // Get notification settings
+        $notificationSettings = NotificationSetting::all();
+
         return view('whatsapp.settings', [
             'status' => $status,
             'qrData' => $qrData,
             'driver' => config('whatsapp.driver'),
             'ownerPhone' => config('whatsapp.owner_phone'),
             'baileysUrl' => config('whatsapp.baileys.base_url'),
+            'notificationSettings' => $notificationSettings,
         ]);
     }
 
@@ -106,5 +111,74 @@ class WhatsAppController extends Controller
     {
         $result = $this->whatsapp->disconnect();
         return response()->json($result);
+    }
+
+    /**
+     * Toggle notification setting
+     */
+    public function toggleNotification(Request $request, NotificationSetting $setting)
+    {
+        $setting->update(['is_enabled' => !$setting->is_enabled]);
+
+        return response()->json([
+            'success' => true,
+            'is_enabled' => $setting->is_enabled,
+            'message' => $setting->is_enabled 
+                ? "Notifikasi '{$setting->label}' diaktifkan" 
+                : "Notifikasi '{$setting->label}' dinonaktifkan"
+        ]);
+    }
+
+    /**
+     * Update notification template
+     */
+    public function updateTemplate(Request $request, NotificationSetting $setting)
+    {
+        $request->validate([
+            'template' => 'required|string|max:2000',
+        ]);
+
+        $setting->update(['template' => $request->template]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Template '{$setting->label}' berhasil diperbarui"
+        ]);
+    }
+
+    /**
+     * Reset template to default
+     */
+    public function resetTemplate(NotificationSetting $setting)
+    {
+        // Re-run seeder for this type
+        $defaults = $this->getDefaultTemplates();
+        
+        if (isset($defaults[$setting->type])) {
+            $setting->update(['template' => $defaults[$setting->type]]);
+            return response()->json([
+                'success' => true,
+                'template' => $setting->template,
+                'message' => "Template '{$setting->label}' direset ke default"
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Default template tidak ditemukan'
+        ], 404);
+    }
+
+    /**
+     * Get default templates
+     */
+    protected function getDefaultTemplates(): array
+    {
+        return [
+            'manual_input' => "🔔 *⚠️ Input Manual - Inv {invoice}*\n\nKasir *{cashier}* membuat transaksi dengan *{item_count} item* input manual:\n\n{items_list}\n\n💰 *Total: Rp {total}*\n📋 Invoice: {invoice}\n⏰ Waktu: {datetime}",
+            'low_stock' => "⚠️ *ALERT STOK RENDAH*\n\nDitemukan *{product_count} produk* dengan stok rendah:\n\n{products_list}\n\n📦 Segera lakukan restok!",
+            'daily_report' => "📊 *LAPORAN HARIAN*\n📅 {date}\n\n💰 Total Penjualan: *Rp {total_sales}*\n🧾 Jumlah Transaksi: *{transaction_count}*\n💵 Total Tunai: Rp {cash_total}\n💳 Total Transfer: Rp {transfer_total}\n📉 Total Pengeluaran: Rp {expense_total}\n💎 Laba Bersih: *Rp {net_profit}*\n🏆 Produk Terlaris: {top_product}",
+            'login_alert' => "🔐 *LOGIN ALERT*\n\nUser *{user_name}* ({role}) telah login pada:\n⏰ {datetime}\n🌐 IP: {ip_address}\n💻 Browser: {browser}",
+        ];
     }
 }

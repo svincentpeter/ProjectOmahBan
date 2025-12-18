@@ -227,6 +227,137 @@ WHATSAPP_OWNER_PHONE=6282227863969</pre>
                     </div>
                 </div>
             </div>
+
+            {{-- Notification Templates Card --}}
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700 overflow-hidden lg:col-span-2">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h6 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <i class="bi bi-chat-square-text text-purple-600"></i>
+                        Pengaturan Notifikasi
+                    </h6>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola jenis notifikasi dan template pesan WhatsApp</p>
+                </div>
+
+                <div class="p-6">
+                    @if(isset($notificationSettings) && $notificationSettings->count() > 0)
+                        <div class="space-y-4">
+                            @foreach($notificationSettings as $setting)
+                                <div class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden" x-data="{ open: false }">
+                                    {{-- Header --}}
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+                                                <i class="bi {{ $setting->icon ?? 'bi-bell' }} text-lg text-gray-600 dark:text-gray-300"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="font-bold text-gray-900 dark:text-white text-sm">{{ $setting->label }}</h6>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $setting->description }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            {{-- Toggle Switch - More Visible --}}
+                                            <div class="flex items-center">
+                                                <label class="relative inline-flex items-center cursor-pointer" style="min-width: 44px;">
+                                                    <input type="checkbox" 
+                                                        class="sr-only notification-toggle" 
+                                                        data-id="{{ $setting->id }}"
+                                                        id="toggle-{{ $setting->id }}"
+                                                        {{ $setting->is_enabled ? 'checked' : '' }}>
+                                                    <div class="toggle-track w-11 h-6 rounded-full border border-gray-300 dark:border-gray-600 transition-colors duration-200 {{ $setting->is_enabled ? 'bg-green-500 border-green-500' : 'bg-gray-200 dark:bg-gray-700' }}">
+                                                        <div class="toggle-thumb absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm border border-gray-200 transition-transform duration-200 {{ $setting->is_enabled ? 'translate-x-5' : 'translate-x-0' }}"></div>
+                                                    </div>
+                                                </label>
+                                                <span class="ml-2 text-xs font-medium {{ $setting->is_enabled ? 'text-green-600' : 'text-gray-500' }}" id="status-{{ $setting->id }}">
+                                                    {{ $setting->is_enabled ? 'ON' : 'OFF' }}
+                                                </span>
+                                            </div>
+                                            {{-- Expand Button --}}
+                                            <button @click="open = !open" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors" title="Edit Template">
+                                                <i class="bi text-lg" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {{-- Template Editor (Collapsible) --}}
+                                    <div x-show="open" x-collapse class="border-t border-gray-200 dark:border-gray-700">
+                                        <div class="p-4 space-y-4">
+                                            {{-- Placeholders Info --}}
+                                            @if($setting->placeholders)
+                                            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-lg">
+                                                <p class="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-2">
+                                                    <i class="bi bi-info-circle mr-1"></i> Variabel yang tersedia (Klik untuk sisipkan):
+                                                </p>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach($setting->placeholders as $key => $desc)
+                                                        <button type="button" 
+                                                            onclick="insertPlaceholder('template-{{ $setting->id }}', '{{ '{'.$key.'}' }}')"
+                                                            class="inline-flex items-center px-2 py-1 text-xs font-mono bg-amber-100 dark:bg-amber-800 text-amber-800 dark:text-amber-200 rounded hover:bg-amber-200 dark:hover:bg-amber-700 transition-colors" 
+                                                            title="{{ $desc }}">
+                                                            {{"{"}}{{ $key }}{{"}"}}
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            {{-- Template Textarea --}}
+                                            <div>
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <label class="text-sm font-semibold text-gray-900 dark:text-white">Template Pesan</label>
+                                                    {{-- Formatting Toolbar --}}
+                                                    <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                                                        <button type="button" onclick="insertFormat('template-{{ $setting->id }}', 'bold')" class="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-600 rounded" title="Bold (*text*)">
+                                                            <i class="bi bi-type-bold"></i>
+                                                        </button>
+                                                        <button type="button" onclick="insertFormat('template-{{ $setting->id }}', 'italic')" class="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-600 rounded" title="Italic (_text_)">
+                                                            <i class="bi bi-type-italic"></i>
+                                                        </button>
+                                                        <button type="button" onclick="insertFormat('template-{{ $setting->id }}', 'strike')" class="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-600 rounded" title="Strikethrough (~text~)">
+                                                            <i class="bi bi-type-strikethrough"></i>
+                                                        </button>
+                                                        <button type="button" onclick="insertFormat('template-{{ $setting->id }}', 'mono')" class="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-600 rounded" title="Monospace (```text```)">
+                                                            <i class="bi bi-code"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <textarea 
+                                                    id="template-{{ $setting->id }}"
+                                                    rows="15"
+                                                    class="block w-full p-3 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono leading-relaxed"
+                                                    style="min-height: 350px;"
+                                                    placeholder="Template pesan...">{{ $setting->template }}</textarea>
+                                            </div>
+
+                                            {{-- Action Buttons --}}
+                                            <div class="flex justify-end gap-2">
+                                                <button type="button" onclick="resetTemplate({{ $setting->id }})" 
+                                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                                                    <i class="bi bi-arrow-counterclockwise mr-2"></i>
+                                                    Reset Default
+                                                </button>
+                                                <button type="button" onclick="saveTemplate({{ $setting->id }})" 
+                                                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                                                    <i class="bi bi-check2 mr-2"></i>
+                                                    Simpan Template
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 mx-auto rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+                                <i class="bi bi-database-x text-2xl text-gray-400"></i>
+                            </div>
+                            <p class="text-gray-500 dark:text-gray-400">Belum ada pengaturan notifikasi.</p>
+                            <p class="text-sm text-gray-400 mt-2">Jalankan perintah berikut di terminal:</p>
+                            <code class="block mt-2 px-4 py-2 bg-gray-900 text-green-400 rounded-lg text-sm">php artisan db:seed --class=NotificationSettingSeeder</code>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -362,6 +493,166 @@ WHATSAPP_OWNER_PHONE=6282227863969</pre>
                     });
             }
         });
+    }
+
+    // ========================================
+    // Notification Settings Functions
+    // ========================================
+
+    // Toggle notification on/off
+    $(document).on('change', '.notification-toggle', function() {
+        const settingId = $(this).data('id');
+        const checkbox = $(this);
+        const isChecked = checkbox.prop('checked');
+        const track = checkbox.siblings('.toggle-track');
+        const thumb = track.find('.toggle-thumb');
+        const statusLabel = $(`#status-${settingId}`);
+        
+        // Immediately update visual
+        if (isChecked) {
+            track.removeClass('bg-gray-200 dark:bg-gray-700').addClass('bg-green-500 border-green-500');
+            thumb.removeClass('translate-x-0').addClass('translate-x-5');
+            statusLabel.removeClass('text-gray-500').addClass('text-green-600').text('ON');
+        } else {
+            track.removeClass('bg-green-500 border-green-500').addClass('bg-gray-200 dark:bg-gray-700');
+            thumb.removeClass('translate-x-5').addClass('translate-x-0');
+            statusLabel.removeClass('text-green-600').addClass('text-gray-500').text('OFF');
+        }
+        
+        $.ajax({
+            url: `/whatsapp/notifications/${settingId}/toggle`,
+            method: 'POST',
+            data: { _token: '{{ csrf_token() }}' },
+            success: function(data) {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: data.is_enabled ? 'Diaktifkan' : 'Dinonaktifkan',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                }
+            },
+            error: function() {
+                // Revert checkbox and visual
+                checkbox.prop('checked', !isChecked);
+                if (!isChecked) {
+                    track.removeClass('bg-gray-200 dark:bg-gray-700').addClass('bg-green-500 border-green-500');
+                    thumb.removeClass('translate-x-0').addClass('translate-x-5');
+                    statusLabel.removeClass('text-gray-500').addClass('text-green-600').text('ON');
+                } else {
+                    track.removeClass('bg-green-500 border-green-500').addClass('bg-gray-200 dark:bg-gray-700');
+                    thumb.removeClass('translate-x-5').addClass('translate-x-0');
+                    statusLabel.removeClass('text-green-600').addClass('text-gray-500').text('OFF');
+                }
+                Swal.fire('Error', 'Gagal mengubah status notifikasi', 'error');
+            }
+        });
+    });
+
+    // Save template
+    function saveTemplate(id) {
+        const template = $(`#template-${id}`).val();
+        
+        if (!template.trim()) {
+            Swal.fire('Error', 'Template tidak boleh kosong', 'warning');
+            return;
+        }
+
+        $.ajax({
+            url: `/whatsapp/notifications/${id}/template`,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                template: template
+            },
+            success: function(data) {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Template berhasil disimpan',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire('Error', 'Gagal menyimpan template', 'error');
+            }
+        });
+    }
+
+    function resetTemplate(id) {
+        Swal.fire({
+            title: 'Reset Template?',
+            text: "Template akan dikembalikan ke default sistem",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Reset!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/whatsapp/notifications/${id}/reset`,
+                    method: 'POST',
+                    data: { _token: '{{ csrf_token() }}' },
+                    success: function(data) {
+                        if (data.success) {
+                            $(`#template-${id}`).val(data.template);
+                            Swal.fire(
+                                'Tereset!',
+                                'Template telah dikembalikan ke default.',
+                                'success'
+                            );
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Gagal mereset template', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    // Helper to insert text at cursor position
+    function insertAtCursor(textarea, text, wrapStart = '', wrapEnd = '') {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+        const selectedText = value.substring(start, end);
+        
+        const replacement = wrapStart + (selectedText.length > 0 ? selectedText : text) + wrapEnd;
+        
+        textarea.value = value.substring(0, start) + replacement + value.substring(end);
+        
+        // Restore cursor/selection
+        const newCursorPos = start + (selectedText.length > 0 ? replacement.length : wrapStart.length + text.length);
+        textarea.focus();
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }
+
+    function insertPlaceholder(textareaId, placeholder) {
+        const textarea = document.getElementById(textareaId);
+        insertAtCursor(textarea, placeholder);
+    }
+
+    function insertFormat(textareaId, format) {
+        const textarea = document.getElementById(textareaId);
+        let start = '', end = '';
+        
+        switch(format) {
+            case 'bold': start = '*'; end = '*'; break;
+            case 'italic': start = '_'; end = '_'; break;
+            case 'strike': start = '~'; end = '~'; break;
+            case 'mono': start = '```'; end = '```'; break;
+        }
+        
+        insertAtCursor(textarea, '', start, end);
     }
 </script>
 @endpush
