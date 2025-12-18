@@ -39,6 +39,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/notify-owner', [\App\Http\Controllers\WhatsAppController::class, 'notifyOwner'])->name('notify-owner');
         Route::post('/reconnect', [\App\Http\Controllers\WhatsAppController::class, 'reconnect'])->name('reconnect');
         Route::post('/disconnect', [\App\Http\Controllers\WhatsAppController::class, 'disconnect'])->name('disconnect');
+        
+        // Notification Settings
+        Route::post('/notifications/{setting}/toggle', [\App\Http\Controllers\WhatsAppController::class, 'toggleNotification'])->name('notifications.toggle');
+        Route::post('/notifications/{setting}/template', [\App\Http\Controllers\WhatsAppController::class, 'updateTemplate'])->name('notifications.update-template');
+        Route::post('/notifications/{setting}/reset', [\App\Http\Controllers\WhatsAppController::class, 'resetTemplate'])->name('notifications.reset-template');
     });
 });
 

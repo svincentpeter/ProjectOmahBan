@@ -5,6 +5,7 @@ namespace App\Services\WhatsApp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\OwnerNotification;
+use App\Models\NotificationSetting;
 
 class BaileysNotificationService
 {
@@ -226,29 +227,42 @@ class BaileysNotificationService
      */
     public function sendLowStockAlert(array $products): array
     {
+        // Check if enabled in settings
+        if (!NotificationSetting::isEnabled('low_stock')) {
+            Log::info('Low stock notification disabled');
+            return ['success' => false, 'error' => 'Notification disabled'];
+        }
+
         if (empty($products)) {
             return ['success' => false, 'error' => 'No products to alert'];
         }
 
-        $message = "⚠️ *ALERT STOK RENDAH*\n\n";
-        $message .= "Ditemukan " . count($products) . " produk dengan stok rendah:\n\n";
-
+        // Build products list
+        $productsList = '';
         $count = 0;
         foreach ($products as $product) {
             if ($count >= 10) break;
-            
             $status = ($product['quantity'] ?? 0) <= 0 ? '🔴' : '🟡';
             $name = $product['name'] ?? $product['product_name'] ?? 'Unknown';
             $qty = $product['quantity'] ?? $product['product_quantity'] ?? 0;
-            $message .= "{$status} {$name}: {$qty} unit\n";
+            $productsList .= "{$status} {$name}: {$qty} unit\n";
             $count++;
         }
 
         if (count($products) > 10) {
-            $message .= "\n...dan " . (count($products) - 10) . " produk lainnya.";
+            $productsList .= "\n...dan " . (count($products) - 10) . " produk lainnya.";
         }
 
-        $message .= "\n\n📦 Segera lakukan restok!";
+        // Get template from DB or use default
+        $setting = NotificationSetting::getByType('low_stock');
+        $template = $setting?->template ?? "⚠️ *ALERT STOK RENDAH*\n\nDitemukan *{product_count} produk* dengan stok rendah:\n\n{products_list}\n\n📦 Segera lakukan restok!";
+
+        $message = str_replace(
+            ['{product_count}', '{products_list}'],
+            [count($products), $productsList],
+            $template
+        );
+
         $message .= $this->getBotSignature();
 
         return $this->notifyOwner($message, 'Alert Stok Rendah');
@@ -259,16 +273,28 @@ class BaileysNotificationService
      */
     public function sendDailyReport(array $data): array
     {
-        $date = $data['date'] ?? now()->format('d M Y');
-        $totalSales = number_format($data['total_sales'] ?? 0, 0, ',', '.');
-        $transactionCount = $data['transaction_count'] ?? 0;
-        $topProduct = $data['top_product'] ?? '-';
+        // Check if enabled in settings
+        if (!NotificationSetting::isEnabled('daily_report')) {
+            Log::info('Daily report notification disabled');
+            return ['success' => false, 'error' => 'Notification disabled'];
+        }
 
-        $message = "📊 *LAPORAN HARIAN*\n";
-        $message .= "📅 {$date}\n\n";
-        $message .= "💰 Total Penjualan: Rp {$totalSales}\n";
-        $message .= "🧾 Jumlah Transaksi: {$transactionCount}\n";
-        $message .= "🏆 Produk Terlaris: {$topProduct}";
+        $placeholders = [
+            '{date}' => $data['date'] ?? now()->format('d M Y'),
+            '{total_sales}' => number_format($data['total_sales'] ?? 0, 0, ',', '.'),
+            '{transaction_count}' => $data['transaction_count'] ?? 0,
+            '{cash_total}' => number_format($data['cash_total'] ?? 0, 0, ',', '.'),
+            '{transfer_total}' => number_format($data['transfer_total'] ?? 0, 0, ',', '.'),
+            '{expense_total}' => number_format($data['expense_total'] ?? 0, 0, ',', '.'),
+            '{net_profit}' => number_format($data['net_profit'] ?? 0, 0, ',', '.'),
+            '{top_product}' => $data['top_product'] ?? '-',
+        ];
+
+        // Get template from DB or use default
+        $setting = NotificationSetting::getByType('daily_report');
+        $template = $setting?->template ?? "📊 *LAPORAN HARIAN*\n📅 {date}\n\n💰 Total Penjualan: *Rp {total_sales}*\n🧾 Jumlah Transaksi: *{transaction_count}*\n🏆 Produk Terlaris: {top_product}";
+
+        $message = str_replace(array_keys($placeholders), array_values($placeholders), $template);
         $message .= $this->getBotSignature();
 
         return $this->notifyOwner($message, 'Laporan Harian');

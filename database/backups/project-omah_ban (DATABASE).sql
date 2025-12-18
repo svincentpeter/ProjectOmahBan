@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 17, 2025 at 05:01 PM
+-- Generation Time: Dec 18, 2025 at 02:48 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.12
 
@@ -771,7 +771,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (64, '2025_12_14_192547_create_activity_log_table', 28),
 (65, '2025_12_14_192548_add_event_column_to_activity_log_table', 29),
 (66, '2025_12_14_192549_add_batch_uuid_column_to_activity_log_table', 29),
-(67, '2025_12_14_235740_rename_fontee_to_whatsapp_in_owner_notifications', 30);
+(67, '2025_12_14_235740_rename_fontee_to_whatsapp_in_owner_notifications', 30),
+(68, '2025_12_18_191119_create_notification_settings_table', 31);
 
 -- --------------------------------------------------------
 
@@ -810,6 +811,35 @@ INSERT INTO `model_has_roles` (`role_id`, `model_type`, `model_id`) VALUES
 (5, 'App\\Models\\User', 6),
 (3, 'App\\Models\\User', 9006),
 (2, 'App\\Models\\User', 9007);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notification_settings`
+--
+
+CREATE TABLE `notification_settings` (
+  `id` bigint UNSIGNED NOT NULL,
+  `type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Unique identifier: manual_input, low_stock, daily_report, etc',
+  `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Human readable name',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Description of this notification type',
+  `icon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'bi-bell' COMMENT 'Bootstrap icon class',
+  `is_enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Whether this notification type is active',
+  `template` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Message template with {placeholders}',
+  `placeholders` json DEFAULT NULL COMMENT 'Available placeholders for this template',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `notification_settings`
+--
+
+INSERT INTO `notification_settings` (`id`, `type`, `label`, `description`, `icon`, `is_enabled`, `template`, `placeholders`, `created_at`, `updated_at`) VALUES
+(1, 'manual_input', 'Manual Input Alert', 'Notifikasi saat kasir input item manual di POS (item tidak dari katalog)', 'bi-pencil-square', 1, '🔔 *⚠️ Input Manual - Inv {invoice}*\n\nKasir *{cashier}* membuat transaksi dengan *{item_count} item* input manual:\n\n{items_list}\n\n💰 *Total: Rp {total}*\n📋 Invoice: {invoice}\n⏰ Waktu: {datetime}', '{\"total\": \"Total transaksi (Rp)\", \"cashier\": \"Nama kasir\", \"invoice\": \"Nomor invoice\", \"datetime\": \"Waktu transaksi\", \"item_count\": \"Jumlah item manual\", \"items_list\": \"Daftar item (nama, qty, harga)\"}', '2025-12-18 13:51:24', '2025-12-18 13:09:55'),
+(2, 'low_stock', 'Low Stock Alert', 'Notifikasi saat stok produk mencapai batas minimum', 'bi-box-seam', 1, '⚠️ *ALERT STOK RENDAH*\n\nDitemukan *{product_count} produk* dengan stok rendah:\n\n{products_list}\n\n📦 Segera lakukan restok!', '{\"product_count\": \"Jumlah produk stok rendah\", \"products_list\": \"Daftar produk (nama, qty)\"}', '2025-12-18 13:51:24', '2025-12-18 13:51:24'),
+(3, 'daily_report', 'Laporan Harian', 'Ringkasan penjualan harian yang dikirim otomatis setiap tutup toko', 'bi-graph-up-arrow', 1, '📊 *LAPORAN HARIAN*\n📅 {date}\n\n💰 Total Penjualan: *Rp {total_sales}*\n🧾 Jumlah Transaksi: *{transaction_count}*\n💵 Total Tunai: Rp {cash_total}\n💳 Total Transfer: Rp {transfer_total}\n📉 Total Pengeluaran: Rp {expense_total}\n💎 Laba Bersih: *Rp {net_profit}*\n🏆 Produk Terlaris: {top_product}', '{\"date\": \"Tanggal laporan\", \"cash_total\": \"Total tunai\", \"net_profit\": \"Laba bersih\", \"top_product\": \"Produk terlaris\", \"total_sales\": \"Total penjualan\", \"expense_total\": \"Total pengeluaran\", \"transfer_total\": \"Total transfer\", \"transaction_count\": \"Jumlah transaksi\"}', '2025-12-18 13:51:24', '2025-12-18 13:51:24'),
+(4, 'login_alert', 'Login Alert', 'Notifikasi saat ada user yang login ke sistem', 'bi-shield-lock', 0, '🔐 *LOGIN ALERT*\n\nUser *{user_name}* ({role}) telah login pada:\n⏰ {datetime}\n🌐 IP: {ip_address}\n💻 Browser: {browser}', '{\"role\": \"Role user\", \"browser\": \"Browser/device\", \"datetime\": \"Waktu login\", \"user_name\": \"Nama user\", \"ip_address\": \"Alamat IP\"}', '2025-12-18 13:51:24', '2025-12-18 13:51:24');
 
 -- --------------------------------------------------------
 
@@ -3000,6 +3030,13 @@ ALTER TABLE `model_has_roles`
   ADD KEY `model_has_roles_model_id_model_type_index` (`model_id`,`model_type`);
 
 --
+-- Indexes for table `notification_settings`
+--
+ALTER TABLE `notification_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `notification_settings_type_unique` (`type`);
+
+--
 -- Indexes for table `owner_notifications`
 --
 ALTER TABLE `owner_notifications`
@@ -3406,7 +3443,13 @@ ALTER TABLE `media`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+
+--
+-- AUTO_INCREMENT for table `notification_settings`
+--
+ALTER TABLE `notification_settings`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `owner_notifications`
