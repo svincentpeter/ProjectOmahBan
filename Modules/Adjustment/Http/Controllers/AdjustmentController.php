@@ -394,13 +394,91 @@ class AdjustmentController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
-            ->addColumn('requester_name', fn($a) => $a->requester->name ?? '-')
-            ->addColumn('product_count', fn($a) => $a->adjustedProducts->count())
-            ->addColumn('created_at_formatted', fn($a) => optional($a->created_at)->format('d/m/Y H:i'))
-            ->addColumn('actions', function ($row) {
-                return view('adjustment::adjustments.partials.actions-approval', compact('row'))->render();
+            ->editColumn('reference', function($a) {
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded font-mono text-sm font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    ' . $a->reference . '
+                </span>';
             })
-            ->rawColumns(['actions'])
+            ->addColumn('requester_name', function($a) {
+                return '<div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs ring-2 ring-white shadow-sm">
+                        ' . strtoupper(substr($a->requester->name ?? '?', 0, 2)) . '
+                    </div>
+                    <span class="font-medium text-gray-900">' . ($a->requester->name ?? '-') . '</span>
+                </div>';
+            })
+            ->editColumn('reason', function($a) {
+                $reason = $a->reason ?? '-';
+                $color = match(strtolower($reason)) {
+                    'rusak' => 'bg-red-50 text-red-700 border-red-200',
+                    'hilang' => 'bg-amber-50 text-amber-700 border-amber-200',
+                    'expired', 'kadaluarsa' => 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                    'lainnya' => 'bg-blue-50 text-blue-700 border-blue-200',
+                    default => 'bg-gray-50 text-gray-700 border-gray-200'
+                };
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border '.$color.'">
+                    ' . $reason . '
+                </span>';
+            })
+            ->addColumn('product_count', function($a) {
+                return '<span class="inline-flex items-center justify-center w-8 h-6 rounded-md bg-zinc-100 text-zinc-900 text-sm font-bold border border-zinc-200">
+                    ' . $a->adjustedProducts->count() . '
+                </span>';
+            })
+            ->addColumn('created_at_formatted', fn($a) => '<span class="text-gray-600 text-sm">' . optional($a->created_at)->format('d/m/Y H:i') . '</span>')
+            ->addColumn('actions', function ($row) {
+                $customActions = '';
+                
+                // Detail Action
+                $customActions .= '
+                    <li>
+                        <a href="'.route('adjustments.show', $row->id).'" 
+                           class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors">
+                            <i class="bi bi-eye text-blue-600 dark:text-blue-400"></i>
+                            <span>Detail</span>
+                        </a>
+                    </li>';
+
+                // Approve Action
+                $customActions .= '
+                    <li>
+                        <a href="javascript:void(0)" 
+                           class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors btn-approve-action"
+                           data-id="'.$row->id.'" 
+                           data-action="approve"
+                           data-reference="'.$row->reference.'"
+                           data-requester="'.($row->requester->name ?? '-').'"
+                           data-reason="'.e($row->reason ?? '-').'"
+                           data-product-count="'.$row->adjustedProducts->count().'">
+                            <i class="bi bi-check-circle text-emerald-600 dark:text-emerald-400"></i>
+                            <span>Setujui</span>
+                        </a>
+                    </li>';
+
+                // Reject Action
+                $customActions .= '
+                    <li>
+                        <a href="javascript:void(0)" 
+                           class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors btn-approve-action"
+                           data-id="'.$row->id.'" 
+                           data-action="reject"
+                           data-reference="'.$row->reference.'"
+                           data-requester="'.($row->requester->name ?? '-').'"
+                           data-reason="'.e($row->reason ?? '-').'"
+                           data-product-count="'.$row->adjustedProducts->count().'">
+                            <i class="bi bi-x-circle text-red-600 dark:text-red-400"></i>
+                            <span>Tolak</span>
+                        </a>
+                    </li>';
+
+                return view('partials.datatable-actions', [
+                    'id' => $row->id,
+                    'itemName' => $row->reference,
+                    // We don't use standard show/delete here, providing custom ones
+                    'customActions' => $customActions
+                ])->render();
+            })
+            ->rawColumns(['reference', 'requester_name', 'reason', 'product_count', 'created_at_formatted', 'actions'])
             ->make(true);
     }
 

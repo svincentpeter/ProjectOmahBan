@@ -33,7 +33,7 @@
 
         {{-- System Qty --}}
         <div class="flex justify-between items-center mb-2">
-            <span class="text-sm text-zinc-500">Stok Sistem:</span>
+            <span class="text-sm text-black">Stok Sistem:</span>
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
                 {{ number_format($item->system_qty) }} unit
             </span>
@@ -41,7 +41,7 @@
 
         {{-- Actual Qty --}}
         <div class="flex justify-between items-center mb-3">
-            <span class="text-sm text-zinc-500">Hasil Hitung:</span>
+            <span class="text-sm text-black">Hasil Hitung:</span>
             @if($item->actual_qty !== null)
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 actual-qty-display">
                     {{ number_format($item->actual_qty) }} unit

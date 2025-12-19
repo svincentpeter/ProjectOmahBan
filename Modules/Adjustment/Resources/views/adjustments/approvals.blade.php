@@ -21,7 +21,7 @@
             </div>
             <div class="z-10">
                 <p class="text-xs uppercase text-zinc-500 font-bold tracking-wider mb-1">Pending</p>
-                <p class="text-2xl font-black text-zinc-800">{{ $pendingCount ?? 0 }}</p>
+                <p class="text-2xl font-black text-black">{{ $pendingCount ?? 0 }}</p>
             </div>
             <div class="absolute -bottom-4 -right-4 w-20 h-20 bg-yellow-50/50 rounded-full group-hover:bg-yellow-100 transition-colors z-0"></div>
         </div>
@@ -33,7 +33,7 @@
             </div>
             <div class="z-10">
                 <p class="text-xs uppercase text-zinc-500 font-bold tracking-wider mb-1">Urgent (>7 Hari)</p>
-                <p class="text-2xl font-black text-zinc-800">{{ $urgentCount ?? 0 }}</p>
+                <p class="text-2xl font-black text-black">{{ $urgentCount ?? 0 }}</p>
             </div>
             <div class="absolute -bottom-4 -right-4 w-20 h-20 bg-red-50/50 rounded-full group-hover:bg-red-100 transition-colors z-0"></div>
         </div>
@@ -45,7 +45,7 @@
             </div>
             <div class="z-10">
                 <p class="text-xs uppercase text-zinc-500 font-bold tracking-wider mb-1">Total Approved</p>
-                <p class="text-2xl font-black text-zinc-800">{{ $approvedCount ?? 0 }}</p>
+                <p class="text-2xl font-black text-black">{{ $approvedCount ?? 0 }}</p>
             </div>
             <div class="absolute -bottom-4 -right-4 w-20 h-20 bg-green-50/50 rounded-full group-hover:bg-green-100 transition-colors z-0"></div>
         </div>
@@ -57,7 +57,7 @@
             </div>
             <div class="z-10">
                 <p class="text-xs uppercase text-zinc-500 font-bold tracking-wider mb-1">Total Rejected</p>
-                <p class="text-2xl font-black text-zinc-800">{{ $rejectedCount ?? 0 }}</p>
+                <p class="text-2xl font-black text-black">{{ $rejectedCount ?? 0 }}</p>
             </div>
             <div class="absolute -bottom-4 -right-4 w-20 h-20 bg-red-50/50 rounded-full group-hover:bg-red-100 transition-colors z-0"></div>
         </div>
@@ -66,7 +66,7 @@
     {{-- Main Card --}}
     <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm text-sm overflow-hidden">
         <div class="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
-            <h5 class="font-bold text-zinc-800 flex items-center gap-2">
+            <h5 class="font-bold text-black flex items-center gap-2">
                 <i class="bi bi-list-check text-lg text-blue-600"></i>
                 Daftar Persetujuan Pending
             </h5>
@@ -84,13 +84,13 @@
                 <table id="approvalTable" class="w-full text-left border-collapse">
                     <thead class="bg-zinc-50 text-zinc-500 uppercase text-xs font-bold leading-normal">
                         <tr>
-                            <th class="px-5 py-3 border-b border-zinc-100">#</th>
-                            <th class="px-5 py-3 border-b border-zinc-100">Kode Ref</th>
-                            <th class="px-5 py-3 border-b border-zinc-100">Dibuat Oleh</th>
-                            <th class="px-5 py-3 border-b border-zinc-100">Alasan</th>
-                            <th class="px-5 py-3 border-b border-zinc-100 text-center">Produk</th>
-                            <th class="px-5 py-3 border-b border-zinc-100">Tanggal</th>
-                            <th class="px-5 py-3 border-b border-zinc-100 text-center">Aksi</th>
+                            <th class="px-5 py-3 border-b border-zinc-100 font-bold text-black">#</th>
+                            <th class="px-5 py-3 border-b border-zinc-100 font-bold text-black">Kode Ref</th>
+                            <th class="px-5 py-3 border-b border-zinc-100 font-bold text-black">Dibuat Oleh</th>
+                            <th class="px-5 py-3 border-b border-zinc-100 font-bold text-black">Alasan</th>
+                            <th class="px-5 py-3 border-b border-zinc-100 text-center font-bold text-black">Produk</th>
+                            <th class="px-5 py-3 border-b border-zinc-100 font-bold text-black">Tanggal</th>
+                            <th class="px-5 py-3 border-b border-zinc-100 text-center font-bold text-black">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="text-zinc-600 text-sm font-light bg-white divide-y divide-zinc-100"></tbody>
@@ -117,35 +117,49 @@
                 ajax: "{{ route('adjustments.getPendingAdjustments') }}",
                 order: [[5, 'desc']], // Order by Date
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'px-5 py-4 text-center' },
-                    { data: 'reference', name: 'reference', className: 'px-5 py-4 font-medium text-zinc-900' },
-                    { data: 'requester_name', name: 'requester_name', className: 'px-5 py-4' },
-                    { data: 'reason', name: 'reason', className: 'px-5 py-4' },
-                    { data: 'product_count', name: 'product_count', className: 'px-5 py-4 text-center' },
-                    { data: 'created_at_formatted', name: 'created_at_formatted', className: 'px-5 py-4' },
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, className: 'px-5 py-4 text-center text-black' },
+                    { data: 'reference', name: 'reference', className: 'px-5 py-4 font-medium text-black' },
+                    { data: 'requester_name', name: 'requester_name', className: 'px-5 py-4 text-black' },
+                    { data: 'reason', name: 'reason', className: 'px-5 py-4 text-black' },
+                    { data: 'product_count', name: 'product_count', className: 'px-5 py-4 text-center text-black' },
+                    { data: 'created_at_formatted', name: 'created_at_formatted', className: 'px-5 py-4 text-black' },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'px-5 py-4 text-center' }
-                ]
+                ],
+                drawCallback: function() {
+                    // Re-init Flowbite dropdowns (Actions)
+                    if (typeof initFlowbite === 'function') {
+                        initFlowbite();
+                    }
+                }
             });
 
             // Handle Approve Button Click
             $(document).on('click', '.btn-approve-action', function() {
-                const id = $(this).data('id');
-                const action = $(this).data('action'); // approve | reject
+                const $btn = $(this);
+                const id = $btn.data('id');
+                const action = $btn.data('action'); // approve | reject
                 const approve = action === 'approve';
-                const rowData = dt.row($(this).closest('tr')).data() || {};
+                
+                // Get data from attributes (Safe from dropdown DOM movement)
+                const rowData = {
+                    reference: $btn.data('reference'),
+                    requester_name: $btn.data('requester'),
+                    product_count: $btn.data('product-count'),
+                    reason: $btn.data('reason')
+                };
 
                 // UI Helper
                 const previewHTML = `
                     <div class="text-left bg-zinc-50 p-4 rounded-xl border border-zinc-200 text-sm">
                         <div class="grid grid-cols-2 gap-2 mb-2">
                             <span class="text-zinc-500">Kode:</span>
-                            <span class="font-mono font-bold text-zinc-800">${rowData.reference || '-'}</span>
+                            <span class="font-mono font-bold text-black">${rowData.reference || '-'}</span>
                             
                             <span class="text-zinc-500">Oleh:</span>
-                            <span class="font-medium text-zinc-800">${rowData.requester_name || '-'}</span>
+                            <span class="font-medium text-black">${rowData.requester_name || '-'}</span>
                             
                             <span class="text-zinc-500">Produk:</span>
-                            <span class="font-medium text-zinc-800">${rowData.product_count || '0'} items</span>
+                            <span class="font-medium text-black">${rowData.product_count || '0'} items</span>
                         </div>
                         <div class="pt-2 border-t border-zinc-200 mt-2">
                             <p class="text-zinc-500 text-xs mb-1">Alasan:</p>

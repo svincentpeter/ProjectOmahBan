@@ -3,7 +3,7 @@
 {{-- Section 1: Informasi Dasar --}}
 <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm mb-6">
     <div class="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50 rounded-t-2xl">
-        <h6 class="font-bold text-zinc-800 flex items-center gap-2">
+        <h6 class="font-bold text-black flex items-center gap-2">
             <i class="bi bi-info-circle text-blue-600"></i>
             {{ $isEdit ? 'Edit Informasi Pengajuan' : 'Informasi Pengajuan' }}
         </h6>
@@ -12,7 +12,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {{-- Date --}}
             <div>
-                <label for="date" class="block mb-2 text-sm font-bold text-zinc-700">
+                <label for="date" class="block mb-2 text-sm font-bold text-black">
                     Tanggal <span class="text-red-500">*</span>
                 </label>
                 <div class="relative">
@@ -20,7 +20,7 @@
                         <i class="bi bi-calendar text-zinc-500"></i>
                     </div>
                     <input type="date" id="date" name="date"
-                        class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 @error('date') border-red-500 bg-red-50 @enderror"
+                        class="bg-zinc-50 border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 @error('date') border-red-500 bg-red-50 @enderror"
                         required
                         value="{{ old('date', $isEdit ? $adjustment->date->format('Y-m-d') : date('Y-m-d')) }}">
                 </div>
@@ -31,7 +31,7 @@
 
             {{-- Reference --}}
             <div>
-                <label for="reference" class="block mb-2 text-sm font-bold text-zinc-700">
+                <label for="reference" class="block mb-2 text-sm font-bold text-black">
                     Referensi
                 </label>
                 <div class="relative">
@@ -39,7 +39,7 @@
                         <i class="bi bi-upc-scan text-zinc-500"></i>
                     </div>
                     <input type="text" id="reference" 
-                        class="bg-zinc-100 border border-zinc-200 text-zinc-600 text-sm rounded-xl block w-full pl-10 p-2.5 cursor-not-allowed font-mono"
+                        class="bg-zinc-100 border border-zinc-200 text-black text-sm rounded-xl block w-full pl-10 p-2.5 cursor-not-allowed font-mono"
                         value="{{ $isEdit ? $adjustment->reference : 'Auto-generated: ADJ-XXX' }}" readonly disabled>
                 </div>
                 <p class="mt-1 text-xs text-zinc-500">
@@ -49,11 +49,11 @@
 
             {{-- Reason --}}
             <div>
-                <label for="reason" class="block mb-2 text-sm font-bold text-zinc-700">
+                <label for="reason" class="block mb-2 text-sm font-bold text-black">
                     Alasan Penyesuaian <span class="text-red-500">*</span>
                 </label>
                 <select id="reason" name="reason"
-                    class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('reason') border-red-500 @enderror" required>
+                    class="bg-zinc-50 border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('reason') border-red-500 @enderror" required>
                     <option value="">-- Pilih Alasan --</option>
                     @foreach(['Rusak', 'Hilang', 'Kadaluarsa', 'Lainnya'] as $opt)
                         <option value="{{ $opt }}" {{ old('reason', $isEdit ? $adjustment->reason : '') == $opt ? 'selected' : '' }}>
@@ -68,11 +68,11 @@
 
             {{-- Description --}}
             <div class="md:col-span-2">
-                <label for="description" class="block mb-2 text-sm font-bold text-zinc-700">
+                <label for="description" class="block mb-2 text-sm font-bold text-black">
                     Keterangan Detail <span class="text-red-500">*</span>
                 </label>
                 <textarea id="description" name="description" rows="3"
-                    class="block p-2.5 w-full text-sm text-zinc-900 bg-zinc-50 rounded-xl border border-zinc-300 focus:ring-blue-500 focus:border-blue-500 @error('description') border-red-500 @enderror"
+                    class="block p-2.5 w-full text-sm text-black bg-zinc-50 rounded-xl border border-zinc-300 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 @error('description') border-red-500 @enderror"
                     placeholder="Jelaskan detail alasan penyesuaian..." required>{{ old('description', $isEdit ? $adjustment->description : '') }}</textarea>
                 @error('description')
                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -81,7 +81,7 @@
 
             {{-- Files --}}
             <div class="md:col-span-2">
-                <label class="block mb-2 text-sm font-bold text-zinc-700">
+                <label class="block mb-2 text-sm font-bold text-black">
                     Bukti Gambar <span class="text-red-500">*</span> <span class="text-zinc-400 font-normal">(Maks 3 File, JPG/PNG)</span>
                 </label>
                 
@@ -122,11 +122,11 @@
 
             {{-- Note (Optional) --}}
             <div class="md:col-span-2">
-                <label for="note" class="block mb-2 text-sm font-bold text-zinc-700">
+                <label for="note" class="block mb-2 text-sm font-bold text-black">
                     Catatan Tambahan <span class="text-zinc-400 font-normal">(Opsional)</span>
                 </label>
                 <textarea id="note" name="note" rows="2"
-                    class="block p-2.5 w-full text-sm text-zinc-900 bg-zinc-50 rounded-xl border border-zinc-300 focus:ring-blue-500 focus:border-blue-500"
+                    class="block p-2.5 w-full text-sm text-black bg-zinc-50 rounded-xl border border-zinc-300 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
                     placeholder="Catatan internal...">{{ old('note', $isEdit ? $adjustment->note : '') }}</textarea>
             </div>
         </div>
@@ -136,7 +136,7 @@
 {{-- Section 2: Products Table --}}
 <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm mb-6">
     <div class="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50 rounded-t-2xl flex justify-between items-center">
-        <h6 class="font-bold text-zinc-800 flex items-center gap-2">
+        <h6 class="font-bold text-black flex items-center gap-2">
             <i class="bi bi-box-seam text-blue-600"></i>
             Daftar Produk
         </h6>
@@ -158,8 +158,8 @@
 
         {{-- Table Container --}}
         <div id="products-table-container" class="hidden overflow-x-auto rounded-lg border border-zinc-200">
-            <table class="w-full text-sm text-left text-zinc-500">
-                <thead class="text-xs text-zinc-700 uppercase bg-zinc-50 border-b border-zinc-200">
+            <table class="w-full text-sm text-left text-black">
+                <thead class="text-xs text-black uppercase bg-zinc-50 border-b border-zinc-200">
                     <tr>
                         <th class="px-4 py-3 min-w-[250px]">Produk</th>
                         <th class="px-4 py-3 text-center">Stok Awal</th>
@@ -194,11 +194,11 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <input type="number" name="quantities[]" min="1" required placeholder="0"
-                                        class="bg-white border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full text-center quantity-input"
+                                        class="bg-white border border-zinc-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full text-center quantity-input placeholder-gray-400"
                                         data-index="{{ $index }}" value="{{ $adjusted->quantity }}">
                                 </td>
                                 <td class="px-4 py-3">
-                                    <select name="types[]" required class="bg-white border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full type-select" data-index="{{ $index }}">
+                                    <select name="types[]" required class="bg-white border border-zinc-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full type-select" data-index="{{ $index }}">
                                         <option value="add" {{ $adjusted->type == 'add' ? 'selected' : '' }}>Penambahan (+)</option>
                                         <option value="sub" {{ $adjusted->type == 'sub' ? 'selected' : '' }}>Pengurangan (-)</option>
                                     </select>
@@ -337,11 +337,11 @@
                         </td>
                         <td class="px-4 py-3">
                             <input type="number" name="quantities[]" min="1" required placeholder="0"
-                                class="bg-white border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full text-center quantity-input"
+                                class="bg-white border border-zinc-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full text-center quantity-input placeholder-gray-400"
                                 data-index="${index}">
                         </td>
                         <td class="px-4 py-3">
-                            <select name="types[]" required class="bg-white border border-zinc-300 text-zinc-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full type-select" data-index="${index}">
+                            <select name="types[]" required class="bg-white border border-zinc-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full type-select" data-index="${index}">
                                 <option value="add" selected>Penambahan (+)</option>
                                 <option value="sub">Pengurangan (-)</option>
                             </select>

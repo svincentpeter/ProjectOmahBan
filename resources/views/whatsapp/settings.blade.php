@@ -358,6 +358,127 @@ WHATSAPP_OWNER_PHONE=6282227863969</pre>
                     @endif
                 </div>
             </div>
+
+            {{-- Recipients Card --}}
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700 overflow-hidden lg:col-span-2" id="recipients">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-people-fill text-teal-600 dark:text-teal-400 text-lg"></i>
+                        <div>
+                            <h6 class="text-base font-bold text-gray-900 dark:text-white">Daftar Penerima</h6>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Kelola nomor WhatsApp tambahan yang menerima notifikasi</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="openRecipientModal()" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="bi bi-plus-lg mr-2"></i> Tambah
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Nama / Label</th>
+                                <th scope="col" class="px-6 py-3">No. WhatsApp</th>
+                                <th scope="col" class="px-6 py-3">Izin Notifikasi</th>
+                                <th scope="col" class="px-6 py-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recipients ?? [] as $recipient)
+                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                    {{ $recipient->recipient_name }}
+                                    @if(!$recipient->is_active)
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Nonaktif</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 font-mono">{{ $recipient->recipient_phone }}</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-wrap gap-1">
+                                        @forelse($recipient->permissions ?? [] as $perm)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                                {{ str_replace('_', ' ', ucfirst($perm)) }}
+                                            </span>
+                                        @empty
+                                            <span class="text-xs text-gray-400 italic">Tidak ada izin</span>
+                                        @endforelse
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button onclick="editRecipient({{ $recipient->id }}, '{{ $recipient->recipient_name }}', '{{ $recipient->recipient_phone }}', {{ json_encode($recipient->permissions ?? []) }}, {{ $recipient->is_active ? 'true' : 'false' }})" 
+                                        class="font-medium text-blue-600 dark:text-blue-400 hover:underline mr-3">Edit</button>
+                                    <button onclick="deleteRecipient({{ $recipient->id }})" class="font-medium text-red-600 dark:text-red-400 hover:underline">Hapus</button>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <i class="bi bi-people text-2xl mb-2 block text-gray-300"></i>
+                                    Belum ada penerima tambahan.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {{-- Hidden Trigger for Modal --}}
+    <button id="recipientModalTrigger" data-modal-target="recipientModal" data-modal-toggle="recipientModal" class="hidden"></button>
+
+    <!-- Recipient Modal -->
+    <div id="recipientModal" tabindex="-1" aria-hidden="true" class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full backdrop-blur-sm bg-gray-900/50">
+        <div class="relative w-full max-w-md max-h-full">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <button type="button" onclick="closeRecipientModal()" class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
+                    <i class="bi bi-x-lg"></i>
+                    <span class="sr-only">Close modal</span>
+                </button>
+                <div class="px-6 py-6 lg:px-8">
+                    <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white" id="modalTitle">Tambah Penerima</h3>
+                    <form id="recipientForm" action="{{ route('whatsapp.recipients.store') }}" method="POST">
+                        @csrf
+                        <div id="methodField"></div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="recipient_name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nama / Label</label>
+                                <input type="text" name="recipient_name" id="recipient_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="Contoh: Pak Budi (Gudang)" required>
+                            </div>
+                            <div>
+                                <label for="recipient_phone" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nomor WhatsApp</label>
+                                <input type="text" name="recipient_phone" id="recipient_phone" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" placeholder="628..." required>
+                                <p class="mt-1 text-xs text-gray-500">Awali dengan kode negara (62). Jangan pakai 08.</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Izin Notifikasi</label>
+                                <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                                    @foreach(['manual_input' => 'Input Manual', 'low_stock' => 'Stok Rendah', 'daily_report' => 'Laporan Harian', 'login_alert' => 'Login Alert'] as $key => $label)
+                                    <div class="flex items-center">
+                                        <input id="perm-{{ $key }}" type="checkbox" value="{{ $key }}" name="permissions[]" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                        <label for="perm-{{ $key }}" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ $label }}</label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="flex items-center">
+                                <input id="is_active" type="checkbox" name="is_active" value="1" checked class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="is_active" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Aktifkan Penerima ini</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
@@ -625,13 +746,13 @@ WHATSAPP_OWNER_PHONE=6282227863969</pre>
         const end = textarea.selectionEnd;
         const value = textarea.value;
         const selectedText = value.substring(start, end);
-        
+
         const replacement = wrapStart + (selectedText.length > 0 ? selectedText : text) + wrapEnd;
-        
+
         textarea.value = value.substring(0, start) + replacement + value.substring(end);
-        
+
         // Restore cursor/selection
-        const newCursorPos = start + (selectedText.length > 0 ? replacement.length : wrapStart.length + text.length);
+        const newCursorPos = start + (selectedText.length > 0 ? replacement.length : (wrapStart.length + text.length));
         textarea.focus();
         textarea.setSelectionRange(newCursorPos, newCursorPos);
     }
@@ -644,15 +765,74 @@ WHATSAPP_OWNER_PHONE=6282227863969</pre>
     function insertFormat(textareaId, format) {
         const textarea = document.getElementById(textareaId);
         let start = '', end = '';
-        
-        switch(format) {
+
+        switch (format) {
             case 'bold': start = '*'; end = '*'; break;
             case 'italic': start = '_'; end = '_'; break;
             case 'strike': start = '~'; end = '~'; break;
             case 'mono': start = '```'; end = '```'; break;
         }
-        
+
         insertAtCursor(textarea, '', start, end);
+    }
+
+    // Modal Logic via Hidden Trigger (Workaround for Modal class availability)
+    function toggleRecipientModal() {
+        document.getElementById('recipientModalTrigger').click();
+    }
+
+    function openRecipientModal() {
+        document.getElementById('recipientForm').reset();
+        document.getElementById('recipientForm').action = "{{ route('whatsapp.recipients.store') }}";
+        document.getElementById('methodField').innerHTML = '';
+        document.getElementById('modalTitle').innerText = 'Tambah Penerima';
+        
+        toggleRecipientModal();
+    }
+
+    function closeRecipientModal() {
+        toggleRecipientModal();
+    }
+
+    function editRecipient(id, name, phone, permissions, isActive) {
+        document.getElementById('recipient_name').value = name;
+        document.getElementById('recipient_phone').value = phone;
+        document.getElementById('is_active').checked = isActive;
+        
+        document.querySelectorAll('input[name="permissions[]"]').forEach(cb => {
+            cb.checked = permissions.includes(cb.value);
+        });
+
+        const updateUrl = "{{ route('whatsapp.recipients.update', ':id') }}".replace(':id', id);
+        document.getElementById('recipientForm').action = updateUrl;
+        document.getElementById('methodField').innerHTML = '<input type="hidden" name="_method" value="PUT">';
+        document.getElementById('modalTitle').innerText = 'Edit Penerima';
+        
+        toggleRecipientModal();
+    }
+
+    function deleteRecipient(id) {
+        Swal.fire({
+            title: 'Hapus Penerima?',
+            text: "Data tidak bisa dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ route('whatsapp.recipients.delete', ':id') }}".replace(':id', id);
+                form.innerHTML = `
+                    @csrf
+                    @method('DELETE')
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     }
 </script>
 @endpush

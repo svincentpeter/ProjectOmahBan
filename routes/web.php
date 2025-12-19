@@ -44,6 +44,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/notifications/{setting}/toggle', [\App\Http\Controllers\WhatsAppController::class, 'toggleNotification'])->name('notifications.toggle');
         Route::post('/notifications/{setting}/template', [\App\Http\Controllers\WhatsAppController::class, 'updateTemplate'])->name('notifications.update-template');
         Route::post('/notifications/{setting}/reset', [\App\Http\Controllers\WhatsAppController::class, 'resetTemplate'])->name('notifications.reset-template');
+
+        // Recipient Management
+        Route::post('/recipients', [\App\Http\Controllers\WhatsAppController::class, 'storeRecipient'])->name('recipients.store');
+        Route::put('/recipients/{recipient}', [\App\Http\Controllers\WhatsAppController::class, 'updateRecipient'])->name('recipients.update');
+        Route::delete('/recipients/{recipient}', [\App\Http\Controllers\WhatsAppController::class, 'deleteRecipient'])->name('recipients.delete');
     });
 });
 

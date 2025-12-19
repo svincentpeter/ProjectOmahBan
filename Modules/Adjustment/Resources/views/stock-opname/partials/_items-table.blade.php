@@ -13,28 +13,28 @@
         <table class="min-w-full divide-y divide-zinc-100">
             <thead class="bg-zinc-50">
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-zinc-700 uppercase tracking-wider">#</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-zinc-700 uppercase tracking-wider">Kode Produk</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-zinc-700 uppercase tracking-wider">Nama Produk</th>
-                    <th class="px-4 py-3 text-left text-xs font-bold text-zinc-700 uppercase tracking-wider">Kategori</th>
-                    <th class="px-4 py-3 text-right text-xs font-bold text-zinc-700 uppercase tracking-wider">Stok Sistem</th>
-                    <th class="px-4 py-3 text-right text-xs font-bold text-zinc-700 uppercase tracking-wider">Hasil Hitung</th>
-                    <th class="px-4 py-3 text-right text-xs font-bold text-zinc-700 uppercase tracking-wider">Selisih</th>
-                    <th class="px-4 py-3 text-center text-xs font-bold text-zinc-700 uppercase tracking-wider">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">#</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Kode Produk</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Nama Produk</th>
+                    <th class="px-4 py-3 text-left text-xs font-bold text-black uppercase tracking-wider">Kategori</th>
+                    <th class="px-4 py-3 text-right text-xs font-bold text-black uppercase tracking-wider">Stok Sistem</th>
+                    <th class="px-4 py-3 text-right text-xs font-bold text-black uppercase tracking-wider">Hasil Hitung</th>
+                    <th class="px-4 py-3 text-right text-xs font-bold text-black uppercase tracking-wider">Selisih</th>
+                    <th class="px-4 py-3 text-center text-xs font-bold text-black uppercase tracking-wider">Status</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-zinc-100">
                 @foreach($items as $index => $item)
                     <tr class="hover:bg-zinc-50">
-                        <td class="px-4 py-3 text-sm text-zinc-600">{{ $index + 1 }}</td>
-                        <td class="px-4 py-3 text-sm font-mono font-medium text-zinc-900">{{ $item->product->product_code }}</td>
-                        <td class="px-4 py-3 text-sm text-zinc-900">{{ $item->product->product_name }}</td>
+                        <td class="px-4 py-3 text-sm text-black">{{ $index + 1 }}</td>
+                        <td class="px-4 py-3 text-sm font-mono font-medium text-black">{{ $item->product->product_code }}</td>
+                        <td class="px-4 py-3 text-sm text-black">{{ $item->product->product_name }}</td>
                         <td class="px-4 py-3 text-sm">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700">
                                 {{ $item->product->category->category_name ?? '-' }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-sm text-right font-medium text-zinc-900">{{ number_format($item->system_qty) }}</td>
+                        <td class="px-4 py-3 text-sm text-right font-medium text-black">{{ number_format($item->system_qty) }}</td>
                         <td class="px-4 py-3 text-sm text-right font-medium">
                             @if($item->actual_qty !== null)
                                 <span class="text-blue-600">{{ number_format($item->actual_qty) }}</span>

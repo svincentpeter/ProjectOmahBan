@@ -33,7 +33,7 @@
                     <h3 class="text-2xl font-bold text-black flex items-center gap-2">
                         <i class="bi bi-clipboard-check text-blue-600"></i> {{ $stockOpname->reference }}
                     </h3>
-                    <div class="flex items-center gap-3 mt-2 text-sm text-zinc-600">
+                    <div class="flex items-center gap-3 mt-2 text-sm text-zinc-900">
                         <span class="inline-flex items-center gap-1">
                             <i class="bi bi-calendar3"></i> {{ $stockOpname->opname_date->format('d F Y') }}
                         </span>
@@ -76,20 +76,11 @@
                 {{-- Info Kolom Kiri --}}
                 <div class="space-y-3">
                     <div class="flex items-center gap-3">
-                        <span class="text-sm text-zinc-500 w-32">Jenis Opname:</span>
-                        <span class="font-bold text-black">
-                            @if($stockOpname->scope_type === 'all')
-                                <i class="bi bi-box-seam text-blue-600 me-1"></i> Semua Produk
-                            @elseif($stockOpname->scope_type === 'category')
-                                <i class="bi bi-collection text-amber-600 me-1"></i> Per Kategori
-                            @else
-                                <i class="bi bi-list-check text-emerald-600 me-1"></i> Custom
-                            @endif
                         </span>
                     </div>
                     @if($stockOpname->scope_type === 'category' && $stockOpname->scope_ids)
                         <div class="flex items-start gap-3">
-                            <span class="text-sm text-zinc-500 w-32">Kategori:</span>
+                            <span class="text-sm text-black w-32">Kategori:</span>
                             <div class="flex flex-wrap gap-1">
                                 @php
                                     $categories = \Modules\Product\Entities\Category::whereIn('id', $stockOpname->scope_ids)->get();
@@ -101,7 +92,7 @@
                         </div>
                     @endif
                     <div class="flex items-center gap-3">
-                        <span class="text-sm text-zinc-500 w-32">Total Item:</span>
+                        <span class="text-sm text-black w-32">Total Item:</span>
                         <span class="font-bold text-black">{{ $stockOpname->items->count() }} produk</span>
                     </div>
                 </div>
@@ -109,10 +100,10 @@
                 {{-- Info Kolom Kanan --}}
                 <div class="space-y-3">
                     <div class="flex items-center gap-3">
-                        <span class="text-sm text-zinc-500 w-32">Progress:</span>
+                        <span class="text-sm text-black w-32">Progress:</span>
                         <div class="flex-1">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="text-sm font-bold text-zinc-700">{{ $stockOpname->completion_percentage }}%</span>
+                                <span class="text-sm font-bold text-black">{{ $stockOpname->completion_percentage }}%</span>
                             </div>
                             <div class="w-full bg-zinc-200 rounded-full h-2.5">
                                 @php
@@ -125,14 +116,14 @@
                     </div>
                     @if($stockOpname->supervisor_id)
                         <div class="flex items-center gap-3">
-                            <span class="text-sm text-zinc-500 w-32">Supervisor:</span>
+                            <span class="text-sm text-black w-32">Supervisor:</span>
                             <span class="font-bold text-black">{{ $stockOpname->supervisor->name }}</span>
                         </div>
                     @endif
                     @if($stockOpname->notes)
                         <div class="flex items-start gap-3">
-                            <span class="text-sm text-zinc-500 w-32">Catatan:</span>
-                            <span class="text-zinc-700">{{ $stockOpname->notes }}</span>
+                            <span class="text-sm text-black w-32">Catatan:</span>
+                            <span class="text-black">{{ $stockOpname->notes }}</span>
                         </div>
                     @endif
                 </div>
@@ -143,7 +134,7 @@
         <div class="p-6 bg-zinc-50 rounded-b-2xl border-t border-zinc-100">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('stock-opnames.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-zinc-300 text-zinc-700 font-medium rounded-xl hover:bg-zinc-50 transition-all">
+                    <a href="{{ route('stock-opnames.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-zinc-300 text-black font-medium rounded-xl hover:bg-zinc-50 transition-all">
                         <i class="bi bi-arrow-left me-2"></i> Kembali
                     </a>
 
@@ -187,7 +178,7 @@
         <div class="bg-white border-l-4 border-blue-500 rounded-2xl p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs uppercase text-zinc-500 font-semibold">Total Item</p>
+                    <p class="text-xs uppercase text-black font-semibold">Total Item</p>
                     <p class="text-2xl font-bold text-black">{{ $stockOpname->items->count() }}</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -199,7 +190,7 @@
         <div class="bg-white border-l-4 border-emerald-500 rounded-2xl p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs uppercase text-zinc-500 font-semibold">Cocok (Match)</p>
+                    <p class="text-xs uppercase text-black font-semibold">Cocok (Match)</p>
                     <p class="text-2xl font-bold text-emerald-600">{{ $summary['match'] }}</p>
                     <p class="text-xs text-zinc-500">
                         {{ $stockOpname->items->count() > 0 ? round(($summary['match'] / $stockOpname->items->count()) * 100) : 0 }}%
@@ -214,7 +205,7 @@
         <div class="bg-white border-l-4 border-cyan-500 rounded-2xl p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs uppercase text-zinc-500 font-semibold">Surplus (Lebih)</p>
+                    <p class="text-xs uppercase text-black font-semibold">Surplus (Lebih)</p>
                     <p class="text-2xl font-bold text-cyan-600">{{ $summary['surplus'] }}</p>
                     <p class="text-xs text-zinc-500">
                         Total: +{{ $stockOpname->items->where('variance_type', 'surplus')->sum('variance_qty') }} unit
@@ -229,7 +220,7 @@
         <div class="bg-white border-l-4 border-red-500 rounded-2xl p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs uppercase text-zinc-500 font-semibold">Shortage (Kurang)</p>
+                    <p class="text-xs uppercase text-black font-semibold">Shortage (Kurang)</p>
                     <p class="text-2xl font-bold text-red-600">{{ $summary['shortage'] }}</p>
                     <p class="text-xs text-zinc-500">
                         Total: {{ $stockOpname->items->where('variance_type', 'shortage')->sum('variance_qty') }} unit

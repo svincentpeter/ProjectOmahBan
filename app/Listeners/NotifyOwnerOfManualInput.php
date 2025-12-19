@@ -6,6 +6,7 @@ use App\Events\ManualInputCreated;
 use App\Models\OwnerNotification;
 use App\Models\User;
 use App\Models\NotificationSetting;
+use App\Models\NotificationRecipient;
 use App\Services\WhatsApp\BaileysNotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -127,7 +128,41 @@ class NotifyOwnerOfManualInput
                 }
             }
 
-            // 6) Tandai SALE sudah dinotifikasi (idempoten)
+
+            // 6) Kirim ke External Recipients (NotificationRecipients)
+            $externalRecipients = NotificationRecipient::where('is_active', 1)->get();
+            if ($externalRecipients->isNotEmpty()) {
+                // Generate Message (Reuse logic)
+                $ref = $sale->reference ?? '#' . $sale->id;
+                $totalStr = number_format($totalValue, 0, ',', '.');
+                $datetime = $sale->created_at?->format('d-m-Y H:i:s') ?? now()->format('d-m-Y H:i:s');
+                $templateData = [
+                    'invoice' => $ref,
+                    'cashier' => $cashier->name,
+                    'item_count' => $itemCount,
+                    'items_list' => $itemsList,
+                    'total' => $totalStr,
+                    'datetime' => $datetime,
+                ];
+
+                $message = $setting 
+                    ? $setting->parseTemplate($templateData)
+                    : "🔔 *⚠️ Input Manual - Inv {$ref}*\n\nKasir *{$cashier->name}* membuat transaksi dengan *{$itemCount} item* input manual:\n\n{$itemsList}\n\n💰 *Total: Rp {$totalStr}*\n📋 Invoice: {$ref}\n⏰ Waktu: {$datetime}";
+
+                foreach ($externalRecipients as $recipient) { // @phpstan-ignore-line
+                    // Check permission
+                    if ($recipient->shouldReceive('manual_input')) {
+                        try {
+                            $this->baileysService->sendMessage($recipient->recipient_phone, $message);
+                            Log::info('External notification sent', ['recipient' => $recipient->recipient_name, 'phone' => $recipient->recipient_phone]);
+                        } catch (\Throwable $e) {
+                            Log::error('External notification failed', ['recipient' => $recipient->recipient_name, 'error' => $e->getMessage()]);
+                        }
+                    }
+                }
+            }
+
+            // 7) Tandai SALE sudah dinotifikasi (idempoten)
             $sale->update([
                 'is_manual_input_notified' => 1,
                 'notified_at' => now(),

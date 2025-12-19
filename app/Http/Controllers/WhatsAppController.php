@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NotificationSetting;
+use App\Models\NotificationRecipient;
 use App\Services\WhatsApp\BaileysNotificationService;
 use Illuminate\Http\Request;
 
@@ -29,8 +30,9 @@ class WhatsAppController extends Controller
             $qrData = $this->whatsapp->getQrCode();
         }
 
-        // Get notification settings
+        // Get notification settings and recipients
         $notificationSettings = NotificationSetting::all();
+        $recipients = NotificationRecipient::all();
 
         return view('whatsapp.settings', [
             'status' => $status,
@@ -39,6 +41,7 @@ class WhatsAppController extends Controller
             'ownerPhone' => config('whatsapp.owner_phone'),
             'baileysUrl' => config('whatsapp.baileys.base_url'),
             'notificationSettings' => $notificationSettings,
+            'recipients' => $recipients,
         ]);
     }
 
@@ -180,5 +183,58 @@ class WhatsAppController extends Controller
             'daily_report' => "📊 *LAPORAN HARIAN*\n📅 {date}\n\n💰 Total Penjualan: *Rp {total_sales}*\n🧾 Jumlah Transaksi: *{transaction_count}*\n💵 Total Tunai: Rp {cash_total}\n💳 Total Transfer: Rp {transfer_total}\n📉 Total Pengeluaran: Rp {expense_total}\n💎 Laba Bersih: *Rp {net_profit}*\n🏆 Produk Terlaris: {top_product}",
             'login_alert' => "🔐 *LOGIN ALERT*\n\nUser *{user_name}* ({role}) telah login pada:\n⏰ {datetime}\n🌐 IP: {ip_address}\n💻 Browser: {browser}",
         ];
+    }
+
+
+    /**
+     * Store new recipient
+     */
+    public function storeRecipient(Request $request)
+    {
+        $request->validate([
+            'recipient_name' => 'required|string|max:255',
+            'recipient_phone' => 'required|string|max:20',
+            'permissions' => 'nullable|array',
+        ]);
+
+        NotificationRecipient::create([
+            'recipient_name' => $request->recipient_name,
+            'recipient_phone' => $request->recipient_phone,
+            'permissions' => $request->permissions ?? [],
+            'is_active' => true,
+        ]);
+
+        return redirect()->back()->with('success', 'Penerima notifikasi berhasil ditambahkan');
+    }
+
+    /**
+     * Update recipient
+     */
+    public function updateRecipient(Request $request, NotificationRecipient $recipient)
+    {
+        $request->validate([
+            'recipient_name' => 'required|string|max:255',
+            'recipient_phone' => 'required|string|max:20',
+            'permissions' => 'nullable|array',
+            'is_active' => 'boolean',
+        ]);
+
+        $recipient->update([
+            'recipient_name' => $request->recipient_name,
+            'recipient_phone' => $request->recipient_phone,
+            'permissions' => $request->permissions ?? [],
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->back()->with('success', 'Data penerima berhasil diperbarui');
+    }
+
+    /**
+     * Delete recipient
+     */
+    public function deleteRecipient(NotificationRecipient $recipient)
+    {
+        $recipient->delete();
+        return redirect()->back()->with('success', 'Penerima berhasil dihapus');
     }
 }
