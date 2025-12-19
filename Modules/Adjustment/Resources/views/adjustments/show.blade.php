@@ -20,8 +20,8 @@
                     <i class="bi bi-file-earmark-text text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-zinc-900 leading-tight">Detail Penyesuaian: <span class="font-mono text-blue-600">{{ $adjustment->reference }}</span></h1>
-                    <p class="text-zinc-500 text-sm mt-1">Informasi lengkap penyesuaian stok dan riwayat approval.</p>
+                    <h1 class="text-xl font-bold text-black leading-tight">Detail Penyesuaian: <span class="font-mono text-blue-600">{{ $adjustment->reference }}</span></h1>
+                    <p class="text-zinc-900 text-sm mt-1">Informasi lengkap penyesuaian stok dan riwayat approval.</p>
                 </div>
             </div>
             
@@ -57,7 +57,7 @@
                 {{-- Products List --}}
                 <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50 flex justify-between items-center">
-                        <h6 class="font-bold text-zinc-800 flex items-center gap-2">
+                        <h6 class="font-bold text-black flex items-center gap-2">
                             <i class="bi bi-box-seam text-blue-600"></i>
                             Daftar Produk
                         </h6>
@@ -66,8 +66,8 @@
                         </span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-zinc-500">
-                            <thead class="text-xs text-zinc-700 uppercase bg-zinc-50 border-b border-zinc-200">
+                        <table class="w-full text-sm text-left text-black">
+                            <thead class="text-xs text-black uppercase bg-zinc-50 border-b border-zinc-200">
                                 <tr>
                                     <th class="px-6 py-3">Produk</th>
                                     <th class="px-6 py-3 text-center">Tipe</th>
@@ -78,7 +78,7 @@
                             <tbody class="divide-y divide-zinc-100">
                                 @forelse($adjustment->adjustedProducts as $item)
                                     <tr class="bg-white hover:bg-zinc-50 transition-colors">
-                                        <td class="px-6 py-4 font-medium text-zinc-900">
+                                        <td class="px-6 py-4 font-medium text-black">
                                             <div class="flex flex-col">
                                                 <span>{{ $item->product->product_name ?? '-' }}</span>
                                                 <small class="text-zinc-500 font-mono">{{ $item->product->product_code ?? 'N/A' }}</small>
@@ -95,7 +95,7 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        <td class="px-6 py-4 text-center font-bold text-zinc-700">
+                                        <td class="px-6 py-4 text-center font-bold text-black">
                                             {{ $item->quantity }}
                                         </td>
                                         <td class="px-6 py-4 text-right">
@@ -121,7 +121,7 @@
                 @if ($adjustment->adjustmentFiles->count() > 0)
                     <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
-                            <h6 class="font-bold text-zinc-800 flex items-center gap-2">
+                            <h6 class="font-bold text-black flex items-center gap-2">
                                 <i class="bi bi-image text-blue-600"></i>
                                 Foto Bukti
                             </h6>
@@ -149,7 +149,7 @@
                 {{-- Notes & Description --}}
                 <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
                      <div class="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
-                        <h6 class="font-bold text-zinc-800 flex items-center gap-2">
+                        <h6 class="font-bold text-black flex items-center gap-2">
                             <i class="bi bi-card-text text-blue-600"></i>
                             Keterangan
                         </h6>
@@ -157,8 +157,8 @@
                     <div class="p-6 space-y-4">
                         @if ($adjustment->description)
                             <div>
-                                <h4 class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Deskripsi</h4>
-                                <div class="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-sm text-zinc-700">
+                                <h4 class="text-xs font-bold text-black uppercase tracking-wider mb-2">Deskripsi</h4>
+                                <div class="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-sm text-black">
                                     {{ $adjustment->description }}
                                 </div>
                             </div>
@@ -166,7 +166,7 @@
                         
                         @if ($adjustment->note)
                              <div>
-                                <h4 class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Catatan Tambahan</h4>
+                                <h4 class="text-xs font-bold text-black uppercase tracking-wider mb-2">Catatan Tambahan</h4>
                                 <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
                                     {{ $adjustment->note }}
                                 </div>
@@ -195,17 +195,17 @@
                             <i class="bi {{ $curr['icon'] }} text-3xl"></i>
                         </div>
                         <h3 class="text-2xl font-bold {{ $curr['color'] }}">{{ $curr['label'] }}</h3>
-                        <p class="text-zinc-500 text-sm mt-1">Status Pengajuan Saat Ini</p>
+                        <p class="text-black text-sm mt-1">Status Pengajuan Saat Ini</p>
                     </div>
                     <div class="p-4 bg-zinc-50/50">
                         <div class="grid grid-cols-2 gap-4 text-center">
                             <div>
-                                <div class="text-xs text-zinc-500 uppercase font-bold">Tanggal</div>
-                                <div class="font-bold text-zinc-800">{{ $adjustment->date->format('d M Y') }}</div>
+                                <div class="text-xs text-black uppercase font-bold">Tanggal</div>
+                                <div class="font-bold text-black">{{ $adjustment->date->format('d M Y') }}</div>
                             </div>
                             <div>
-                                <div class="text-xs text-zinc-500 uppercase font-bold">Total Item</div>
-                                <div class="font-bold text-zinc-800">{{ $adjustment->adjustedProducts->count() }}</div>
+                                <div class="text-xs text-black uppercase font-bold">Total Item</div>
+                                <div class="font-bold text-black">{{ $adjustment->adjustedProducts->count() }}</div>
                             </div>
                         </div>
                     </div>
@@ -248,17 +248,17 @@
                  {{-- Approval Info (If not pending) --}}
                  @if ($adjustment->status !== 'pending')
                     <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden p-6">
-                        <h6 class="font-bold text-zinc-800 mb-4 flex items-center gap-2">
+                        <h6 class="font-bold text-black mb-4 flex items-center gap-2">
                             <i class="bi bi-check-all text-blue-600"></i> Informasi Approval
                         </h6>
                         <dl class="space-y-3 text-sm">
                             <div class="flex justify-between">
-                                <dt class="text-zinc-500">Oleh:</dt>
-                                <dd class="font-bold text-zinc-800">{{ $adjustment->approver->name ?? '-' }}</dd>
+                                <dt class="text-black">Oleh:</dt>
+                                <dd class="font-bold text-black">{{ $adjustment->approver->name ?? '-' }}</dd>
                             </div>
                             <div class="flex justify-between">
-                                <dt class="text-zinc-500">Tanggal:</dt>
-                                <dd class="font-bold text-zinc-800">{{ $adjustment->approval_date ? $adjustment->approval_date->format('d M Y H:i') : '-' }}</dd>
+                                <dt class="text-black">Tanggal:</dt>
+                                <dd class="font-bold text-black">{{ $adjustment->approval_date ? $adjustment->approval_date->format('d M Y H:i') : '-' }}</dd>
                             </div>
                             @if($adjustment->approval_notes)
                             <div class="pt-3 border-t border-zinc-100">

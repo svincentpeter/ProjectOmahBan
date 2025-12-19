@@ -22,7 +22,7 @@
     <li aria-current="page">
         <div class="flex items-center">
             <i class="bi bi-chevron-right text-zinc-400 mx-2 text-xs"></i>
-            <span class="text-sm font-bold text-zinc-900">Counting</span>
+            <span class="text-sm font-bold text-black">Counting</span>
         </div>
     </li>
 @endsection
@@ -64,19 +64,19 @@
         <div class="p-6 bg-gradient-to-b from-slate-50 to-white">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white border-l-4 border-blue-500 rounded-xl p-4 shadow-sm">
-                    <p class="text-xs uppercase text-zinc-500 font-semibold">Total Item</p>
+                    <p class="text-xs uppercase text-zinc-900 font-semibold">Total Item</p>
                     <p class="text-2xl font-bold text-black">{{ $stockOpname->items->count() }}</p>
                 </div>
                 <div class="bg-white border-l-4 border-emerald-500 rounded-xl p-4 shadow-sm">
-                    <p class="text-xs uppercase text-zinc-500 font-semibold">Sudah Dihitung</p>
+                    <p class="text-xs uppercase text-zinc-900 font-semibold">Sudah Dihitung</p>
                     <p class="text-2xl font-bold text-emerald-600" id="stat-counted">{{ $stockOpname->items->whereNotNull('actual_qty')->count() }}</p>
                 </div>
                 <div class="bg-white border-l-4 border-amber-500 rounded-xl p-4 shadow-sm">
-                    <p class="text-xs uppercase text-zinc-500 font-semibold">Belum Dihitung</p>
+                    <p class="text-xs uppercase text-zinc-900 font-semibold">Belum Dihitung</p>
                     <p class="text-2xl font-bold text-amber-600" id="stat-pending">{{ $stockOpname->items->whereNull('actual_qty')->count() }}</p>
                 </div>
                 <div class="bg-white border-l-4 border-red-500 rounded-xl p-4 shadow-sm">
-                    <p class="text-xs uppercase text-zinc-500 font-semibold">Ada Selisih</p>
+                    <p class="text-xs uppercase text-zinc-900 font-semibold">Ada Selisih</p>
                     <p class="text-2xl font-bold text-red-600" id="stat-variance">{{ $stockOpname->items->whereNotNull('actual_qty')->filter(fn($i) => $i->variance_qty != 0)->count() }}</p>
                 </div>
             </div>
@@ -87,17 +87,17 @@
     <div class="bg-white border border-slate-100 rounded-2xl shadow-md mb-6 p-5">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
             <div class="md:col-span-4">
-                <label class="block mb-1.5 text-xs font-bold text-zinc-600">
+                <label class="block mb-1.5 text-xs font-bold text-black">
                     <i class="bi bi-search me-1"></i> Cari Produk
                 </label>
                 <input type="text" 
                        id="search-product" 
                        placeholder="Cari kode/nama produk..."
-                       class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm font-medium">
+                       class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm font-medium placeholder-gray-400">
             </div>
 
             <div class="md:col-span-3">
-                <label class="block mb-1.5 text-xs font-bold text-zinc-600">
+                <label class="block mb-1.5 text-xs font-bold text-black">
                     <i class="bi bi-funnel me-1"></i> Filter Status
                 </label>
                 <select id="filter-variance" class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm font-medium">
@@ -111,7 +111,7 @@
             </div>
 
             <div class="md:col-span-3">
-                <label class="block mb-1.5 text-xs font-bold text-zinc-600">
+                <label class="block mb-1.5 text-xs font-bold text-black">
                     <i class="bi bi-collection me-1"></i> Kategori
                 </label>
                 <select id="filter-category" class="bg-white border border-zinc-300 text-black text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm font-medium">
@@ -189,7 +189,7 @@
                 <input type="hidden" id="item-id" name="item_id">
 
                 <div class="mb-4">
-                    <label for="actual_qty" class="block mb-2 text-sm font-bold text-zinc-700">
+                    <label for="actual_qty" class="block mb-2 text-sm font-bold text-black">
                         Hasil Hitungan Fisik <span class="text-red-500">*</span>
                     </label>
                     <input type="number" 
@@ -198,21 +198,21 @@
                            min="0" 
                            step="1" 
                            required 
-                           class="w-full text-center text-3xl font-bold border-2 border-zinc-200 rounded-xl p-4 focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full text-center text-3xl font-bold border-2 border-zinc-200 rounded-xl p-4 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400">
                     <p class="text-xs text-zinc-500 mt-1">
                         <i class="bi bi-info-circle me-1"></i> Masukkan jumlah produk yang Anda hitung secara fisik
                     </p>
                 </div>
 
                 <div class="mb-4">
-                    <label for="variance_reason" class="block mb-2 text-sm font-bold text-zinc-700">
+                    <label for="variance_reason" class="block mb-2 text-sm font-bold text-black">
                         Alasan Selisih (Jika Ada)
                     </label>
                     <textarea id="variance_reason" 
                               name="variance_reason" 
                               rows="2" 
                               placeholder="Contoh: Produk rusak 2 unit, hilang 1 unit"
-                              class="w-full border border-zinc-300 rounded-xl p-3 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                              class="w-full border border-zinc-300 rounded-xl p-3 text-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"></textarea>
                 </div>
 
                 {{-- VARIANCE PREVIEW --}}

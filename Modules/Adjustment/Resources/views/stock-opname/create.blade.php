@@ -68,7 +68,7 @@
             <h6 class="font-bold text-emerald-700 mb-3 flex items-center gap-2">
                 <i class="bi bi-lightbulb-fill"></i> Tips Stock Opname
             </h6>
-            <ul class="space-y-2 text-sm text-zinc-700">
+            <ul class="space-y-2 text-sm text-black">
                 <li class="flex items-start gap-2">
                     <i class="bi bi-check-circle-fill text-emerald-500 mt-0.5"></i>
                     <span><strong>Pilih waktu yang tepat:</strong> Lakukan saat toko tutup atau stok tidak banyak bergerak</span>

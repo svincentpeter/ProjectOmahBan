@@ -62,7 +62,53 @@ class StockOpnameController extends Controller
                 return $so->status_badge; // Dari accessor di model (raw HTML)
             })
             ->addColumn('actions', function ($so) {
-                return view('adjustment::stock-opname.partials.actions', compact('so'))->render();
+                // Construct Custom Actions
+                $customActions = '';
+
+                // 1. Lanjutkan Hitung (Draft/In Progress)
+                if (auth()->user()->can('edit_stock_opname') && in_array($so->status, ['draft', 'in_progress'])) {
+                    $customActions .= '
+                        <li>
+                            <a href="'.route('stock-opnames.counting', $so->id).'" 
+                               class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors">
+                                <i class="bi bi-calculator text-amber-600 dark:text-amber-400"></i>
+                                <span>Lanjutkan Hitung</span>
+                            </a>
+                        </li>';
+                }
+
+                // 2. Selesaikan Opname (In Progress & 100%)
+                if (auth()->user()->can('edit_stock_opname') && $so->status === 'in_progress' && $so->completion_percentage >= 100) {
+                    // Note: We need a form for this. standard actions partial doesn't support random forms easily inside the dropdown 
+                    // unless we use a link that triggers a form submission via JS. 
+                    // Let's use a class trigger 'btn-complete-opname' similar to delete.
+                    // We'll put the form in the 'customActions' hidden or just use JS to create form dynamically.
+                    // Better: Use a simple link with class and data attribute.
+                    $customActions .= '
+                        <li>
+                            <a href="javascript:void(0)" 
+                               class="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 dark:hover:text-white transition-colors btn-complete-opname"
+                               data-id="'.$so->id.'"
+                               data-url="'.route('stock-opnames.complete', $so->id).'">
+                                <i class="bi bi-check-circle text-emerald-600 dark:text-emerald-400"></i>
+                                <span>Selesaikan</span>
+                            </a>
+                        </li>';
+                }
+                
+                // 3. Delete Action (Draft Only)
+                // We can use the standard 'deleteRoute' param of the partial, but we need to check condition ($so->status === 'draft')
+                $deleteRoute = ($so->status === 'draft') ? route('stock-opnames.destroy', $so->id) : null;
+
+                return view('partials.datatable-actions', [
+                    'id' => $so->id,
+                    'itemName' => $so->reference,
+                    'showRoute' => route('stock-opnames.show', $so->id),
+                    'showPermission' => 'show_stock_opname',
+                    'deleteRoute' => $deleteRoute,
+                    'deletePermission' => 'delete_stock_opname',
+                    'customActions' => $customActions
+                ])->render();
             })
             ->rawColumns(['status_badge', 'actions']) // Allow HTML
             ->make(true);

@@ -38,9 +38,9 @@
                 <i class="bi bi-clipboard-data text-xl"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-slate-600">Total</p>
-                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $total }}</p>
-                <p class="text-xs text-slate-500 mt-1">Semua stok opname</p>
+                <p class="text-sm font-semibold text-black">Total</p>
+                <p class="text-3xl font-extrabold text-black leading-tight">{{ $total }}</p>
+                <p class="text-xs text-zinc-500 mt-1">Semua stok opname</p>
             </div>
         </div>
     </div>
@@ -56,9 +56,9 @@
                 <i class="bi bi-file-earmark-text text-xl"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-slate-600">Draft</p>
-                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $draft }}</p>
-                <p class="text-xs text-slate-500 mt-1">Belum dimulai</p>
+                <p class="text-sm font-semibold text-black">Draft</p>
+                <p class="text-3xl font-extrabold text-black leading-tight">{{ $draft }}</p>
+                <p class="text-xs text-zinc-500 mt-1">Belum dimulai</p>
             </div>
         </div>
     </button>
@@ -74,9 +74,9 @@
                 <i class="bi bi-arrow-repeat text-xl"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-slate-600">Berjalan</p>
-                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $progress }}</p>
-                <p class="text-xs text-slate-500 mt-1">Sedang diproses</p>
+                <p class="text-sm font-semibold text-black">Berjalan</p>
+                <p class="text-3xl font-extrabold text-black leading-tight">{{ $progress }}</p>
+                <p class="text-xs text-zinc-500 mt-1">Sedang diproses</p>
             </div>
         </div>
     </button>
@@ -92,9 +92,9 @@
                 <i class="bi bi-check-circle text-xl"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-slate-600">Selesai</p>
-                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $completed }}</p>
-                <p class="text-xs text-slate-500 mt-1">Opname selesai</p>
+                <p class="text-sm font-semibold text-black">Selesai</p>
+                <p class="text-3xl font-extrabold text-black leading-tight">{{ $completed }}</p>
+                <p class="text-xs text-zinc-500 mt-1">Opname selesai</p>
             </div>
         </div>
     </button>
@@ -113,7 +113,7 @@
                         <i class="bi bi-clipboard-check text-blue-600"></i>
                         Daftar Stok Opname
                     </h5>
-                    <p class="text-sm text-zinc-600 mt-1">Kelola dan pantau proses stok opname</p>
+                    <p class="text-sm text-zinc-900 mt-1">Kelola dan pantau proses stok opname</p>
                 </div>
                 
                 @can('create_stock_opname')
@@ -283,7 +283,14 @@ $(document).ready(function() {
                 className: 'text-center'
             }
         ],
-        order: [[2, 'desc']]
+
+        order: [[2, 'desc']],
+        drawCallback: function() {
+            // Re-init Flowbite dropdowns
+            if (typeof initFlowbite === 'function') {
+                initFlowbite();
+            }
+        }
     });
 
     // Event listener untuk filter (Bind to new IDs from filter-card)
@@ -307,6 +314,63 @@ $(document).ready(function() {
     setInterval(function() {
         table.ajax.reload(null, false);
     }, 30000);
+});
+</script>
+<script>
+$(document).ready(function() {
+    // Listener untuk Selesaikan Opname
+    $(document).on('click', '.btn-complete-opname', function() {
+        const url = $(this).data('url');
+        const id = $(this).data('id');
+
+        Swal.fire({
+            title: 'Selesaikan Stock Opname?',
+            text: "Pastikan semua penghitungan telah selesai. Sistem akan otomatis membuat Adjustment untuk selisih stok.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Selesaikan!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Tampilkan loading
+                Swal.fire({
+                    title: 'Memproses...',
+                    text: 'Mohon tunggu sebentar',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Kirim request
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire(
+                            'Berhasil!',
+                            'Stock Opname telah diselesaikan.',
+                            'success'
+                        ).then(() => {
+                            $('#stock-opname-table').DataTable().ajax.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        Swal.fire(
+                            'Gagal!',
+                            xhr.responseJSON?.message || 'Terjadi kesalahan saat memproses data.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
 });
 </script>
 @endpush

@@ -29,7 +29,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <label for="opname_date" class="block mb-1.5 text-sm font-bold text-zinc-700">
+                <label for="opname_date" class="block mb-1.5 text-sm font-bold text-black">
                     Tanggal Opname <span class="text-red-500">*</span>
                 </label>
                 <input type="date" 
@@ -47,9 +47,9 @@
             </div>
 
             <div>
-                <label class="block mb-1.5 text-sm font-bold text-zinc-700">Reference</label>
+                <label class="block mb-1.5 text-sm font-bold text-black">Reference</label>
                 <input type="text" 
-                       class="bg-zinc-100 border border-zinc-300 text-zinc-600 text-sm rounded-xl block w-full p-2.5 font-medium cursor-not-allowed" 
+                       class="bg-zinc-100 border border-zinc-300 text-black text-sm rounded-xl block w-full p-2.5 font-medium cursor-not-allowed" 
                        value="{{ $isEdit ? $stockOpname->reference : 'SO-' . now()->format('Ymd') . '-#####' }}" 
                        readonly>
                 <p class="text-xs text-zinc-500 mt-1">
@@ -76,7 +76,7 @@
 
         {{-- SCOPE TYPE SELECTOR --}}
         <div class="mb-4">
-            <label class="block mb-2 text-sm font-bold text-zinc-700">
+            <label class="block mb-2 text-sm font-bold text-black">
                 Jenis Opname <span class="text-red-500">*</span>
             </label>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -136,7 +136,7 @@
         {{-- SCOPE DETAIL: CATEGORY SELECTOR --}}
         <div id="category-selector" class="scope-detail {{ old('scope_type', $isEdit ? $stockOpname->scope_type : '') == 'category' ? '' : 'hidden' }}">
             <div class="bg-zinc-50 rounded-xl p-4 border border-zinc-200">
-                <label class="block mb-2 text-sm font-bold text-zinc-700">
+                <label class="block mb-2 text-sm font-bold text-black">
                     <i class="bi bi-funnel me-1"></i> Pilih Kategori <span class="text-red-500">*</span>
                 </label>
                 <select name="category_ids[]" 
@@ -162,7 +162,7 @@
         {{-- SCOPE DETAIL: CUSTOM PRODUCT SELECTOR --}}
         <div id="product-selector" class="scope-detail {{ old('scope_type', $isEdit ? $stockOpname->scope_type : '') == 'custom' ? '' : 'hidden' }}">
             <div class="bg-zinc-50 rounded-xl p-4 border border-zinc-200">
-                <label class="block mb-2 text-sm font-bold text-zinc-700">
+                <label class="block mb-2 text-sm font-bold text-black">
                     <i class="bi bi-search me-1"></i> Pilih Produk <span class="text-red-500">*</span>
                 </label>
                 <select name="product_ids[]" 
@@ -195,7 +195,7 @@
         </h5>
 
         <div>
-            <label for="notes" class="block mb-1.5 text-sm font-bold text-zinc-700">
+            <label for="notes" class="block mb-1.5 text-sm font-bold text-black">
                 <i class="bi bi-chat-left-text me-1"></i> Catatan Tambahan
             </label>
             <textarea name="notes" 
@@ -231,7 +231,7 @@
 
     {{-- ACTION BUTTONS --}}
     <div class="flex flex-col md:flex-row justify-between items-center gap-4 pt-4 border-t border-zinc-200">
-        <a href="{{ route('stock-opnames.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-zinc-300 text-zinc-700 font-medium rounded-xl hover:bg-zinc-50 transition-all">
+        <a href="{{ route('stock-opnames.index') }}" class="inline-flex items-center px-4 py-2 bg-white border border-zinc-300 text-black font-medium rounded-xl hover:bg-zinc-50 transition-all">
             <i class="bi bi-arrow-left me-2"></i> Kembali
         </a>
 

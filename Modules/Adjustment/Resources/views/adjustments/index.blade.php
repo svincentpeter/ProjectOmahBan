@@ -35,9 +35,9 @@
                 <i class="bi bi-layers text-xl"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-slate-600">Total</p>
-                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $total }}</p>
-                <p class="text-xs text-slate-500 mt-1">Semua penyesuaian</p>
+                <p class="text-sm font-semibold text-black">Total</p>
+                <p class="text-3xl font-extrabold text-black leading-tight">{{ $total }}</p>
+                <p class="text-xs text-zinc-500 mt-1">Semua penyesuaian</p>
             </div>
         </div>
     </div>
@@ -53,9 +53,9 @@
                 <i class="bi bi-hourglass-split text-xl"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-slate-600">Pending</p>
-                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $pending }}</p>
-                <p class="text-xs text-slate-500 mt-1">Menunggu approval</p>
+                <p class="text-sm font-semibold text-black">Pending</p>
+                <p class="text-3xl font-extrabold text-black leading-tight">{{ $pending }}</p>
+                <p class="text-xs text-zinc-500 mt-1">Menunggu approval</p>
             </div>
         </div>
     </button>
@@ -71,9 +71,9 @@
                 <i class="bi bi-check-circle text-xl"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-slate-600">Approved</p>
-                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $approved }}</p>
-                <p class="text-xs text-slate-500 mt-1">Sudah diproses</p>
+                <p class="text-sm font-semibold text-black">Approved</p>
+                <p class="text-3xl font-extrabold text-black leading-tight">{{ $approved }}</p>
+                <p class="text-xs text-zinc-500 mt-1">Sudah diproses</p>
             </div>
         </div>
     </button>
@@ -89,9 +89,9 @@
                 <i class="bi bi-x-circle text-xl"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-slate-600">Rejected</p>
-                <p class="text-3xl font-extrabold text-slate-900 leading-tight">{{ $rejected }}</p>
-                <p class="text-xs text-slate-500 mt-1">Ditolak</p>
+                <p class="text-sm font-semibold text-black">Rejected</p>
+                <p class="text-3xl font-extrabold text-black leading-tight">{{ $rejected }}</p>
+                <p class="text-xs text-zinc-500 mt-1">Ditolak</p>
             </div>
         </div>
     </button>
@@ -110,7 +110,7 @@
                         <i class="bi bi-arrow-repeat text-blue-600"></i>
                         Daftar Penyesuaian Stok
                     </h5>
-                    <p class="text-sm text-zinc-600 mt-1">Kelola penyesuaian stok untuk koreksi inventory</p>
+                    <p class="text-sm text-zinc-900 mt-1">Kelola penyesuaian stok untuk koreksi inventory</p>
                 </div>
                 
                 <a href="{{ route('adjustments.create') }}"
@@ -168,7 +168,7 @@
         {{-- DataTable --}}
         <div class="p-0">
             <div class="overflow-x-auto">
-                {!! $dataTable->table(['class' => 'w-full text-sm text-left text-zinc-500 dark:text-zinc-400', 'id' => 'adjustments-table'], true) !!}
+                {!! $dataTable->table(['class' => 'w-full text-sm text-left text-black dark:text-zinc-400', 'id' => 'adjustments-table'], true) !!}
             </div>
         </div>
     </div>
