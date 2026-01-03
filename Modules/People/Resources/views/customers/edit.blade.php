@@ -43,7 +43,7 @@
                                         Nama Customer <span class="text-red-500">*</span>
                                     </label>
                                     <input type="text" 
-                                           class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm @error('customer_name') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
+                                           class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm placeholder-zinc-400 @error('customer_name') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
                                            name="customer_name" 
                                            id="customer_name" 
                                            value="{{ old('customer_name', $customer->customer_name) }}"
@@ -62,7 +62,7 @@
                                         Email <span class="text-red-500">*</span>
                                     </label>
                                     <input type="email" 
-                                           class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm @error('customer_email') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
+                                           class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm placeholder-zinc-400 @error('customer_email') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
                                            name="customer_email" 
                                            id="customer_email" 
                                            value="{{ old('customer_email', $customer->customer_email) }}" 
@@ -81,7 +81,7 @@
                                         No. Telepon <span class="text-red-500">*</span>
                                     </label>
                                     <input type="text" 
-                                           class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm @error('customer_phone') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
+                                           class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm placeholder-zinc-400 @error('customer_phone') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
                                            name="customer_phone" 
                                            id="customer_phone" 
                                            value="{{ old('customer_phone', $customer->customer_phone) }}"
@@ -101,7 +101,7 @@
                                         Kota <span class="text-red-500">*</span>
                                     </label>
                                     <input type="text" 
-                                           class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm @error('city') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
+                                           class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm placeholder-zinc-400 @error('city') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
                                            name="city" 
                                            id="city" 
                                            value="{{ old('city', $customer->city) }}"
@@ -140,7 +140,7 @@
                                     <label for="address" class="block text-sm font-medium text-zinc-700 mb-1">
                                         Alamat Lengkap <span class="text-red-500">*</span>
                                     </label>
-                                    <textarea class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm @error('address') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
+                                    <textarea class="w-full rounded-xl border-zinc-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm placeholder-zinc-400 @error('address') border-red-500 focus:border-red-500 focus:ring-red-500 @enderror"
                                               name="address" 
                                               id="address" 
                                               rows="3"

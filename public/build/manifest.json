@@ -1,11 +1,16 @@
 {
   "resources/css/flowbite.css": {
-    "file": "assets/flowbite-5c836d98.css",
+    "file": "assets/flowbite-b0925b51.css",
     "isEntry": true,
     "src": "resources/css/flowbite.css"
   },
+  "resources/css/login.css": {
+    "file": "assets/login-f97910a7.css",
+    "isEntry": true,
+    "src": "resources/css/login.css"
+  },
   "resources/css/pos.css": {
-    "file": "assets/pos-9afb9dc3.css",
+    "file": "assets/pos-b2756ff0.css",
     "isEntry": true,
     "src": "resources/css/pos.css"
   },

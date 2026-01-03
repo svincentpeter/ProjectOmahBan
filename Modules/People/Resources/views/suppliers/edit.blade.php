@@ -3,33 +3,15 @@
 @section('title', 'Edit Supplier')
 
 @section('content')
-    <!-- Header -->
-    <div class="mb-6">
-        <nav class="flex mb-4" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-                <li class="inline-flex items-center">
-                    <a href="{{ route('home') }}" class="inline-flex items-center text-sm font-medium text-zinc-700 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-white">
-                        <i class="bi bi-house-door me-2"></i> Home
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        <i class="bi bi-chevron-right text-zinc-400 text-xs mx-1"></i>
-                        <a href="{{ route('suppliers.index') }}" class="ms-1 text-sm font-medium text-zinc-700 hover:text-blue-600 md:ms-2 dark:text-zinc-400 dark:hover:text-white">
-                            Supplier
-                        </a>
-                    </div>
-                </li>
-                <li aria-current="page">
-                    <div class="flex items-center">
-                        <i class="bi bi-chevron-right text-zinc-400 text-xs mx-1"></i>
-                        <span class="ms-1 text-sm font-medium text-zinc-500 md:ms-2 dark:text-zinc-400">Edit</span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        <h1 class="text-2xl font-extrabold text-zinc-900 tracking-tight dark:text-white">Edit Data Supplier</h1>
-    </div>
+    {{-- Breadcrumb --}}
+    @include('layouts.breadcrumb-flowbite', [
+        'title' => 'Edit Supplier',
+        'items' => [
+            ['text' => 'Home', 'url' => route('home')],
+            ['text' => 'Supplier', 'url' => route('suppliers.index')],
+            ['text' => 'Edit', 'url' => '#']
+        ]
+    ])
 
     <form action="{{ route('suppliers.update', $supplier->id) }}" method="POST">
         @csrf
@@ -60,7 +42,7 @@
                                    id="supplier_name" 
                                    name="supplier_name" 
                                    value="{{ old('supplier_name', $supplier->supplier_name) }}"
-                                   class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('supplier_name') border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:ring-red-500 focus:border-red-500 @enderror" 
+                                   class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-zinc-400 @error('supplier_name') border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:ring-red-500 focus:border-red-500 @enderror" 
                                    required>
                             @error('supplier_name')
                                 <p class="mt-2 text-sm text-red-600"><span class="font-medium">Oops!</span> {{ $message }}</p>
@@ -76,7 +58,7 @@
                                    id="supplier_email" 
                                    name="supplier_email" 
                                    value="{{ old('supplier_email', $supplier->supplier_email) }}"
-                                   class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('supplier_email') border-red-500 bg-red-50 text-red-900 @enderror" 
+                                   class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-zinc-400 @error('supplier_email') border-red-500 bg-red-50 text-red-900 @enderror" 
                                    required>
                             @error('supplier_email')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -92,7 +74,7 @@
                                    id="supplier_phone" 
                                    name="supplier_phone" 
                                    value="{{ old('supplier_phone', $supplier->supplier_phone) }}"
-                                   class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('supplier_phone') border-red-500 bg-red-50 text-red-900 @enderror" 
+                                   class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-zinc-400 @error('supplier_phone') border-red-500 bg-red-50 text-red-900 @enderror" 
                                    required>
                             @error('supplier_phone')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -108,7 +90,7 @@
                                    id="city" 
                                    name="city" 
                                    value="{{ old('city', $supplier->city) }}"
-                                   class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('city') border-red-500 bg-red-50 text-red-900 @enderror" 
+                                   class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-zinc-400 @error('city') border-red-500 bg-red-50 text-red-900 @enderror" 
                                    required>
                             @error('city')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -134,7 +116,7 @@
                             <textarea id="address" 
                                       name="address" 
                                       rows="4" 
-                                      class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 @error('address') border-red-500 bg-red-50 text-red-900 @enderror" 
+                                      class="bg-zinc-50 border border-zinc-300 text-zinc-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-zinc-400 @error('address') border-red-500 bg-red-50 text-red-900 @enderror" 
                                       required>{{ old('address', $supplier->address) }}</textarea>
                             @error('address')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>

@@ -12,7 +12,7 @@
                 <span class="text-blue-600 font-bold text-lg">Rp</span>
             </div>
             <input type="text" id="amount" name="amount"
-                class="bg-white border border-blue-200 text-blue-800 text-2xl font-bold rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full ps-12 p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:placeholder-gray-400 dark:text-white js-money transition-all"
+                class="bg-white border border-blue-200 text-blue-800 text-2xl font-bold rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full ps-12 p-4 shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:placeholder-zinc-400 placeholder-zinc-400 dark:text-white js-money transition-all"
                 value="{{ number_format((int) old('amount', $expense->amount ?? 0), 0, ',', '.') }}"
                 placeholder="0" required autofocus>
         </div>
@@ -84,7 +84,7 @@
                         <i class="bi bi-fonts text-gray-400"></i>
                     </div>
                     <input type="text" name="details" id="details" 
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-zinc-400 placeholder-zinc-400 transition-colors"
                         placeholder="Contoh: Pembelian Alat Tulis Kantor"
                         value="{{ old('details', $expense->details ?? null) }}" required>
                 </div>
@@ -149,7 +149,7 @@
                         <i class="bi bi-credit-card-2-front text-gray-400"></i>
                     </div>
                     <input type="text" name="bank_name" id="bank_name"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:text-gray-400 transition-colors"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-zinc-400 placeholder-zinc-400 disabled:bg-gray-100 disabled:text-gray-400 transition-colors"
                         placeholder="Nama Bank / E-Wallet"
                         value="{{ old('bank_name', $expense->bank_name ?? null) }}">
                 </div>
@@ -173,7 +173,13 @@
                 Upload Nota / Bukti Valid <span class="text-xs font-normal text-gray-500">(Opsional)</span>
             </label>
             
-            <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" 
+            <input class="block w-full text-sm text-slate-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100
+                border border-slate-200 rounded-xl cursor-pointer bg-white focus:outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400" 
                 id="attachment" name="attachment" type="file" accept="image/*,application/pdf">
             <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                 <i class="bi bi-info-circle"></i> Format yang didukung: JPG, PNG, PDF (Maks. 2MB)

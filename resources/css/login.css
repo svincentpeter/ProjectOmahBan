@@ -1,0 +1,9 @@
+/* File: resources/css/login.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tambahkan custom CSS Anda di bawah ini jika ada */
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}

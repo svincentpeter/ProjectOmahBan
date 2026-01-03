@@ -29,18 +29,18 @@
                 <div class="flex items-center gap-3 mb-3">
                     <span class="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold border border-white/30 shadow-lg flex items-center gap-2">
                         <i class="bi bi-stars text-yellow-300"></i>
-                        <span>Owner Dashboard</span>
+                        <span>Dashboard Pemilik</span>
                     </span>
                     <span class="px-3 py-1 bg-emerald-500/80 backdrop-blur-md rounded-full text-xs font-bold flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                        Live Data
+                        Data Langsung
                     </span>
                 </div>
-                <h1 class="text-3xl md:text-4xl font-black mb-2 tracking-tight drop-shadow-lg">
+                <h1 class="text-3xl md:text-4xl font-black mb-2 tracking-tight drop-shadow-lg leading-tight">
                     Selamat Datang, {{ Auth::user()->name }}! 👋
                 </h1>
-                <p class="text-blue-100 text-lg font-medium max-w-xl">
-                    Mari kita pantau performa bisnis hari ini dan lihat perkembangan terbaru.
+                <p class="text-blue-100 text-lg font-medium max-w-xl opacity-90">
+                    Mari pantau performa bisnis hari ini dan lihat perkembangan terbaru Omah Ban.
                 </p>
             </div>
             
@@ -117,7 +117,7 @@
                          <span class="inline-flex items-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
                              <i class="bi bi-arrow-up text-sm me-1"></i> +8.2%
                          </span>
-                         <span class="text-xs text-zinc-400 font-medium">profit margin</span>
+                         <span class="text-xs text-zinc-400 font-medium">margin keuntungan</span>
                      </div>
                  </div>
                  <div class="space-y-1">
@@ -166,7 +166,7 @@
                      </div>
                      <div class="flex flex-col items-end gap-1">
                          <span class="inline-flex items-center bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 text-xs font-bold px-2.5 py-1 rounded-lg border border-purple-200 dark:border-purple-800">
-                             <i class="bi bi-tags text-sm me-1"></i> Types
+                             <i class="bi bi-tags text-sm me-1"></i> Tipe
                          </span>
                          <span class="text-xs text-zinc-400 font-medium">kategori</span>
                      </div>
@@ -183,6 +183,63 @@
 
         </div>
     @endcan
+
+    {{-- QUICK ACTIONS (Aksi Cepat) --}}
+    <div class="mb-8">
+        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg border-l-4 border-indigo-500 p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <i class="bi bi-lightning-charge-fill text-xl"></i>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">Aksi Cepat</h4>
+                    <p class="text-xs text-zinc-500 font-medium">Jalan pintas untuk tugas yang sering dilakukan</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{{ route('products.create') }}" class="group flex items-center p-3 bg-zinc-50 dark:bg-zinc-700/50 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-blue-50 hover:border-blue-200 hover:shadow-sm transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-white text-blue-600 shadow-sm flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                        <i class="bi bi-plus-lg text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-blue-700">Produk</span>
+                        <span class="block text-[10px] text-zinc-400 group-hover:text-blue-500">Tambah Baru</span>
+                    </div>
+                </a>
+                
+                <a href="{{ route('stock-opnames.create') }}" class="group flex items-center p-3 bg-zinc-50 dark:bg-zinc-700/50 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-sm transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-white text-emerald-600 shadow-sm flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                        <i class="bi bi-clipboard-check text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-emerald-700">Stok Opname</span>
+                        <span class="block text-[10px] text-zinc-400 group-hover:text-emerald-500">Cek Stok</span>
+                    </div>
+                </a>
+                
+                <a href="{{ route('expenses.create') }}" class="group flex items-center p-3 bg-zinc-50 dark:bg-zinc-700/50 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-red-50 hover:border-red-200 hover:shadow-sm transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-white text-red-600 shadow-sm flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                        <i class="bi bi-wallet2 text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-red-700">Pengeluaran</span>
+                        <span class="block text-[10px] text-zinc-400 group-hover:text-red-500">Catat Beban</span>
+                    </div>
+                </a>
+                
+                <a href="{{ route('reports.daily.index') }}" class="group flex items-center p-3 bg-zinc-50 dark:bg-zinc-700/50 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-purple-50 hover:border-purple-200 hover:shadow-sm transition-all">
+                    <div class="w-10 h-10 rounded-lg bg-white text-purple-600 shadow-sm flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+                        <i class="bi bi-file-earmark-bar-graph text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-purple-700">Laporan</span>
+                        <span class="block text-[10px] text-zinc-400 group-hover:text-purple-500">Kas Harian</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
 
     {{-- DASHBOARD WIDGETS ROW --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -214,7 +271,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg">Weekly</span>
+                                <span class="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg">Mingguan</span>
                             </div>
                         </div>
                     </div>

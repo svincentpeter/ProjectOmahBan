@@ -1,21 +1,24 @@
 <div wire:key="pl-root">
-    {{-- Header & Filter Section --}}
-    <div class="mb-6 space-y-4">
-        {{-- Card Header with Icon --}}
-        <div class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
-                    <i class="bi bi-wallet2 text-2xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Laporan Laba Rugi</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Analisa pendapatan, HPP, dan beban operasional perusahaan</p>
-                </div>
+
+
+        {{-- Filter Card --}}
+        <div class="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                    <div class="p-2 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-600/20">
+                        <i class="bi bi-wallet2 text-xl"></i>
+                    </div>
+                    Laporan Laba Rugi
+                </h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 pl-[3.25rem]">
+                    Analisa pendapatan, HPP, dan beban operasional perusahaan.
+                </p>
             </div>
-            
-            {{-- Action Buttons --}}
-            <div class="flex items-center gap-2">
-                <button wire:click="toggleComparison" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl border {{ $showComparison ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700' }} transition-all shadow-sm">
+
+            {{-- Export & Comparison Buttons --}}
+            <div class="flex items-center gap-2 pl-[3.25rem] md:pl-0">
+                <button wire:click="toggleComparison" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl border {{ $showComparison ? 'bg-purple-50 text-purple-700 border-purple-200 ring-1 ring-purple-500/20 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700' }} transition-all shadow-sm">
                     <i class="bi bi-arrow-left-right mr-2"></i> Bandingkan
                 </button>
                 <div class="h-8 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden md:block"></div>
@@ -30,8 +33,6 @@
             </div>
         </div>
 
-        {{-- Filter Card --}}
-        <div class="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
             <form wire:submit.prevent="generateReport">
                 <div class="flex flex-col md:flex-row gap-6 items-end">
                     
@@ -81,7 +82,7 @@
                 </div>
             </form>
         </div>
-    </div>
+
 
     {{-- Period Comparison Section --}}
     @if($showComparison)

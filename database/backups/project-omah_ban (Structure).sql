@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 13, 2025 at 06:08 PM
+-- Generation Time: Dec 30, 2025 at 03:00 PM
 -- Server version: 8.0.30
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,27 @@ SET time_zone = "+00:00";
 --
 -- Database: `project-omah_ban`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `activity_log`
+--
+
+CREATE TABLE `activity_log` (
+  `id` bigint UNSIGNED NOT NULL,
+  `log_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `subject_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `event` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `subject_id` bigint UNSIGNED DEFAULT NULL,
+  `causer_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `causer_id` bigint UNSIGNED DEFAULT NULL,
+  `properties` json DEFAULT NULL,
+  `batch_uuid` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -92,12 +113,12 @@ CREATE TABLE `adjustments` (
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `status` enum('pending','approved','rejected') COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
   `requester_id` bigint UNSIGNED DEFAULT NULL,
   `approver_id` bigint UNSIGNED DEFAULT NULL,
-  `reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
-  `approval_notes` text COLLATE utf8mb4_unicode_ci,
+  `reason` enum('Rusak','Hilang','Kadaluarsa','Lainnya') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `approval_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `approval_date` timestamp NULL DEFAULT NULL,
   `total_value` decimal(10,2) DEFAULT '0.00',
   `created_at` timestamp NULL DEFAULT NULL,
@@ -114,8 +135,8 @@ CREATE TABLE `adjustments` (
 CREATE TABLE `adjustment_files` (
   `id` bigint UNSIGNED NOT NULL,
   `adjustment_id` bigint UNSIGNED NOT NULL,
-  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `file_size` bigint UNSIGNED DEFAULT NULL,
   `mime_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -133,10 +154,10 @@ CREATE TABLE `adjustment_logs` (
   `id` bigint UNSIGNED NOT NULL,
   `adjustment_id` bigint UNSIGNED NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `action` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `old_status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `new_status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `notes` longtext COLLATE utf8mb4_unicode_ci,
+  `action` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `old_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `new_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `notes` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `locked` tinyint(1) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -238,7 +259,7 @@ CREATE TABLE `expenses` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `payment_method` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payment_method` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -467,6 +488,41 @@ CREATE TABLE `model_has_roles` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `notification_recipients`
+--
+
+CREATE TABLE `notification_recipients` (
+  `id` bigint UNSIGNED NOT NULL,
+  `recipient_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `recipient_phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `permissions` json DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notification_settings`
+--
+
+CREATE TABLE `notification_settings` (
+  `id` bigint UNSIGNED NOT NULL,
+  `type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Unique identifier: manual_input, low_stock, daily_report, etc',
+  `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Human readable name',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Description of this notification type',
+  `icon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'bi-bell' COMMENT 'Bootstrap icon class',
+  `is_enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Whether this notification type is active',
+  `template` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Message template with {placeholders}',
+  `placeholders` json DEFAULT NULL COMMENT 'Available placeholders for this template',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `owner_notifications`
 --
 
@@ -485,10 +541,10 @@ CREATE TABLE `owner_notifications` (
   `reviewed_at` timestamp NULL DEFAULT NULL,
   `reviewed_by` bigint UNSIGNED DEFAULT NULL COMMENT 'User ID yang review',
   `review_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `fontee_message_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ID dari Fontee API',
-  `fontee_status` enum('pending','sent','failed','read') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
-  `fontee_sent_at` timestamp NULL DEFAULT NULL,
-  `fontee_error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `whatsapp_message_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ID dari Fontee API',
+  `whatsapp_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pending',
+  `whatsapp_sent_at` datetime DEFAULT NULL,
+  `whatsapp_error_message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -532,6 +588,7 @@ CREATE TABLE `products` (
   `category_id` bigint UNSIGNED NOT NULL,
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `barcode` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `product_quantity` int NOT NULL,
   `stok_awal` int NOT NULL DEFAULT '0',
   `product_cost` int NOT NULL,
@@ -592,7 +649,7 @@ CREATE TABLE `purchases` (
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `bank_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bank_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `user_id` bigint UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -647,17 +704,17 @@ CREATE TABLE `purchase_payments` (
 CREATE TABLE `purchase_seconds` (
   `id` bigint UNSIGNED NOT NULL,
   `date` date NOT NULL COMMENT 'Tanggal beli bekas',
-  `reference` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Format: PBS-YYYYMMDD-0001',
-  `customer_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nama customer yang jual bekas',
-  `customer_phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nomor HP customer',
+  `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Format: PBS-YYYYMMDD-0001',
+  `customer_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nama customer yang jual bekas',
+  `customer_phone` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nomor HP customer',
   `total_amount` bigint NOT NULL DEFAULT '0' COMMENT 'Total bayar ke customer',
   `paid_amount` bigint NOT NULL DEFAULT '0' COMMENT 'Jumlah yang sudah dibayar',
   `due_amount` bigint NOT NULL DEFAULT '0' COMMENT 'Sisa yang belum dibayar',
-  `status` enum('Pending','Completed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Pending' COMMENT 'Status pembelian',
-  `payment_status` enum('Lunas','Belum Lunas') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Belum Lunas',
-  `payment_method` enum('Tunai','Transfer') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Tunai',
-  `bank_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nama bank jika Transfer',
-  `note` text COLLATE utf8mb4_unicode_ci COMMENT 'Catatan tambahan',
+  `status` enum('Pending','Completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Pending' COMMENT 'Status pembelian',
+  `payment_status` enum('Lunas','Belum Lunas') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Belum Lunas',
+  `payment_method` enum('Tunai','Transfer') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Tunai',
+  `bank_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nama bank jika Transfer',
+  `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Catatan tambahan',
   `user_id` bigint UNSIGNED DEFAULT NULL COMMENT 'User yang input',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -673,12 +730,63 @@ CREATE TABLE `purchase_second_details` (
   `id` bigint UNSIGNED NOT NULL,
   `purchase_second_id` bigint UNSIGNED NOT NULL,
   `product_second_id` bigint UNSIGNED NOT NULL COMMENT 'ID dari productseconds (TANPA underscore)',
-  `product_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `product_code` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `condition_notes` text COLLATE utf8mb4_unicode_ci COMMENT 'Catatan kondisi produk',
+  `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `condition_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Catatan kondisi produk',
   `quantity` int NOT NULL DEFAULT '1' COMMENT 'Selalu 1 untuk produk bekas',
   `unit_price` bigint NOT NULL DEFAULT '0' COMMENT 'Harga beli per unit',
   `sub_total` bigint NOT NULL DEFAULT '0' COMMENT 'Total = unit_price * 1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotations`
+--
+
+CREATE TABLE `quotations` (
+  `id` bigint UNSIGNED NOT NULL,
+  `date` date NOT NULL,
+  `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `customer_id` bigint UNSIGNED DEFAULT NULL,
+  `customer_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tax_percentage` int NOT NULL DEFAULT '0',
+  `tax_amount` int NOT NULL DEFAULT '0',
+  `discount_percentage` int NOT NULL DEFAULT '0',
+  `discount_amount` int NOT NULL DEFAULT '0',
+  `shipping_amount` int NOT NULL DEFAULT '0',
+  `total_amount` int NOT NULL,
+  `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotation_details`
+--
+
+CREATE TABLE `quotation_details` (
+  `id` bigint UNSIGNED NOT NULL,
+  `quotation_id` bigint UNSIGNED NOT NULL,
+  `product_id` bigint UNSIGNED DEFAULT NULL,
+  `productable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `productable_id` bigint UNSIGNED DEFAULT NULL,
+  `source_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',
+  `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `quantity` int NOT NULL,
+  `price` int NOT NULL,
+  `unit_price` int NOT NULL,
+  `sub_total` int NOT NULL,
+  `product_discount_amount` int NOT NULL DEFAULT '0',
+  `product_discount_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'fixed',
+  `product_tax_amount` int NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -720,9 +828,9 @@ CREATE TABLE `sales` (
   `date` date NOT NULL,
   `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `customer_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `customer_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Email customer (opsional)',
-  `customer_phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nomor telepon customer (opsional)',
+  `customer_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `customer_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Email customer (opsional)',
+  `customer_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nomor telepon customer (opsional)',
   `has_price_adjustment` tinyint(1) DEFAULT '0' COMMENT '1=ada item dengan harga diedit',
   `tax_percentage` int NOT NULL DEFAULT '0',
   `tax_amount` bigint NOT NULL DEFAULT '0',
@@ -739,9 +847,9 @@ CREATE TABLE `sales` (
   `payment_status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `paid_at` timestamp NULL DEFAULT NULL,
   `payment_method` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `snap_token` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `midtrans_transaction_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `midtrans_payment_type` enum('gopay','shopeepay','qris','bank_transfer','credit_card','other') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `snap_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `midtrans_transaction_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `midtrans_payment_type` enum('gopay','shopeepay','qris','bank_transfer','credit_card','other') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -751,7 +859,7 @@ CREATE TABLE `sales` (
   `manual_input_summary` json DEFAULT NULL COMMENT 'Summary item manual: [{"name":"...", "qty":1, "price":..., "reason":"..."}]',
   `is_manual_input_notified` tinyint(1) DEFAULT '0' COMMENT 'Flag: sudah notify owner?',
   `notified_at` timestamp NULL DEFAULT NULL COMMENT 'Waktu notifikasi owner'
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Triggers `sales`
@@ -779,7 +887,7 @@ CREATE TABLE `sale_details` (
   `productable_id` bigint UNSIGNED DEFAULT NULL,
   `productable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `source_type` enum('new','second','manual') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',
-  `manual_kind` enum('service','goods') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `manual_kind` enum('service','goods') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
@@ -787,7 +895,7 @@ CREATE TABLE `sale_details` (
   `original_price` bigint DEFAULT NULL COMMENT 'Harga asli dari master product',
   `is_price_adjusted` tinyint(1) DEFAULT '0' COMMENT 'Flag: 1=ada perubahan harga, 0=tidak ada',
   `price_adjustment_amount` bigint DEFAULT '0' COMMENT 'Selisih: original_price - price (positif = diskon)',
-  `price_adjustment_note` text COLLATE utf8mb4_unicode_ci COMMENT 'Catatan kasir (WAJIB jika ada diskon)',
+  `price_adjustment_note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Catatan kasir (WAJIB jika ada diskon)',
   `adjusted_by` bigint UNSIGNED DEFAULT NULL COMMENT 'User ID kasir yang edit harga',
   `adjusted_at` timestamp NULL DEFAULT NULL COMMENT 'Waktu edit harga',
   `hpp` bigint NOT NULL DEFAULT '0',
@@ -800,7 +908,7 @@ CREATE TABLE `sale_details` (
   `product_tax_amount` bigint NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Triggers `sale_details`
@@ -823,7 +931,7 @@ CREATE TRIGGER `trg_sale_details_chk_bi` BEFORE INSERT ON `sale_details` FOR EAC
   END IF;
 
   -- Deteksi JASA (ServiceMaster) → paksa jadi manual/service
-  IF NEW.productable_type IN ('Modules\Product\Entities\ServiceMaster','ModulesProductEntitiesServiceMaster')
+  IF NEW.productable_type IN ('ModulesProductEntitiesServiceMaster','ModulesProductEntitiesServiceMaster')
      OR LEFT(NEW.product_code,4) = 'SRV-'
   THEN
     SET NEW.source_type = 'manual';
@@ -883,7 +991,7 @@ CREATE TRIGGER `trg_sale_details_chk_bu` BEFORE UPDATE ON `sale_details` FOR EAC
   END IF;
 
   -- Deteksi JASA → paksa manual/service
-  IF NEW.productable_type IN ('Modules\Product\Entities\ServiceMaster','ModulesProductEntitiesServiceMaster')
+  IF NEW.productable_type IN ('ModulesProductEntitiesServiceMaster','ModulesProductEntitiesServiceMaster')
      OR LEFT(NEW.product_code,4) = 'SRV-'
   THEN
     SET NEW.source_type = 'manual';
@@ -985,7 +1093,7 @@ CREATE TRIGGER `trg_sd_inv_ad` AFTER DELETE ON `sale_details` FOR EACH ROW BEGIN
     INSERT INTO stock_movements
       (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
     VALUES
-      ('Modules\Product\Entities\Product', OLD.product_id, 'in', OLD.quantity,
+      ('ModulesProductEntitiesProduct', OLD.product_id, 'in', OLD.quantity,
        CONCAT('Revert sale ', IFNULL(v_ref, OLD.sale_id)), v_user_id, NOW(), NOW());
 
   ELSEIF OLD.source_type = 'second' THEN
@@ -996,7 +1104,7 @@ CREATE TRIGGER `trg_sd_inv_ad` AFTER DELETE ON `sale_details` FOR EACH ROW BEGIN
     INSERT INTO stock_movements
       (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
     VALUES
-      ('Modules\Product\Entities\ProductSecond', OLD.productable_id, 'in', 1,
+      ('ModulesProductEntitiesProductSecond', OLD.productable_id, 'in', 1,
        CONCAT('Revert sale ', IFNULL(v_ref, OLD.sale_id)), v_user_id, NOW(), NOW());
   END IF;
 END
@@ -1019,7 +1127,7 @@ CREATE TRIGGER `trg_sd_inv_ai` AFTER INSERT ON `sale_details` FOR EACH ROW BEGIN
       (productable_type, productable_id, product_id, ref_id, ref_type, `type`,
        quantity, description, user_id, created_at, updated_at)
     VALUES
-      ('Modules\Product\Entities\Product', NEW.product_id, NEW.product_id,
+      ('ModulesProductEntitiesProduct', NEW.product_id, NEW.product_id,
        NEW.sale_id, 'sale', 'out', NEW.quantity,
        CONCAT('Sale ', COALESCE(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
 
@@ -1032,7 +1140,7 @@ CREATE TRIGGER `trg_sd_inv_ai` AFTER INSERT ON `sale_details` FOR EACH ROW BEGIN
       (productable_type, productable_id, ref_id, ref_type, `type`,
        quantity, description, user_id, created_at, updated_at)
     VALUES
-      ('Modules\Product\Entities\ProductSecond', NEW.productable_id,
+      ('ModulesProductEntitiesProductSecond', NEW.productable_id,
        NEW.sale_id, 'sale', 'out', 1,
        CONCAT('Sale ', COALESCE(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
   END IF;
@@ -1065,7 +1173,7 @@ CREATE TRIGGER `trg_sd_inv_au` AFTER UPDATE ON `sale_details` FOR EACH ROW BEGIN
       INSERT INTO stock_movements
         (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
       VALUES
-        ('Modules\Product\Entities\Product', OLD.product_id, 'in', OLD.quantity,
+        ('ModulesProductEntitiesProduct', OLD.product_id, 'in', OLD.quantity,
          CONCAT('Adjust (revert) sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
 
     ELSEIF OLD.source_type = 'second' THEN
@@ -1076,7 +1184,7 @@ CREATE TRIGGER `trg_sd_inv_au` AFTER UPDATE ON `sale_details` FOR EACH ROW BEGIN
       INSERT INTO stock_movements
         (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
       VALUES
-        ('Modules\Product\Entities\ProductSecond', OLD.productable_id, 'in', 1,
+        ('ModulesProductEntitiesProductSecond', OLD.productable_id, 'in', 1,
          CONCAT('Adjust (revert) sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
     END IF;
 
@@ -1089,7 +1197,7 @@ CREATE TRIGGER `trg_sd_inv_au` AFTER UPDATE ON `sale_details` FOR EACH ROW BEGIN
       INSERT INTO stock_movements
         (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
       VALUES
-        ('Modules\Product\Entities\Product', NEW.product_id, 'out', NEW.quantity,
+        ('ModulesProductEntitiesProduct', NEW.product_id, 'out', NEW.quantity,
          CONCAT('Adjust sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
 
     ELSEIF NEW.source_type = 'second' THEN
@@ -1100,7 +1208,7 @@ CREATE TRIGGER `trg_sd_inv_au` AFTER UPDATE ON `sale_details` FOR EACH ROW BEGIN
       INSERT INTO stock_movements
         (productable_type, productable_id, `type`, quantity, description, user_id, created_at, updated_at)
       VALUES
-        ('Modules\Product\Entities\ProductSecond', NEW.productable_id, 'out', 1,
+        ('ModulesProductEntitiesProductSecond', NEW.productable_id, 'out', 1,
          CONCAT('Adjust sale ', IFNULL(v_ref, NEW.sale_id)), v_user_id, NOW(), NOW());
     END IF;
   END IF;
@@ -1235,7 +1343,58 @@ CREATE TABLE `sale_payments` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_returns`
+--
+
+CREATE TABLE `sale_returns` (
+  `id` bigint UNSIGNED NOT NULL,
+  `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sale_id` bigint UNSIGNED NOT NULL,
+  `customer_id` bigint UNSIGNED DEFAULT NULL,
+  `date` date NOT NULL,
+  `status` enum('Pending','Approved','Rejected','Completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Pending',
+  `total_amount` bigint NOT NULL DEFAULT '0',
+  `refund_amount` bigint NOT NULL DEFAULT '0',
+  `refund_method` enum('Cash','Credit','Store Credit') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Cash',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint UNSIGNED NOT NULL,
+  `approved_by` bigint UNSIGNED DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_return_details`
+--
+
+CREATE TABLE `sale_return_details` (
+  `id` bigint UNSIGNED NOT NULL,
+  `sale_return_id` bigint UNSIGNED NOT NULL,
+  `sale_detail_id` bigint UNSIGNED DEFAULT NULL,
+  `product_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `product_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `quantity` int NOT NULL,
+  `unit_price` bigint NOT NULL,
+  `sub_total` bigint NOT NULL,
+  `source_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `condition` enum('good','damaged','defective') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'good',
+  `restock` tinyint(1) NOT NULL DEFAULT '1',
+  `productable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `productable_id` bigint UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1245,10 +1404,10 @@ CREATE TABLE `sale_payments` (
 
 CREATE TABLE `service_masters` (
   `id` bigint UNSIGNED NOT NULL,
-  `service_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nama jasa: Pasang Ban, Balancing, dll',
+  `service_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nama jasa: Pasang Ban, Balancing, dll',
   `standard_price` bigint UNSIGNED NOT NULL DEFAULT '0' COMMENT 'Harga standar (dalam rupiah)',
-  `category` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'service' COMMENT 'Kategori: service|goods|custom',
-  `description` text COLLATE utf8mb4_unicode_ci COMMENT 'Deskripsi jasa',
+  `category` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'service' COMMENT 'Kategori: service|goods|custom',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Deskripsi jasa',
   `status` tinyint UNSIGNED NOT NULL DEFAULT '1' COMMENT '1=aktif, 0=nonaktif',
   `price_before` bigint UNSIGNED DEFAULT NULL COMMENT 'Harga sebelum diubah',
   `price_after` bigint UNSIGNED DEFAULT NULL COMMENT 'Harga setelah diubah',
@@ -1271,7 +1430,7 @@ CREATE TABLE `service_master_audits` (
   `service_master_id` bigint UNSIGNED NOT NULL,
   `old_price` bigint UNSIGNED NOT NULL COMMENT 'Harga lama',
   `new_price` bigint UNSIGNED NOT NULL COMMENT 'Harga baru',
-  `reason` text COLLATE utf8mb4_unicode_ci COMMENT 'Alasan perubahan harga',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Alasan perubahan harga',
   `changed_by` bigint UNSIGNED NOT NULL COMMENT 'User ID yang mengubah',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -1308,11 +1467,11 @@ CREATE TABLE `settings` (
 
 CREATE TABLE `stock_movements` (
   `id` bigint UNSIGNED NOT NULL,
-  `productable_type` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `productable_type` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `productable_id` bigint UNSIGNED DEFAULT NULL,
   `product_id` bigint UNSIGNED DEFAULT NULL,
   `ref_id` bigint UNSIGNED DEFAULT NULL,
-  `ref_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'adjustment',
+  `ref_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'adjustment',
   `type` enum('in','out') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `quantity` int NOT NULL,
   `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -1320,8 +1479,8 @@ CREATE TABLE `stock_movements` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `out_key` varchar(255) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when (`type` = _utf8mb4'out') then concat(`productable_type`,_utf8mb4'#',`productable_id`) else NULL end)) STORED,
-  `second_out_key` varchar(255) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when ((`type` = _utf8mb4'out') and (`productable_type` = _utf8mb4'Modules\\Product\\Entities\\ProductSecond')) then concat(`productable_type`,_utf8mb4'#',`productable_id`) else NULL end)) STORED
+  `out_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when (`type` = _utf8mb4'out') then concat(`productable_type`,_utf8mb4'#',`productable_id`) else NULL end)) STORED,
+  `second_out_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when ((`type` = _utf8mb4'out') and (`productable_type` = _utf8mb4'Modules\\Product\\Entities\\ProductSecond')) then concat(`productable_type`,_utf8mb4'#',`productable_id`) else NULL end)) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1332,15 +1491,15 @@ CREATE TABLE `stock_movements` (
 
 CREATE TABLE `stock_opnames` (
   `id` bigint UNSIGNED NOT NULL,
-  `reference` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'SO-YYYYMMDD-#####',
+  `reference` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'SO-YYYYMMDD-#####',
   `opname_date` date NOT NULL COMMENT 'Tanggal pelaksanaan',
-  `status` enum('draft','in_progress','completed','cancelled') COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
-  `scope_type` enum('all','category','custom') COLLATE utf8mb4_unicode_ci DEFAULT 'all',
+  `status` enum('draft','in_progress','completed','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'draft',
+  `scope_type` enum('all','category','custom') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'all',
   `scope_ids` json DEFAULT NULL COMMENT 'Array ID kategori jika scope=category',
   `pic_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Petugas yang menghitung',
   `supervisor_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Supervisor yang approve',
   `approved_at` timestamp NULL DEFAULT NULL,
-  `notes` text COLLATE utf8mb4_unicode_ci,
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `total_items` int UNSIGNED DEFAULT '0' COMMENT 'Jumlah item yang dihitung',
   `total_variance` int DEFAULT '0' COMMENT 'Total selisih (bisa +/-)',
   `variance_value` decimal(15,2) DEFAULT '0.00' COMMENT 'Nilai rupiah selisih',
@@ -1362,9 +1521,9 @@ CREATE TABLE `stock_opname_items` (
   `system_qty` int NOT NULL DEFAULT '0' COMMENT 'Stok di sistem saat mulai hitung',
   `actual_qty` int DEFAULT NULL COMMENT 'Hasil hitung fisik (NULL = belum dihitung)',
   `variance_qty` int GENERATED ALWAYS AS ((`actual_qty` - `system_qty`)) STORED COMMENT 'Selisih',
-  `variance_type` varchar(10) COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when (`actual_qty` is null) then _utf8mb4'pending' when (`actual_qty` > `system_qty`) then _utf8mb4'surplus' when (`actual_qty` < `system_qty`) then _utf8mb4'shortage' else _utf8mb4'match' end)) STORED,
-  `variance_reason` text COLLATE utf8mb4_unicode_ci COMMENT 'Alasan selisih (jika ada)',
-  `notes` text COLLATE utf8mb4_unicode_ci,
+  `variance_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci GENERATED ALWAYS AS ((case when (`actual_qty` is null) then _utf8mb4'pending' when (`actual_qty` > `system_qty`) then _utf8mb4'surplus' when (`actual_qty` < `system_qty`) then _utf8mb4'shortage' else _utf8mb4'match' end)) STORED,
+  `variance_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Alasan selisih (jika ada)',
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `counted_at` timestamp NULL DEFAULT NULL COMMENT 'Waktu item ini dihitung',
   `counted_by` bigint UNSIGNED DEFAULT NULL,
   `adjustment_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID adjustment jika auto-generated',
@@ -1467,10 +1626,10 @@ CREATE TABLE `stock_opname_logs` (
   `id` bigint UNSIGNED NOT NULL,
   `stock_opname_id` bigint UNSIGNED NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `action` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'created, started, item_counted, completed, approved, cancelled',
-  `old_status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `new_status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `action` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'created, started, item_counted, completed, approved, cancelled',
+  `old_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `new_status` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -1555,10 +1714,10 @@ CREATE TABLE `users` (
   `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `supervisor_pin` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'PIN 6 digit encrypted',
-  `phone_number` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `supervisor_pin` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'PIN 6 digit encrypted',
+  `phone_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `last_login_at` timestamp NULL DEFAULT NULL,
-  `login_ip` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `login_ip` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -1575,11 +1734,11 @@ CREATE TABLE `users` (
 CREATE TABLE `user_activity_logs` (
   `id` bigint UNSIGNED NOT NULL,
   `user_id` bigint UNSIGNED NOT NULL,
-  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'create_invoice, void_sale, override_price, dll',
-  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'create_invoice, void_sale, override_price, dll',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `data` json DEFAULT NULL COMMENT 'data detail aktivitas',
-  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_agent` text COLLATE utf8mb4_unicode_ci,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -1606,6 +1765,15 @@ CREATE TABLE `v_adjustment_summary` (
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `activity_log`
+--
+ALTER TABLE `activity_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `subject` (`subject_type`,`subject_id`),
+  ADD KEY `causer` (`causer_type`,`causer_id`),
+  ADD KEY `activity_log_log_name_index` (`log_name`);
 
 --
 -- Indexes for table `adjusted_products`
@@ -1774,6 +1942,19 @@ ALTER TABLE `model_has_roles`
   ADD KEY `model_has_roles_model_id_model_type_index` (`model_id`,`model_type`);
 
 --
+-- Indexes for table `notification_recipients`
+--
+ALTER TABLE `notification_recipients`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `notification_settings`
+--
+ALTER TABLE `notification_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `notification_settings_type_unique` (`type`);
+
+--
 -- Indexes for table `owner_notifications`
 --
 ALTER TABLE `owner_notifications`
@@ -1783,7 +1964,7 @@ ALTER TABLE `owner_notifications`
   ADD KEY `idx_user_reviewed` (`user_id`,`is_reviewed`),
   ADD KEY `idx_severity` (`severity`),
   ADD KEY `idx_notification_type` (`notification_type`),
-  ADD KEY `idx_fontee_status` (`fontee_status`),
+  ADD KEY `idx_fontee_status` (`whatsapp_status`),
   ADD KEY `idx_created_at` (`created_at`);
 
 --
@@ -1807,7 +1988,8 @@ ALTER TABLE `products`
   ADD UNIQUE KEY `uk_products_code` (`product_code`),
   ADD KEY `products_category_id_foreign` (`category_id`),
   ADD KEY `products_brand_id_foreign` (`brand_id`),
-  ADD KEY `idx_products_year` (`product_year`);
+  ADD KEY `idx_products_year` (`product_year`),
+  ADD KEY `products_barcode_index` (`barcode`);
 ALTER TABLE `products` ADD FULLTEXT KEY `ft_products_search` (`product_name`,`product_code`,`product_size`,`ring`);
 
 --
@@ -1869,6 +2051,22 @@ ALTER TABLE `purchase_second_details`
   ADD KEY `purchase_second_details_product_second_id_foreign` (`product_second_id`);
 
 --
+-- Indexes for table `quotations`
+--
+ALTER TABLE `quotations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `quotations_reference_unique` (`reference`),
+  ADD KEY `quotations_customer_id_foreign` (`customer_id`);
+
+--
+-- Indexes for table `quotation_details`
+--
+ALTER TABLE `quotation_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `quotation_details_quotation_id_foreign` (`quotation_id`),
+  ADD KEY `quotation_details_product_id_foreign` (`product_id`);
+
+--
 -- Indexes for table `roles`
 --
 ALTER TABLE `roles`
@@ -1927,6 +2125,27 @@ ALTER TABLE `sale_payments`
   ADD KEY `idx_sale_payments_method` (`payment_method`),
   ADD KEY `sale_payments_date_method_bank_idx` (`date`,`payment_method`,`bank_name`),
   ADD KEY `sale_payments_sale_date_index` (`sale_id`,`date`);
+
+--
+-- Indexes for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `sale_returns_reference_unique` (`reference`),
+  ADD KEY `sale_returns_customer_id_foreign` (`customer_id`),
+  ADD KEY `sale_returns_created_by_foreign` (`created_by`),
+  ADD KEY `sale_returns_approved_by_foreign` (`approved_by`),
+  ADD KEY `sale_returns_date_status_index` (`date`,`status`),
+  ADD KEY `sale_returns_sale_id_index` (`sale_id`);
+
+--
+-- Indexes for table `sale_return_details`
+--
+ALTER TABLE `sale_return_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sale_return_details_sale_detail_id_foreign` (`sale_detail_id`),
+  ADD KEY `sale_return_details_sale_return_id_index` (`sale_return_id`),
+  ADD KEY `sale_return_details_productable_type_productable_id_index` (`productable_type`,`productable_id`);
 
 --
 -- Indexes for table `service_masters`
@@ -2037,6 +2256,12 @@ ALTER TABLE `user_activity_logs`
 --
 
 --
+-- AUTO_INCREMENT for table `activity_log`
+--
+ALTER TABLE `activity_log`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `adjusted_products`
 --
 ALTER TABLE `adjusted_products`
@@ -2139,6 +2364,18 @@ ALTER TABLE `migrations`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `notification_recipients`
+--
+ALTER TABLE `notification_recipients`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `notification_settings`
+--
+ALTER TABLE `notification_settings`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `owner_notifications`
 --
 ALTER TABLE `owner_notifications`
@@ -2193,6 +2430,18 @@ ALTER TABLE `purchase_second_details`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `quotations`
+--
+ALTER TABLE `quotations`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quotation_details`
+--
+ALTER TABLE `quotation_details`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
@@ -2214,6 +2463,18 @@ ALTER TABLE `sale_details`
 -- AUTO_INCREMENT for table `sale_payments`
 --
 ALTER TABLE `sale_payments`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `sale_return_details`
+--
+ALTER TABLE `sale_return_details`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -2443,6 +2704,19 @@ ALTER TABLE `purchase_second_details`
   ADD CONSTRAINT `purchase_second_details_purchase_second_id_foreign` FOREIGN KEY (`purchase_second_id`) REFERENCES `purchase_seconds` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `quotations`
+--
+ALTER TABLE `quotations`
+  ADD CONSTRAINT `quotations_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `quotation_details`
+--
+ALTER TABLE `quotation_details`
+  ADD CONSTRAINT `quotation_details_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `quotation_details_quotation_id_foreign` FOREIGN KEY (`quotation_id`) REFERENCES `quotations` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `role_has_permissions`
 --
 ALTER TABLE `role_has_permissions`
@@ -2476,6 +2750,22 @@ ALTER TABLE `sale_details`
 ALTER TABLE `sale_payments`
   ADD CONSTRAINT `fk_sp_sale` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_spay_sale` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `sale_returns`
+--
+ALTER TABLE `sale_returns`
+  ADD CONSTRAINT `sale_returns_approved_by_foreign` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sale_returns_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `sale_returns_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sale_returns_sale_id_foreign` FOREIGN KEY (`sale_id`) REFERENCES `sales` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `sale_return_details`
+--
+ALTER TABLE `sale_return_details`
+  ADD CONSTRAINT `sale_return_details_sale_detail_id_foreign` FOREIGN KEY (`sale_detail_id`) REFERENCES `sale_details` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sale_return_details_sale_return_id_foreign` FOREIGN KEY (`sale_return_id`) REFERENCES `sale_returns` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `service_masters`

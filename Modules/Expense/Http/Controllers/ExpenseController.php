@@ -22,7 +22,7 @@ class ExpenseController extends Controller
     {
         // Calculate total (reusing logic for stats)
         $query = Expense::query();
-        
+
         $from = null;
         $to = null;
 
@@ -64,7 +64,13 @@ class ExpenseController extends Controller
         $total = $query->sum('amount');
         $categories = ExpenseCategory::orderBy('category_name')->get();
 
-        return $dataTable->render('expense::expenses.index', compact('categories', 'total', 'from', 'to'));
+        $expensesToday = Expense::whereDate('date', now()->toDateString())->sum('amount');
+        $expensesThisMonth = Expense::whereMonth('date', now()->month)->whereYear('date', now()->year)->sum('amount');
+
+        $count = Expense::count();
+        $averageExpense = $count > 0 ? Expense::sum('amount') / $count : 0;
+
+        return $dataTable->render('expense::expenses.index', compact('categories', 'total', 'from', 'to', 'expensesToday', 'expensesThisMonth', 'averageExpense'));
     }
 
     /**
