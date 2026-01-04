@@ -30,7 +30,7 @@ class ProductDataTable extends DataTable
                 $qty = $d->product_quantity;
                 $alert = $d->product_stock_alert;
                 $unit = $d->product_unit;
-                
+
                 if ($qty <= 0) {
                     return '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">' . $qty . ' ' . $unit . '</span>';
                 } elseif ($qty <= $alert) {
@@ -55,8 +55,8 @@ class ProductDataTable extends DataTable
             ->addColumn('harga_jual_badge', function ($d) {
                 return '<span class="font-bold text-emerald-600">' . format_currency($d->product_price) . '</span>';
             })
-            ->filterColumn('merk', function($query, $keyword) {
-                $query->whereHas('brand', function($q) use ($keyword) {
+            ->filterColumn('merk', function ($query, $keyword) {
+                $query->whereHas('brand', function ($q) use ($keyword) {
                     $q->where('name', 'like', "%{$keyword}%");
                 });
             })
@@ -66,7 +66,7 @@ class ProductDataTable extends DataTable
     public function query(Product $model)
     {
         $query = $model->newQuery()->with(['category', 'brand']);
-        
+
         // Filter by category
         if (request()->has('category_id') && request('category_id') != '') {
             $query->where('category_id', request('category_id'));
@@ -75,21 +75,34 @@ class ProductDataTable extends DataTable
         if (request()->has('brand_id') && request('brand_id') != '') {
             $query->where('brand_id', request('brand_id'));
         }
-        
+
         // Filter by quick filter
         if (request()->has('quick_filter') && request('quick_filter') != 'all') {
             $filter = request('quick_filter');
             switch ($filter) {
                 case 'low-stock':
                     $query->whereColumn('product_quantity', '<=', 'product_stock_alert')
-                          ->where('product_quantity', '>', 0);
+                        ->where('product_quantity', '>', 0);
                     break;
                 case 'out-of-stock':
                     $query->where('product_quantity', '<=', 0);
                     break;
             }
         }
-        
+
+        // Smart Filter: product_size (ukuran ban)
+        if (request()->has('product_size') && request('product_size') != '') {
+            $query->where('product_size', 'like', '%' . request('product_size') . '%');
+        }
+
+        // Smart Filter: ring (ring ban) - handle both "R15" and "15" formats
+        if (request()->has('ring') && request('ring') != '') {
+            $ringValue = request('ring');
+            // Remove leading "R" or "r" if present
+            $ringValue = preg_replace('/^R/i', '', $ringValue);
+            $query->where('ring', 'like', '%' . $ringValue . '%');
+        }
+
         return $query;
     }
 
@@ -104,7 +117,6 @@ class ProductDataTable extends DataTable
                 'responsive' => true,
                 'autoWidth' => false,
                 'drawCallback' => 'function() { 
-                    window.scrollTo(0, 0);
                     if (typeof initFlowbite === "function") {
                         initFlowbite();
                     }

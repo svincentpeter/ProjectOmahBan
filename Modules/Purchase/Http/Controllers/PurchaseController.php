@@ -105,7 +105,17 @@ class PurchaseController extends Controller
         // Clear cart sebelum create baru
         Cart::instance('purchase')->destroy();
 
-        return view('purchase::baru.create');
+        // Query data di controller, bukan di view (optimasi performa)
+        $products = Product::where('is_active', true)
+            ->select('id', 'product_name', 'product_code', 'product_cost', 'product_quantity')
+            ->orderBy('product_name')
+            ->get();
+        
+        $suppliers = Supplier::orderBy('supplier_name')
+            ->select('id', 'supplier_name')
+            ->get();
+
+        return view('purchase::baru.create', compact('products', 'suppliers'));
     }
 
     /**
@@ -219,7 +229,17 @@ class PurchaseController extends Controller
             ]);
         }
 
-        return view('purchase::baru.edit', compact('purchase'));
+        // Query data di controller, bukan di view (optimasi performa)
+        $products = Product::where('is_active', true)
+            ->select('id', 'product_name', 'product_code', 'product_cost', 'product_quantity')
+            ->orderBy('product_name')
+            ->get();
+        
+        $suppliers = Supplier::orderBy('supplier_name')
+            ->select('id', 'supplier_name')
+            ->get();
+
+        return view('purchase::baru.edit', compact('purchase', 'products', 'suppliers'));
     }
 
     /**
