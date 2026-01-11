@@ -14,7 +14,9 @@
     @endsection
 
     {{-- Stats Cards --}}
-    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {{-- Stats Cards --}}
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {{-- Total Filtered --}}
         <div class="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
             <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20 group-hover:opacity-30 transition-opacity">
                 <i class="bi bi-wallet2 text-9xl"></i>
@@ -24,14 +26,65 @@
                     <i class="bi bi-currency-dollar text-2xl"></i>
                 </div>
                 <div>
-                    <p class="text-blue-100 text-sm font-medium mb-1 tracking-wide">Total Pengeluaran</p>
+                    <p class="text-blue-100 text-sm font-medium mb-1 tracking-wide">Total (Filter)</p>
                     <h3 class="text-2xl font-bold tracking-tight">Rp {{ number_format($total, 0, ',', '.') }}</h3>
                     @if($from && $to)
                         <div class="inline-flex items-center mt-2 px-2 py-1 bg-white/10 rounded-lg text-xs text-blue-50">
                             <i class="bi bi-calendar-range mr-1.5"></i>
-                            {{ \Carbon\Carbon::parse($from)->format('d M') }} - {{ \Carbon\Carbon::parse($to)->format('d M Y') }}
+                            {{ \Carbon\Carbon::parse($from)->format('d M') }} - {{ \Carbon\Carbon::parse($to)->format('d M') }}
                         </div>
                     @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- Hari Ini --}}
+        <div class="relative bg-gradient-to-br from-purple-600 to-fuchsia-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20 group-hover:opacity-30 transition-opacity">
+                <i class="bi bi-calendar-event text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 icon-float shadow-inner">
+                    <i class="bi bi-clock-history text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-purple-100 text-sm font-medium mb-1 tracking-wide">Hari Ini</p>
+                    <h3 class="text-2xl font-bold tracking-tight">Rp {{ number_format($expensesToday, 0, ',', '.') }}</h3>
+                    <p class="text-xs text-purple-200 mt-1 opacity-80">{{ \Carbon\Carbon::now()->locale('id')->isoFormat('dddd, D MMMM') }}</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Bulan Ini --}}
+        <div class="relative bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20 group-hover:opacity-30 transition-opacity">
+                <i class="bi bi-calendar-month text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 icon-float shadow-inner">
+                    <i class="bi bi-calendar3 text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-orange-100 text-sm font-medium mb-1 tracking-wide">Bulan Ini</p>
+                    <h3 class="text-2xl font-bold tracking-tight">Rp {{ number_format($expensesThisMonth, 0, ',', '.') }}</h3>
+                    <p class="text-xs text-orange-200 mt-1 opacity-80">{{ \Carbon\Carbon::now()->locale('id')->isoFormat('MMMM Y') }}</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Rata-rata --}}
+        <div class="relative bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+            <div class="absolute top-0 right-0 -mr-4 -mt-4 opacity-20 group-hover:opacity-30 transition-opacity">
+                <i class="bi bi-calculator text-9xl"></i>
+            </div>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4 icon-float shadow-inner">
+                    <i class="bi bi-receipt text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-teal-100 text-sm font-medium mb-1 tracking-wide">Rata-rata / Transaksi</p>
+                    <h3 class="text-2xl font-bold tracking-tight">Rp {{ number_format($averageExpense, 0, ',', '.') }}</h3>
+                     <p class="text-xs text-teal-200 mt-1 opacity-80">Dari total semua data</p>
                 </div>
             </div>
         </div>

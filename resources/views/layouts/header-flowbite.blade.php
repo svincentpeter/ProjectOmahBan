@@ -118,31 +118,10 @@
 </nav>
 
 {{-- Dark Mode Toggle Script --}}
+@push('page_scripts')
 <script>
-// Dark mode toggle
-const themeToggleBtn = document.getElementById('theme-toggle');
-
-// Check for saved theme preference or default to 'light' mode
-const currentTheme = localStorage.getItem('color-theme') || 'light';
-
-// Set initial theme
-if (currentTheme === 'dark' || (!localStorage.getItem('color-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-} else {
+    // Force light mode
     document.documentElement.classList.remove('dark');
-}
-
-if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', function() {
-        // Toggle dark mode
-        document.documentElement.classList.toggle('dark');
-        
-        // Save preference
-        if (document.documentElement.classList.contains('dark')) {
-            localStorage.setItem('color-theme', 'dark');
-        } else {
-            localStorage.setItem('color-theme', 'light');
-        }
-    });
-}
+    localStorage.removeItem('color-theme');
 </script>
+@endpush

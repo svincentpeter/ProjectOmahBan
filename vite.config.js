@@ -9,6 +9,7 @@ export default defineConfig({
             "resources/js/chart-config.js",
             "resources/css/pos.css",
             "resources/css/flowbite.css",
+            "resources/css/login.css",
         ]),
     ],
 });

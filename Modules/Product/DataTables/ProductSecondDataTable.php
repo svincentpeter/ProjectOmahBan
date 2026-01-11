@@ -74,6 +74,19 @@ class ProductSecondDataTable extends DataTable
             $query->where('status', request('status'));
         }
 
+        // Smart Filter: size (ukuran ban)
+        if (request()->has('size') && request('size') != '') {
+            $query->where('size', 'like', '%' . request('size') . '%');
+        }
+
+        // Smart Filter: ring (ring ban) - handle both "R15" and "15" formats
+        if (request()->has('ring') && request('ring') != '') {
+            $ringValue = request('ring');
+            // Remove leading "R" or "r" if present
+            $ringValue = preg_replace('/^R/i', '', $ringValue);
+            $query->where('ring', 'like', '%' . $ringValue . '%');
+        }
+
         return $query;
     }
 
@@ -88,7 +101,6 @@ class ProductSecondDataTable extends DataTable
                 'responsive' => true,
                 'autoWidth' => false,
                 'drawCallback' => 'function() { 
-                    window.scrollTo(0, 0); 
                     if (typeof initFlowbite === "function") {
                         initFlowbite();
                     }

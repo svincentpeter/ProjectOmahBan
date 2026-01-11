@@ -1,32 +1,37 @@
 <div wire:key="daily-root">
     {{-- Filter Card (Styled to match layouts.filter-card) --}}
-    <div class="mb-6 p-5 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <div class="p-1.5 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-900/50 dark:text-blue-400">
-                    <i class="bi bi-funnel-fill"></i>
-                </div>
-                Filter Laporan Kas Harian
-            </h3>
+    {{-- Main Control Card --}}
+    <div class="mb-6 p-6 bg-white border border-gray-200 rounded-2xl shadow-sm dark:bg-gray-800 dark:border-gray-700">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                    <div class="p-2 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-600/20">
+                        <i class="bi bi-wallet2 text-xl"></i>
+                    </div>
+                    Laporan Kas Harian
+                </h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 pl-[3.25rem]">
+                    Rekapitulasi transaksi harian, omset, dan pengeluaran operasional.
+                </p>
+            </div>
+
             {{-- Export & Comparison Buttons --}}
-            <div class="flex items-center gap-2">
-                <button wire:click="toggleComparison" class="inline-flex items-center px-3 py-2 text-xs font-medium rounded-lg border {{ $showComparison ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600' }} transition-colors">
-                    <i class="bi bi-arrow-left-right mr-1.5"></i>
-                    Bandingkan
+            <div class="flex items-center gap-2 pl-[3.25rem] md:pl-0">
+                <button wire:click="toggleComparison" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl border {{ $showComparison ? 'bg-purple-50 text-purple-700 border-purple-200 ring-1 ring-purple-500/20 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700' }} transition-all shadow-sm">
+                    <i class="bi bi-arrow-left-right mr-2"></i> Bandingkan
                 </button>
-                <div class="border-l border-gray-200 dark:border-gray-600 h-6 mx-1"></div>
-                <button wire:click="exportCsv" wire:loading.attr="disabled" class="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors">
-                    <i class="bi bi-filetype-csv mr-1.5"></i>
-                    CSV
-                </button>
-                <button wire:click="exportExcel" wire:loading.attr="disabled" class="inline-flex items-center px-3 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/50 transition-colors">
-                    <i class="bi bi-file-earmark-excel mr-1.5"></i>
-                    Excel
-                </button>
-                <button wire:click="exportPdf" wire:loading.attr="disabled" class="inline-flex items-center px-3 py-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/50 transition-colors">
-                    <i class="bi bi-file-earmark-pdf mr-1.5"></i>
-                    PDF
-                </button>
+                <div class="h-8 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden md:block"></div>
+                <div class="flex rounded-xl shadow-sm" role="group">
+                    <button wire:click="exportCsv" wire:loading.attr="disabled" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-l-xl hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 transition-all">
+                        <i class="bi bi-filetype-csv mr-2"></i> CSV
+                    </button>
+                    <button wire:click="exportExcel" wire:loading.attr="disabled" class="inline-flex items-center px-4 py-2 text-sm font-medium text-green-700 bg-white border-t border-b border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-green-400 dark:hover:bg-gray-700 transition-all">
+                        <i class="bi bi-file-earmark-excel mr-2"></i> Excel
+                    </button>
+                    <button wire:click="exportPdf" wire:loading.attr="disabled" class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-white border border-gray-200 rounded-r-xl hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-red-400 dark:hover:bg-gray-700 transition-all">
+                        <i class="bi bi-file-earmark-pdf mr-2"></i> PDF
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -102,41 +107,78 @@
         </form>
     </div>
 
-    {{-- Net Income Card --}}
-    <div class="relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg mb-8 group transition-all hover:scale-[1.01] hover:shadow-xl">
-        <div class="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-green-100 to-transparent dark:from-green-900/20 opacity-50"></div>
-        <div class="absolute -bottom-8 -right-8 text-9xl text-green-50 dark:text-green-900/10 opacity-50 rotate-12 pointer-events-none">
-            <i class="bi bi-cash-stack"></i>
-        </div>
+    {{-- KPI Cards --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         
-        <div class="p-8 text-center relative z-10">
-            <h6 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 dark:text-gray-400 flex items-center justify-center gap-2">
-                <i class="bi bi-wallet-fill text-green-500"></i> Income Bersih Hari Ini
-            </h6>
-            <div class="mb-8 scale-100 group-hover:scale-110 transition-transform duration-500">
-                <span class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500 animate-gradient-x drop-shadow-sm">
-                    {{ format_currency($incomeBersih) }}
-                </span>
-            </div>
-            <div class="flex flex-col sm:flex-row justify-center gap-4 sm:gap-8">
-                <div class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
-                    <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-200">
-                         <i class="bi bi-graph-up-arrow"></i>
-                    </div>
-                    <div>
-                        <div class="text-xs text-blue-500 dark:text-blue-400 uppercase tracking-wide font-semibold">Omset</div>
-                        <div class="text-lg font-bold">{{ format_currency($omzet) }}</div>
-                    </div>
+        {{-- Total Transaksi --}}
+        <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition border-l-4 border-l-blue-600">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-600 dark:text-gray-300">Total Transaksi</p>
+                    <h3 class="mt-1 text-3xl font-extrabold text-slate-900 dark:text-white leading-none tabular-nums">
+                        {{ number_format($ringkasanPembayaran->sum('trx_count'), 0, ',', '.') }}
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-gray-400 mt-2">Transaksi hari ini</p>
                 </div>
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-900/50">
+                    <i class="bi bi-receipt text-xl"></i>
+                </div>
+            </div>
+        </div>
 
-                <div class="flex items-center gap-3 px-5 py-2.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-800">
-                    <div class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-800 flex items-center justify-center text-red-600 dark:text-red-200">
-                         <i class="bi bi-graph-down-arrow"></i>
+        {{-- Total Omset --}}
+        <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition border-l-4 border-l-indigo-600">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-600 dark:text-gray-300">Total Omset</p>
+                    <div class="mt-1 flex items-baseline gap-2 whitespace-nowrap">
+                        <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">Rp</span>
+                        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white leading-none tabular-nums tracking-tight">
+                            {{ format_currency($omzet) }}
+                        </h3>
                     </div>
-                    <div>
-                        <div class="text-xs text-red-500 dark:text-red-400 uppercase tracking-wide font-semibold">Pengeluaran</div>
-                        <div class="text-lg font-bold">{{ format_currency($pengeluaran) }}</div>
+                    <p class="text-xs text-slate-500 dark:text-gray-400 mt-2">Pemasukan kotor</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-900/50">
+                    <i class="bi bi-wallet2 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        {{-- Pengeluaran --}}
+        <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition border-l-4 border-l-amber-600">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-600 dark:text-gray-300">Total Pengeluaran</p>
+                    <div class="mt-1 flex items-baseline gap-2 whitespace-nowrap">
+                        <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">Rp</span>
+                        <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white leading-none tabular-nums tracking-tight">
+                            {{ format_currency($pengeluaran) }}
+                        </h3>
                     </div>
+                    <p class="text-xs text-slate-500 dark:text-gray-400 mt-2">Beban operasional</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-amber-50 text-amber-700 ring-1 ring-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-900/50">
+                    <i class="bi bi-cash-stack text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        {{-- Income Bersih --}}
+        <div class="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition border-l-4 border-l-emerald-600">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-slate-600 dark:text-gray-300">Income Bersih</p>
+                    <div class="mt-1 flex items-baseline gap-2 whitespace-nowrap">
+                        <span class="text-sm font-semibold text-slate-500 dark:text-gray-400">Rp</span>
+                        <h3 class="text-2xl font-extrabold leading-none tabular-nums tracking-tight {{ $incomeBersih >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-600 dark:text-rose-400' }}">
+                            {{ format_currency($incomeBersih) }}
+                        </h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-gray-400 mt-2">Omset - Pengeluaran</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-900/50">
+                    <i class="bi bi-graph-up-arrow text-xl"></i>
                 </div>
             </div>
         </div>

@@ -30,8 +30,7 @@
                             <select id="product_id"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500">
                                 <option value="">-- Pilih Produk --</option>
-                                {{-- NOTE: Optimasi query jika produk ribuan --}}
-                                @foreach (\Modules\Product\Entities\Product::all() as $product)
+                                @foreach ($products as $product)
                                     <option value="{{ $product->id }}" data-name="{{ $product->product_name }}"
                                         data-code="{{ $product->product_code }}" data-price="{{ $product->product_cost }}"
                                         data-stock="{{ $product->product_quantity }}">
@@ -111,7 +110,7 @@
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-purple-500 dark:focus:border-purple-500"
                                     required>
                                     <option value="">-- Pilih Supplier --</option>
-                                    @foreach (\Modules\People\Entities\Supplier::all() as $supplier)
+                                    @foreach ($suppliers as $supplier)
                                         <option value="{{ $supplier->id }}">{{ $supplier->supplier_name }}</option>
                                     @endforeach
                                 </select>

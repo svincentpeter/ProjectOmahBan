@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERD - Project Omah Ban (Compact)</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --text-color: #334155;
+            --header-bg: #fff;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            /* Restrict width to make it "photo friendly" */
+            min-width: 1400px;
+            max-width: 1600px;
+            margin: 0 auto;
+            /* Center on large screens */
+            position: relative;
+        }
+
+        /* --- Standard Top Header --- */
+        header {
+            background: var(--header-bg);
+            padding: 20px 40px;
+            border-bottom: 2px solid #e2e8f0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            margin: 0 0 10px 0;
+            color: #1e293b;
+            font-size: 1.8rem;
+        }
+
+        header p {
+            margin: 0;
+            color: #64748b;
+        }
+
+        .legend {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .legend-badge {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        /* --- Diagrams Container --- */
+        #er-container {
+            position: relative;
+            width: 100%;
+            height: 1800px;
+            /* Still needs height, but width is contained */
+            background: var(--bg-color);
+        }
+
+        /* --- SVG Layer --- */
+        #svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* --- Table Cards (Compact) --- */
+        .table-card {
+            position: absolute;
+            background: var(--card-bg);
+            width: 220px;
+            /* Reduced width */
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .card-header {
+            padding: 6px 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #1e293b;
+            background: #f1f5f9;
+            border-bottom: 1px solid #cbd5e1;
+            border-radius: 5px 5px 0 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .table-rows {
+            padding: 4px 0;
+            font-size: 0.7rem;
+            color: #475569;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 10px;
+            border-bottom: 1px solid #f8fafc;
+            height: 18px;
+        }
+
+        .row:last-child {
+            border-bottom: none;
+        }
+
+        .col-left {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .col-right {
+            color: #94a3b8;
+            font-family: monospace;
+            font-size: 0.65rem;
+            margin-left: 4px;
+        }
+
+        .pk-icon {
+            color: #eab308;
+            font-size: 0.65rem;
+        }
+
+        .fk-icon {
+            color: #94a3b8;
+            font-size: 0.65rem;
+        }
+
+        .uk-icon {
+            color: #3b82f6;
+            font-size: 0.6rem;
+            font-weight: bold;
+            margin-left: 2px;
+        }
+
+        /* Themes */
+        .theme-blue {
+            border-top: 3px solid #3b82f6;
+        }
+
+        .theme-green {
+            border-top: 3px solid #22c55e;
+        }
+
+        .theme-purple {
+            border-top: 3px solid #a855f7;
+        }
+
+        .theme-red {
+            border-top: 3px solid #ef4444;
+        }
+
+        .theme-orange {
+            border-top: 3px solid #f97316;
+        }
+
+        .theme-teal {
+            border-top: 3px solid #0d9488;
+        }
+
+        .theme-yellow {
+            border-top: 3px solid #eab308;
+        }
+
+        /* Connector Labels */
+        .label-rect {
+            fill: #fff;
+            stroke: #e2e8f0;
+            stroke-width: 1px;
+            rx: 3;
+        }
+
+        .label-text {
+            font-size: 9px;
+            font-family: sans-serif;
+            fill: #64748b;
+            font-weight: 600;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Project Omah Ban</h1>
+        <p>Entity Relationship Diagram</p>
+        <div class="legend">
+            <span class="legend-badge" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe">Users &
+                Auth</span>
+            <span class="legend-badge" style="background:#faf5ff; color:#7e22ce; border-color:#e9d5ff">Sales &
+                TRX</span>
+            <span class="legend-badge" style="background:#fef2f2; color:#b91c1c; border-color:#fecaca">Purchase &
+                Supply</span>
+            <span class="legend-badge" style="background:#f0fdf4; color:#15803d; border-color:#bbf7d0">Products &
+                Master</span>
+            <span class="legend-badge" style="background:#f0fdfa; color:#0f766e; border-color:#99f6e4">Inventory &
+                Audit</span>
+        </div>
+    </header>
+
+    <div id="er-container">
+        <svg id="svg-layer">
+            <defs>
+                <!-- Removed Arrowheads for cleaner "Crow's foot" style look, or simple lines as per "Rapi" request -->
+                <!-- Re-adding small pointer if needed, but modern diagrams often just use lines for clarity unless cardinality is strict -->
+                <marker id="arrow-end" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+                </marker>
+            </defs>
+        </svg>
+
+        <!-- 
+      LAYOUT STRATEGY (COMPACT):
+      Card Width: 220px
+      Gap X: 60px
+      X1: 30px
+      X2: 310px (30+220+60)
+      X3: 590px
+      X4: 870px
+      X5: 1150px
+    -->
+
+        <!-- COL 1: ACTORS (Leftmost) -->
+        <div class="table-card theme-blue" id="users" style="left: 30px; top: 30px;">
+            <div class="card-header">users</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">name</span><span class="col-right">str</span></div>
+                <div class="row"><span class="col-left">email <span class="uk-icon">UK</span></span><span
+                        class="col-right">str</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>role_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">is_active</span><span class="col-right">bool</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-blue" id="roles" style="left: 30px; top: 220px;">
+            <div class="card-header">roles</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">name <span class="uk-icon">UK</span></span><span
+                        class="col-right">str</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-orange" id="customers" style="left: 30px; top: 350px;">
+            <div class="card-header">customers</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">name</span><span class="col-right">str</span></div>
+                <div class="row"><span class="col-left">phone</span><span class="col-right">str</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-red" id="suppliers" style="left: 30px; top: 550px;">
+            <div class="card-header">suppliers</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">name</span><span class="col-right">str</span></div>
+                <div class="row"><span class="col-left">phone</span><span class="col-right">str</span></div>
+            </div>
+        </div>
+
+        <!-- COL 2: HEADERS (Sales, Purchases) -->
+        <div class="table-card theme-purple" id="sales" style="left: 310px; top: 30px;">
+            <div class="card-header">sales</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">ref <span class="uk-icon">UK</span></span><span
+                        class="col-right">str</span></div>
+                <div class="row"><span class="col-left">date</span><span class="col-right">date</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>cust_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>user_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">total</span><span class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">manual</span><span class="col-right">bool</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-red" id="purchases" style="left: 310px; top: 550px;">
+            <div class="card-header">purchases</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">ref <span class="uk-icon">UK</span></span><span
+                        class="col-right">str</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>supp_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>user_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">total</span><span class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">status</span><span class="col-right">str</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-yellow" id="expenses" style="left: 310px; top: 800px;">
+            <div class="card-header">expenses</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>cat_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>user_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">amount</span><span class="col-right">bigint</span></div>
+            </div>
+        </div>
+
+        <!-- COL 3: DETAILS & PAYMENTS -->
+        <div class="table-card theme-purple" id="sale_details" style="left: 590px; top: 220px;">
+            <div class="card-header">sale_details</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>sale_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>prod_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">qty</span><span class="col-right">int</span></div>
+                <div class="row"><span class="col-left">sub_total</span><span class="col-right">bigint</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-purple" id="sale_payments" style="left: 590px; top: 30px;">
+            <div class="card-header">sale_payments</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>sale_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">amount</span><span class="col-right">bigint</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-purple" id="manual_input_details" style="left: 590px; top: 380px;">
+            <div class="card-header">manual_logs</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>sale_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>detail_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">reason</span><span class="col-right">text</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-red" id="purchase_details" style="left: 590px; top: 550px;">
+            <div class="card-header">purchase_details</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>purch_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>prod_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">qty</span><span class="col-right">int</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-red" id="purchase_payments" style="left: 590px; top: 700px;">
+            <div class="card-header">purch_payments</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>purch_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">amount</span><span class="col-right">bigint</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-yellow" id="expense_categories" style="left: 590px; top: 800px;">
+            <div class="card-header">expense_cats</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">name</span><span class="col-right">str</span></div>
+            </div>
+        </div>
+
+        <!-- COL 4: PRODUCTS & MASTER -->
+        <div class="table-card theme-green" id="products" style="left: 870px; top: 380px;">
+            <div class="card-header">products</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">code</span><span class="col-right">str</span></div>
+                <div class="row"><span class="col-left">name</span><span class="col-right">str</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>cat_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>brand_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">qty</span><span class="col-right">int</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-green" id="categories" style="left: 870px; top: 30px;">
+            <div class="card-header">categories</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">name</span><span class="col-right">str</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-green" id="brands" style="left: 870px; top: 150px;">
+            <div class="card-header">brands</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">name</span><span class="col-right">str</span></div>
+            </div>
+        </div>
+
+        <!-- COL 5: INVENTORY & AUDIT (Merged closest) -->
+        <div class="table-card theme-teal" id="stock_opnames" style="left: 1150px; top: 30px;">
+            <div class="card-header">stock_opnames</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left">ref</span><span class="col-right">str</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>user_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">status</span><span class="col-right">str</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-teal" id="stock_opname_items" style="left: 1150px; top: 220px;">
+            <div class="card-header">stock_opname_details</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>opname_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>prod_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">variance</span><span class="col-right">int</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-teal" id="adjustments" style="left: 1150px; top: 380px;">
+            <div class="card-header">adjustments</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>opname_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">reason</span><span class="col-right">enum</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-teal" id="adjusted_products" style="left: 1150px; top: 550px;">
+            <div class="card-header">adjusted_products</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>adj_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>prod_id</span><span
+                        class="col-right">fk</span></div>
+            </div>
+        </div>
+
+        <div class="table-card theme-teal" id="stock_movements" style="left: 1150px; top: 720px;">
+            <div class="card-header">stock_movements</div>
+            <div class="table-rows">
+                <div class="row"><span class="col-left"><b class="pk-icon">🔑</b>id</span><span
+                        class="col-right">bigint</span></div>
+                <div class="row"><span class="col-left"><span class="fk-icon">🔗</span>prod_id</span><span
+                        class="col-right">fk</span></div>
+                <div class="row"><span class="col-left">qty_change</span><span class="col-right">int</span></div>
+                <div class="row"><span class="col-left">type</span><span class="col-right">str</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const relations = [
+            // USERS & AUTH
+            { from: 'users', to: 'roles', label: 'memiliki' },
+            { from: 'users', to: 'sales', label: 'membuat' },
+            { from: 'users', to: 'purchases', label: 'membuat' },
+            { from: 'users', to: 'expenses', label: 'mencatat' },
+            { from: 'users', to: 'stock_opnames', label: 'melakukan' },
+            { from: 'users', to: 'manual_input_details', label: 'dibuat_oleh' },
+
+            // SALES
+            { from: 'customers', to: 'sales', label: 'melakukan' },
+            { from: 'sales', to: 'sale_details', label: 'berisi' },
+            { from: 'sales', to: 'sale_payments', label: 'memiliki' },
+            { from: 'sales', to: 'manual_input_details', label: 'memiliki' },
+            { from: 'manual_input_details', to: 'sale_details', label: 'melacak' },
+
+            // PURCHASES
+            { from: 'suppliers', to: 'purchases', label: 'memasok' },
+            { from: 'purchases', to: 'purchase_details', label: 'berisi' },
+            { from: 'purchases', to: 'purchase_payments', label: 'memiliki' },
+
+            // PRODUCTS & LINKS
+            { from: 'products', to: 'sale_details', label: 'terjual' },
+            { from: 'products', to: 'purchase_details', label: 'dibeli' },
+            { from: 'products', to: 'categories', label: 'kategori' },
+            { from: 'products', to: 'brands', label: 'merk' },
+
+            // INVENTORY
+            { from: 'products', to: 'stock_opname_items', label: 'audit' },
+            { from: 'products', to: 'adjusted_products', label: 'sesuai' },
+            { from: 'products', to: 'stock_movements', label: 'mutasi' },
+
+            // STOCK OPNAME
+            { from: 'stock_opnames', to: 'stock_opname_items', label: 'berisi' },
+            { from: 'stock_opnames', to: 'adjustments', label: 'hasil' },
+            { from: 'adjustments', to: 'adjusted_products', label: 'berisi' },
+
+            // FINANCE
+            { from: 'expense_categories', to: 'expenses', label: 'kategori' },
+        ];
+
+        function renderLines() {
+            const svg = document.getElementById('svg-layer');
+            // Clear paths but keep defs
+            const defs = svg.innerHTML.split('</defs>')[0] + '</defs>';
+            svg.innerHTML = defs;
+
+            // Since header is static, we need offset from container, not body
+            const container = document.getElementById('er-container');
+            const cRect = container.getBoundingClientRect();
+
+            relations.forEach(rel => {
+                const el1 = document.getElementById(rel.from);
+                const el2 = document.getElementById(rel.to);
+                if (!el1 || !el2) return;
+
+                const r1 = el1.getBoundingClientRect();
+                const r2 = el2.getBoundingClientRect();
+
+                // Calculate center points relative to CONTAINER
+                const x1 = (r1.left - cRect.left) + r1.width / 2;
+                const y1 = (r1.top - cRect.top) + r1.height / 2;
+                const x2 = (r2.left - cRect.left) + r2.width / 2;
+                const y2 = (r2.top - cRect.top) + r2.height / 2;
+
+                // Simple Orthogonal Routing
+                // Decide anchors based on relative position
+                let startX, startY, endX, endY;
+
+                // X-Anchor strategy (Side to Side preferred)
+                if (r2.left > r1.right + 20) {
+                    // Right to Left
+                    startX = (r1.left - cRect.left) + r1.width; startY = y1;
+                    endX = (r2.left - cRect.left); endY = y2;
+                } else if (r1.left > r2.right + 20) {
+                    // Left to Right
+                    startX = (r1.left - cRect.left); startY = y1;
+                    endX = (r2.left - cRect.left) + r2.width; endY = y2;
+                } else {
+                    // Top/Bottom (e.g. Products to Brands)
+                    // Use Side anchors anyway for cleaner stack look? No, standard logic
+                    startX = x1; startY = (r1.top - cRect.top) + r1.height;
+                    endX = x2; endY = (r2.top - cRect.top);
+                    if (y2 < y1) { // Upward
+                        startY = (r1.top - cRect.top);
+                        endY = (r2.top - cRect.top) + r2.height;
+                    }
+                }
+
+                // Draw Path
+                // Midpoint logic
+                const midX = (startX + endX) / 2;
+                const midY = (startY + endY) / 2;
+
+                let d = '';
+                // If strictly vertical alignment possible
+                if (Math.abs(startX - endX) < 10) {
+                    d = `M ${startX} ${startY} L ${endX} ${endY}`;
+                } else {
+                    // Standard Z-shape
+                    d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+                }
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', d);
+                path.setAttribute('stroke', '#cbd5e1');
+                path.setAttribute('stroke-width', '1.5');
+                path.setAttribute('fill', 'none');
+                // path.setAttribute('marker-end', 'url(#arrow-end)'); // Optional
+                svg.appendChild(path);
+
+                // Label
+                if (rel.label) {
+                    const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    // Calculate position on the middle vertical segment usually
+                    // Or simplified center of bounding box
+                    const lx = midX;
+                    const ly = midY;
+
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.textContent = rel.label;
+                    text.setAttribute('x', lx);
+                    text.setAttribute('y', ly + 1); // trivial adjustment
+                    text.setAttribute('class', 'label-text');
+
+                    const w = rel.label.length * 5 + 8;
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', lx - w / 2);
+                    rect.setAttribute('y', ly - 7);
+                    rect.setAttribute('width', w);
+                    rect.setAttribute('height', 14);
+                    rect.setAttribute('class', 'label-rect');
+
+                    grp.appendChild(rect);
+                    grp.appendChild(text);
+                    svg.appendChild(grp);
+                }
+
+            });
+        }
+
+        window.addEventListener('load', renderLines);
+    </script>
+
+</body>
+
+</html>
